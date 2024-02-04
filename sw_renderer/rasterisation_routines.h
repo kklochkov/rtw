@@ -5,7 +5,8 @@
 
 namespace rtw::sw_renderer {
 
-/// Draw a line using the DDA algorithm.
+/// Draw a line using the DDA (Digital Differential Analyzer) algorithm.
+/// See https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) for more details.
 /// @tparam RasteriseCallback The type of the callback function which is called for each pixel.
 /// The function must have the following signature: void(const math::Point2i&).
 /// @param[in] p0 The first point of the line.
@@ -27,6 +28,7 @@ void draw_line_dda(const math::Point2i& p0, const math::Point2i& p1, RasteriseCa
 }
 
 /// Draw a line using the Bresenham's algorithm.
+/// See https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm for more details.
 /// @tparam RasteriseCallback The type of the callback function which is called for each pixel.
 /// The function must have the following signature: void(const math::Point2i&).
 /// @param[in] p0 The first point of the line.

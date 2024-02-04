@@ -37,3 +37,4 @@ Note the `-c opt` flag, which is used to run the application in release mode to 
 - [benchmark](https://github.com/google/benchmark) - A microbenchmark support library
 - [imgui](https://github.com/ocornut/imgui) - Bloat-free Immediate Mode Graphical User interface for C++ with minimal dependencies
 - [implot](https://github.com/epezent/implot) - Advanced 2D Plotting for Dear ImGui
+- [CLI11](https://github.com/CLIUtils/CLI11) - CLI11 is a command line parser for C++11 and beyond that provides a rich feature set with a simple and intuitive interface

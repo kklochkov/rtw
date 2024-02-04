@@ -6,6 +6,7 @@ cc_binary(
     data = ["//sw_renderer/resources:textured_cube"],
     deps = [
         "//sw_renderer",
+        "@cli11",
         "@fmt",
         "@imgui",
     ] + select({
