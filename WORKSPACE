@@ -1,0 +1,67 @@
+workspace(name = "rtw")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Hedron's Compile Commands Extractor for Bazel
+# https://github.com/hedronvision/bazel-compile-commands-extractor
+http_archive(
+    name = "hedron_compile_commands",
+    strip_prefix = "bazel-compile-commands-extractor-ed994039a951b736091776d677f324b3903ef939",
+
+    # Replace the commit hash in both places (below) with the latest, rather than using the stale one here.
+    # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
+    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/ed994039a951b736091776d677f324b3903ef939.tar.gz",
+    # When you first run this tool, it'll recommend a sha256 hash to put here with a message like: "DEBUG: Rule 'hedron_compile_commands' indicated that a canonical reproducible form can be obtained by modifying arguments sha256 = ..."
+)
+
+http_archive(
+    name = "fmt",
+    build_file = "//third_party/fmt:fmt.BUILD",
+    sha256 = "ede1b6b42188163a3f2e0f25ad5c0637eca564bd8df74d02e31a311dd6b37ad8",
+    strip_prefix = "fmt-10.0.0",
+    url = "https://github.com/fmtlib/fmt/archive/refs/tags/10.0.0.tar.gz",
+)
+
+http_archive(
+    name = "googletest",
+    sha256 = "8ad598c73ad796e0d8280b082cebd82a630d73e73cd3c70057938a6501bba5d7",
+    strip_prefix = "googletest-1.14.0",
+    url = "https://github.com/google/googletest/archive/refs/tags/v1.14.0.tar.gz",
+)
+
+http_archive(
+    name = "google_benchmark",
+    sha256 = "6bc180a57d23d4d9515519f92b0c83d61b05b5bab188961f36ac7b06b0d9e9ce",
+    strip_prefix = "benchmark-1.8.3",
+    url = "https://github.com/google/benchmark/archive/refs/tags/v1.8.3.tar.gz",
+)
+
+# brew install sdl2 sdl2_image sfml
+new_local_repository(
+    name = "sysroot_macos",
+    build_file = "//third_party/sysroot:sysroot_macos.BUILD",
+    path = "/opt/homebrew",
+)
+
+# sudo apt install '^libsdl2.*' '^libsfml.*'
+new_local_repository(
+    name = "sysroot_linux",
+    build_file = "//third_party/sysroot:sysroot_linux.BUILD",
+    path = "/usr",
+)
+
+http_archive(
+    name = "imgui",
+    build_file = "//third_party/imgui:imgui.BUILD",
+    sha256 = "e2a361e61e3c8c683fb5a11932bbb0f4432480947f5329eeef613bbd85a0adc9",
+    strip_prefix = "imgui-54c1ac3e38a5b6df4c2c016cd5859666f3472e4d",
+    url = "https://github.com/ocornut/imgui/archive/54c1ac3e38a5b6df4c2c016cd5859666f3472e4d.zip",  # docking branch
+)
+
+http_archive(
+    name = "implot",
+    build_file = "//third_party/implot:implot.BUILD",
+    sha256 = "0330569e5d3d44cc7aa56dda7f3ff980e93f5bf6da4aca011f74c332eedda609",
+    strip_prefix = "implot-0.14",
+    url = "https://github.com/epezent/implot/archive/refs/tags/v0.14.zip",
+)
