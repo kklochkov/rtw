@@ -36,6 +36,14 @@ http_archive(
     url = "https://github.com/google/benchmark/archive/refs/tags/v1.8.3.tar.gz",
 )
 
+http_archive(
+    name = "cli11",
+    build_file = "//third_party/cli11:cli11.BUILD",
+    sha256 = "aac0ab42108131ac5d3344a9db0fdf25c4db652296641955720a4fbe52334e22",
+    strip_prefix = "CLI11-2.3.2",
+    url = "https://github.com/CLIUtils/CLI11/archive/refs/tags/v2.3.2.tar.gz",
+)
+
 # brew install sdl2 sdl2_image sfml
 new_local_repository(
     name = "sysroot_macos",

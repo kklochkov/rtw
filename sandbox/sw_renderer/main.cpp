@@ -4,6 +4,8 @@
 
 #include "math/transform3.h"
 
+#include <CLI/CLI.hpp>
+
 #include <SDL.h>
 #include <SDL_image.h>
 
@@ -32,6 +34,7 @@ public:
   ~Application();
 
   bool init();
+  bool load_mesh(const std::filesystem::path& mesh_path);
   void run();
 
 private:
@@ -129,16 +132,20 @@ bool Application::init()
     return false;
   }
 
-  const std::filesystem::path resources_folder{"sw_renderer/resources"};
-  auto maybe_mesh = rtw::sw_renderer::load_obj(resources_folder / "textured_cube.obj");
+  init_imgui();
+  return true;
+}
+
+bool Application::load_mesh(const std::filesystem::path& mesh_path)
+{
+  const std::filesystem::path resources_folder = mesh_path.parent_path();
+  auto maybe_mesh = rtw::sw_renderer::load_obj(mesh_path);
   if (!maybe_mesh.has_value())
   {
     // TODO: error handling
     //    fmt::print("Could not load mesh: {}\n", maybe_mesh.error());
     return false;
   }
-
-  init_imgui();
 
   mesh_ = std::move(maybe_mesh.value());
   return load_textures(resources_folder, mesh_);
@@ -404,14 +411,25 @@ void Application::run()
 
 int main(int argc, char* argv[])
 {
-  std::ignore = argc;
-  std::ignore = argv;
+  CLI::App cli_app{"Software Renderer"};
+
+  std::filesystem::path mesh_path;
+  cli_app.add_option("-m,--mesh", mesh_path, "Mesh file path")
+      ->check(CLI::ExistingFile)
+      ->default_val("sw_renderer/resources/textured_cube.obj");
 
   //  Application app(800, 600);
   Application app(320, 240);
   //  Application app(1024, 768);
 
   if (!app.init())
+  {
+    return EXIT_FAILURE;
+  }
+
+  CLI11_PARSE(cli_app, argc, argv);
+
+  if (!app.load_mesh(mesh_path))
   {
     return EXIT_FAILURE;
   }
