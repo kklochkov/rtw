@@ -3,6 +3,7 @@
 #include "fixed_point/operations.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <limits>
 

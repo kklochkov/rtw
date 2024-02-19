@@ -1,0 +1,53 @@
+# Not needed after https://github.com/bazelbuild/bazel/issues/7260 is closed
+build --incompatible_enable_cc_toolchain_resolution
+
+# For macOS only:
+
+# Needed for Bazel versions before 7.
+# Without this, one can use `--linkopt='-undefined dynamic_lookup'`.
+# This feature is intentionally not supported on macOS.
+build --features=-supports_dynamic_linker
+# Not needed after https://github.com/grailbio/bazel-toolchain/pull/229.
+build --features=-libtool
+
+build --nokeep_going
+test  --nokeep_going
+test --test_output=errors
+
+# C++17 standard
+build --cxxopt=--std=c++17
+test --cxxopt=--std=c++17
+build --host_cxxopt=--std=c++17
+build --repo_env=CC=clang
+build --repo_env=CXX=clang++
+
+# Warnings
+build --cxxopt=-Wall
+build --cxxopt=-Wextra
+build --cxxopt=-Wpedantic
+
+# Sanitizers
+build:sanitizers --copt=-fno-omit-frame-pointer
+build:sanitizers --copt=-O1
+build:sanitizers --copt=-g
+build:sanitizers --strip=never
+
+build:asan --config=sanitizers
+build:asan --copt -fsanitize=address
+build:asan --linkopt -fsanitize=address
+
+build:tsan --config=sanitizers
+build:tsan --copt -fsanitize=thread
+build:tsan --linkopt -fsanitize=thread
+
+build:msan --config=sanitizers
+build:msan --copt=-fsanitize=memory
+build:msan --linkopt=-fsanitize=memory
+
+build:ubsan --config=sanitizers
+build:ubsan --copt=-fsanitize=undefined
+build:ubsan --linkopt=-fsanitize=undefined
+
+build:sssan --config=sanitizers
+build:sssan --copt=-fsanitize=safe-stack
+build:sssan --linkopt=-fsanitize=safe-stack

@@ -3,6 +3,8 @@
 #include "sw_renderer/operations.h"
 #include "sw_renderer/vertex.h"
 
+#include <algorithm>
+
 namespace rtw::sw_renderer {
 
 /// Draw a line using the DDA (Digital Differential Analyzer) algorithm.
