@@ -2,6 +2,8 @@
 
 #include "math/matrix.h"
 
+#include <cmath>
+
 namespace rtw::math {
 
 template <typename T, std::uint16_t N>
