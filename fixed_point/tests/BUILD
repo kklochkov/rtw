@@ -5,6 +5,7 @@ cc_test(
     srcs = [
         "fixed_point_test.cpp",
         "int128_test.cpp",
+        "operations_test.cpp",
     ],
     deps = [
         "//fixed_point",

@@ -2,104 +2,76 @@
 
 #include <gtest/gtest.h>
 
-TEST(sign_bit_test, sign_bit)
-{
-  {
-    const std::int8_t a = 0;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 0);
-  }
-  {
-    const std::int8_t a = -1;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 1);
-  }
-  {
-    const std::int16_t a = 0;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 0);
-  }
-  {
-    const std::int16_t a = -1;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 1);
-  }
-  {
-    const std::int32_t a = 0;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 0);
-  }
-  {
-    const std::int32_t a = -1;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 1);
-  }
-  {
-    const std::int64_t a = 0;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 0);
-  }
-  {
-    const std::int64_t a = -1;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 1);
-  }
-  {
-    const std::uint8_t a = 0;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 0);
-  }
-  {
-    const std::uint16_t a = 0;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 0);
-  }
-  {
-    const std::uint32_t a = 0;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 0);
-  }
-  {
-    const std::uint64_t a = 0;
-    EXPECT_EQ(rtw::fixed_point::sign_bit(a), 0);
-  }
-}
-
 TEST(fp8_t, constants)
 {
+  static_assert(std::numeric_limits<rtw::fixed_point::fp8_t::type>::min() == rtw::fixed_point::fp8_t::MIN_INTEGER,
+                "The minimum value of the underlying type must be correct");
+  static_assert(std::numeric_limits<rtw::fixed_point::fp8_t::type>::max() == rtw::fixed_point::fp8_t::MAX_INTEGER,
+                "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::fp8_t::BITS, 16);
   EXPECT_EQ(rtw::fixed_point::fp8_t::SIGN_BIT, 1);
   EXPECT_EQ(rtw::fixed_point::fp8_t::FRACTIONAL_BITS, 8);
   EXPECT_EQ(rtw::fixed_point::fp8_t::INTEGER_BITS, 7);
   EXPECT_EQ(rtw::fixed_point::fp8_t::ONE, 256);
   EXPECT_EQ(rtw::fixed_point::fp8_t::RESOLUTION, 0.00390625);
-  EXPECT_EQ(rtw::fixed_point::fp8_t::min(), -128);
-  EXPECT_EQ(rtw::fixed_point::fp8_t::max(), 127);
+  EXPECT_EQ(rtw::fixed_point::fp8_t::min(), -128.0);
+  EXPECT_EQ(rtw::fixed_point::fp8_t::max(), 127.99609375);
+  EXPECT_EQ(rtw::fixed_point::fp8_t::MIN, -128);
+  EXPECT_EQ(rtw::fixed_point::fp8_t::MAX, 127);
 }
 
 TEST(ufp8_t, constants)
 {
+  static_assert(std::numeric_limits<rtw::fixed_point::ufp8_t::type>::min() == rtw::fixed_point::ufp8_t::MIN_INTEGER,
+                "The minimum value of the underlying type must be correct");
+  static_assert(std::numeric_limits<rtw::fixed_point::ufp8_t::type>::max() == rtw::fixed_point::ufp8_t::MAX_INTEGER,
+                "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::ufp8_t::BITS, 16);
   EXPECT_EQ(rtw::fixed_point::ufp8_t::SIGN_BIT, 0);
   EXPECT_EQ(rtw::fixed_point::ufp8_t::FRACTIONAL_BITS, 8);
   EXPECT_EQ(rtw::fixed_point::ufp8_t::INTEGER_BITS, 8);
   EXPECT_EQ(rtw::fixed_point::ufp8_t::ONE, 256);
   EXPECT_EQ(rtw::fixed_point::ufp8_t::RESOLUTION, 0.00390625);
-  EXPECT_EQ(rtw::fixed_point::ufp8_t::min(), 0);
-  EXPECT_EQ(rtw::fixed_point::ufp8_t::max(), 255);
+  EXPECT_EQ(rtw::fixed_point::ufp8_t::min(), 0.0);
+  EXPECT_EQ(rtw::fixed_point::ufp8_t::max(), 255.99609375);
+  EXPECT_EQ(rtw::fixed_point::ufp8_t::MIN, 0);
+  EXPECT_EQ(rtw::fixed_point::ufp8_t::MAX, 255);
 }
 
 TEST(fp16_t, constants)
 {
+  static_assert(std::numeric_limits<rtw::fixed_point::fp16_t::type>::min() == rtw::fixed_point::fp16_t::MIN_INTEGER,
+                "The minimum value of the underlying type must be correct");
+  static_assert(std::numeric_limits<rtw::fixed_point::fp16_t::type>::max() == rtw::fixed_point::fp16_t::MAX_INTEGER,
+                "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::fp16_t::BITS, 32);
   EXPECT_EQ(rtw::fixed_point::fp16_t::SIGN_BIT, 1);
   EXPECT_EQ(rtw::fixed_point::fp16_t::FRACTIONAL_BITS, 16);
   EXPECT_EQ(rtw::fixed_point::fp16_t::INTEGER_BITS, 15);
   EXPECT_EQ(rtw::fixed_point::fp16_t::ONE, 65536);
   EXPECT_EQ(rtw::fixed_point::fp16_t::RESOLUTION, 0.0000152587890625);
-  EXPECT_EQ(rtw::fixed_point::fp16_t::min(), -32768);
-  EXPECT_EQ(rtw::fixed_point::fp16_t::max(), 32767);
+  EXPECT_EQ(rtw::fixed_point::fp16_t::min(), -32768.0);
+  EXPECT_EQ(rtw::fixed_point::fp16_t::max(), 32767.999984741211);
+  EXPECT_EQ(rtw::fixed_point::fp16_t::MIN, -32768);
+  EXPECT_EQ(rtw::fixed_point::fp16_t::MAX, 32767);
 }
 
 TEST(ufp16_t, constants)
 {
+  static_assert(std::numeric_limits<rtw::fixed_point::ufp16_t::type>::min() == rtw::fixed_point::ufp16_t::MIN_INTEGER,
+                "The minimum value of the underlying type must be correct");
+  static_assert(std::numeric_limits<rtw::fixed_point::ufp16_t::type>::max() == rtw::fixed_point::ufp16_t::MAX_INTEGER,
+                "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::ufp16_t::BITS, 32);
   EXPECT_EQ(rtw::fixed_point::ufp16_t::SIGN_BIT, 0);
   EXPECT_EQ(rtw::fixed_point::ufp16_t::FRACTIONAL_BITS, 16);
   EXPECT_EQ(rtw::fixed_point::ufp16_t::INTEGER_BITS, 16);
   EXPECT_EQ(rtw::fixed_point::ufp16_t::ONE, 65536);
   EXPECT_EQ(rtw::fixed_point::ufp16_t::RESOLUTION, 0.0000152587890625);
-  EXPECT_EQ(rtw::fixed_point::ufp16_t::min(), 0);
-  EXPECT_EQ(rtw::fixed_point::ufp16_t::max(), 65535);
+  EXPECT_EQ(rtw::fixed_point::ufp16_t::min(), 0.0);
+  EXPECT_EQ(rtw::fixed_point::ufp16_t::max(), 65535.999984741211);
+  EXPECT_EQ(rtw::fixed_point::ufp16_t::MIN, 0);
+  EXPECT_EQ(rtw::fixed_point::ufp16_t::MAX, 65535);
 }
 // -----------------------------------------------------------------------------------------------
 template <typename T>
@@ -312,52 +284,52 @@ TYPED_TEST(signed_fixed_point_test, arithmetic)
 TYPED_TEST(signed_fixed_point_test, arithmetic_saturate)
 {
   {
-    const TypeParam a(TypeParam::max_value());
+    const TypeParam a(TypeParam::max());
     const TypeParam b(1.0);
     const TypeParam c = a + b;
-    EXPECT_EQ(c, TypeParam::max_value());
+    EXPECT_EQ(c, TypeParam::max());
   }
   {
-    const TypeParam a(TypeParam::min_value());
+    const TypeParam a(TypeParam::min());
     const TypeParam b(-1.0);
     const TypeParam c = a + b;
-    EXPECT_EQ(c, TypeParam::min_value());
+    EXPECT_EQ(c, TypeParam::min());
   }
   {
-    const TypeParam a(TypeParam::max_value());
+    const TypeParam a(TypeParam::max());
     const TypeParam b(-1.0);
     const TypeParam c = a - b;
-    EXPECT_EQ(c, TypeParam::max_value());
+    EXPECT_EQ(c, TypeParam::max());
   }
   {
-    const TypeParam a(TypeParam::min_value());
+    const TypeParam a(TypeParam::min());
     const TypeParam b(1.0);
     const TypeParam c = a - b;
-    EXPECT_EQ(c, TypeParam::min_value());
+    EXPECT_EQ(c, TypeParam::min());
   }
   {
-    const TypeParam a(TypeParam::max_value());
+    const TypeParam a(TypeParam::max());
     const TypeParam b(2.0);
     const TypeParam c = a * b;
-    EXPECT_EQ(c, TypeParam::max_value());
+    EXPECT_EQ(c, TypeParam::max());
   }
   {
-    const TypeParam a(TypeParam::min_value());
+    const TypeParam a(TypeParam::min());
     const TypeParam b(2.0);
     const TypeParam c = a * b;
-    EXPECT_EQ(c, TypeParam::min_value());
+    EXPECT_EQ(c, TypeParam::min());
   }
   {
-    const TypeParam a(TypeParam::max_value());
+    const TypeParam a(TypeParam::max());
     const TypeParam b(TypeParam::RESOLUTION);
     const TypeParam c = a / b;
-    EXPECT_EQ(c, TypeParam::max_value());
+    EXPECT_EQ(c, TypeParam::max());
   }
   {
-    const TypeParam a(TypeParam::min_value());
+    const TypeParam a(TypeParam::min());
     const TypeParam b(TypeParam::RESOLUTION);
     const TypeParam c = a / b;
-    EXPECT_EQ(c, TypeParam::min_value());
+    EXPECT_EQ(c, TypeParam::min());
   }
 }
 
@@ -482,22 +454,22 @@ TYPED_TEST(unsigned_fixed_point_test, arithmetic_saturate)
     EXPECT_EQ(a, TypeParam::max()); // See the comment in the implementation.
   }
   {
-    const TypeParam a(TypeParam::max_value());
+    const TypeParam a(TypeParam::max());
     const TypeParam b(1.0);
     const TypeParam c = a + b;
-    EXPECT_EQ(c, TypeParam::max_value());
+    EXPECT_EQ(c, TypeParam::max());
   }
   {
     const TypeParam a(0.0);
     const TypeParam b(1.0);
     const TypeParam c = a - b;
-    EXPECT_EQ(c, TypeParam::max_value()); // See the comment in the implementation.
+    EXPECT_EQ(c, TypeParam::max()); // See the comment in the implementation.
   }
   {
-    const TypeParam a(TypeParam::max_value());
+    const TypeParam a(TypeParam::max());
     const TypeParam b(2.0);
     const TypeParam c = a * b;
-    EXPECT_EQ(c, TypeParam::max_value());
+    EXPECT_EQ(c, TypeParam::max());
   }
   {
     const TypeParam a(0.0);
@@ -506,10 +478,10 @@ TYPED_TEST(unsigned_fixed_point_test, arithmetic_saturate)
     EXPECT_EQ(c, 0.0);
   }
   {
-    const TypeParam a(TypeParam::max_value());
+    const TypeParam a(TypeParam::max());
     const TypeParam b(TypeParam::RESOLUTION);
     const TypeParam c = a / b;
-    EXPECT_EQ(c, TypeParam::max_value());
+    EXPECT_EQ(c, TypeParam::max());
   }
   {
     const TypeParam a(0.0);
@@ -777,7 +749,7 @@ TYPED_TEST_SUITE(wrap_fixed_point_test, WrapFixedPointTypes, );
 TYPED_TEST(wrap_fixed_point_test, arithmetic_wrap)
 {
   {
-    const TypeParam a(static_cast<double>(TypeParam::max()));
+    const TypeParam a(static_cast<double>(TypeParam::MAX));
     const TypeParam b(1.0);
     const auto c = a + b;
     EXPECT_EQ(c, this->expected_plus_max_value());
@@ -785,44 +757,44 @@ TYPED_TEST(wrap_fixed_point_test, arithmetic_wrap)
   if constexpr (std::is_signed_v<typename TypeParam::type>)
   {
     {
-      const TypeParam a(static_cast<double>(TypeParam::min()));
+      const TypeParam a(static_cast<double>(TypeParam::MIN));
       const TypeParam b(-1.0);
       const auto c = a + b;
       EXPECT_EQ(c, this->expected_plus_min_value());
     }
     {
-      const TypeParam a(static_cast<double>(TypeParam::max()));
+      const TypeParam a(static_cast<double>(TypeParam::MAX));
       const TypeParam b(-1.0);
       const auto c = a - b;
       EXPECT_EQ(c, this->expected_minus_max_value());
     }
   }
   {
-    const TypeParam a(static_cast<double>(TypeParam::min()));
+    const TypeParam a(static_cast<double>(TypeParam::MIN));
     const TypeParam b(1.0);
     const auto c = a - b;
     EXPECT_EQ(c, this->expected_minus_min_value());
   }
   {
-    const TypeParam a(static_cast<double>(TypeParam::max()));
+    const TypeParam a(static_cast<double>(TypeParam::MAX));
     const TypeParam b(2.0);
     const auto c = a * b;
     EXPECT_EQ(c, this->expected_mul_min_value());
   }
   {
-    const TypeParam a(static_cast<double>(TypeParam::min()));
+    const TypeParam a(static_cast<double>(TypeParam::MIN));
     const TypeParam b(2.0);
     const auto c = a * b;
     EXPECT_EQ(c, this->expected_mul_max_value());
   }
   {
-    const TypeParam a(static_cast<double>(TypeParam::max()));
+    const TypeParam a(static_cast<double>(TypeParam::MAX));
     const TypeParam b(TypeParam::RESOLUTION);
     const auto c = a / b;
     EXPECT_EQ(c, this->expected_div_min_value());
   }
   {
-    const TypeParam a(static_cast<double>(TypeParam::min()));
+    const TypeParam a(static_cast<double>(TypeParam::MIN));
     const TypeParam b(TypeParam::RESOLUTION);
     const auto c = a / b;
     EXPECT_EQ(c, this->expected_div_max_value());
