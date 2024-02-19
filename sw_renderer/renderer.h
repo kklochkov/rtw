@@ -9,17 +9,18 @@
 
 #include "math/point.h"
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 enum class RenderMode : std::uint8_t
 {
-  FaceCulling = 1U << 0U,
-  Wireframe = 1U << 1U,
-  Shading = 1U << 2U,
-  VertexDrawing = 1U << 3U,
-  Light = 1U << 4U,
-  NormalDraw = 1U << 5U,
-  Texture = 1U << 6U
+  FACE_CULLING = 1U << 0U,
+  WIREFRAME = 1U << 1U,
+  SHADING = 1U << 2U,
+  VERTEX_DRAWING = 1U << 3U,
+  LIGHT = 1U << 4U,
+  NORMAL_DRAW = 1U << 5U,
+  TEXTURE = 1U << 6U
 };
 
 using RenderModeFlags = Flags<RenderMode>;
@@ -44,20 +45,20 @@ public:
   void set_render_mode(const RenderModeFlags mode) { render_mode_ = mode; }
   RenderModeFlags render_mode() const { return render_mode_; }
 
-  void set_face_culling_enabled(const bool enabled) { render_mode_.set(RenderMode::FaceCulling, enabled); }
-  bool face_culling_enabled() const { return render_mode_ & RenderMode::FaceCulling; }
-  void set_wireframe_enabled(const bool enabled) { render_mode_.set(RenderMode::Wireframe, enabled); }
-  bool wireframe_enabled() const { return render_mode_ & RenderMode::Wireframe; }
-  void set_shading_enabled(const bool enabled) { render_mode_.set(RenderMode::Shading, enabled); }
-  bool shading_enabled() const { return render_mode_ & RenderMode::Shading; }
-  void set_vertex_drawing_enabled(const bool enabled) { render_mode_.set(RenderMode::VertexDrawing, enabled); }
-  bool vertex_drawing_enabled() const { return render_mode_ & RenderMode::VertexDrawing; }
-  void set_light_enabled(const bool enabled) { render_mode_.set(RenderMode::Light, enabled); }
-  bool light_enabled() const { return render_mode_ & RenderMode::Light; }
-  void set_normal_draw_enabled(const bool enabled) { render_mode_.set(RenderMode::NormalDraw, enabled); }
-  bool normal_draw_enabled() const { return render_mode_ & RenderMode::NormalDraw; }
-  void set_texture_enabled(const bool enabled) { render_mode_.set(RenderMode::Texture, enabled); }
-  bool texture_enabled() const { return render_mode_ & RenderMode::Texture; }
+  void set_face_culling_enabled(const bool enabled) { render_mode_.set(RenderMode::FACE_CULLING, enabled); }
+  bool face_culling_enabled() const { return render_mode_ & RenderMode::FACE_CULLING; }
+  void set_wireframe_enabled(const bool enabled) { render_mode_.set(RenderMode::WIREFRAME, enabled); }
+  bool wireframe_enabled() const { return render_mode_ & RenderMode::WIREFRAME; }
+  void set_shading_enabled(const bool enabled) { render_mode_.set(RenderMode::SHADING, enabled); }
+  bool shading_enabled() const { return render_mode_ & RenderMode::SHADING; }
+  void set_vertex_drawing_enabled(const bool enabled) { render_mode_.set(RenderMode::VERTEX_DRAWING, enabled); }
+  bool vertex_drawing_enabled() const { return render_mode_ & RenderMode::VERTEX_DRAWING; }
+  void set_light_enabled(const bool enabled) { render_mode_.set(RenderMode::LIGHT, enabled); }
+  bool light_enabled() const { return render_mode_ & RenderMode::LIGHT; }
+  void set_normal_draw_enabled(const bool enabled) { render_mode_.set(RenderMode::NORMAL_DRAW, enabled); }
+  bool normal_draw_enabled() const { return render_mode_ & RenderMode::NORMAL_DRAW; }
+  void set_texture_enabled(const bool enabled) { render_mode_.set(RenderMode::TEXTURE, enabled); }
+  bool texture_enabled() const { return render_mode_ & RenderMode::TEXTURE; }
 
   void set_depth(const std::size_t x, const std::size_t y, const float depth) { depth_buffer_.set_depth(x, y, depth); }
   float depth(const std::size_t x, const std::size_t y) const { return depth_buffer_.depth(x, y); }
@@ -92,8 +93,8 @@ private:
   math::Matrix4x4f projection_matrix_;
   math::Matrix4x4f screen_space_matrix_;
   math::Vector3f light_direction_;
-  RenderModeFlags render_mode_{RenderMode::FaceCulling | RenderMode::Wireframe | RenderMode::Shading |
-                               RenderMode::Light};
+  RenderModeFlags render_mode_{RenderMode::FACE_CULLING | RenderMode::WIREFRAME | RenderMode::SHADING
+                               | RenderMode::LIGHT};
 };
 
 } // namespace rtw::sw_renderer

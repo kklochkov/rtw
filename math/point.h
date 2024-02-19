@@ -2,7 +2,8 @@
 
 #include "math/vector.h"
 
-namespace rtw::math {
+namespace rtw::math
+{
 
 template <typename T, std::uint16_t N>
 class Point : Matrix<T, N, 1>

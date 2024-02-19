@@ -5,22 +5,22 @@
 
 TEST(ConvexPolygonTest, default_ctor)
 {
-  constexpr rtw::math::ConvexPolygon2i<3U> polygon;
-  EXPECT_EQ(polygon.size(), 0U);
-  EXPECT_EQ(polygon.capacity(), 3U);
+  constexpr rtw::math::ConvexPolygon2i<3U> POLYGON;
+  EXPECT_EQ(POLYGON.size(), 0U);
+  EXPECT_EQ(POLYGON.capacity(), 3U);
 }
 
 TEST(ConvexPolygonTest, initializer_list_constructor)
 {
-  constexpr rtw::math::ConvexPolygon2i<3U> polygon = {rtw::math::Point2i{1, 2}, rtw::math::Point2i{3, 4},
+  constexpr rtw::math::ConvexPolygon2i<3U> POLYGON = {rtw::math::Point2i{1, 2}, rtw::math::Point2i{3, 4},
                                                       rtw::math::Point2i{5, 6}};
-  EXPECT_EQ(polygon.size(), 3U);
-  EXPECT_EQ(polygon.capacity(), 3U);
-  EXPECT_EQ(polygon[0], rtw::math::Point2i(1, 2));
-  EXPECT_EQ(polygon[1], rtw::math::Point2i(3, 4));
-  EXPECT_EQ(polygon[2], rtw::math::Point2i(5, 6));
-  EXPECT_EQ(polygon.size(), 3U);
-  EXPECT_EQ(polygon.capacity(), 3U);
+  EXPECT_EQ(POLYGON.size(), 3U);
+  EXPECT_EQ(POLYGON.capacity(), 3U);
+  EXPECT_EQ(POLYGON[0], rtw::math::Point2i(1, 2));
+  EXPECT_EQ(POLYGON[1], rtw::math::Point2i(3, 4));
+  EXPECT_EQ(POLYGON[2], rtw::math::Point2i(5, 6));
+  EXPECT_EQ(POLYGON.size(), 3U);
+  EXPECT_EQ(POLYGON.capacity(), 3U);
 }
 
 TEST(ConvexPolygonTest, push_back)
@@ -47,12 +47,12 @@ TEST(ConvexPolygonTest, clear)
 
 TEST(ConvexPolygonTest, begin_end)
 {
-  constexpr rtw::math::ConvexPolygon2i<3U> polygon = {rtw::math::Point2i{1, 2}, rtw::math::Point2i{3, 4},
+  constexpr rtw::math::ConvexPolygon2i<3U> POLYGON = {rtw::math::Point2i{1, 2}, rtw::math::Point2i{3, 4},
                                                       rtw::math::Point2i{5, 6}};
-  EXPECT_EQ(*polygon.begin(), rtw::math::Point2i(1, 2));
-  EXPECT_EQ(*(polygon.begin() + 1), rtw::math::Point2i(3, 4));
-  EXPECT_EQ(*(polygon.begin() + 2), rtw::math::Point2i(5, 6));
-  EXPECT_EQ(polygon.begin() + 3, polygon.end());
+  EXPECT_EQ(*POLYGON.begin(), rtw::math::Point2i(1, 2));
+  EXPECT_EQ(*(POLYGON.begin() + 1), rtw::math::Point2i(3, 4));
+  EXPECT_EQ(*(POLYGON.begin() + 2), rtw::math::Point2i(5, 6));
+  EXPECT_EQ(POLYGON.begin() + 3, POLYGON.end());
 }
 
 TEST(ConvexPolygonTest, valid)
@@ -69,16 +69,16 @@ TEST(ConvexPolygonTest, valid)
 
 TEST(ConvexPolygonTest, index_operator)
 {
-  constexpr rtw::math::ConvexPolygon2i<3U> polygon = {rtw::math::Point2i{1, 2}, rtw::math::Point2i{3, 4},
+  constexpr rtw::math::ConvexPolygon2i<3U> POLYGON = {rtw::math::Point2i{1, 2}, rtw::math::Point2i{3, 4},
                                                       rtw::math::Point2i{5, 6}};
-  EXPECT_EQ(polygon[0], rtw::math::Point2i(1, 2));
-  EXPECT_EQ(polygon[1], rtw::math::Point2i(3, 4));
-  EXPECT_EQ(polygon[2], rtw::math::Point2i(5, 6));
+  EXPECT_EQ(POLYGON[0], rtw::math::Point2i(1, 2));
+  EXPECT_EQ(POLYGON[1], rtw::math::Point2i(3, 4));
+  EXPECT_EQ(POLYGON[2], rtw::math::Point2i(5, 6));
 }
 
 TEST(ConvexPolygonTest, index_operator_out_of_bounds)
 {
-  constexpr rtw::math::ConvexPolygon2i<3U> polygon = {rtw::math::Point2i{1, 2}, rtw::math::Point2i{3, 4},
+  constexpr rtw::math::ConvexPolygon2i<3U> POLYGON = {rtw::math::Point2i{1, 2}, rtw::math::Point2i{3, 4},
                                                       rtw::math::Point2i{5, 6}};
-  EXPECT_DEATH(polygon[3], "");
+  EXPECT_DEATH(POLYGON[3], "");
 }

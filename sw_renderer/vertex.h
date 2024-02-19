@@ -5,7 +5,8 @@
 #include "sw_renderer/color.h"
 #include "sw_renderer/tex_coord.h"
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 template <typename T>
 struct Vertex

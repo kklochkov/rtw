@@ -3,7 +3,8 @@
 #include "math/angle.h"
 #include "math/point.h"
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 /// Make a look-at matrix.
 /// @tparam T The type of the elements.

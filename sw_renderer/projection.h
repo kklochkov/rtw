@@ -5,7 +5,8 @@
 #include "math/point.h"
 #include "math/vector.h"
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 /// A plane in Hessian normal form.
 /// The normal vector is pointing towards the positive half-space, i.e. the inside of the plane.

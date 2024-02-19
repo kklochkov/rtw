@@ -2,7 +2,8 @@
 
 #include "math/point.h"
 
-namespace rtw::math {
+namespace rtw::math
+{
 
 /// A convex polygon in 2D space.
 /// The polygon is represented by a sequence of vertices in counter-clockwise.
@@ -19,6 +20,7 @@ class ConvexPolygon
 public:
   static_assert(Capacity >= 3U, "A polygon must have at least capacity of 3.");
 
+  // NOLINTBEGIN (readability-identifier-naming)
   using value_type = PointT<T>;
   using size_type = typename std::array<value_type, Capacity>::size_type;
   using iterator = typename std::array<value_type, Capacity>::iterator;
@@ -27,8 +29,9 @@ public:
   using const_pointer = typename std::array<value_type, Capacity>::const_pointer;
   using reference = typename std::array<value_type, Capacity>::reference;
   using const_reference = typename std::array<value_type, Capacity>::const_reference;
+  // NOLINTEND (google-explicit-constructor)
 
-  constexpr ConvexPolygon() {}
+  constexpr ConvexPolygon() = default;
   constexpr ConvexPolygon(std::initializer_list<value_type> vertices)
   {
     for (const auto& vertex : vertices)

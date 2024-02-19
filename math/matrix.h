@@ -7,37 +7,38 @@
 #include <ostream>
 #include <type_traits>
 
-namespace rtw::math {
+namespace rtw::math
+{
 
-struct uninitialized_t
+struct UninitializedTag
 {
   enum class Tag : std::size_t
   {
     TAG
   };
-  constexpr explicit uninitialized_t(Tag) {}
+  constexpr explicit UninitializedTag(Tag /*tag*/) {}
 };
-constexpr inline uninitialized_t uninitialized{uninitialized_t::Tag::TAG};
+constexpr inline UninitializedTag UNINITIALIZED{UninitializedTag::Tag::TAG};
 
-struct zero_t
+struct ZeroTag
 {
   enum class Tag : std::size_t
   {
     TAG
   };
-  constexpr explicit zero_t(Tag) {}
+  constexpr explicit ZeroTag(Tag /*tag*/) {}
 };
-constexpr inline zero_t zero{zero_t::Tag::TAG};
+constexpr inline ZeroTag ZERO{ZeroTag::Tag::TAG};
 
-struct identity_t
+struct IdentityTag
 {
   enum class Tag : std::size_t
   {
     TAG
   };
-  constexpr explicit identity_t(Tag) {}
+  constexpr explicit IdentityTag(Tag /*tag*/) {}
 };
-constexpr inline identity_t identity{identity_t::Tag::TAG};
+constexpr inline IdentityTag IDENTITY{IdentityTag::Tag::TAG};
 
 /// A matrix that is statically sized.
 /// The matrix is stored in column-major order.
@@ -63,37 +64,40 @@ class Matrix
 
   template <typename U = T, std::uint16_t P, std::uint16_t Q, std::uint16_t... Is>
   constexpr static inline std::array<T, SIZE> from_matrix(const Matrix<U, P, Q>& matrix,
-                                                          std::integer_sequence<std::uint16_t, Is...>)
+                                                          std::integer_sequence<std::uint16_t, Is...> /*index*/)
   {
     static_assert((P * Q) <= SIZE, "Too many elements");
     return std::array<T, SIZE>{matrix[Is]...};
   }
 
 public:
+  // NOLINTBEGIN (readability-identifier-naming)
   using value_type = T;
   using iterator = typename std::array<value_type, SIZE>::iterator;
   using const_iterator = typename std::array<value_type, SIZE>::const_iterator;
   using pointer = typename std::array<value_type, SIZE>::pointer;
   using const_pointer = typename std::array<value_type, SIZE>::const_pointer;
   using reference = typename std::array<value_type, SIZE>::reference;
+  // NOLINTEND (google-explicit-constructor)
 
   static_assert(N > 0, "N (number of rows) must be greater than 0");
   static_assert(M > 0, "M (number of cols) must be greater than 0");
   static_assert(std::is_arithmetic_v<value_type>, "T must be arithmetic");
 
-  constexpr explicit Matrix(uninitialized_t) noexcept {}
-  constexpr explicit Matrix(zero_t) noexcept : data_{value_type{0}} {}
-  constexpr explicit Matrix(identity_t) noexcept : data_{value_type{0}}
+  constexpr explicit Matrix(UninitializedTag /*tag*/) noexcept {}
+  constexpr explicit Matrix(ZeroTag /*tag*/) noexcept : data_{value_type{0}} {}
+  constexpr explicit Matrix(IdentityTag /*tag*/) noexcept : data_{value_type{0}}
   {
     for (std::uint16_t i = 0U; i < N; ++i)
     {
       (*this)(i, i) = value_type{1};
     }
   }
-  constexpr Matrix() noexcept : Matrix{math::zero} {}
+  constexpr Matrix() noexcept : Matrix{math::ZERO} {}
 
-  template <typename... Args, typename = std::enable_if_t<(sizeof...(Args) <= SIZE) &&
-                                                          (std::is_arithmetic_v<std::remove_reference_t<Args>> && ...)>>
+  template <typename... Args,
+            typename = std::enable_if_t<(sizeof...(Args) <= SIZE)
+                                        && (std::is_arithmetic_v<std::remove_reference_t<Args>> && ...)>>
   constexpr explicit Matrix(Args&&... args) noexcept : data_{std::forward<Args>(args)...}
   {
   }
@@ -112,7 +116,7 @@ public:
   template <typename U = value_type, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
   constexpr Matrix<U, N, M> cast() const noexcept
   {
-    Matrix<U, N, M> result{math::uninitialized};
+    Matrix<U, N, M> result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = static_cast<U>(data_[i]);
@@ -126,7 +130,7 @@ public:
     assert(col < M);
     return data_[row * M + col];
   }
-  constexpr const value_type operator()(const std::uint16_t row, const std::uint16_t col) const noexcept
+  constexpr value_type operator()(const std::uint16_t row, const std::uint16_t col) const noexcept
   {
     assert(row < N);
     assert(col < M);
@@ -138,7 +142,7 @@ public:
     assert(index < SIZE);
     return data_[index];
   }
-  constexpr const value_type operator[](const std::uint32_t index) const noexcept
+  constexpr value_type operator[](const std::uint32_t index) const noexcept
   {
     assert(index < SIZE);
     return data_[index];
@@ -249,7 +253,7 @@ public:
   constexpr Matrix<T, M, 1> column(const std::uint16_t col) const noexcept
   {
     assert(col < M);
-    Matrix<T, M, 1> result{math::uninitialized};
+    Matrix<T, M, 1> result{math::UNINITIALIZED};
     for (std::uint16_t i = 0U; i < M; ++i)
     {
       result[i] = (*this)(i, col);
@@ -260,7 +264,7 @@ public:
   constexpr Matrix<T, N, 1> row(const std::uint16_t row) const noexcept
   {
     assert(row < N);
-    Matrix<T, N, 1> result{math::uninitialized};
+    Matrix<T, N, 1> result{math::UNINITIALIZED};
     for (std::uint16_t i = 0U; i < N; ++i)
     {
       result[i] = (*this)(row, i);
@@ -279,8 +283,8 @@ public:
   constexpr pointer data() noexcept { return data_.data(); }
   constexpr const_pointer data() const noexcept { return data_.data(); }
 
-  constexpr static Matrix identity() { return Matrix{math::identity}; }
-  constexpr static Matrix zero() { return Matrix{math::zero}; }
+  constexpr static Matrix identity() { return Matrix{math::IDENTITY}; }
+  constexpr static Matrix zero() { return Matrix{math::ZERO}; }
 
   std::ostream& operator<<(std::ostream& os) const
   {
@@ -320,7 +324,7 @@ public:
   /// @{
   friend constexpr inline Matrix operator+(const Matrix& lhs, const Matrix& rhs)
   {
-    Matrix result{math::uninitialized};
+    Matrix result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = lhs[i] + rhs[i];
@@ -330,7 +334,7 @@ public:
 
   friend constexpr inline Matrix operator-(const Matrix& lhs, const Matrix& rhs)
   {
-    Matrix result{math::uninitialized};
+    Matrix result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = lhs[i] - rhs[i];
@@ -340,7 +344,7 @@ public:
 
   friend constexpr inline Matrix operator*(const Matrix& lhs, const value_type rhs)
   {
-    Matrix result{math::uninitialized};
+    Matrix result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = lhs[i] * rhs;
@@ -352,7 +356,7 @@ public:
 
   friend constexpr inline Matrix operator/(const Matrix& lhs, const value_type rhs)
   {
-    Matrix result{math::uninitialized};
+    Matrix result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = lhs[i] / rhs;
@@ -364,7 +368,7 @@ public:
   friend constexpr inline Matrix<value_type, N, P> operator*(const Matrix& lhs, const Matrix<value_type, M, P>& rhs)
   {
     // TODO: make this more cache friendly.
-    Matrix<value_type, N, P> result{math::zero};
+    Matrix<value_type, N, P> result{math::ZERO};
     for (std::uint16_t i = 0U; i < N; ++i)
     {
       for (std::uint16_t j = 0U; j < P; ++j)
@@ -386,7 +390,7 @@ public:
 
   friend constexpr inline Matrix operator-(const Matrix& rhs)
   {
-    Matrix result{math::uninitialized};
+    Matrix result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = -rhs[i];
@@ -425,7 +429,7 @@ private:
 template <typename T, std::uint16_t N, std::uint16_t M>
 constexpr inline Matrix<T, M, N> transpose(const Matrix<T, N, M>& matrix)
 {
-  Matrix<T, M, N> result{math::uninitialized};
+  Matrix<T, M, N> result{math::UNINITIALIZED};
   for (std::uint16_t i = 0U; i < N; ++i)
   {
     for (std::uint16_t j = 0U; j < M; ++j)
@@ -517,19 +521,19 @@ constexpr inline Matrix3x3<T> inverse(const Matrix3x3<T>& matrix)
   const auto g = matrix(2, 0);
   const auto h = matrix(2, 1);
   const auto i = matrix(2, 2);
-  const auto A = e * i - f * h;
-  const auto B = -(d * i - f * g);
-  const auto C = d * h - e * g;
-  const auto D = -(b * i - c * h);
-  const auto E = a * i - c * g;
-  const auto F = -(a * h - b * g);
-  const auto G = b * f - c * e;
-  const auto H = -(a * f - c * d);
-  const auto I = a * e - b * d;
+  const auto res_a = e * i - f * h;
+  const auto res_b = -(d * i - f * g);
+  const auto res_c = d * h - e * g;
+  const auto res_d = -(b * i - c * h);
+  const auto res_e = a * i - c * g;
+  const auto res_f = -(a * h - b * g);
+  const auto res_g = b * f - c * e;
+  const auto res_h = -(a * f - c * d);
+  const auto res_i = a * e - b * d;
   const auto det = determinant(matrix);
   assert(det != T{0});
   const auto inv_det = T{1} / det;
-  return inv_det * Matrix<T, 3, 3>{A, D, G, B, E, H, C, F, I};
+  return inv_det * Matrix<T, 3, 3>{res_a, res_d, res_g, res_b, res_e, res_h, res_c, res_f, res_i};
 }
 
 } // namespace rtw::math

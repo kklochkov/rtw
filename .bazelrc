@@ -10,6 +10,14 @@ build --features=-supports_dynamic_linker
 # Not needed after https://github.com/grailbio/bazel-toolchain/pull/229.
 build --features=-libtool
 
+# clang-tidy
+# Required for bazel_clang_tidy to operate as expected
+build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
+build:clang-tidy --output_groups=report
+build:clang-tidy --@bazel_clang_tidy//:clang_tidy_executable=@llvm_toolchain//:clang-tidy
+build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
+
+# Build and test
 build --nokeep_going
 test  --nokeep_going
 test --test_output=errors

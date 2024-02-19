@@ -3,7 +3,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-namespace {
+namespace
+{
 
 inline rtw::sw_renderer::Face make_face(std::initializer_list<std::uint32_t> vertex_indices,
                                         std::initializer_list<std::uint32_t> texture_indices,
@@ -12,21 +13,20 @@ inline rtw::sw_renderer::Face make_face(std::initializer_list<std::uint32_t> ver
 {
   rtw::sw_renderer::Face face;
   auto index =
-      rtw::sw_renderer::Index{vertex_indices.begin()[0U], vertex_indices.begin()[1U], vertex_indices.begin()[2U]} -
-      rtw::sw_renderer::Index{1U, 1U, 1U};
+      rtw::sw_renderer::Index{vertex_indices.begin()[0U], vertex_indices.begin()[1U], vertex_indices.begin()[2U]}
+      - rtw::sw_renderer::Index{1U, 1U, 1U};
   face.vertex_indices = index;
   if (!std::empty(texture_indices))
   {
     index =
-        rtw::sw_renderer::Index{texture_indices.begin()[0U], texture_indices.begin()[1U], texture_indices.begin()[2U]} -
-        rtw::sw_renderer::Index{1U, 1U, 1U};
+        rtw::sw_renderer::Index{texture_indices.begin()[0U], texture_indices.begin()[1U], texture_indices.begin()[2U]}
+        - rtw::sw_renderer::Index{1U, 1U, 1U};
     face.texture_indices = std::make_optional<rtw::sw_renderer::Index>(index);
   }
   if (!std::empty(normal_indices))
   {
-    index =
-        rtw::sw_renderer::Index{normal_indices.begin()[0U], normal_indices.begin()[1U], normal_indices.begin()[2U]} -
-        rtw::sw_renderer::Index{1U, 1U, 1U};
+    index = rtw::sw_renderer::Index{normal_indices.begin()[0U], normal_indices.begin()[1U], normal_indices.begin()[2U]}
+          - rtw::sw_renderer::Index{1U, 1U, 1U};
     face.normal_indices = std::make_optional<rtw::sw_renderer::Index>(index);
   }
   face.material = material;
@@ -146,7 +146,6 @@ TEST(ObjLoader, load_obj_from_file)
       rtw::math::Point3f{1.0F, 1.0F, 1.0F},   rtw::math::Point3f{1.0F, -1.0F, 1.0F},
       rtw::math::Point3f{-1.0F, 1.0F, -1.0F}, rtw::math::Point3f{-1.0F, -1.0F, -1.0F},
       rtw::math::Point3f{-1.0F, 1.0F, 1.0F},  rtw::math::Point3f{-1.0F, -1.0F, 1.0F},
-
   };
   EXPECT_THAT(vertices, testing::ElementsAreArray(expected_vertices));
 

@@ -4,14 +4,15 @@
 
 #include <vector>
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 class ColorBuffer
 {
 public:
   ColorBuffer(const std::size_t width, const std::size_t height)
       : buffer_(width * height, Color().rgba), width_(width), height_(height), pitch_(width * bytes_per_pixel_),
-        aspect_ratio_(static_cast<float>(width) / height)
+        aspect_ratio_(static_cast<float>(width) / static_cast<float>(height))
   {
   }
 

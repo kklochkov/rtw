@@ -4,7 +4,8 @@
 
 #include "sw_renderer/barycentric.h"
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 /// Make a barycentric coordinate from a point and a triangle.
 /// The winding order is counter-clockwise.
@@ -71,8 +72,8 @@ constexpr inline bool is_top_left(const math::Vector2<T>& edge)
 
 enum class WindingOrder
 {
-  CounterClockwise,
-  Clockwise
+  COUNTER_CLOCKWISE,
+  CLOCKWISE
 };
 
 /// Check the winding order of a triangle.
@@ -84,7 +85,7 @@ enum class WindingOrder
 template <typename T>
 constexpr WindingOrder winding_order(const math::Point2<T>& v0, const math::Point2<T>& v1, const math::Point2<T>& v2)
 {
-  return math::cross(v1 - v0, v2 - v1) > T{0} ? WindingOrder::CounterClockwise : WindingOrder::Clockwise;
+  return math::cross(v1 - v0, v2 - v1) > T{0} ? WindingOrder::COUNTER_CLOCKWISE : WindingOrder::CLOCKWISE;
 }
 
 } // namespace rtw::sw_renderer

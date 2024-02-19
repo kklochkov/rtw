@@ -1,12 +1,12 @@
 #pragma once
 
 #include "math/convex_polygon.h"
-#include "math/operations.h"
 
 #include "sw_renderer/projection.h"
 #include "sw_renderer/vertex.h"
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 template <typename T, std::size_t Capacity>
 using ConvexPolygonVertex4 = math::ConvexPolygon<T, Vertex4, Capacity>;

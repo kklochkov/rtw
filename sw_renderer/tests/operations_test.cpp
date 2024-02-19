@@ -84,10 +84,10 @@ TEST(Opertions, winding_order)
   const rtw::math::Point2f v1{1.0F, 0.0F};
   const rtw::math::Point2f v2{0.0F, 1.0F};
 
-  ASSERT_EQ(rtw::sw_renderer::winding_order(v0, v1, v2), rtw::sw_renderer::WindingOrder::CounterClockwise);
-  ASSERT_EQ(rtw::sw_renderer::winding_order(v0, v2, v1), rtw::sw_renderer::WindingOrder::Clockwise);
-  ASSERT_EQ(rtw::sw_renderer::winding_order(v1, v0, v2), rtw::sw_renderer::WindingOrder::Clockwise);
-  ASSERT_EQ(rtw::sw_renderer::winding_order(v1, v2, v0), rtw::sw_renderer::WindingOrder::CounterClockwise);
-  ASSERT_EQ(rtw::sw_renderer::winding_order(v2, v0, v1), rtw::sw_renderer::WindingOrder::CounterClockwise);
-  ASSERT_EQ(rtw::sw_renderer::winding_order(v2, v1, v0), rtw::sw_renderer::WindingOrder::Clockwise);
+  ASSERT_EQ(rtw::sw_renderer::winding_order(v0, v1, v2), rtw::sw_renderer::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::sw_renderer::winding_order(v0, v2, v1), rtw::sw_renderer::WindingOrder::CLOCKWISE);
+  ASSERT_EQ(rtw::sw_renderer::winding_order(v1, v0, v2), rtw::sw_renderer::WindingOrder::CLOCKWISE);
+  ASSERT_EQ(rtw::sw_renderer::winding_order(v1, v2, v0), rtw::sw_renderer::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::sw_renderer::winding_order(v2, v0, v1), rtw::sw_renderer::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::sw_renderer::winding_order(v2, v1, v0), rtw::sw_renderer::WindingOrder::CLOCKWISE);
 }

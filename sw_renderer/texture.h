@@ -4,14 +4,16 @@
 
 #include <vector>
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 class Texture
 {
 public:
   Texture() = default;
   Texture(std::uint32_t* data, const std::size_t width, const std::size_t height)
-      : buffer_(data, data + width * height), width_(width), height_(height), pitch_(width * bytes_per_pixel_)
+      : buffer_(data, data + width * height), // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        width_(width), height_(height), pitch_(width * bytes_per_pixel_)
   {
   }
 

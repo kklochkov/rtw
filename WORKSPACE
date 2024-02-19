@@ -38,6 +38,18 @@ load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
 
 llvm_register_toolchains()
 
+# clang-tidy
+load(
+    "@bazel_tools//tools/build_defs/repo:git.bzl",
+    "git_repository",
+)
+
+git_repository(
+    name = "bazel_clang_tidy",
+    commit = "43bef6852a433f3b2a6b001daecc8bc91d791b92",
+    remote = "https://github.com/erenon/bazel_clang_tidy.git",
+)
+
 # Third-party dependencies
 http_archive(
     name = "fmt",

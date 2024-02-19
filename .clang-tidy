@@ -1,0 +1,94 @@
+---
+# Disabled checks:
+# -clang-diagnostic-pragma-once-outside-header - while using clang-tidy with bazel, this warning is not relevant
+# -bugprone-easily-swappable-parameters - too many false positives
+# -cppcoreguidelines-avoid-magic-numbers - too noisy
+# -cppcoreguidelines-avoid-c-arrays - sometimes it's useful, might enable in future
+# -google-readability-todo - irrelevant for now, but might use in future with github's TODOs
+# -google-build-using-namespace - too strict
+# -google-readability-avoid-underscore-in-googletest-name - disabled for now, might either fix in future or switch to Catch2
+# -modernize-use-trailing-return-type - looks a bit unnatural for most of the cases, makes sense for lambdas and when a type needs to be deduced
+# -modernize-use-nodiscard - nice to have, but not a priority
+# -modernize-avoid-c-arrays - same as cppcoreguidelines-avoid-c-arrays
+# -modernize-return-braced-init-list - readability suffers, therefor disabled
+# -readability-redundant-access-specifiers - personal choice, I like to split data members and member functions
+# -readability-magic-numbers - same as cppcoreguidelines-avoid-magic-numbers
+# -readability-identifier-length - in math and physics libs, single letter variables are common, so disabled
+# -readability-avoid-const-params-in-decls - personal choice, I like to use const for all parameters
+# -hicpp-avoid-c-arrays - same as modernize-avoid-c-arrays and cppcoreguidelines-avoid-c-arrays
+
+UseColor: true
+
+Checks: >
+  bugprone-*,
+  cppcoreguidelines-*,
+  google-*,
+  performance-*,
+  clang-*,
+  modernize-*,
+  readability-*,
+  hicpp-*,
+  -clang-diagnostic-pragma-once-outside-header,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-avoid-c-arrays,
+  -google-readability-todo,
+  -google-build-using-namespace,
+  -google-readability-avoid-underscore-in-googletest-name,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -modernize-avoid-c-arrays,
+  -modernize-return-braced-init-list,
+  -readability-redundant-access-specifiers,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -readability-avoid-const-params-in-decls,
+  -hicpp-avoid-c-arrays,
+
+WarningsAsErrors: >
+  *,
+  -clang-diagnostic-pragma-once-outside-header,
+
+CheckOptions:
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 40
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: _
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: _
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: ''
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ClassMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase
+  - key: readability-implicit-bool-conversion.AllowIntegerConditions
+    value: 1
+  - key: readability-implicit-bool-conversion.AllowPointerConditions
+    value: 1

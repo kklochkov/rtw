@@ -5,9 +5,11 @@
 #include <fstream>
 #include <sstream>
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
-namespace {
+namespace
+{
 
 inline void parse_vertex(const std::string& line, math::Point3f& vertex)
 {
@@ -35,7 +37,7 @@ inline void parse_normal(const std::string& line, math::Vector3f& normal)
 
 inline bool try_parse_index(std::istringstream& iss, std::uint32_t& index)
 {
-  const bool ok = std::isdigit(iss.peek());
+  const bool ok = std::isdigit(iss.peek()) != 0;
   if (ok)
   {
     iss >> index;
@@ -81,7 +83,7 @@ inline void parse_face(const std::string& line, Face& face)
 inline std::string parse_material(const std::string& line, const std::string_view prefix)
 {
   std::istringstream iss(line);
-  iss.ignore(prefix.size());
+  iss.ignore(static_cast<std::streamsize>(prefix.size()));
 
   std::string material;
   iss >> material;
@@ -166,7 +168,8 @@ void load_mtl(std::istream& stream, Mesh& mesh)
 {
   Material material;
 
-  const auto try_add_material = [](Mesh& mesh, Material& material) {
+  const auto try_add_material = [](Mesh& mesh, Material& material)
+  {
     if (!material.name.empty())
     {
       for (const auto& texture : {material.ambient_texture, material.diffuse_texture, material.specular_texture})

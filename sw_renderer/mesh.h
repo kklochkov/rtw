@@ -11,7 +11,8 @@
 #include <string>
 #include <vector>
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 using Index = math::Vector3<std::uint32_t>;
 
@@ -39,9 +40,9 @@ struct Material
   std::string ambient_texture;
   std::string diffuse_texture;
   std::string specular_texture;
-  Color ambient{0xFFFFFFFF};
-  Color diffuse{0xFFFFFFFF};
-  Color specular{0xFFFFFFFF};
+  Color ambient{0xFF'FF'FF'FF};
+  Color diffuse{0xFF'FF'FF'FF};
+  Color specular{0xFF'FF'FF'FF};
 };
 
 struct Mesh

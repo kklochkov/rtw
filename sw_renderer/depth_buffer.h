@@ -3,7 +3,8 @@
 #include <limits>
 #include <vector>
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 class DepthBuffer
 {

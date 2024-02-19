@@ -4,7 +4,8 @@
 #include "math/matrix.h"
 #include "math/vector.h"
 
-namespace rtw::math::transform2 {
+namespace rtw::math::transform2
+{
 
 /// Make a homogeneous 2D matrix from a 2D matrix.
 /// @tparam T The type of the elements.
