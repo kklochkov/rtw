@@ -5,7 +5,8 @@
 #include <cassert>
 #include <cstdint>
 
-namespace rtw::fixed_point {
+namespace rtw::fixed_point
+{
 
 template <typename T>
 class Int
@@ -28,6 +29,7 @@ public:
   constexpr Int() noexcept = default;
   constexpr Int(const HiType hi, const LoType lo) noexcept : hi_{hi}, lo_{lo} {}
 
+  // NOLINTBEGIN (google-explicit-constructor)
   template <typename U, typename = std::enable_if_t<std::is_integral_v<U>>>
   constexpr Int(const U value) noexcept : hi_{static_cast<HiType>(-sign_bit(value))}, lo_{static_cast<LoType>(value)}
   {
@@ -38,6 +40,7 @@ public:
       : hi_{static_cast<HiType>(other.hi())}, lo_{static_cast<LoType>(other.lo())}
   {
   }
+  // NOLINTEND (google-explicit-constructor)
 
   constexpr HiType hi() const noexcept { return hi_; }
   constexpr LoType lo() const noexcept { return lo_; }
@@ -214,7 +217,7 @@ private:
   template <typename U = T, typename = std::enable_if_t<std::is_unsigned_v<U>>>
   constexpr static DivResult<U> div_unsigned(Int<U> dividend, Int<U> divisor) noexcept
   {
-    assert(divisor != Int{0U} && "Division by zero");
+    assert(divisor != Int<U>{0U} && "Division by zero");
 
     if (dividend < divisor)
     {
@@ -304,7 +307,7 @@ private:
 };
 
 using Int128 = Int<std::int64_t>;
-using UInt128 = Int<std::uint64_t>;
+using Int128u = Int<std::uint64_t>;
 
 // ----------------------------------------------------------------------------
 

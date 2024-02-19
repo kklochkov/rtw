@@ -1,15 +1,14 @@
 #include "sw_renderer/renderer.h"
 #include "sw_renderer/clipping.h"
+#include "sw_renderer/format.h"
 #include "sw_renderer/projection.h"
 #include "sw_renderer/rasterisation_routines.h"
 
 #include "math/angle.h"
 #include "math/format.h"
-#include "math/transform3.h"
 
-#include <cmath>
-
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 using namespace math::angle_literals;
 
@@ -95,7 +94,8 @@ void Renderer::fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const 
   sw_renderer::fill_triangle_bbox(
       v0, v1, v2,
       [this, color, light_intensity](const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const math::Point2i& p,
-                                     const Barycentric3f& b) {
+                                     const Barycentric3f& b)
+      {
         // Perspective correct interpolation of depth.
         const auto inv_z = 1.0F / (v0.point.w() * b.w0() + v1.point.w() * b.w1() + v2.point.w() * b.w2());
         if (inv_z < depth(p.x(), p.y()))
@@ -111,7 +111,8 @@ void Renderer::fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const 
 {
   sw_renderer::fill_triangle_bbox(v0, v1, v2,
                                   [this, light_intensity](const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2,
-                                                          const math::Point2i& p, const Barycentric3f& b) {
+                                                          const math::Point2i& p, const Barycentric3f& b)
+                                  {
                                     // Perspective correct interpolation of depth.
                                     const auto inv_z =
                                         1.0F / (v0.point.w() * b.w0() + v1.point.w() * b.w1() + v2.point.w() * b.w2());
@@ -132,15 +133,17 @@ void Renderer::fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const 
   sw_renderer::fill_triangle_bbox(
       v0, v1, v2,
       [this, &texture, light_intensity](const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2,
-                                        const math::Point2i& p, const Barycentric3f& b) {
+                                        const math::Point2i& p, const Barycentric3f& b)
+      {
         // Perspective correct interpolation of depth.
         const auto inv_z = 1.0F / (v0.point.w() * b.w0() + v1.point.w() * b.w1() + v2.point.w() * b.w2());
         if (inv_z < depth(p.x(), p.y()))
         {
           // Perspective correct interpolation of texture coordinates.
           const auto tex_coord = (v0.tex_coord * b.w0() + v1.tex_coord * b.w1() + v2.tex_coord * b.w2()) * inv_z;
-          const auto texel = texture.texel(static_cast<std::size_t>(tex_coord.u() * texture.width()),
-                                           static_cast<std::size_t>(tex_coord.v() * texture.height()));
+          const auto texel =
+              texture.texel(static_cast<std::size_t>(tex_coord.u() * static_cast<float>(texture.width())),
+                            static_cast<std::size_t>(tex_coord.v() * static_cast<float>(texture.height())));
           draw_pixel(p, texel * light_intensity);
           set_depth(p.x(), p.y(), inv_z);
         }
@@ -152,8 +155,8 @@ void Renderer::fill_triangle(const Vertex4f& v0, const Vertex4f& v1, const Verte
 {
   sw_renderer::fill_triangle_scanline(
       v0, v1, v2,
-      [this, color, light_intensity](const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2,
-                                     const math::Point2i& p) {
+      [this, color, light_intensity](const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const math::Point2i& p)
+      {
         const auto b = make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
         if (contains(b))
         {
@@ -172,7 +175,8 @@ void Renderer::fill_triangle(const Vertex4f& v0, const Vertex4f& v1, const Verte
 {
   sw_renderer::fill_triangle_scanline(
       v0, v1, v2,
-      [this, light_intensity](const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const math::Point2i& p) {
+      [this, light_intensity](const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const math::Point2i& p)
+      {
         const auto b = make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
         if (contains(b))
         {
@@ -189,7 +193,7 @@ void Renderer::fill_triangle(const Vertex4f& v0, const Vertex4f& v1, const Verte
 #ifdef DEBUG_DRAWING
         else
         {
-          draw_pixel(p, Color{0x000000FF});
+          draw_pixel(p, Color{0x00'00'00'FF});
         }
 #endif // DEBUG_DRAWING
       });
@@ -201,7 +205,8 @@ void Renderer::fill_triangle(const Vertex4f& v0, const Vertex4f& v1, const Verte
   sw_renderer::fill_triangle_scanline(
       v0, v1, v2,
       [this, &texture, light_intensity](const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2,
-                                        const math::Point2i& p) {
+                                        const math::Point2i& p)
+      {
         const auto b = make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
         if (contains(b))
         {
@@ -211,8 +216,9 @@ void Renderer::fill_triangle(const Vertex4f& v0, const Vertex4f& v1, const Verte
           {
             // Perspective correct interpolation of texture coordinates.
             const auto tex_coord = (v0.tex_coord * b.w0() + v1.tex_coord * b.w1() + v2.tex_coord * b.w2()) * inv_z;
-            const auto texel = texture.texel(static_cast<std::size_t>(tex_coord.u() * texture.width()),
-                                             static_cast<std::size_t>(tex_coord.v() * texture.height()));
+            const auto texel =
+                texture.texel(static_cast<std::size_t>(tex_coord.u() * static_cast<float>(texture.width())),
+                              static_cast<std::size_t>(tex_coord.v() * static_cast<float>(texture.height())));
             draw_pixel(p, texel * light_intensity);
             set_depth(p.x(), p.y(), inv_z);
           }
@@ -267,7 +273,7 @@ void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4f& model_view_ma
     const auto triangles = triangulate(polygon);
     for (std::size_t i = 0U; i < triangles.triangle_count; ++i)
     {
-      const auto& triangle = triangles.triangles[i];
+      const auto& triangle = triangles.triangles[i]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 
       v0 = triangle[0U];
       v1 = triangle[1U];
@@ -299,7 +305,7 @@ void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4f& model_view_ma
 
       if (face_culling_enabled())
       {
-        if (winding_order(v0.point.xy(), v1.point.xy(), v2.point.xy()) == WindingOrder::Clockwise)
+        if (winding_order(v0.point.xy(), v1.point.xy(), v2.point.xy()) == WindingOrder::CLOCKWISE)
         {
           continue;
         }
@@ -330,14 +336,14 @@ void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4f& model_view_ma
       if (wireframe_enabled())
       {
         draw_triangle(v0.point.xy().cast<std::int32_t>(), v1.point.xy().cast<std::int32_t>(),
-                      v2.point.xy().cast<std::int32_t>(), Color{0x232323FF});
+                      v2.point.xy().cast<std::int32_t>(), Color{0x23'23'23'FF});
       }
 
       if (vertex_drawing_enabled())
       {
-        draw_pixel(v0.point.xy().cast<std::int32_t>(), Color{0xFF0000FF}, 5);
-        draw_pixel(v1.point.xy().cast<std::int32_t>(), Color{0xFF0000FF}, 5);
-        draw_pixel(v2.point.xy().cast<std::int32_t>(), Color{0xFF0000FF}, 5);
+        draw_pixel(v0.point.xy().cast<std::int32_t>(), Color{0xFF'00'00'FF}, 5);
+        draw_pixel(v1.point.xy().cast<std::int32_t>(), Color{0xFF'00'00'FF}, 5);
+        draw_pixel(v2.point.xy().cast<std::int32_t>(), Color{0xFF'00'00'FF}, 5);
       }
     }
   }
@@ -347,15 +353,15 @@ void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4f& model_view_ma
     Vertex4f v0{math::Point4f(80.0F, 40.0F, 0.0F)};
     Vertex4f v1{math::Point4f(140.0F, 40.0F, 0.0F)};
     Vertex4f v2{math::Point4f(140.0F, 100.0F, 0.0F)};
-    fill_triangle(v0, v1, v2, Color{0x0000FFFF}, 1.0F);
+    fill_triangle(v0, v1, v2, Color{0x00'00'FF'FF}, 1.0F);
 
     const auto vertex_translation = 2 * math::Vector4i{0, 50, 0, 0};
     v0.point += vertex_translation.cast<float>();
-    v0.color = Color{0xFF0000FF};
+    v0.color = Color{0xFF'00'00'FF};
     v1.point += vertex_translation.cast<float>();
-    v1.color = Color{0x00FF00FF};
+    v1.color = Color{0x00'FF'00'FF};
     v2.point += vertex_translation.cast<float>();
-    v2.color = Color{0x0000FFFF};
+    v2.color = Color{0x00'00'FF'FF};
     fill_triangle(v0, v1, v2, 1.0F);
   }
 
@@ -368,15 +374,15 @@ void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4f& model_view_ma
     v0.point += translation.cast<float>();
     v1.point += translation.cast<float>();
     v2.point += translation.cast<float>();
-    fill_triangle_bbox(v0, v1, v2, Color{0x0000FFFF}, 1.0F);
+    fill_triangle_bbox(v0, v1, v2, Color{0x00'00'FF'FF}, 1.0F);
 
     translation = 2 * math::Vector4i{0, 50, 0, 0};
     v0.point += translation.cast<float>();
-    v0.color = Color{0xFF0000FF};
+    v0.color = Color{0xFF'00'00'FF};
     v1.point += translation.cast<float>();
-    v1.color = Color{0x00FF00FF};
+    v1.color = Color{0x00'FF'00'FF};
     v2.point += translation.cast<float>();
-    v2.color = Color{0x0000FFFF};
+    v2.color = Color{0x00'00'FF'FF};
     fill_triangle_bbox(v0, v1, v2, 1.0F);
   }
 #endif // DEBUG_DRAWING

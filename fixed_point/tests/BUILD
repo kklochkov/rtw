@@ -7,6 +7,7 @@ cc_test(
         "int128_test.cpp",
         "operations_test.cpp",
     ],
+    tags = ["no-clang-tidy"],
     deps = [
         "//fixed_point",
         "@googletest//:gtest_main",

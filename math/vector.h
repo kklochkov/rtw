@@ -4,7 +4,8 @@
 
 #include <cmath>
 
-namespace rtw::math {
+namespace rtw::math
+{
 
 template <typename T, std::uint16_t N>
 class Vector : Matrix<T, N, 1>

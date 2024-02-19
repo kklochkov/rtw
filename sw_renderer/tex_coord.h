@@ -3,7 +3,8 @@
 #include "math/interpolation.h"
 #include "math/vector.h"
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 template <typename T, std::uint16_t N = 2U>
 class TexCoord : math::Matrix<T, N, 1>

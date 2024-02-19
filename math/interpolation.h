@@ -2,7 +2,8 @@
 
 #include "math/point.h"
 
-namespace rtw::math {
+namespace rtw::math
+{
 
 /// Linearly interpolates between two values.
 /// @param a The first value.
@@ -23,7 +24,7 @@ constexpr inline T lerp(const T a, const T b, const T t)
 template <typename T, std::uint16_t N, std::uint16_t M>
 constexpr inline Matrix<T, N, M> lerp(const Matrix<T, N, M>& a, const Matrix<T, N, M>& b, const T t)
 {
-  Matrix<T, N, M> result{uninitialized};
+  Matrix<T, N, M> result{UNINITIALIZED};
   for (std::uint32_t i = 0U; i < a.size(); ++i)
   {
     result[i] = lerp(a[i], b[i], t);

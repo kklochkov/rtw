@@ -6,7 +6,8 @@
 #include <istream>
 #include <optional>
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 struct ObjParseResult
 {

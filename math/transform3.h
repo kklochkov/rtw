@@ -4,7 +4,8 @@
 #include "math/matrix.h"
 #include "math/vector.h"
 
-namespace rtw::math::transform3 {
+namespace rtw::math::transform3
+{
 
 /// Make a homogeneous 3D matrix from a 3D matrix.
 /// @tparam T The type of the elements.

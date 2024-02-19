@@ -5,7 +5,8 @@
 
 #include <algorithm>
 
-namespace rtw::sw_renderer {
+namespace rtw::sw_renderer
+{
 
 /// Draw a line using the DDA (Digital Differential Analyzer) algorithm.
 /// See https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) for more details.
@@ -18,7 +19,7 @@ template <typename RasteriseCallback>
 void draw_line_dda(const math::Point2i& p0, const math::Point2i& p1, RasteriseCallback rasterise)
 {
   math::Vector2f delta = (p1 - p0).cast<float>();
-  const std::int32_t steps = std::max(std::abs(delta.x()), std::abs(delta.y()));
+  const std::int32_t steps = static_cast<std::int32_t>(std::max(std::abs(delta.x()), std::abs(delta.y())));
   delta /= static_cast<float>(steps);
 
   auto p = p0.cast<float>();
@@ -42,8 +43,8 @@ void draw_line_bresenham(const math::Point2i& p0, const math::Point2i& p1, Raste
   const std::int32_t dx = std::abs(p1.x() - p0.x());
   const std::int32_t dy = std::abs(p1.y() - p0.y());
 
-  const std::int32_t sx = (p0.x() < p1.x()) ? 1U : -1U;
-  const std::int32_t sy = (p0.y() < p1.y()) ? 1U : -1U;
+  const std::int32_t sx = (p0.x() < p1.x()) ? 1 : -1;
+  const std::int32_t sy = (p0.y() < p1.y()) ? 1 : -1;
 
   std::int32_t err = dx - dy;
 
@@ -58,7 +59,7 @@ void draw_line_bresenham(const math::Point2i& p0, const math::Point2i& p1, Raste
       break;
     }
 
-    const std::int32_t e2 = 2U * err;
+    const std::int32_t e2 = 2 * err;
 
     if (e2 > -dy)
     {
@@ -103,7 +104,7 @@ void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& 
   const auto area = math::cross(edge_a, edge_b);
 
   // Calculate the initial barycentric coordinates of the top-left corner of the bounding box with subpixel precision.
-  const math::Point2f p0{min_x + 0.5F, min_y + 0.5F};
+  const math::Point2f p0{static_cast<float>(min_x) + 0.5F, static_cast<float>(min_y) + 0.5F};
   auto w0_init = math::cross(edge_a, p0 - vc);
   auto w1_init = math::cross(edge_b, p0 - va);
   auto w2_init = math::cross(edge_c, p0 - vb);
@@ -132,7 +133,7 @@ void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& 
 
     for (std::int32_t x = min_x; x <= max_x; ++x)
     {
-      if ((w0 >= 0) & (w1 >= 0) & (w2 >= 0))
+      if ((w0 >= 0) & (w1 >= 0) & (w2 >= 0)) // NOLINT(hicpp-signed-bitwise)
       {
         const math::Point2i p{x, y};
         const Barycentric3f b{w0, w1, w2};
@@ -150,7 +151,8 @@ void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& 
   }
 }
 
-namespace details {
+namespace details
+{
 /// Visit pixels in a triangle.
 /// @tparam RasteriseCallback The type of the callback function which is called for each pixel.
 /// The function must have the following signature:
@@ -171,8 +173,10 @@ void visit_pixels(const math::Point2i& v0_raster, const math::Point2i& v1_raster
 {
   for (auto y = v0_raster.y(); y <= v1_raster.y(); ++y)
   {
-    auto x_start = static_cast<std::int32_t>(inv_slope0 * (y - v0_raster.y()) + v0_raster.x());
-    auto x_end = static_cast<std::int32_t>(inv_slope1 * (y - v1_raster.y()) + v1_raster.x());
+    auto x_start = static_cast<std::int32_t>(inv_slope0 * static_cast<float>(y - v0_raster.y())
+                                             + static_cast<float>(v0_raster.x()));
+    auto x_end = static_cast<std::int32_t>(inv_slope1 * static_cast<float>(y - v1_raster.y())
+                                           + static_cast<float>(v1_raster.x()));
 
     if (x_start > x_end)
     {

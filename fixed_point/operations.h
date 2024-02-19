@@ -3,7 +3,8 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace rtw::fixed_point {
+namespace rtw::fixed_point
+{
 
 /// Sign bit of an integer.
 /// @tparam T The type of the integer.
