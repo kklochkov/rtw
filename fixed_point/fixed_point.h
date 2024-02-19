@@ -73,10 +73,6 @@ public:
   static_assert(std::is_integral_v<T>, "The underlying type must be an integral type");
   static_assert(std::is_signed_v<SaturationT> == std::is_signed_v<T>,
                 "The saturation type must have the same sign as the underlying type");
-  static_assert(std::numeric_limits<T>::min() == MIN_INTEGER,
-                "The minimum value of the underlying type must be correct");
-  static_assert(std::numeric_limits<T>::max() == MAX_INTEGER,
-                "The maximum value of the underlying type must be correct");
 
   constexpr FixedPoint() noexcept = default;
 
@@ -119,11 +115,8 @@ public:
     }
   }
 
-  constexpr static T max() noexcept { return MAX; }
-  constexpr static T min() noexcept { return MIN; }
-
-  constexpr static FixedPoint min_value() noexcept { return FixedPoint(private_ctor, MIN_INTEGER); }
-  constexpr static FixedPoint max_value() noexcept { return FixedPoint(private_ctor, MAX_INTEGER); }
+  constexpr static FixedPoint min() noexcept { return FixedPoint(private_ctor, MIN_INTEGER); }
+  constexpr static FixedPoint max() noexcept { return FixedPoint(private_ctor, MAX_INTEGER); }
 
   template <typename U, std::enable_if_t<std::is_integral_v<U>, ArithmeticType> = ArithmeticType::Integral>
   constexpr explicit operator U() const noexcept
