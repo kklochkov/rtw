@@ -18,9 +18,10 @@ http_archive(
 http_archive(
     name = "toolchains_llvm",
     canonical_id = "0.10.3",
-    sha256 = "b7cd301ef7b0ece28d20d3e778697a5e3b81828393150bed04838c0c52963a01",
-    strip_prefix = "toolchains_llvm-0.10.3",
-    url = "https://github.com/grailbio/bazel-toolchain/releases/download/0.10.3/toolchains_llvm-0.10.3.tar.gz",
+    sha256 = "1ac217553732d25dd487977fad90ed26e07b68246a7ddbd1cc0c43b9628e88b7",
+    # update prefix and url once the new version is released
+    strip_prefix = "toolchains_llvm-llvm-update",
+    url = "https://github.com/Bo98/toolchains_llvm/archive/refs/heads/llvm-update.zip",
 )
 
 load("@toolchains_llvm//toolchain:deps.bzl", "bazel_toolchain_dependencies")
@@ -31,7 +32,7 @@ load("@toolchains_llvm//toolchain:rules.bzl", "llvm_toolchain")
 
 llvm_toolchain(
     name = "llvm_toolchain",
-    llvm_version = "16.0.4",
+    llvm_version = "17.0.6",
 )
 
 load("@llvm_toolchain//:toolchains.bzl", "llvm_register_toolchains")
