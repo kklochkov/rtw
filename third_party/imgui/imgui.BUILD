@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -32,11 +32,11 @@ cc_library(
         "backends",
     ],
     linkopts = select({
-        "@platforms//os:linux": ["-lGL"],
-        "@platforms//os:osx": ["-framework OpenGL"],
+        "@@platforms//os:linux": ["-lGL"],
+        "@@platforms//os:osx": ["-framework OpenGL"],
     }),
     deps = select({
-        "@platforms//os:linux": ["@sysroot_linux//:sdl2"],
-        "@platforms//os:osx": ["@sysroot_macos//:sdl2"],
+        "@@platforms//os:linux": ["@@sysroot_linux//:sdl2"],
+        "@@platforms//os:osx": ["@@sysroot_macos//:sdl2"],
     }),
 )

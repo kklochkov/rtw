@@ -145,6 +145,8 @@ ObjParseResult load_obj(std::istream& stream)
         parse_normal(line, normal);
       }
       break;
+      default:
+        break;
       }
     }
     else if (line[0] == 'u')
@@ -212,6 +214,8 @@ void load_mtl(std::istream& stream, Mesh& mesh)
       case 's': // Specular
         material.specular = parse_color(line);
         break;
+      default:
+        break;
       }
     }
     else if (line[0] == 'm')
@@ -227,6 +231,8 @@ void load_mtl(std::istream& stream, Mesh& mesh)
         break;
       case 's': // Specular
         material.specular_texture = parse_material(line, "map_Ks");
+        break;
+      default:
         break;
       }
     }
