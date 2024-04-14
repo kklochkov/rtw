@@ -4,6 +4,10 @@ build --incompatible_enable_cc_toolchain_resolution
 # Enable Bzlmod for every Bazel command
 common --enable_bzlmod
 
+# Registers
+common --registry=file://%workspace%/bzlmod_registery
+common --registry=https://bcr.bazel.build
+
 # clang-tidy
 # Required for bazel_clang_tidy to operate as expected
 build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
