@@ -1,5 +1,3 @@
-workspace(name = "rtw")
-
 # Remove these lines once this is resolved: https://github.com/bazelbuild/bazel/issues/18285 it should be part of Bazel 7.2.0.
 # brew install sdl2 sdl2_image sfml
 new_local_repository(
