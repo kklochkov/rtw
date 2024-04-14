@@ -11,7 +11,7 @@
 
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
-#include <imgui_impl_sdlrenderer.h>
+#include <imgui_impl_sdlrenderer2.h>
 
 #include <fmt/core.h>
 
@@ -74,7 +74,7 @@ Application::Application(const std::size_t width, const std::size_t height) : sw
 Application::~Application()
 {
   {
-    ImGui_ImplSDLRenderer_Shutdown();
+    ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
   }
@@ -172,7 +172,7 @@ void Application::init_imgui()
 
   // Setup Platform/Renderer backends
   ImGui_ImplSDL2_InitForSDLRenderer(sdl_window_, sdl_renderer_);
-  ImGui_ImplSDLRenderer_Init(sdl_renderer_);
+  ImGui_ImplSDLRenderer2_Init(sdl_renderer_);
 }
 
 bool Application::load_textures(const std::filesystem::path& resources_folder, rtw::sw_renderer::Mesh& mesh)
@@ -367,7 +367,7 @@ void Application::render()
 {
   {
     // Start the Dear ImGui frame
-    ImGui_ImplSDLRenderer_NewFrame();
+    ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
@@ -390,7 +390,7 @@ void Application::render()
   SDL_RenderCopy(sdl_renderer_, sdl_texture_, nullptr, nullptr);
 
   {
-    ImGui_ImplSDLRenderer_RenderDrawData(ImGui::GetDrawData());
+    ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
   }
 
   SDL_RenderPresent(sdl_renderer_);
