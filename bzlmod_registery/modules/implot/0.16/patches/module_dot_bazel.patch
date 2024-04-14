@@ -1,0 +1,11 @@
+--- MODULE.bazel
++++ MODULE.bazel
+@@ -0,0 +1,8 @@
++module(
++    name = "implot",
++    version = "0.16",
++    compatibility_level = 0,
++)
++bazel_dep(name = "rules_cc", version = "0.0.9")
++bazel_dep(name = "imgui", version = "1.90.5")
++bazel_dep(name = "imgui", version = "1.90.5-docking")

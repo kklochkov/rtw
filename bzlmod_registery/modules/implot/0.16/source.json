@@ -1,0 +1,10 @@
+{
+    "url": "https://github.com/epezent/implot/archive/refs/tags/v0.16.tar.gz",
+    "integrity": "sha256-lh3zJ9inVjBNGwpnMW7r2xER0T1Vnw00FRFOwOswq9E=",
+    "strip_prefix": "implot-0.16",
+    "patches": {
+        "add_build_file.patch": "sha256-JQLoupN9VWIKbdJ9eoWHin/cJXNIoQuqANkTkWDYrVE=",
+        "module_dot_bazel.patch": "sha256-qsnPKt6+w2Qm32/+97OoA342X9EdzGGcmLWKK1SVckY="
+    },
+    "patch_strip": 0
+}

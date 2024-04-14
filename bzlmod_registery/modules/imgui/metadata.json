@@ -1,0 +1,12 @@
+{
+    "homepage": "https://github.com/ocornut/imgui",
+    "maintainers": [],
+    "repository": [
+        "github:ocornut/imgui"
+    ],
+    "versions": [
+        "1.90.5-docking",
+        "1.90.5"
+    ],
+    "yanked_versions": {}
+}

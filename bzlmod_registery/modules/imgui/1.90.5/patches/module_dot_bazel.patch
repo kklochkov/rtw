@@ -2,8 +2,8 @@
 +++ MODULE.bazel
 @@ -0,0 +1,6 @@
 +module(
-+    name = "cli11",
-+    version = "2.4.1",
-+    compatibility_level = 2,
++    name = "imgui",
++    version = "1.90.5",
++    compatibility_level = 1,
 +)
 +bazel_dep(name = "rules_cc", version = "0.0.9")
