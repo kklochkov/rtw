@@ -5,6 +5,7 @@
         "github:epezent/implot"
     ],
     "versions": [
+        "0.16-docking",
         "0.16"
     ],
     "yanked_versions": {}
