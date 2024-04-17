@@ -3,3 +3,4 @@ module(
     version = "1.90.5-docking",
     compatibility_level = 1,
 )
+bazel_dep(name = "rules_cc", version = "0.0.9")

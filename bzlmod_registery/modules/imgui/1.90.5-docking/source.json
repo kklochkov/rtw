@@ -3,8 +3,8 @@
     "integrity": "sha256-pOWXAC33np7CeXdvEvMiUk9S8Y88g7r+Zzh9rMfXGJ4=",
     "strip_prefix": "imgui-1db579d458da29fa43376af9d88d486910d9406a",
     "patches": {
-        "add_build_file.patch": "sha256-BZkbIVeMtuQaIy4qSImbkjMnUorTGYxnRzQ3GJuZp48=",
-        "module_dot_bazel.patch": "sha256-aHNHQmgdBg8EhoWkL8C5bUKkMZdu6f3qBwWCbNcTPeE="
+        "add_build_file.patch": "sha256-8qx4LhR3oVllT0uIywPkVijNbdE3ha9MhdQw9E82Jnk=",
+        "module_dot_bazel.patch": "sha256-BaAI1e2R9VWFQIlVEl3i5i+GPlRIiPpcBclwSfO3pFI="
     },
     "patch_strip": 0
 }

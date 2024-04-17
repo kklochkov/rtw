@@ -3,8 +3,8 @@
     "integrity": "sha256-c7fsUiYc6P6YCinfa0zrZiQ7sLd5RR29PQFM/sn9u1g=",
     "strip_prefix": "CLI11-2.4.1",
     "patches": {
-        "add_build_file.patch": "sha256-K+ZDVUUjX6pO5hEN8Bll7ca+tS893f3GDJf+oh5S9zA=",
-        "module_dot_bazel.patch": "sha256-EGJgWSzzrPIthkCqzxQ41tv1BvNWTwpoek82mJz3hTU="
+        "add_build_file.patch": "sha256-lulGIIR6cR5pI38XnlWVau/2SyFW+DmsaXTfGfIOdgE=",
+        "module_dot_bazel.patch": "sha256-EUXlE08IleKLlgJ3nW68G73gyG61MqpXb7o8ofySlNA="
     },
     "patch_strip": 0
 }

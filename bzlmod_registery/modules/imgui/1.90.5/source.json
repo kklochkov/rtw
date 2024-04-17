@@ -3,8 +3,8 @@
     "integrity": "sha256-6UtI26cxHIW6jj5v58c012oO7SGytCxRgP1XBtFWIkE=",
     "strip_prefix": "imgui-1.90.5",
     "patches": {
-        "add_build_file.patch": "sha256-BZkbIVeMtuQaIy4qSImbkjMnUorTGYxnRzQ3GJuZp48=",
-        "module_dot_bazel.patch": "sha256-QnAieNWLbE6bCO7NPYnuk1jgcORUQtKwQS32mBqT3/k="
+        "add_build_file.patch": "sha256-8qx4LhR3oVllT0uIywPkVijNbdE3ha9MhdQw9E82Jnk=",
+        "module_dot_bazel.patch": "sha256-TqlUS9URoLPoy0aYO4GXgtld9a1Xh6xaMTEX6pAhQls="
     },
     "patch_strip": 0
 }
