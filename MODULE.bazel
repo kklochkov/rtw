@@ -50,22 +50,22 @@ bazel_dep(name = "cli11", version = "2.4.1")
 bazel_dep(name = "imgui", version = "1.90.5-docking")
 bazel_dep(name = "implot", version = "0.16-docking")
 
-http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
-# Uncomment these lines once this is resolved: https://github.com/bazelbuild/bazel/issues/18285 it should be part of Bazel 7.2.0.
-## local repos
-#new_local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
-#
-## brew install sdl2 sdl2_image sfml
-#new_local_repository(
-#    name = "sysroot_macos",
-#    build_file = "//third_party/sysroot:sysroot_macos.BUILD",
-#    path = "/opt/homebrew",
-#)
-#
-## sudo apt install '^libsdl2.*'
-#new_local_repository(
-#    name = "sysroot_linux",
-#    build_file = "//third_party/sysroot:sysroot_linux.BUILD",
-#    path = "/usr",
-#)
+# sysroot dependencies
+sysroot = use_extension("//:extensions.bzl", "sysroot")
+sysroot.local_paths(
+  path_linux = "/usr",
+  path_macos = "/opt/homebrew",
+)
+#macos: brew install sdl2 sdl2_image
+#linux: sudo apt install '^libsdl2.*'
+sysroot.declare_library(
+  name = "SDL2",
+  includes = ["include/SDL2"],
+  linkopts_linux = ["-lGL"],
+  linkopts_macos = ["-framework OpenGL"],
+)
+sysroot.declare_library(
+  name = "SDL2_image",
+  includes = ["include/SDL2"],
+)
+use_repo(sysroot, "sysroot")
