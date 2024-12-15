@@ -7,6 +7,8 @@
 #include "math/angle.h"
 #include "math/format.h"
 
+#include <fmt/core.h>
+
 namespace rtw::sw_renderer
 {
 

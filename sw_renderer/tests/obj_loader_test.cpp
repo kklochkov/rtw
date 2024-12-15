@@ -6,11 +6,11 @@
 namespace
 {
 
-inline rtw::sw_renderer::Face make_face(std::initializer_list<std::uint32_t> vertex_indices,
-                                        std::initializer_list<std::uint32_t> texture_indices,
-                                        std::initializer_list<std::uint32_t> normal_indices,
-                                        const std::string& material = {})
+rtw::sw_renderer::Face make_face(std::initializer_list<std::uint32_t> vertex_indices,
+                                 std::initializer_list<std::uint32_t> texture_indices,
+                                 std::initializer_list<std::uint32_t> normal_indices, const std::string& material = {})
 {
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   rtw::sw_renderer::Face face;
   auto index =
       rtw::sw_renderer::Index{vertex_indices.begin()[0U], vertex_indices.begin()[1U], vertex_indices.begin()[2U]}
@@ -29,6 +29,7 @@ inline rtw::sw_renderer::Face make_face(std::initializer_list<std::uint32_t> ver
           - rtw::sw_renderer::Index{1U, 1U, 1U};
     face.normal_indices = std::make_optional<rtw::sw_renderer::Index>(index);
   }
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   face.material = material;
   return face;
 }
@@ -80,9 +81,11 @@ f 7//1 8//2 9//3
   };
   for (std::size_t i = 0U; i < mesh.faces.size(); ++i)
   {
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     ASSERT_EQ(mesh.faces[i].vertex_indices, expected_faces[i].vertex_indices);
     ASSERT_EQ(mesh.faces[i].texture_indices, expected_faces[i].texture_indices);
     ASSERT_EQ(mesh.faces[i].normal_indices, expected_faces[i].normal_indices);
+    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
   }
 }
 
@@ -170,10 +173,12 @@ TEST(ObjLoader, load_obj_from_file)
   // clang-format on
   for (std::size_t i = 0U; i < faces.size(); ++i)
   {
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
     ASSERT_EQ(faces[i].vertex_indices, expected_faces[i].vertex_indices) << "Face " << i;
     ASSERT_EQ(faces[i].texture_indices, *expected_faces[i].texture_indices) << "Face " << i;
     ASSERT_EQ(faces[i].normal_indices, *expected_faces[i].normal_indices) << "Face " << i;
     ASSERT_EQ(faces[i].material, expected_faces[i].material);
+    // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
   }
 
   const auto& materials = mesh->materials;

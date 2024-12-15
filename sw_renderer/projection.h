@@ -60,8 +60,8 @@ struct FrustumParameters
 /// @param far The distance to the far plane.
 /// @return The parameters for a perspective projection.
 template <typename T>
-inline FrustumParameters<T> make_perspective_parameters(const math::Angle<T> fov_y, const T aspect_ratio, const T near,
-                                                        const T far)
+constexpr FrustumParameters<T> make_perspective_parameters(const math::Angle<T> fov_y, const T aspect_ratio, const T near,
+                                                        const T far) noexcept
 {
   assert(near > T{0});
   assert(far > near);
@@ -79,7 +79,7 @@ inline FrustumParameters<T> make_perspective_parameters(const math::Angle<T> fov
 /// @param params The parameters of the perspective projection.
 /// @return The perspective projection matrix.
 template <typename T>
-inline math::Matrix4x4<T> make_perspective_projection_matrix(const FrustumParameters<T> params)
+constexpr math::Matrix4x4<T> make_perspective_projection_matrix(const FrustumParameters<T> params) noexcept
 {
   const auto width = std::abs(params.right - params.left);  // assuming that left and right are not symmetric
   const auto height = std::abs(params.top - params.bottom); // assuming that top and bottom are not symmetric
@@ -107,7 +107,7 @@ inline math::Matrix4x4<T> make_perspective_projection_matrix(const FrustumParame
 /// @param params The parameters of the perspective projection.
 /// @return The frustum.
 template <typename T>
-inline Frustum3<T> make_frustum(const FrustumParameters<T> params)
+inline Frustum3<T> make_frustum(const FrustumParameters<T> params) noexcept
 {
   const auto far_near_aspect_ratio = params.far / params.near;
   const auto far_left = params.left * far_near_aspect_ratio;
@@ -148,7 +148,7 @@ inline Frustum3<T> make_frustum(const FrustumParameters<T> params)
 /// @param matrix The projection matrix.
 /// @return The frustum.
 template <typename T>
-constexpr Frustum3<T> extract_frustum(const math::Matrix4x4<T>& matrix)
+constexpr Frustum3<T> extract_frustum(const math::Matrix4x4<T>& matrix) noexcept
 {
   const auto column0 = math::Vector4<T>{matrix.column(0)};
   const auto column1 = math::Vector4<T>{matrix.column(1)};
@@ -185,7 +185,7 @@ constexpr Frustum3<T> extract_frustum(const math::Matrix4x4<T>& matrix)
 /// @param up The up vector of the camera.
 /// @return The view matrix.
 template <typename T>
-constexpr math::Matrix4x4<T> make_screen_space_matrix(const std::size_t width, const std::size_t height)
+constexpr math::Matrix4x4<T> make_screen_space_matrix(const std::size_t width, const std::size_t height) noexcept
 {
   const auto tx = (width - 1) / T{2};
   const auto ty = (height - 1) / T{2};
@@ -203,7 +203,7 @@ constexpr math::Matrix4x4<T> make_screen_space_matrix(const std::size_t width, c
 
 template <typename T>
 constexpr math::Point4<T> ndc_to_screen_space(const math::Point4<T>& point,
-                                              const math::Matrix4x4<T>& screen_space_matrix)
+                                              const math::Matrix4x4<T>& screen_space_matrix) noexcept
 {
   const auto w = point.w(); // original w is needed for depth buffer and perspective correct interpolation
   const auto result = screen_space_matrix * point;

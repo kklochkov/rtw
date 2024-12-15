@@ -12,7 +12,7 @@ namespace rtw::math::transform3
 /// @param[in] matrix The 3D matrix.
 /// @return The homogeneous 3D matrix.
 template <typename T>
-constexpr Matrix4x4<T> make_homogeneous(const Matrix3x3<T>& matrix)
+constexpr Matrix4x4<T> make_homogeneous(const Matrix3x3<T>& matrix) noexcept
 {
   // clang-format off
   return Matrix4x4<T>{
@@ -31,7 +31,7 @@ constexpr Matrix4x4<T> make_homogeneous(const Matrix3x3<T>& matrix)
 /// @param[in] sz The scaling factor in the z direction.
 /// @return The 3D scaling matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_scale(const T sx, const T sy, const T sz)
+constexpr Matrix3x3<T> make_scale(const T sx, const T sy, const T sz) noexcept
 {
   // clang-format off
   return Matrix3x3<T>{
@@ -47,7 +47,7 @@ constexpr Matrix3x3<T> make_scale(const T sx, const T sy, const T sz)
 /// @param[in] scale The scaling vector.
 /// @return The 3D scaling matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_scale(const Vector3<T>& scale)
+constexpr Matrix3x3<T> make_scale(const Vector3<T>& scale) noexcept
 {
   return make_scale(scale.x(), scale.y(), scale.z());
 }
@@ -57,7 +57,7 @@ constexpr Matrix3x3<T> make_scale(const Vector3<T>& scale)
 /// @param[in] roll The angle of the rotation.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_rotation_x(const Angle<T> roll)
+constexpr Matrix3x3<T> make_rotation_x(const Angle<T> roll) noexcept
 {
   const auto c = std::cos(roll);
   const auto s = std::sin(roll);
@@ -75,7 +75,7 @@ constexpr Matrix3x3<T> make_rotation_x(const Angle<T> roll)
 /// @param[in] roll The angle of the rotation.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_so3_x(const Angle<T> roll)
+constexpr Matrix3x3<T> make_so3_x(const Angle<T> roll) noexcept
 {
   return make_rotation_x(roll);
 }
@@ -85,7 +85,7 @@ constexpr Matrix3x3<T> make_so3_x(const Angle<T> roll)
 /// @param[in] pitch The angle of the rotation.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_rotation_y(const Angle<T> pitch)
+constexpr Matrix3x3<T> make_rotation_y(const Angle<T> pitch) noexcept
 {
   const auto c = std::cos(pitch);
   const auto s = std::sin(pitch);
@@ -103,7 +103,7 @@ constexpr Matrix3x3<T> make_rotation_y(const Angle<T> pitch)
 /// @param[in] pitch The angle of the rotation.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_so3_y(const Angle<T> pitch)
+constexpr Matrix3x3<T> make_so3_y(const Angle<T> pitch) noexcept
 {
   return make_rotation_y(pitch);
 }
@@ -113,7 +113,7 @@ constexpr Matrix3x3<T> make_so3_y(const Angle<T> pitch)
 /// @param[in] yaw The angle of the rotation.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_rotation_z(const Angle<T> yaw)
+constexpr Matrix3x3<T> make_rotation_z(const Angle<T> yaw) noexcept
 {
   const auto c = std::cos(yaw);
   const auto s = std::sin(yaw);
@@ -131,7 +131,7 @@ constexpr Matrix3x3<T> make_rotation_z(const Angle<T> yaw)
 /// @param[in] yaw The angle of the rotation.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_so3_z(const Angle<T> yaw)
+constexpr Matrix3x3<T> make_so3_z(const Angle<T> yaw) noexcept
 {
   return make_rotation_z(yaw);
 }
@@ -143,7 +143,7 @@ constexpr Matrix3x3<T> make_so3_z(const Angle<T> yaw)
 /// @param[in] yaw The angle of the rotation around the z-axis.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_rotation(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw)
+constexpr Matrix3x3<T> make_rotation(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw) noexcept
 {
   return make_rotation_z(yaw) * make_rotation_y(pitch) * make_rotation_x(roll);
 }
@@ -153,7 +153,7 @@ constexpr Matrix3x3<T> make_rotation(const Angle<T> roll, const Angle<T> pitch, 
 /// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_rotation(const EulerAngles<T>& angles)
+constexpr Matrix3x3<T> make_rotation(const EulerAngles<T>& angles) noexcept
 {
   return make_rotation(angles.roll, angles.pitch, angles.yaw);
 }
@@ -165,7 +165,7 @@ constexpr Matrix3x3<T> make_rotation(const EulerAngles<T>& angles)
 /// @param[in] yaw The angle of the rotation around the z-axis.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_so3(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw)
+constexpr Matrix3x3<T> make_so3(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw) noexcept
 {
   return make_rotation(roll, pitch, yaw);
 }
@@ -175,7 +175,7 @@ constexpr Matrix3x3<T> make_so3(const Angle<T> roll, const Angle<T> pitch, const
 /// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
 /// @return The 3D rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> make_so3(const EulerAngles<T>& angles)
+constexpr Matrix3x3<T> make_so3(const EulerAngles<T>& angles) noexcept
 {
   return make_rotation(angles);
 }
@@ -187,7 +187,7 @@ constexpr Matrix3x3<T> make_so3(const EulerAngles<T>& angles)
 /// @param[in] tz The translation in the z direction.
 /// @return The 3D translation matrix.
 template <typename T>
-constexpr Matrix4x4<T> make_translation(const T tx, const T ty, const T tz)
+constexpr Matrix4x4<T> make_translation(const T tx, const T ty, const T tz) noexcept
 {
   // clang-format off
   return Matrix4x4<T>{
@@ -204,7 +204,7 @@ constexpr Matrix4x4<T> make_translation(const T tx, const T ty, const T tz)
 /// @param[in] translation The translation vector.
 /// @return The 3D translation matrix.
 template <typename T>
-constexpr Matrix4x4<T> make_translation(const Vector3<T>& translation)
+constexpr Matrix4x4<T> make_translation(const Vector3<T>& translation) noexcept
 {
   return make_translation(translation.x(), translation.y(), translation.z());
 }
@@ -218,7 +218,7 @@ constexpr Matrix4x4<T> make_translation(const Vector3<T>& translation)
 /// @return The 3D rigid motion.
 template <typename T>
 constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& scale, const Matrix3x3<T>& rotation,
-                                      const Matrix4x4<T>& translation)
+                                      const Matrix4x4<T>& translation) noexcept
 {
   return translation * make_homogeneous(rotation * scale);
 }
@@ -230,7 +230,7 @@ constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& scale, const Matrix3x3
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
 template <typename T>
-constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& rotation, const Vector3<T>& translation)
+constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& rotation, const Vector3<T>& translation) noexcept
 {
   return make_transform(Matrix3x3<T>::identity(), rotation, make_translation(translation));
 }
@@ -242,7 +242,7 @@ constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& rotation, const Vector
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
 template <typename T>
-constexpr Matrix4x4<T> make_se3(const Matrix3x3<T>& rotation, const Vector3<T>& translation)
+constexpr Matrix4x4<T> make_se3(const Matrix3x3<T>& rotation, const Vector3<T>& translation) noexcept
 {
   return make_transform(rotation, translation);
 }
@@ -258,7 +258,7 @@ constexpr Matrix4x4<T> make_se3(const Matrix3x3<T>& rotation, const Vector3<T>& 
 /// @return The 3D rigid motion.
 template <typename T>
 constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const Angle<T> roll, const Angle<T> pitch,
-                                      const Angle<T> yaw, const Vector3<T>& translation)
+                                      const Angle<T> yaw, const Vector3<T>& translation) noexcept
 {
   // TODO: provide enum-based interface for rotation order. (e.g. XYZ, ZYX, etc.)
   const auto rotation = make_rotation_z(yaw) * make_rotation_y(pitch) * make_rotation_x(roll);
@@ -274,7 +274,7 @@ constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const Angle<T> ro
 /// @return The 3D rigid motion.
 template <typename T>
 constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const EulerAngles<T>& angles,
-                                      const Vector3<T>& translation)
+                                      const Vector3<T>& translation) noexcept
 {
   return make_transform(scale, angles.roll, angles.pitch, angles.yaw, translation);
 }
@@ -289,7 +289,7 @@ constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const EulerAngles
 /// @return The 3D rigid motion.
 template <typename T>
 constexpr Matrix4x4<T> make_transform(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw,
-                                      const Vector3<T>& translation)
+                                      const Vector3<T>& translation) noexcept
 {
   return make_transform(Vector3<T>{T{1}, T{1}, T{1}}, roll, pitch, yaw, translation);
 }
@@ -301,7 +301,7 @@ constexpr Matrix4x4<T> make_transform(const Angle<T> roll, const Angle<T> pitch,
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
 template <typename T>
-constexpr Matrix4x4<T> make_transform(const EulerAngles<T>& angles, const Vector3<T>& translation)
+constexpr Matrix4x4<T> make_transform(const EulerAngles<T>& angles, const Vector3<T>& translation) noexcept
 {
   return make_transform(angles.roll, angles.pitch, angles.yaw, translation);
 }
@@ -316,7 +316,7 @@ constexpr Matrix4x4<T> make_transform(const EulerAngles<T>& angles, const Vector
 /// @return The 3D rigid motion.
 template <typename T>
 constexpr Matrix4x4<T> make_se3(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw,
-                                const Vector3<T>& translation)
+                                const Vector3<T>& translation) noexcept
 {
   return make_transform(roll, pitch, yaw, translation);
 }
@@ -328,7 +328,7 @@ constexpr Matrix4x4<T> make_se3(const Angle<T> roll, const Angle<T> pitch, const
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
 template <typename T>
-constexpr Matrix4x4<T> make_se3(const EulerAngles<T>& angles, const Vector3<T>& translation)
+constexpr Matrix4x4<T> make_se3(const EulerAngles<T>& angles, const Vector3<T>& translation) noexcept
 {
   return make_transform(angles, translation);
 }
@@ -338,7 +338,7 @@ constexpr Matrix4x4<T> make_se3(const EulerAngles<T>& angles, const Vector3<T>& 
 /// @param[in] matrix The transformation matrix.
 /// @return The rotation matrix.
 template <typename T>
-constexpr Matrix3x3<T> rotation(const Matrix4x4<T>& matrix)
+constexpr Matrix3x3<T> rotation(const Matrix4x4<T>& matrix) noexcept
 {
   // clang-format off
   return Matrix3x3<T>{
@@ -354,7 +354,7 @@ constexpr Matrix3x3<T> rotation(const Matrix4x4<T>& matrix)
 /// @param[in] matrix The transformation matrix.
 /// @return The translation vector.
 template <typename T>
-constexpr Vector3<T> translation(const Matrix4x4<T>& matrix)
+constexpr Vector3<T> translation(const Matrix4x4<T>& matrix) noexcept
 {
   return Vector3<T>{matrix(0, 3), matrix(1, 3), matrix(2, 3)};
 }
@@ -365,7 +365,7 @@ constexpr Vector3<T> translation(const Matrix4x4<T>& matrix)
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
 template <typename T>
-constexpr Matrix3x3<T> inverse_rotation(const Matrix3x3<T>& matrix)
+constexpr Matrix3x3<T> inverse_rotation(const Matrix3x3<T>& matrix) noexcept
 {
   return transpose(matrix);
 }
@@ -376,7 +376,7 @@ constexpr Matrix3x3<T> inverse_rotation(const Matrix3x3<T>& matrix)
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
 template <typename T>
-constexpr Matrix3x3<T> inverse_so3(const Matrix3x3<T>& matrix)
+constexpr Matrix3x3<T> inverse_so3(const Matrix3x3<T>& matrix) noexcept
 {
   return inverse_rotation(matrix);
 }
@@ -392,7 +392,7 @@ constexpr Matrix3x3<T> inverse_so3(const Matrix3x3<T>& matrix)
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
 template <typename T>
-constexpr Matrix4x4<T> inverse_transform(const Matrix4x4<T>& matrix)
+constexpr Matrix4x4<T> inverse_transform(const Matrix4x4<T>& matrix) noexcept
 {
   const auto inv_rotation = inverse_rotation(rotation(matrix));
   const auto inv_translation = -inv_rotation * translation(matrix);
@@ -410,7 +410,7 @@ constexpr Matrix4x4<T> inverse_transform(const Matrix4x4<T>& matrix)
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
 template <typename T>
-constexpr Matrix4x4<T> inverse_se3(const Matrix4x4<T>& matrix)
+constexpr Matrix4x4<T> inverse_se3(const Matrix4x4<T>& matrix) noexcept
 {
   return inverse_transform(matrix);
 }

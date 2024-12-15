@@ -18,31 +18,45 @@ constexpr Angle<T> TAO = T{2} * PI<T>;
 template <typename T>
 constexpr Angle<T> PI_2 = PI<T> / T{2};
 
+struct DegTag
+{
+  enum class Tag : std::uint8_t
+  {
+    TAG
+  };
+
+  constexpr explicit DegTag(Tag /*tag*/) noexcept {}
+};
+struct RadTag
+{
+  enum class Tag : std::uint8_t
+  {
+    TAG
+  };
+
+  constexpr explicit RadTag(Tag /*tag*/) noexcept {}
+};
+
+constexpr static DegTag DEG{DegTag::Tag::TAG};
+constexpr static RadTag RAD{RadTag::Tag::TAG};
+
 template <typename T>
 class Angle
 {
 public:
-  using ValueType = T;
+  using value_type = T;
 
-  // NOLINTBEGIN (readability-identifier-naming)
-  // clang-format off
-  struct deg_t{};
-  struct rad_t{};
-  // clang-format on
-  constexpr static deg_t deg_tag{};
-  constexpr static rad_t rad_tag{};
-  // NOLINTEND (google-explicit-constructor)
+  static_assert(std::is_arithmetic_v<value_type>, "T must be arithmetic");
 
-  static_assert(std::is_arithmetic_v<ValueType>, "T must be arithmetic");
+  constexpr Angle() noexcept = default;
+  constexpr explicit Angle(const value_type value) noexcept : rad_(value) {}
+  constexpr Angle(DegTag /*tag*/, const value_type value) noexcept : rad_(value * PI<value_type> / value_type{180}) {}
+  constexpr Angle(RadTag /*tag*/, const value_type value) noexcept : Angle(value) {}
 
-  constexpr Angle() = default;
-  constexpr explicit Angle(const ValueType value) : rad_(value) {}
-  constexpr Angle(deg_t /*tag*/, const ValueType value) : rad_(value * PI<ValueType> / ValueType{180}) {}
-  constexpr Angle(rad_t /*tag*/, const ValueType value) : Angle(value) {}
-
-  constexpr ValueType rad() const noexcept { return rad_; }
-  constexpr ValueType deg() const noexcept { return rad_ * ValueType{180} / PI<ValueType>; }
-  constexpr operator ValueType() const noexcept { return rad_; } // NOLINT (google-explicit-constructor)
+  constexpr value_type rad() const noexcept { return rad_; }
+  constexpr value_type deg() const noexcept { return rad_ * value_type{180} / PI<value_type>; }
+  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
+  constexpr operator value_type() const noexcept { return rad_; }
 
   constexpr Angle operator-() const noexcept { return Angle{-rad_}; }
 
@@ -58,13 +72,13 @@ public:
     return *this;
   }
 
-  constexpr Angle& operator*=(const ValueType scalar) noexcept
+  constexpr Angle& operator*=(const value_type scalar) noexcept
   {
     rad_ *= scalar;
     return *this;
   }
 
-  constexpr Angle& operator/=(const ValueType scalar) noexcept
+  constexpr Angle& operator/=(const value_type scalar) noexcept
   {
     rad_ /= scalar;
     return *this;
@@ -72,26 +86,27 @@ public:
 
   /// Barton-Nackman trick to generate operators.
   /// @{
-  friend constexpr Angle operator+(const Angle& lhs, const Angle& rhs) { return Angle{lhs.rad() + rhs.rad()}; }
-  friend constexpr Angle operator-(const Angle& lhs, const Angle& rhs) { return Angle{lhs.rad() - rhs.rad()}; }
-  friend constexpr Angle operator*(const Angle& lhs, const ValueType rhs) { return Angle{lhs.rad() * rhs}; }
-  friend constexpr Angle operator*(const ValueType lhs, const Angle& rhs) { return Angle{lhs * rhs.rad()}; }
-  friend constexpr Angle operator/(const Angle& lhs, const ValueType rhs) { return Angle{lhs.rad() / rhs}; }
-  friend constexpr Angle operator/(const ValueType lhs, const Angle& rhs) { return Angle{lhs / rhs.rad()}; }
-  friend constexpr bool operator==(const Angle& lhs, const Angle& rhs)
+  friend constexpr Angle operator+(const Angle& lhs, const Angle& rhs) noexcept { return Angle{lhs.rad() + rhs.rad()}; }
+  friend constexpr Angle operator-(const Angle& lhs, const Angle& rhs) noexcept { return Angle{lhs.rad() - rhs.rad()}; }
+  friend constexpr Angle operator*(const Angle& lhs, const value_type rhs) noexcept { return Angle{lhs.rad() * rhs}; }
+  friend constexpr Angle operator*(const value_type lhs, const Angle& rhs) noexcept { return Angle{lhs * rhs.rad()}; }
+  friend constexpr Angle operator/(const Angle& lhs, const value_type rhs) noexcept { return Angle{lhs.rad() / rhs}; }
+  friend constexpr Angle operator/(const value_type lhs, const Angle& rhs) noexcept { return Angle{lhs / rhs.rad()}; }
+  friend constexpr bool operator==(const Angle& lhs, const Angle& rhs) noexcept
   {
     // TODO: Floating point comparison is hard.
-    return lhs.rad() == rhs.rad() || lhs.rad() == rhs.rad() + TAO<ValueType> || lhs.rad() == rhs.rad() - TAO<ValueType>;
+    return lhs.rad() == rhs.rad()
+        || lhs.rad() == rhs.rad() + TAO<value_type> || lhs.rad() == rhs.rad() - TAO<value_type>;
   }
-  friend constexpr bool operator!=(const Angle& lhs, const Angle& rhs) { return !(lhs == rhs); }
-  friend constexpr bool operator<(const Angle& lhs, const Angle& rhs) { return lhs.rad() < rhs.rad(); }
-  friend constexpr bool operator>(const Angle& lhs, const Angle& rhs) { return lhs.rad() > rhs.rad(); }
-  friend constexpr bool operator<=(const Angle& lhs, const Angle& rhs) { return lhs.rad() <= rhs.rad(); }
-  friend constexpr bool operator>=(const Angle& lhs, const Angle& rhs) { return lhs.rad() >= rhs.rad(); }
+  friend constexpr bool operator!=(const Angle& lhs, const Angle& rhs) noexcept { return !(lhs == rhs); }
+  friend constexpr bool operator<(const Angle& lhs, const Angle& rhs) noexcept { return lhs.rad() < rhs.rad(); }
+  friend constexpr bool operator>(const Angle& lhs, const Angle& rhs) noexcept { return lhs.rad() > rhs.rad(); }
+  friend constexpr bool operator<=(const Angle& lhs, const Angle& rhs) noexcept { return lhs.rad() <= rhs.rad(); }
+  friend constexpr bool operator>=(const Angle& lhs, const Angle& rhs) noexcept { return lhs.rad() >= rhs.rad(); }
   /// @}
 
 private:
-  ValueType rad_{0};
+  value_type rad_{0};
 };
 
 using Anglef = Angle<float>;
@@ -124,25 +139,13 @@ Angle<T> interpolate(const Angle<T>& lhs, const Angle<T>& rhs, const T t) noexce
 namespace angle_literals
 {
 
-constexpr Angled operator""_deg(const long double value) noexcept
-{
-  return Angled{Angled::deg_tag, static_cast<double>(value)};
-}
+constexpr Angled operator""_deg(const long double value) noexcept { return Angled{DEG, static_cast<double>(value)}; }
 
-constexpr Angled operator""_rad(const long double value) noexcept
-{
-  return Angled{Angled::rad_tag, static_cast<double>(value)};
-}
+constexpr Angled operator""_rad(const long double value) noexcept { return Angled{RAD, static_cast<double>(value)}; }
 
-constexpr Anglef operator""_degf(const long double value) noexcept
-{
-  return Anglef{Anglef::deg_tag, static_cast<float>(value)};
-}
+constexpr Anglef operator""_degf(const long double value) noexcept { return Anglef{DEG, static_cast<float>(value)}; }
 
-constexpr Anglef operator""_radf(const long double value) noexcept
-{
-  return Anglef{Anglef::rad_tag, static_cast<float>(value)};
-}
+constexpr Anglef operator""_radf(const long double value) noexcept { return Anglef{RAD, static_cast<float>(value)}; }
 
 } // namespace angle_literals
 

@@ -5,90 +5,137 @@
 namespace rtw::sw_renderer
 {
 
-template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
-constexpr inline T operator|(const T lhs, const T rhs)
-{
-  return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs));
-}
-
-template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
-constexpr inline T operator&(const T lhs, const T rhs)
-{
-  return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs));
-}
-
-template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
-constexpr inline T operator^(const T lhs, const T rhs)
-{
-  return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs));
-}
-
-template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
-constexpr inline T operator~(const T lhs)
-{
-  return static_cast<T>(~static_cast<std::underlying_type_t<T>>(lhs));
-}
-
 template <typename T>
 class Flags
 {
 public:
   static_assert(std::is_enum_v<T>, "T must be an enum type.");
 
-  using ValueType = T;
+  using underlying_type = std::underlying_type_t<T>;
 
-  constexpr Flags() : flags_{static_cast<ValueType>(0)} {}
+  constexpr Flags() noexcept : Flags{static_cast<underlying_type>(0)} {}
+  constexpr explicit Flags(const T flag) noexcept : Flags{static_cast<underlying_type>(flag)} {}
 
-  // NOLINTBEGIN (google-explicit-constructor)
-  constexpr Flags(const ValueType flags) : flags_{flags} {}
+  constexpr explicit operator underlying_type() const noexcept { return flags_; }
+  constexpr explicit operator bool() const noexcept { return flags_ != static_cast<underlying_type>(0); }
+  constexpr bool any() const noexcept { return static_cast<bool>(*this); }
+  constexpr bool none() const noexcept { return !static_cast<bool>(*this); }
 
-  constexpr operator ValueType() const { return flags_; }
-  constexpr operator bool() const { return flags_ != static_cast<ValueType>(0); }
-  // NOLINTEND (google-explicit-constructor)
-
-  constexpr void set(const ValueType flags, const bool enabled = true)
+  constexpr void set(const T flag, const bool enabled = true) noexcept
   {
-    flags_ = enabled ? flags_ | flags : flags_ & ~flags;
+    if (enabled)
+    {
+      flags_ |= static_cast<underlying_type>(flag);
+    }
+    else
+    {
+      flags_ &= ~static_cast<underlying_type>(flag);
+    }
   }
-  constexpr bool test(const ValueType flags) const { return (flags_ & flags) == flags; }
 
-  constexpr Flags operator|(const Flags& rhs) const { return Flags{flags_ | rhs.flags_}; }
-  constexpr Flags operator&(const Flags& rhs) const { return Flags{flags_ & rhs.flags_}; }
-  constexpr Flags operator^(const Flags& rhs) const { return Flags{flags_ ^ rhs.flags_}; }
-  constexpr Flags operator~() const { return Flags{~flags_}; }
+  constexpr bool test(const T flag) const noexcept
+  {
+    return (flags_ & static_cast<underlying_type>(flag)) == static_cast<underlying_type>(flag);
+  }
 
-  constexpr Flags& operator|=(const Flags& rhs)
+  constexpr Flags operator|(const Flags& rhs) const noexcept
+  {
+    return Flags{static_cast<underlying_type>(flags_ | rhs.flags_)};
+  }
+  constexpr Flags operator|(const underlying_type rhs) const noexcept { return operator|(Flags{rhs}); }
+  constexpr Flags operator|(const T rhs) const noexcept { return operator|(Flags{rhs}); }
+
+  constexpr Flags operator&(const Flags& rhs) const noexcept
+  {
+    return Flags{static_cast<underlying_type>(flags_ & rhs.flags_)};
+  }
+  constexpr Flags operator&(const underlying_type rhs) const noexcept { return operator&(Flags{rhs}); }
+  constexpr Flags operator&(const T rhs) const noexcept { return operator&(Flags{rhs}); }
+
+  constexpr Flags operator^(const Flags& rhs) const noexcept
+  {
+    return Flags{static_cast<underlying_type>(flags_ ^ rhs.flags_)};
+  }
+  constexpr Flags operator^(const underlying_type rhs) const noexcept { return operator^(Flags{rhs}); }
+  constexpr Flags operator^(const T rhs) const noexcept { return operator^(Flags{rhs}); }
+
+  constexpr Flags operator~() const noexcept { return Flags{static_cast<underlying_type>(~flags_)}; }
+
+  constexpr Flags& operator|=(const Flags& rhs) noexcept
   {
     flags_ = flags_ | rhs.flags_;
     return *this;
   }
-  constexpr Flags& operator|=(const ValueType rhs) { return operator|=(Flags{rhs}); }
+  constexpr Flags& operator|=(const underlying_type rhs) noexcept { return operator|=(Flags{rhs}); }
+  constexpr Flags& operator|=(const T rhs) noexcept { return operator|=(Flags{rhs}); }
 
-  constexpr Flags& operator&=(const Flags& rhs)
+  constexpr Flags& operator&=(const Flags& rhs) noexcept
   {
     flags_ = flags_ & rhs.flags_;
     return *this;
   }
-  constexpr Flags& operator&=(const ValueType rhs) { return operator&=(Flags{rhs}); }
 
-  constexpr Flags& operator^=(const Flags& rhs)
+  constexpr Flags& operator&=(const underlying_type rhs) noexcept { return operator&=(Flags{rhs}); }
+  constexpr Flags& operator&=(const T rhs) noexcept { return operator&=(Flags{rhs}); }
+
+  constexpr Flags& operator^=(const Flags& rhs) noexcept
   {
     flags_ = flags_ ^ rhs.flags_;
     return *this;
   }
-  constexpr Flags& operator^=(const ValueType rhs) { return operator^=(Flags{rhs}); }
+  constexpr Flags& operator^=(const underlying_type rhs) noexcept { return operator^=(Flags{rhs}); }
+  constexpr Flags& operator^=(const T rhs) noexcept { return operator^=(Flags{rhs}); }
+
+  constexpr bool operator==(const Flags& rhs) const noexcept { return flags_ == rhs.flags_; }
+  constexpr bool operator==(const underlying_type rhs) const noexcept { return operator==(Flags{rhs}); }
+  constexpr bool operator==(const T rhs) const noexcept { return operator==(Flags{rhs}); }
+
+  constexpr bool operator!=(const Flags& rhs) const noexcept { return flags_ != rhs.flags_; }
+  constexpr bool operator!=(const underlying_type rhs) const noexcept { return operator!=(Flags{rhs}); }
+  constexpr bool operator!=(const T rhs) const noexcept { return operator!=(Flags{rhs}); }
 
   /// Barton-Nackman trick to generate operators.
   /// @{
-  friend constexpr inline Flags operator|(const ValueType lhs, const Flags& rhs) { return Flags{lhs} | rhs; }
-  friend constexpr inline Flags operator&(const ValueType lhs, const Flags& rhs) { return Flags{lhs} & rhs; }
-  friend constexpr inline Flags operator^(const ValueType lhs, const Flags& rhs) { return Flags{lhs} ^ rhs; }
+  friend constexpr Flags operator|(const underlying_type lhs, const Flags& rhs) noexcept { return Flags{lhs} | rhs; }
+  friend constexpr Flags operator|(const T lhs, const Flags& rhs) noexcept { return Flags{lhs} | rhs; }
+  friend constexpr Flags operator&(const underlying_type lhs, const Flags& rhs) noexcept { return Flags{lhs} & rhs; }
+  friend constexpr Flags operator&(const T lhs, const Flags& rhs) noexcept { return Flags{lhs} & rhs; }
+  friend constexpr Flags operator^(const underlying_type lhs, const Flags& rhs) noexcept { return Flags{lhs} ^ rhs; }
+  friend constexpr Flags operator^(const T lhs, const Flags& rhs) noexcept { return Flags{lhs} ^ rhs; }
 
-  friend constexpr inline bool operator==(const ValueType lhs, const Flags& rhs) { return lhs == rhs.flags_; }
-  friend constexpr inline bool operator!=(const ValueType lhs, const Flags& rhs) { return lhs != rhs.flags_; }
+  friend constexpr bool operator==(const underlying_type lhs, const Flags& rhs) noexcept { return lhs == rhs.flags_; }
+  friend constexpr bool operator==(const T lhs, const Flags& rhs) noexcept { return Flags{lhs} == rhs.flags_; }
+  friend constexpr bool operator!=(const underlying_type lhs, const Flags& rhs) noexcept { return lhs != rhs.flags_; }
+  friend constexpr bool operator!=(const T lhs, const Flags& rhs) noexcept { return Flags{lhs} != rhs.flags_; }
   /// @}
 private:
-  ValueType flags_;
+  constexpr explicit Flags(const underlying_type flags) noexcept : flags_{flags} {}
+
+  underlying_type flags_;
 };
+
+template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+constexpr Flags<T> operator|(const T lhs, const T rhs) noexcept
+{
+  return Flags<T>{lhs} | Flags<T>{rhs};
+}
+
+template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+constexpr Flags<T> operator&(const T lhs, const T rhs) noexcept
+{
+  return Flags<T>{lhs} & Flags<T>{rhs};
+}
+
+template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+constexpr Flags<T> operator^(const T lhs, const T rhs) noexcept
+{
+  return Flags<T>{lhs} ^ Flags<T>{rhs};
+}
+
+template <typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+constexpr Flags<T> operator~(const T lhs) noexcept
+{
+  return ~Flags<T>{lhs};
+}
 
 } // namespace rtw::sw_renderer

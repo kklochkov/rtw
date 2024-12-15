@@ -39,7 +39,8 @@ TEST(Barycentric, copy_ctor)
 TEST(Barycentric, move_ctor)
 {
   rtw::sw_renderer::Barycentric3f b1{1.0F, 2.0F, 3.0F};
-  const rtw::sw_renderer::Barycentric3f b2{std::move(b1)}; // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  const rtw::sw_renderer::Barycentric3f b2{std::move(b1)};
   EXPECT_THAT(b2, ::testing::ElementsAre(1, 2, 3));
 }
 
@@ -55,7 +56,8 @@ TEST(Barycentric, move_assign)
 {
   rtw::sw_renderer::Barycentric3f b1{1.0F, 2.0F, 3.0F};
   rtw::sw_renderer::Barycentric3f b2;
-  b2 = std::move(b1); // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  b2 = std::move(b1);
   EXPECT_THAT(b2, ::testing::ElementsAre(1, 2, 3));
 }
 

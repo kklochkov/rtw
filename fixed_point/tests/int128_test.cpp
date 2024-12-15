@@ -4,7 +4,7 @@
 
 #include <array>
 
-// These aliases are used solely for the purpose of testing of the Int class.against the built-in integer types.
+// These aliases are used solely for the purpose of testing of the Int class against the built-in integer types.
 // They should not be used in production code.
 namespace rtw::fixed_point
 {
@@ -20,25 +20,117 @@ using Int64u = Int<std::uint32_t>;
 
 namespace
 {
-template <typename IntT, typename ResultT, typename Container>
-inline void check_conversion_ctor(const Container& test_case)
+template <typename PackedIntT, typename HiIntT, typename LoIntT>
+constexpr PackedIntT pack_hi_lo(const HiIntT hi, const LoIntT lo)
 {
-  using Int = rtw::fixed_point::Int<IntT>;
-  constexpr ResultT WORD_SIZE = sizeof(ResultT) * ResultT{4};
+  using PackedUIntT = std::make_unsigned_t<PackedIntT>;
+  using HiUIntT = std::make_unsigned_t<HiIntT>;
 
-  for (const auto& a : test_case)
+  constexpr std::uint8_t WORD_SIZE = sizeof(LoIntT) * 8U;
+
+  // Input values need to be upper casted to the unsigned type to avoid undefined behavior:
+  // 1. cast signed value to unsigned type of the same size (e.g. int8_t -> uint8_t)
+  // 2. store the result in a larger unsigned type (e.g. uint8_t -> uint16_t)
+  // 3. shift left the value to the higher word by the size of the lower word
+  // 4. OR the result with the lower word
+  // 5. cast the result to the packed type
+  if constexpr (std::is_same_v<PackedUIntT, std::uint16_t> && std::is_same_v<HiUIntT, std::uint8_t>)
   {
-    const Int result{a};
-    const IntT hi = -rtw::fixed_point::sign_bit(a);
-    const auto lo = static_cast<typename Int::LoType>(a);
-    const ResultT result_t = ResultT(result.hi()) << WORD_SIZE | result.lo();
-    EXPECT_EQ(result_t, a);
-    EXPECT_EQ(result.hi(), hi);
-    EXPECT_EQ(result.lo(), lo);
+    const std::uint16_t hi_u = static_cast<LoIntT>(hi);
+    const std::uint16_t result = (static_cast<std::uint32_t>(hi_u) << WORD_SIZE) | lo;
+    return static_cast<PackedIntT>(result);
+  }
+  else if constexpr (std::is_same_v<PackedUIntT, std::uint32_t> && std::is_same_v<HiUIntT, std::uint16_t>)
+  {
+    const std::uint32_t hi_u = static_cast<LoIntT>(hi);
+    const std::uint32_t result = (hi_u << WORD_SIZE) | lo;
+    return static_cast<PackedIntT>(result);
+  }
+  else if constexpr (std::is_same_v<PackedUIntT, std::uint64_t> && std::is_same_v<HiUIntT, std::uint32_t>)
+  {
+    const std::uint64_t hi_u = static_cast<LoIntT>(hi);
+    const std::uint64_t result = (hi_u << WORD_SIZE) | lo;
+    return static_cast<PackedIntT>(result);
+  }
+  else
+  {
+    static_assert(true, "Unsupported type");
+  }
+  return 0;
+}
+
+template <typename PackedIntT, typename HiIntT, typename LoIntT>
+void unpack_hi_lo(const PackedIntT packed, HiIntT& hi, LoIntT& lo)
+{
+  using PackedUIntT = std::make_unsigned_t<PackedIntT>;
+  using HiUIntT = std::make_unsigned_t<HiIntT>;
+
+  constexpr std::uint8_t WORD_SIZE = sizeof(LoIntT) * 8U;
+  constexpr PackedUIntT LO_MASK = (PackedUIntT{1U} << WORD_SIZE) - PackedUIntT{1U};
+
+  // The packed value needs to be casted to the unsigned type to avoid undefined behavior:
+  // 1. cast the packed value to the unsigned type of the same size (e.g. int8_t -> uint8_t)
+  // 2. store the result in a larger unsigned type (e.g. uint8_t -> uint16_t)
+  // 3. shift right the result by the size of the lower word
+  // 4. cast the result to the hi part
+  // 5. AND the packed value with the mask to get the lower word
+  // 6. cast the result to the lo part
+  if constexpr (std::is_same_v<PackedUIntT, std::uint16_t> && std::is_same_v<HiUIntT, std::uint8_t>)
+  {
+    const std::uint32_t packed_u = static_cast<std::uint16_t>(packed);
+    hi = static_cast<HiIntT>(packed_u >> WORD_SIZE);
+    lo = static_cast<LoIntT>(packed_u & LO_MASK);
+  }
+  else if constexpr (std::is_same_v<PackedUIntT, std::uint32_t> && std::is_same_v<HiUIntT, std::uint16_t>)
+  {
+    const std::uint64_t packed_u = static_cast<std::uint32_t>(packed);
+    hi = static_cast<HiIntT>(packed_u >> WORD_SIZE);
+    lo = static_cast<LoIntT>(packed_u & LO_MASK);
+  }
+  else if constexpr (std::is_same_v<PackedUIntT, std::uint64_t> && std::is_same_v<HiUIntT, std::uint32_t>)
+  {
+    const auto packed_u = static_cast<std::uint64_t>(packed);
+    hi = static_cast<HiIntT>(packed_u >> WORD_SIZE);
+    lo = static_cast<LoIntT>(packed_u & LO_MASK);
+  }
+  else
+  {
+    static_assert(sizeof(PackedIntT) == 0,
+                  "Unsupported type"); // workaround before CWG2518/P2593R1
   }
 }
 
-enum class OperationType
+template <typename IntT, typename ResultT, typename ContainerT>
+void check_conversion_ctor(const ContainerT& test_case)
+{
+  using CustomIntT = rtw::fixed_point::Int<IntT>;
+
+  for (const auto& expected : test_case)
+  {
+    const CustomIntT result{expected};
+    const auto result_t = pack_hi_lo<ResultT>(result.hi(), result.lo());
+    const IntT expected_hi = -rtw::fixed_point::sign_bit(expected); // The sign is in the hi part
+    const auto expected_lo =
+        static_cast<typename CustomIntT::lo_type>(expected); // The lo part is the same as the input
+    EXPECT_EQ(result_t, expected);
+    EXPECT_EQ(result.hi(), expected_hi);
+    EXPECT_EQ(result.lo(), expected_lo);
+  }
+}
+
+template <typename IntT, typename ResultT, typename CustomIntT = rtw::fixed_point::Int<IntT>>
+constexpr void check_result(const CustomIntT result, const ResultT expected)
+{
+  IntT expected_hi;
+  typename CustomIntT::lo_type expected_lo;
+  unpack_hi_lo(expected, expected_hi, expected_lo);
+  const auto result_t = pack_hi_lo<ResultT>(result.hi(), result.lo());
+  EXPECT_EQ(result_t, expected);
+  EXPECT_EQ(result.hi(), expected_hi);
+  EXPECT_EQ(result.lo(), expected_lo);
+}
+
+enum class OperationType : std::uint8_t
 {
   ADD,
   SUB,
@@ -47,78 +139,52 @@ enum class OperationType
   MOD,
 };
 
-template <typename IntT, typename ResultT, OperationType Operation, typename Container>
-inline void check(const Container& test_case)
+// NOLINTBEGIN(readability-function-cognitive-complexity)
+template <typename IntT, typename ResultT, OperationType OPERATION, typename CustomIntT = rtw::fixed_point::Int<IntT>>
+void check_operation(const typename CustomIntT::hi_type a, const typename CustomIntT::hi_type b)
 {
-  using Int = rtw::fixed_point::Int<IntT>;
-  constexpr ResultT WORD_SIZE = sizeof(ResultT) * ResultT{4};
-  constexpr ResultT LoMask = (ResultT{1} << WORD_SIZE) - ResultT{1};
-
-  constexpr auto CHECK_OPERATION = [](const auto& a, const auto& b)
+  if constexpr (OPERATION == OperationType::ADD)
   {
-    if constexpr (Operation == OperationType::ADD)
+    check_result<IntT, ResultT>(CustomIntT{a} + CustomIntT{b}, ResultT{a} + ResultT{b});
+  }
+  else if constexpr (OPERATION == OperationType::SUB)
+  {
+    check_result<IntT, ResultT>(CustomIntT{a} - CustomIntT{b}, ResultT{a} - ResultT{b});
+  }
+  else if constexpr (OPERATION == OperationType::MUL)
+  {
+    check_result<IntT, ResultT>(CustomIntT{a} * CustomIntT{b}, ResultT{a} * ResultT{b});
+  }
+  else if constexpr (OPERATION == OperationType::DIV)
+  {
+    if (b == 0)
     {
-      const Int result = Int{a} + Int{b};
-      const ResultT expected = ResultT(a) + ResultT(b);
-      const ResultT result_t = ResultT(result.hi()) << WORD_SIZE | result.lo();
-      EXPECT_EQ(result_t, expected);
-      EXPECT_EQ(result.hi(), expected >> WORD_SIZE);
-      EXPECT_EQ(result.lo(), expected & LoMask);
+      EXPECT_DEATH(CustomIntT{a} / CustomIntT{b}, "");
+      return;
     }
-    else if constexpr (Operation == OperationType::SUB)
-    {
-      const Int result = Int{a} - Int{b};
-      const ResultT expected = ResultT(a) - ResultT(b);
-      const ResultT result_t = ResultT(result.hi()) << WORD_SIZE | result.lo();
-      EXPECT_EQ(result_t, expected);
-      EXPECT_EQ(result.hi(), expected >> WORD_SIZE);
-      EXPECT_EQ(result.lo(), expected & LoMask);
-    }
-    else if constexpr (Operation == OperationType::MUL)
-    {
-      const Int result = Int{a} * Int{b};
-      const ResultT expected = ResultT(a) * ResultT(b);
-      const ResultT result_t = ResultT(result.hi()) << WORD_SIZE | result.lo();
-      EXPECT_EQ(result_t, expected);
-      EXPECT_EQ(result.hi(), expected >> WORD_SIZE);
-      EXPECT_EQ(result.lo(), expected & LoMask);
-    }
-    else if constexpr (Operation == OperationType::DIV)
-    {
-      if (b == 0)
-      {
-        EXPECT_DEATH(Int{a} / Int{b}, "");
-        return;
-      }
 
-      const Int result = Int{a} / Int{b};
-      const ResultT expected = ResultT(a) / ResultT(b);
-      const ResultT result_t = ResultT(result.hi()) << WORD_SIZE | result.lo();
-      EXPECT_EQ(result_t, expected);
-      EXPECT_EQ(result.hi(), expected >> WORD_SIZE);
-      EXPECT_EQ(result.lo(), expected & LoMask);
-    }
-    else if constexpr (Operation == OperationType::MOD)
+    check_result<IntT, ResultT>(CustomIntT{a} / CustomIntT{b}, ResultT{a} / ResultT{b});
+  }
+  else if constexpr (OPERATION == OperationType::MOD)
+  {
+    if (b == 0)
     {
-      if (b == 0)
-      {
-        EXPECT_DEATH(Int{a} % Int{b}, "");
-        return;
-      }
-
-      const Int result = Int{a} % Int{b};
-      const ResultT expected = ResultT(a) % ResultT(b);
-      const ResultT result_t = ResultT(result.hi()) << WORD_SIZE | result.lo();
-      EXPECT_EQ(result_t, expected);
-      EXPECT_EQ(result.hi(), expected >> WORD_SIZE);
-      EXPECT_EQ(result.lo(), expected & LoMask);
+      EXPECT_DEATH(CustomIntT{a} % CustomIntT{b}, "");
+      return;
     }
-  };
 
+    check_result<IntT, ResultT>(CustomIntT{a} % CustomIntT{b}, ResultT{a} % ResultT{b});
+  }
+}
+// NOLINTEND(readability-function-cognitive-complexity)
+
+template <typename IntT, typename ResultT, OperationType OPERATION, typename ContainerT>
+void check(const ContainerT& test_case)
+{
   for (const auto& [a, b] : test_case)
   {
-    CHECK_OPERATION(a, b);
-    CHECK_OPERATION(b, a);
+    check_operation<IntT, ResultT, OPERATION>(a, b);
+    check_operation<IntT, ResultT, OPERATION>(b, a);
   }
 }
 } // namespace

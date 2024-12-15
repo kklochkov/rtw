@@ -32,12 +32,12 @@ public:
   using Matrix::z;
 
   template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 2)>>
-  constexpr explicit Point(const T x, const T y) : Matrix(x, y)
+  constexpr explicit Point(const T x, const T y) noexcept : Matrix(x, y)
   {
   }
 
   template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 3)>>
-  constexpr explicit Point(const T x, const T y, const T z) : Matrix(x, y, z)
+  constexpr explicit Point(const T x, const T y, const T z) noexcept : Matrix(x, y, z)
   {
   }
 
@@ -47,24 +47,24 @@ public:
   /// @param z The z coordinate.
   /// @param w The w coordinate. 1 by default to represent a position.
   template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 4)>>
-  constexpr explicit Point(const T x, const T y, const T z, const T w = T{1}) : Matrix(x, y, z, w)
+  constexpr explicit Point(const T x, const T y, const T z, const T w = T{1}) noexcept : Matrix(x, y, z, w)
   {
   }
 
   template <typename U = T, std::uint16_t M, typename = std::enable_if_t<std::is_same_v<U, T> && (M <= N)>>
-  constexpr explicit Point(const Point<U, M>& point) : Matrix(point.as_matrix())
+  constexpr explicit Point(const Point<U, M>& point) noexcept : Matrix(point.as_matrix())
   {
     operator[](M) = U{1}; // Set the last element to 1 to represent a position.
   }
 
-  constexpr explicit Point(const Matrix& matrix) : Matrix(matrix) {}
-  constexpr explicit Point(const Vector& vector) : Matrix(vector.as_matrix()) {}
+  constexpr explicit Point(const Matrix& matrix) noexcept : Matrix(matrix) {}
+  constexpr explicit Point(const Vector& vector) noexcept : Matrix(vector.as_matrix()) {}
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
   constexpr const Matrix& as_matrix() const noexcept { return static_cast<const Matrix&>(*this); }
 
-  constexpr explicit operator Vector() const { return Vector(as_matrix()); }
-  constexpr explicit operator Matrix() const { return as_matrix(); }
+  constexpr explicit operator Vector() const noexcept { return Vector(as_matrix()); }
+  constexpr explicit operator Matrix() const noexcept { return as_matrix(); }
 
   template <typename U = value_type, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
   constexpr Point<U, N> cast() const noexcept
@@ -79,25 +79,25 @@ public:
   constexpr Point<value_type, 3> xyz() const noexcept { return Point<value_type, 3>{as_matrix().xyz()}; }
   /// @}
 
-  constexpr Point& operator+=(const Vector& vector)
+  constexpr Point& operator+=(const Vector& vector) noexcept
   {
     as_matrix() += vector.as_matrix();
     return *this;
   }
 
-  constexpr Point& operator-=(const Vector& vector)
+  constexpr Point& operator-=(const Vector& vector) noexcept
   {
     as_matrix() -= vector.as_matrix();
     return *this;
   }
 
-  constexpr Point& operator*=(const value_type rhs)
+  constexpr Point& operator*=(const value_type rhs) noexcept
   {
     as_matrix() *= rhs;
     return *this;
   }
 
-  constexpr Point& operator/=(const value_type rhs)
+  constexpr Point& operator/=(const value_type rhs) noexcept
   {
     as_matrix() /= rhs;
     return *this;
@@ -105,29 +105,29 @@ public:
 
   /// Barton-Nackman trick to generate operators.
   /// @{
-  friend constexpr inline Point operator+(const Point& point, const Vector& vector)
+  friend constexpr Point operator+(const Point& point, const Vector& vector) noexcept
   {
     return Point{point.as_matrix() + vector.as_matrix()};
   }
 
-  friend constexpr inline Point operator-(const Point& point, const Vector& vector)
+  friend constexpr Point operator-(const Point& point, const Vector& vector) noexcept
   {
     return Point{point.as_matrix() - vector.as_matrix()};
   }
 
-  friend constexpr inline Vector operator-(const Point& lhs, const Point& rhs)
+  friend constexpr Vector operator-(const Point& lhs, const Point& rhs) noexcept
   {
     return Vector{lhs.as_matrix() - rhs.as_matrix()};
   }
 
-  friend constexpr inline bool operator==(const Point& lhs, const Point& rhs)
+  friend constexpr bool operator==(const Point& lhs, const Point& rhs) noexcept
   {
     return lhs.as_matrix() == rhs.as_matrix();
   }
 
-  friend constexpr inline bool operator!=(const Point& lhs, const Point& rhs) { return !(lhs == rhs); }
+  friend constexpr bool operator!=(const Point& lhs, const Point& rhs) noexcept { return !(lhs == rhs); }
 
-  friend inline std::ostream& operator<<(std::ostream& os, const Point& point)
+  friend std::ostream& operator<<(std::ostream& os, const Point& point) noexcept
   {
     os << "Point" << N;
     return point.as_matrix().operator<<(os);
@@ -136,7 +136,7 @@ public:
 };
 
 template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, typename = std::enable_if_t<(P <= M)>>
-constexpr inline Point<T, N> operator*(const Matrix<T, N, M>& lhs, const Point<T, P>& rhs)
+constexpr Point<T, N> operator*(const Matrix<T, N, M>& lhs, const Point<T, P>& rhs) noexcept
 {
   if constexpr (M == P)
   {

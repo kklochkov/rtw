@@ -16,7 +16,7 @@ TEST(Flags, default_constructor)
   using namespace rtw::sw_renderer;
 
   constexpr TestFlags FLAGS;
-  EXPECT_EQ(static_cast<TestEnum>(0), FLAGS);
+  EXPECT_TRUE(FLAGS.none());
 }
 
 TEST(Flags, constructor)
@@ -37,7 +37,7 @@ TEST(Flags, basic)
   EXPECT_TRUE(FLAGS.test(TestEnum::B));
   EXPECT_FALSE(FLAGS.test(TestEnum::C));
   EXPECT_TRUE(FLAGS);
-  EXPECT_EQ(TestEnum::A | TestEnum::B, static_cast<TestEnum>(FLAGS));
+  EXPECT_EQ(TestEnum::A | TestEnum::B, static_cast<std::uint8_t>(FLAGS));
   EXPECT_TRUE((FLAGS & TestEnum::A) == TestEnum::A);
   EXPECT_TRUE((FLAGS & TestEnum::B) == TestEnum::B);
   EXPECT_FALSE((FLAGS & TestEnum::C));
@@ -59,7 +59,7 @@ TEST(Flags, set)
   flags.set(TestEnum::B, false);
   EXPECT_EQ(TestEnum::C, flags);
   flags.set(TestEnum::C, false);
-  EXPECT_EQ(static_cast<TestEnum>(0), flags);
+  EXPECT_TRUE(flags.none());
 }
 
 TEST(Flags, operator_bitwise_or)
@@ -80,7 +80,7 @@ TEST(Flags, operator_bitwise_and)
   EXPECT_EQ(TestEnum::A | TestEnum::B, FLAGS);
   EXPECT_EQ(TestEnum::A, FLAGS & TestEnum::A);
   EXPECT_EQ(TestEnum::B, FLAGS & TestEnum::B);
-  EXPECT_EQ(static_cast<TestEnum>(0), FLAGS & TestEnum::C);
+  EXPECT_FALSE(FLAGS.test(TestEnum::C));
 }
 
 TEST(Flags, operator_bitwise_xor)
@@ -115,7 +115,7 @@ TEST(Flags, operator_bitwise_and_equal)
   flags &= TestEnum::A;
   EXPECT_EQ(TestEnum::A, flags);
   flags &= TestEnum::B;
-  EXPECT_EQ(static_cast<TestEnum>(0), flags);
+  EXPECT_TRUE(flags.none());
 }
 
 TEST(Flags, operator_bitwise_xor_equal)

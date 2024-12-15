@@ -11,7 +11,7 @@ namespace rtw::fixed_point
 /// @param value The integer value.
 /// @return For signed integers, it returns the sign bit, otherwise it returns false.
 template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
-constexpr inline bool sign_bit(const T value)
+constexpr bool sign_bit(const T value) noexcept
 {
   if constexpr (std::is_signed_v<T>)
   {
@@ -24,7 +24,7 @@ constexpr inline bool sign_bit(const T value)
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
-constexpr inline std::int32_t count_leading_zero(const T value)
+constexpr std::int32_t count_leading_zero(const T value) noexcept
 {
   constexpr std::uint32_t WORD_SIZE = sizeof(T) * 8U;
 

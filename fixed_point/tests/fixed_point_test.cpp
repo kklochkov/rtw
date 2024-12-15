@@ -1,13 +1,13 @@
 #include "fixed_point/fixed_point.h"
 
-#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 TEST(FixedPoint8, constants)
 {
-  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint8::Type>::min()
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint8::type>::min()
                     == rtw::fixed_point::FixedPoint8::MIN_INTEGER,
                 "The minimum value of the underlying type must be correct");
-  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint8::Type>::max()
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint8::type>::max()
                     == rtw::fixed_point::FixedPoint8::MAX_INTEGER,
                 "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::FixedPoint8::BITS, 16);
@@ -24,10 +24,10 @@ TEST(FixedPoint8, constants)
 
 TEST(FixedPoint8u, constants)
 {
-  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint8u::Type>::min()
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint8u::type>::min()
                     == rtw::fixed_point::FixedPoint8u::MIN_INTEGER,
                 "The minimum value of the underlying type must be correct");
-  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint8u::Type>::max()
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint8u::type>::max()
                     == rtw::fixed_point::FixedPoint8u::MAX_INTEGER,
                 "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::FixedPoint8u::BITS, 16);
@@ -44,10 +44,10 @@ TEST(FixedPoint8u, constants)
 
 TEST(FixedPoint16, constants)
 {
-  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint16::Type>::min()
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint16::type>::min()
                     == rtw::fixed_point::FixedPoint16::MIN_INTEGER,
                 "The minimum value of the underlying type must be correct");
-  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint16::Type>::max()
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint16::type>::max()
                     == rtw::fixed_point::FixedPoint16::MAX_INTEGER,
                 "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::FixedPoint16::BITS, 32);
@@ -64,10 +64,10 @@ TEST(FixedPoint16, constants)
 
 TEST(FixedPoint16u, constants)
 {
-  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint16u::Type>::min()
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint16u::type>::min()
                     == rtw::fixed_point::FixedPoint16u::MIN_INTEGER,
                 "The minimum value of the underlying type must be correct");
-  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint16u::Type>::max()
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint16u::type>::max()
                     == rtw::fixed_point::FixedPoint16u::MAX_INTEGER,
                 "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::FixedPoint16u::BITS, 32);
@@ -527,22 +527,23 @@ TYPED_TEST(UnsignedFixedPointTest, assignment)
 }
 // -----------------------------------------------------------------------------------------------
 using WrapFixedPoint8 =
-    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint8::Type, rtw::fixed_point::FixedPoint8::FRACTIONAL_BITS,
-                                 rtw::fixed_point::FixedPoint8::SaturationType, rtw::fixed_point::OverflowPolicy::WRAP>;
+    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint8::type, rtw::fixed_point::FixedPoint8::FRACTIONAL_BITS,
+                                 rtw::fixed_point::FixedPoint8::saturation_type,
+                                 rtw::fixed_point::OverflowPolicy::WRAP>;
 
 using WrapFixedPoint16 =
-    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint16::Type, rtw::fixed_point::FixedPoint16::FRACTIONAL_BITS,
-                                 rtw::fixed_point::FixedPoint16::SaturationType,
+    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint16::type, rtw::fixed_point::FixedPoint16::FRACTIONAL_BITS,
+                                 rtw::fixed_point::FixedPoint16::saturation_type,
                                  rtw::fixed_point::OverflowPolicy::WRAP>;
 
 using WrapFixedPoint8u =
-    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint8u::Type, rtw::fixed_point::FixedPoint8u::FRACTIONAL_BITS,
-                                 rtw::fixed_point::FixedPoint8u::SaturationType,
+    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint8u::type, rtw::fixed_point::FixedPoint8u::FRACTIONAL_BITS,
+                                 rtw::fixed_point::FixedPoint8u::saturation_type,
                                  rtw::fixed_point::OverflowPolicy::WRAP>;
 
 using WrapFixedPoint16u = rtw::fixed_point::FixedPoint<
-    rtw::fixed_point::FixedPoint16u::Type, rtw::fixed_point::FixedPoint16u::FRACTIONAL_BITS,
-    rtw::fixed_point::FixedPoint16u::SaturationType, rtw::fixed_point::OverflowPolicy::WRAP>;
+    rtw::fixed_point::FixedPoint16u::type, rtw::fixed_point::FixedPoint16u::FRACTIONAL_BITS,
+    rtw::fixed_point::FixedPoint16u::saturation_type, rtw::fixed_point::OverflowPolicy::WRAP>;
 
 template <typename T>
 class WrapFixedPointTest : public ::testing::Test
@@ -552,21 +553,21 @@ public:
   /// @{
   constexpr double expected_plus_max_value() const
   {
-    if constexpr (std::is_same_v<typename T::Type, std::int16_t>)
+    if constexpr (std::is_same_v<typename T::type, std::int16_t>)
     {
-      return static_cast<double>(std::int8_t(std::int8_t(127) + std::int8_t(1)));
+      return static_cast<double>(static_cast<std::int8_t>(std::int8_t{127} + std::int8_t{1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::int32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::int32_t>)
     {
-      return static_cast<double>(std::int16_t(std::int16_t(32'767) + std::int16_t(1)));
+      return static_cast<double>(static_cast<std::int16_t>(std::int16_t{32'767} + std::int16_t{1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint16_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
-      return static_cast<double>(std::uint8_t(std::uint8_t(255) + std::uint8_t(1)));
+      return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{255} + std::uint8_t{1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
-      return static_cast<double>(std::uint16_t(std::uint16_t(65'535) + std::uint16_t(1)));
+      return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{65'535} + std::uint16_t{1}));
     }
     else
     {
@@ -577,21 +578,21 @@ public:
 
   constexpr double expected_plus_min_value() const
   {
-    if constexpr (std::is_same_v<typename T::Type, std::int16_t>)
+    if constexpr (std::is_same_v<typename T::type, std::int16_t>)
     {
-      return static_cast<double>(std::int8_t(std::int8_t(-128) + std::int8_t(-1)));
+      return static_cast<double>(static_cast<std::int8_t>(std::int8_t{-128} + std::int8_t{-1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::int32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::int32_t>)
     {
-      return static_cast<double>(std::int16_t(std::int16_t(-32'768) + std::int16_t(-1)));
+      return static_cast<double>(static_cast<std::int16_t>(std::int16_t{-32'768} + std::int16_t{-1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint16_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
-      return static_cast<double>(std::uint8_t(std::uint8_t(0) + std::uint8_t(-1)));
+      return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{0} + static_cast<std::uint8_t>(-1)));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
-      return static_cast<double>(std::uint16_t(std::uint16_t(0) + std::uint16_t(-1)));
+      return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{0} + static_cast<std::uint16_t>(-1)));
     }
     else
     {
@@ -602,21 +603,21 @@ public:
 
   constexpr double expected_minus_max_value() const
   {
-    if constexpr (std::is_same_v<typename T::Type, std::int16_t>)
+    if constexpr (std::is_same_v<typename T::type, std::int16_t>)
     {
-      return static_cast<double>(std::int8_t(std::int8_t(127) - std::int8_t(-1)));
+      return static_cast<double>(static_cast<std::int8_t>(std::int8_t{127} - std::int8_t{-1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::int32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::int32_t>)
     {
-      return static_cast<double>(std::int16_t(std::int16_t(32'767) - std::int16_t(-1)));
+      return static_cast<double>(static_cast<std::int16_t>(std::int16_t{32'767} - std::int16_t{-1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint16_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
-      return static_cast<double>(std::uint8_t(std::uint8_t(255) - std::uint8_t(-1)));
+      return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{255} - static_cast<std::uint8_t>(-1)));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
-      return static_cast<double>(std::uint16_t(std::uint16_t(65'535) - std::uint16_t(-1)));
+      return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{65'535} - static_cast<std::uint16_t>(-1)));
     }
     else
     {
@@ -627,21 +628,21 @@ public:
 
   constexpr double expected_minus_min_value() const
   {
-    if constexpr (std::is_same_v<typename T::Type, std::int16_t>)
+    if constexpr (std::is_same_v<typename T::type, std::int16_t>)
     {
-      return static_cast<double>(std::int8_t(std::int8_t(-128) - std::int8_t(1)));
+      return static_cast<double>(static_cast<std::int8_t>(std::int8_t{-128} - std::int8_t{1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::int32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::int32_t>)
     {
-      return static_cast<double>(std::int16_t(std::int16_t(-32'768) - std::int16_t(1)));
+      return static_cast<double>(static_cast<std::int16_t>(std::int16_t{-32'768} - std::int16_t{1}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint16_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
-      return static_cast<double>(std::uint8_t(std::uint8_t(0) - std::uint8_t(1)));
+      return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{0} - static_cast<std::uint8_t>(1)));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
-      return static_cast<double>(std::uint16_t(std::int16_t(0) - std::uint16_t(1)));
+      return static_cast<double>(static_cast<std::uint16_t>(std::int16_t{0} - static_cast<std::uint16_t>(1)));
     }
     else
     {
@@ -652,21 +653,21 @@ public:
 
   constexpr double expected_mul_min_value() const
   {
-    if constexpr (std::is_same_v<typename T::Type, std::int16_t>)
+    if constexpr (std::is_same_v<typename T::type, std::int16_t>)
     {
-      return static_cast<double>(std::int8_t(std::int8_t(127) * std::int8_t(2)));
+      return static_cast<double>(static_cast<std::int8_t>(std::int8_t{127} * std::int8_t{2}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::int32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::int32_t>)
     {
-      return static_cast<double>(std::int16_t(std::int16_t(32'767) * std::int16_t(2)));
+      return static_cast<double>(static_cast<std::int16_t>(std::int16_t{32'767} * std::int16_t{2}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint16_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
-      return static_cast<double>(std::uint8_t(std::uint8_t(255) * std::uint8_t(2)));
+      return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{255} * static_cast<std::uint8_t>(2)));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
-      return static_cast<double>(std::uint16_t(std::uint16_t(65'535) * std::uint16_t(2)));
+      return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{65'535} * static_cast<std::uint16_t>(2)));
     }
     else
     {
@@ -677,21 +678,21 @@ public:
 
   constexpr double expected_mul_max_value() const
   {
-    if constexpr (std::is_same_v<typename T::Type, std::int16_t>)
+    if constexpr (std::is_same_v<typename T::type, std::int16_t>)
     {
-      return static_cast<double>(std::int8_t(std::int8_t(-128) * std::int8_t(2)));
+      return static_cast<double>(static_cast<std::int8_t>(std::int8_t{-128} * std::int8_t{2}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::int32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::int32_t>)
     {
-      return static_cast<double>(std::int16_t(std::int16_t(-32'768) * std::int16_t(2)));
+      return static_cast<double>(static_cast<std::int16_t>(std::int16_t{-32'768} * std::int16_t{2}));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint16_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
-      return static_cast<double>(std::uint8_t(std::uint8_t(0) * std::uint8_t(2)));
+      return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{0} * static_cast<std::uint8_t>(2)));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
-      return static_cast<double>(std::uint16_t(std::uint16_t(0) * std::uint16_t(2)));
+      return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{0} * static_cast<std::uint16_t>(2)));
     }
     else
     {
@@ -702,21 +703,22 @@ public:
 
   constexpr double expected_div_min_value() const
   {
-    if constexpr (std::is_same_v<typename T::Type, std::int16_t>)
+    if constexpr (std::is_same_v<typename T::type, std::int16_t>)
     {
-      return static_cast<double>(std::int8_t(std::int8_t(127) * (std::int8_t(1) / std::int8_t(2))));
+      return static_cast<double>(static_cast<std::int8_t>(std::int8_t{127} * (std::int8_t{1} / std::int8_t{2})));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::int32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::int32_t>)
     {
-      return static_cast<double>(std::int16_t(std::int16_t(32'767) * (std::int16_t(1) / std::int16_t(2))));
+      return static_cast<double>(static_cast<std::int16_t>(std::int16_t{32'767} * (std::int16_t{1} / std::int16_t{2})));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint16_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
-      return static_cast<double>(std::uint8_t(std::uint8_t(255) * (std::uint8_t(1) / std::uint8_t(2))));
+      return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{255} * (std::uint8_t{1} / std::uint8_t{2})));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
-      return static_cast<double>(std::uint16_t(std::uint16_t(65'535) * (std::uint16_t(1) / std::uint16_t(2))));
+      return static_cast<double>(
+          static_cast<std::uint16_t>(std::uint16_t{65'535} * (std::uint16_t{1} / std::uint16_t{2})));
     }
     else
     {
@@ -727,21 +729,22 @@ public:
 
   constexpr double expected_div_max_value() const
   {
-    if constexpr (std::is_same_v<typename T::Type, std::int16_t>)
+    if constexpr (std::is_same_v<typename T::type, std::int16_t>)
     {
-      return static_cast<double>(std::int8_t(std::int8_t(-128) * (std::int8_t(1) / std::int8_t(2))));
+      return static_cast<double>(static_cast<std::int8_t>(std::int8_t{-128} * (std::int8_t{1} / std::int8_t{2})));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::int32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::int32_t>)
     {
-      return static_cast<double>(std::int16_t(std::int16_t(-32'767) * (std::int16_t(1) / std::int16_t(2))));
+      return static_cast<double>(
+          static_cast<std::int16_t>(std::int16_t{-32'767} * (std::int16_t{1} / std::int16_t{2})));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint16_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
-      return static_cast<double>(std::uint8_t(std::uint8_t(0) * (std::uint8_t(1) / std::uint8_t(2))));
+      return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{0} * (std::uint8_t{1} / std::uint8_t{2})));
     }
-    else if constexpr (std::is_same_v<typename T::Type, std::uint32_t>)
+    else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
-      return static_cast<double>(std::uint16_t(std::uint16_t(0) * (std::uint16_t(1) / std::uint16_t(2))));
+      return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{0} * (std::uint16_t{1} / std::uint16_t{2})));
     }
     else
     {
@@ -763,7 +766,7 @@ TYPED_TEST(WrapFixedPointTest, arithmetic_wrap)
     const auto c = a + b;
     EXPECT_EQ(c, this->expected_plus_max_value());
   }
-  if constexpr (std::is_signed_v<typename TypeParam::Type>)
+  if constexpr (std::is_signed_v<typename TypeParam::type>)
   {
     {
       const TypeParam a(static_cast<double>(TypeParam::MIN));

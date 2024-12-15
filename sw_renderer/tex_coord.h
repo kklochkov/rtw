@@ -23,14 +23,14 @@ public:
   using Matrix::data;
   using Matrix::end;
 
-  constexpr explicit TexCoord(const Matrix& matrix) : Matrix(matrix) {}
-  constexpr explicit TexCoord(const Vector& vector) : Matrix(vector.as_matrix()) {}
+  constexpr explicit TexCoord(const Matrix& matrix) noexcept : Matrix(matrix) {}
+  constexpr explicit TexCoord(const Vector& vector) noexcept : Matrix(vector.as_matrix()) {}
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
   constexpr const Matrix& as_matrix() const noexcept { return static_cast<const Matrix&>(*this); }
 
-  constexpr explicit operator Vector() const { return Vector{as_matrix()}; }
-  constexpr explicit operator Matrix() const { return as_matrix(); }
+  constexpr explicit operator Vector() const noexcept { return Vector{as_matrix()}; }
+  constexpr explicit operator Matrix() const noexcept { return as_matrix(); }
 
   constexpr value_type u() const noexcept { return operator[](0); }
   constexpr reference u() noexcept { return operator[](0); }
@@ -44,13 +44,13 @@ public:
   constexpr value_type t() const noexcept { return v(); }
   constexpr reference t() noexcept { return v(); }
 
-  constexpr TexCoord& operator*=(const value_type rhs)
+  constexpr TexCoord& operator*=(const value_type rhs) noexcept
   {
     as_matrix() *= rhs;
     return *this;
   }
 
-  constexpr TexCoord& operator/=(const value_type rhs)
+  constexpr TexCoord& operator/=(const value_type rhs) noexcept
   {
     as_matrix() /= rhs;
     return *this;
@@ -58,31 +58,31 @@ public:
 
   /// Barton-Nackman trick to generate operators.
   /// @{
-  friend constexpr inline TexCoord operator+(const TexCoord& lhs, const TexCoord& rhs)
+  friend constexpr TexCoord operator+(const TexCoord& lhs, const TexCoord& rhs) noexcept
   {
     return TexCoord{lhs.as_matrix() + rhs.as_matrix()};
   }
 
-  friend constexpr inline TexCoord operator*(const TexCoord& lhs, const value_type rhs)
+  friend constexpr TexCoord operator*(const TexCoord& lhs, const value_type rhs) noexcept
   {
     return TexCoord{lhs.as_matrix() * rhs};
   }
 
-  friend constexpr inline TexCoord operator*(const value_type lhs, const TexCoord& rhs) { return rhs * lhs; }
+  friend constexpr TexCoord operator*(const value_type lhs, const TexCoord& rhs) noexcept { return rhs * lhs; }
 
-  friend constexpr inline bool operator==(const TexCoord& lhs, const TexCoord& rhs)
+  friend constexpr bool operator==(const TexCoord& lhs, const TexCoord& rhs) noexcept
   {
     return lhs.as_matrix() == rhs.as_matrix();
   }
 
-  friend constexpr inline TexCoord operator/(const TexCoord& lhs, const value_type rhs)
+  friend constexpr TexCoord operator/(const TexCoord& lhs, const value_type rhs) noexcept
   {
     return TexCoord{lhs.as_matrix() / rhs};
   }
 
-  friend constexpr inline bool operator!=(const TexCoord& lhs, const TexCoord& rhs) { return !(lhs == rhs); }
+  friend constexpr bool operator!=(const TexCoord& lhs, const TexCoord& rhs) noexcept { return !(lhs == rhs); }
 
-  friend inline std::ostream& operator<<(std::ostream& os, const TexCoord& coord)
+  friend std::ostream& operator<<(std::ostream& os, const TexCoord& coord) noexcept
   {
     os << "TexCoord" << N;
     return coord.as_matrix().operator<<(os);
@@ -96,7 +96,7 @@ using TexCoord2f = TexCoord<float>;
 using TexCoord2d = TexCoord<double>;
 
 template <typename T>
-constexpr inline TexCoord2<T> lerp(const TexCoord2<T>& lhs, const TexCoord2<T>& rhs, const T t)
+constexpr TexCoord2<T> lerp(const TexCoord2<T>& lhs, const TexCoord2<T>& rhs, const T t) noexcept
 {
   return TexCoord2<T>{math::lerp(lhs.as_matrix(), rhs.as_matrix(), t)};
 }

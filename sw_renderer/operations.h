@@ -17,8 +17,8 @@ namespace rtw::sw_renderer
 /// @param[in] p The point.
 /// @return The barycentric coordinate.
 template <typename T>
-constexpr inline Barycentric<T> make_barycentric(const math::Point2<T>& v0, const math::Point2<T>& v1,
-                                                 const math::Point2<T>& v2, const math::Point2<T>& p)
+constexpr Barycentric<T> make_barycentric(const math::Point2<T>& v0, const math::Point2<T>& v1,
+                                          const math::Point2<T>& v2, const math::Point2<T>& p) noexcept
 {
   const auto a = v2 - v1;
   const auto b = v0 - v2;
@@ -40,7 +40,7 @@ constexpr inline Barycentric<T> make_barycentric(const math::Point2<T>& v0, cons
 /// @param[in] b The barycentric coordinate.
 /// @return True if the point is inside the triangle, false otherwise.
 template <typename T>
-constexpr inline bool contains(const Barycentric<T>& b)
+constexpr bool contains(const Barycentric<T>& b) noexcept
 {
   return b.alpha() >= T{0} && b.beta() >= T{0} && b.gamma() >= T{0};
 }
@@ -55,22 +55,22 @@ constexpr inline bool contains(const Barycentric<T>& b)
 /// @param[in] p The point.
 /// @return True if the point is inside the triangle, false otherwise.
 template <typename T>
-constexpr inline bool contains(const math::Point2<T>& v0, const math::Point2<T>& v1, const math::Point2<T>& v2,
-                               const math::Point2<T>& p)
+constexpr bool contains(const math::Point2<T>& v0, const math::Point2<T>& v1, const math::Point2<T>& v2,
+                        const math::Point2<T>& p) noexcept
 {
   const auto b = make_barycentric(v0, v1, v2, p);
   return contains(b);
 }
 
 template <typename T>
-constexpr inline bool is_top_left(const math::Vector2<T>& edge)
+constexpr bool is_top_left(const math::Vector2<T>& edge) noexcept
 {
   const bool is_top = edge.y() == T{0} && edge.x() < T{0};
   const bool is_left = edge.y() > T{0};
   return is_top || is_left;
 }
 
-enum class WindingOrder
+enum class WindingOrder : std::uint8_t
 {
   COUNTER_CLOCKWISE,
   CLOCKWISE
@@ -83,7 +83,8 @@ enum class WindingOrder
 /// @param[in] v2 The third vertex of the triangle.
 /// @return The winding order of the triangle.
 template <typename T>
-constexpr WindingOrder winding_order(const math::Point2<T>& v0, const math::Point2<T>& v1, const math::Point2<T>& v2)
+constexpr WindingOrder winding_order(const math::Point2<T>& v0, const math::Point2<T>& v1,
+                                     const math::Point2<T>& v2) noexcept
 {
   return math::cross(v1 - v0, v2 - v1) > T{0} ? WindingOrder::COUNTER_CLOCKWISE : WindingOrder::CLOCKWISE;
 }

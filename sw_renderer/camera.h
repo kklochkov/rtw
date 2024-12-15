@@ -13,8 +13,8 @@ namespace rtw::sw_renderer
 /// @param[in] up The up vector that defines the orientation of the camera.
 /// @return The look-at matrix.
 template <typename T>
-constexpr inline math::Matrix4x4<T> make_look_at(const math::Point3<T>& eye, const math::Point3<T>& target,
-                                                 const math::Vector3<T>& up = math::Vector3<T>{T{0}, T{1}, T{0}})
+constexpr math::Matrix4x4<T> make_look_at(const math::Point3<T>& eye, const math::Point3<T>& target,
+                                          const math::Vector3<T>& up = math::Vector3<T>{T{0}, T{1}, T{0}}) noexcept
 {
   const auto z = math::normalize(eye - target);
   const auto x = math::normalize(math::cross(up, z));
