@@ -8,14 +8,14 @@
 namespace rtw::sw_renderer
 {
 
-template <typename T, std::size_t Capacity>
-using ConvexPolygonVertex4 = math::ConvexPolygon<T, Vertex4, Capacity>;
-template <std::size_t Capacity>
-using ConvexPolygonVertex4f = ConvexPolygonVertex4<float, Capacity>;
-template <std::size_t Capacity>
-using ConvexPolygonVertex4d = ConvexPolygonVertex4<double, Capacity>;
-template <std::size_t Capacity>
-using ConvexPolygonVertex4i = ConvexPolygonVertex4<int, Capacity>;
+template <typename T, std::size_t CAPACITY>
+using ConvexPolygonVertex4 = math::ConvexPolygon<T, Vertex4, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygonVertex4f = ConvexPolygonVertex4<float, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygonVertex4d = ConvexPolygonVertex4<double, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygonVertex4i = ConvexPolygonVertex4<int, CAPACITY>;
 
 template <typename T>
 using TriangleVertex4 = ConvexPolygonVertex4<T, 3>;
@@ -24,15 +24,15 @@ using TriangleVertex4d = TriangleVertex4<double>;
 using TriangleVertex4i = TriangleVertex4<int>;
 
 /// Clips a triangle against the frustum using the Sutherland-Hodgman algorithm.
-/// @tparam Capacity The maximum number of vertices the polygon can hold.
+/// @tparam CAPACITY The maximum number of vertices the polygon can hold.
 /// @param polygon The polygon to clip.
 /// @param plane The plane to clip against.
 /// @return The clipped polygon.
-template <typename T, std::size_t Capacity = 8U>
-constexpr ConvexPolygonVertex4<T, Capacity> clip_against_plane(const ConvexPolygonVertex4<T, Capacity>& polygon,
-                                                               const Plane3<T>& plane)
+template <typename T, std::size_t CAPACITY = 8U>
+constexpr ConvexPolygonVertex4<T, CAPACITY> clip_against_plane(const ConvexPolygonVertex4<T, CAPACITY>& polygon,
+                                                               const Plane3<T>& plane) noexcept
 {
-  ConvexPolygonVertex4<T, Capacity> clipped_result;
+  ConvexPolygonVertex4<T, CAPACITY> clipped_result;
   for (std::size_t i = 0U; i < polygon.size(); ++i)
   {
     const auto& current = polygon.at(i);
@@ -61,17 +61,17 @@ constexpr ConvexPolygonVertex4<T, Capacity> clip_against_plane(const ConvexPolyg
 }
 
 /// Clips a triangle against the frustum using the Sutherland-Hodgman algorithm.
-/// @tparam Capacity The maximum number of vertices the polygon can hold.
+/// @tparam CAPACITY The maximum number of vertices the polygon can hold.
 /// @param p0 The first vertex of the triangle.
 /// @param p1 The second vertex of the triangle.
 /// @param p2 The third vertex of the triangle.
 /// @param frustum The frustum to clip against.
 /// @return The clipped triangle.
-template <typename T, std::size_t Capacity = 8U>
-constexpr ConvexPolygonVertex4<T, Capacity> clip(const Vertex4<T>& v0, const Vertex4<T>& v1, const Vertex4<T>& v2,
-                                                 const Frustum3<T>& frustum)
+template <typename T, std::size_t CAPACITY = 8U>
+constexpr ConvexPolygonVertex4<T, CAPACITY> clip(const Vertex4<T>& v0, const Vertex4<T>& v1, const Vertex4<T>& v2,
+                                                 const Frustum3<T>& frustum) noexcept
 {
-  ConvexPolygonVertex4<T, Capacity> result;
+  ConvexPolygonVertex4<T, CAPACITY> result;
   result.push_back(v0);
   result.push_back(v1);
   result.push_back(v2);
@@ -86,24 +86,24 @@ constexpr ConvexPolygonVertex4<T, Capacity> clip(const Vertex4<T>& v0, const Ver
 }
 
 /// The result of the triangulation of a convex polygon.
-/// @tparam Capacity The maximum number of vertices the polygon can hold.
+/// @tparam CAPACITY The maximum number of vertices the polygon can hold.
 /// @tparam T The type of the polygon's vertices.
-template <typename T, std::size_t Capacity = 8U>
+template <typename T, std::size_t CAPACITY = 8U>
 struct TriangulationResult
 {
-  std::array<TriangleVertex4<T>, Capacity> triangles;
+  std::array<TriangleVertex4<T>, CAPACITY> triangles;
   std::size_t triangle_count{};
 };
 
 /// Triangulates a convex polygon.
 /// Resulting triangles are counter-clockwise.
-/// @tparam Capacity The maximum number of vertices the polygon can hold.
+/// @tparam CAPACITY The maximum number of vertices the polygon can hold.
 /// @param polygon The polygon to triangulate.
 /// @return The triangulation result.
-template <typename T, std::size_t Capacity = 8U>
-constexpr inline TriangulationResult<T, Capacity> triangulate(const ConvexPolygonVertex4<T, Capacity>& polygon)
+template <typename T, std::size_t CAPACITY = 8U>
+constexpr TriangulationResult<T, CAPACITY> triangulate(const ConvexPolygonVertex4<T, CAPACITY>& polygon) noexcept
 {
-  TriangulationResult<T, Capacity> result;
+  TriangulationResult<T, CAPACITY> result;
 
   if (polygon.valid())
   {

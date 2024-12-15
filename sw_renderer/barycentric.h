@@ -22,14 +22,14 @@ public:
   using Matrix::data;
   using Matrix::end;
 
-  constexpr explicit Barycentric(const Matrix& matrix) : Matrix(matrix) {}
-  constexpr explicit Barycentric(const Vector& vector) : Matrix(vector.as_matrix()) {}
+  constexpr explicit Barycentric(const Matrix& matrix) noexcept : Matrix(matrix) {}
+  constexpr explicit Barycentric(const Vector& vector) noexcept  : Matrix(vector.as_matrix()) {}
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
   constexpr const Matrix& as_matrix() const noexcept { return static_cast<const Matrix&>(*this); }
 
-  constexpr explicit operator Vector() const { return Vector{as_matrix()}; }
-  constexpr explicit operator Matrix() const { return as_matrix(); }
+  constexpr explicit operator Vector() const noexcept { return Vector{as_matrix()}; }
+  constexpr explicit operator Matrix() const noexcept { return as_matrix(); }
 
   constexpr value_type w0() const noexcept { return operator[](0); }
   constexpr reference w0() noexcept { return operator[](0); }
@@ -60,14 +60,14 @@ public:
 
   /// Barton-Nackman trick to generate operators.
   /// @{
-  friend constexpr inline bool operator==(const Barycentric& lhs, const Barycentric& rhs)
+  friend constexpr bool operator==(const Barycentric& lhs, const Barycentric& rhs) noexcept
   {
     return lhs.as_matrix() == rhs.as_matrix();
   }
 
-  friend constexpr inline bool operator!=(const Barycentric& lhs, const Barycentric& rhs) { return !(lhs == rhs); }
+  friend constexpr bool operator!=(const Barycentric& lhs, const Barycentric& rhs) noexcept  { return !(lhs == rhs); }
 
-  friend inline std::ostream& operator<<(std::ostream& os, const Barycentric& coord)
+  friend std::ostream& operator<<(std::ostream& os, const Barycentric& coord) noexcept
   {
     os << "Barycentric" << N;
     return coord.as_matrix().operator<<(os);

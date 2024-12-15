@@ -6,11 +6,9 @@
 # -cppcoreguidelines-avoid-c-arrays - sometimes it's useful, might enable in future
 # -google-readability-todo - irrelevant for now, but might use in future with github's TODOs
 # -google-build-using-namespace - too strict
-# -google-readability-avoid-underscore-in-googletest-name - disabled for now, might either fix in future or switch to Catch2
 # -modernize-use-trailing-return-type - looks a bit unnatural for most of the cases, makes sense for lambdas and when a type needs to be deduced
 # -modernize-use-nodiscard - nice to have, but not a priority
 # -modernize-avoid-c-arrays - same as cppcoreguidelines-avoid-c-arrays
-# -modernize-return-braced-init-list - readability suffers, therefor disabled
 # -readability-redundant-access-specifiers - personal choice, I like to split data members and member functions
 # -readability-magic-numbers - same as cppcoreguidelines-avoid-magic-numbers
 # -readability-identifier-length - in math and physics libs, single letter variables are common, so disabled
@@ -34,11 +32,9 @@ Checks: >
   -cppcoreguidelines-avoid-c-arrays,
   -google-readability-todo,
   -google-build-using-namespace,
-  -google-readability-avoid-underscore-in-googletest-name,
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
   -modernize-avoid-c-arrays,
-  -modernize-return-braced-init-list,
   -readability-redundant-access-specifiers,
   -readability-magic-numbers,
   -readability-identifier-length,
@@ -84,10 +80,28 @@ CheckOptions:
     value: UPPER_CASE
   - key: readability-identifier-naming.ParameterCase
     value: lower_case
-  - key: readability-identifier-naming.TypeAliasCase
-    value: CamelCase
+  - key: readability-identifier-naming.ParameterPackCase
+    value: lower_case
   - key: readability-identifier-naming.TemplateParameterCase
     value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterSuffix
+    value: T
+  - key: readability-identifier-naming.TemplateTemplateParameterIgnoredRegexp
+    value: '^(T|U)$'
+  - key: readability-identifier-naming.TemplateTemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateTemplateParameterSuffix
+    value: T
+  - key: readability-identifier-naming.TemplateTemplateParameterIgnoredRegexp
+    value: '^(T|U)$'
+  - key: readability-identifier-naming.TypeTemplateParameterCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeTemplateParameterSuffix
+    value: T
+  - key: readability-identifier-naming.TypeTemplateParameterIgnoredRegexp
+    value: '^(T|U)$'
+  - key: readability-identifier-naming.ValueTemplateParameterCase
+    value: UPPER_CASE
   - key: readability-implicit-bool-conversion.AllowIntegerConditions
     value: 1
   - key: readability-implicit-bool-conversion.AllowPointerConditions

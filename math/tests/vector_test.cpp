@@ -39,7 +39,8 @@ TEST(Vector, copy_ctor)
 TEST(Vector, move_ctor)
 {
   rtw::math::Vector2i v1{1, 2};
-  const rtw::math::Vector2i v2{std::move(v1)}; // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  const rtw::math::Vector2i v2{std::move(v1)};
   EXPECT_THAT(v2, ::testing::ElementsAre(1, 2));
 }
 
@@ -55,7 +56,8 @@ TEST(Vector, move_assign)
 {
   rtw::math::Vector2i v1{1, 2};
   rtw::math::Vector2i v2;
-  v2 = std::move(v1); // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  v2 = std::move(v1);
   EXPECT_THAT(v2, ::testing::ElementsAre(1, 2));
 }
 

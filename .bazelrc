@@ -19,6 +19,7 @@ build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
 build --nokeep_going
 test  --nokeep_going
 test --test_output=errors
+test --test_env=GTEST_COLOR=1
 
 # C++17 standard
 build --cxxopt=--std=c++17
@@ -41,6 +42,7 @@ build:sanitizers --strip=never
 build:asan --config=sanitizers
 build:asan --copt -fsanitize=address
 build:asan --linkopt -fsanitize=address
+build:asan --test_env=ASAN_OPTIONS=color=always
 
 build:tsan --config=sanitizers
 build:tsan --copt -fsanitize=thread
@@ -49,10 +51,12 @@ build:tsan --linkopt -fsanitize=thread
 build:msan --config=sanitizers
 build:msan --copt=-fsanitize=memory
 build:msan --linkopt=-fsanitize=memory
+build:msan --test_env=MSAN_OPTIONS=color=always
 
 build:ubsan --config=sanitizers
 build:ubsan --copt=-fsanitize=undefined
 build:ubsan --linkopt=-fsanitize=undefined
+build:ubsan --test_env=UBSAN_OPTIONS=color=always
 
 build:sssan --config=sanitizers
 build:sssan --copt=-fsanitize=safe-stack

@@ -161,10 +161,10 @@ void Application::init_imgui()
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
-  // NOLINTBEGIN (hicpp-signed-bitwise)
+  // NOLINTBEGIN(hicpp-signed-bitwise)
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-  // NOLINTEND (hicpp-signed-bitwise)
+  // NOLINTEND(hicpp-signed-bitwise)
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
@@ -300,13 +300,13 @@ void Application::update(const rtw::sw_renderer::Seconds& delta_time)
 
 void Application::render_imgui()
 {
-  // NOLINTBEGIN (hicpp-signed-bitwise)
+  // NOLINTBEGIN(hicpp-signed-bitwise)
   ImGui::Begin("Settings", nullptr,
                ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavInputs);
-  // NOLINTEND (hicpp-signed-bitwise)
+  // NOLINTEND(hicpp-signed-bitwise)
   ImGui::SetWindowPos(ImVec2(0, 0));
   ImGui::SetWindowCollapsed(true, ImGuiCond_FirstUseEver);
-  // NOLINTNEXTLINE (cppcoreguidelines-pro-type-vararg)
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-vararg)
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0F / ImGui::GetIO().Framerate,
               ImGui::GetIO().Framerate);
 

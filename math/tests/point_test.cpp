@@ -46,7 +46,8 @@ TEST(Point, copy_ctor)
 TEST(Point, move_ctor)
 {
   rtw::math::Point2i p1{1, 2};
-  const rtw::math::Point2i p2{std::move(p1)}; // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  const rtw::math::Point2i p2{std::move(p1)};
   EXPECT_THAT(p2, ::testing::ElementsAre(1, 2));
 }
 
@@ -62,7 +63,8 @@ TEST(Point, move_assign)
 {
   rtw::math::Point2i p1{1, 2};
   rtw::math::Point2i p2;
-  p2 = std::move(p1); // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  p2 = std::move(p1);
   EXPECT_THAT(p2, ::testing::ElementsAre(1, 2));
 }
 

@@ -39,7 +39,8 @@ TEST(TexCoord, copy_ctor)
 TEST(TexCoord, move_ctor)
 {
   rtw::sw_renderer::TexCoord2f t1{1.0F, 2.0F};
-  const rtw::sw_renderer::TexCoord2f t2{std::move(t1)}; // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  const rtw::sw_renderer::TexCoord2f t2{std::move(t1)};
   EXPECT_THAT(t2, ::testing::ElementsAre(1, 2));
 }
 
@@ -55,7 +56,8 @@ TEST(TexCoord, move_assign)
 {
   rtw::sw_renderer::TexCoord2f t1{1.0F, 2.0F};
   rtw::sw_renderer::TexCoord2f t2;
-  t2 = std::move(t1); // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  t2 = std::move(t1);
   EXPECT_THAT(t2, ::testing::ElementsAre(1, 2));
 }
 

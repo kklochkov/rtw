@@ -11,7 +11,7 @@ namespace rtw::math
 /// @param t The interpolation factor.
 /// @return The interpolated value.
 template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
-constexpr inline T lerp(const T a, const T b, const T t)
+constexpr T lerp(const T a, const T b, const T t) noexcept
 {
   return a + (b - a) * t;
 }
@@ -22,7 +22,7 @@ constexpr inline T lerp(const T a, const T b, const T t)
 /// @param t The interpolation factor.
 /// @return The interpolated matrix.
 template <typename T, std::uint16_t N, std::uint16_t M>
-constexpr inline Matrix<T, N, M> lerp(const Matrix<T, N, M>& a, const Matrix<T, N, M>& b, const T t)
+constexpr Matrix<T, N, M> lerp(const Matrix<T, N, M>& a, const Matrix<T, N, M>& b, const T t) noexcept
 {
   Matrix<T, N, M> result{UNINITIALIZED};
   for (std::uint32_t i = 0U; i < a.size(); ++i)
@@ -38,7 +38,7 @@ constexpr inline Matrix<T, N, M> lerp(const Matrix<T, N, M>& a, const Matrix<T, 
 /// @param t The interpolation factor.
 /// @return The interpolated vector.
 template <typename T, std::uint16_t N>
-constexpr inline Vector<T, N> lerp(const Vector<T, N>& a, const Vector<T, N>& b, const T t)
+constexpr Vector<T, N> lerp(const Vector<T, N>& a, const Vector<T, N>& b, const T t) noexcept
 {
   return Vector<T, N>{lerp(a.as_matrix(), b.as_matrix(), t)};
 }
@@ -49,7 +49,7 @@ constexpr inline Vector<T, N> lerp(const Vector<T, N>& a, const Vector<T, N>& b,
 /// @param t The interpolation factor.
 /// @return The interpolated point.
 template <typename T, std::uint16_t N>
-constexpr inline Point<T, N> lerp(const Point<T, N>& a, const Point<T, N>& b, const T t)
+constexpr Point<T, N> lerp(const Point<T, N>& a, const Point<T, N>& b, const T t) noexcept
 {
   return Point<T, N>{lerp(a.as_matrix(), b.as_matrix(), t)};
 }

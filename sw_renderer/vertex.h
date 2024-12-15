@@ -11,10 +11,16 @@ namespace rtw::sw_renderer
 template <typename T>
 struct Vertex
 {
-  math::Point4<T> point{};
-  TexCoord2<T> tex_coord{};
-  math::Vector3<T> normal{};
-  Color color{};
+  explicit Vertex(const math::Point4<T>& point = {}, const TexCoord2<T>& tex_coord = {},
+                  const math::Vector3<T>& normal = {}, const Color& color = {})
+      : point{point}, tex_coord{tex_coord}, normal{normal}, color{color}
+  {
+  }
+
+  math::Point4<T> point;
+  TexCoord2<T> tex_coord;
+  math::Vector3<T> normal;
+  Color color;
 };
 
 template <typename T>

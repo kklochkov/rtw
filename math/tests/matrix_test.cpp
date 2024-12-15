@@ -52,7 +52,8 @@ TEST(Matrix, copy_ctor)
 TEST(Matrix, move_ctor)
 {
   rtw::math::Matrix<int, 2, 2> m1{1, 2, 3, 4};
-  const rtw::math::Matrix<int, 2, 2> m2{std::move(m1)}; // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  const rtw::math::Matrix<int, 2, 2> m2{std::move(m1)};
   EXPECT_EQ(m2.rows(), 2);
   EXPECT_EQ(m2.cols(), 2);
 
@@ -74,7 +75,8 @@ TEST(Matrix, move_assign)
 {
   rtw::math::Matrix<int, 2, 2> m1{1, 2, 3, 4};
   rtw::math::Matrix<int, 2, 2> m2;
-  m2 = std::move(m1); // NOLINT (performance-move-const-arg) -- this is a test
+  // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
+  m2 = std::move(m1);
   EXPECT_EQ(m2.rows(), 2);
   EXPECT_EQ(m2.cols(), 2);
 

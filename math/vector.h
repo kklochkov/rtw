@@ -33,12 +33,12 @@ public:
   using Matrix::z;
 
   template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 2)>>
-  constexpr explicit Vector(const U x, const U y) : Matrix(x, y)
+  constexpr explicit Vector(const U x, const U y) noexcept : Matrix(x, y)
   {
   }
 
   template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 3)>>
-  constexpr explicit Vector(const U x, const U y, const U z) : Matrix(x, y, z)
+  constexpr explicit Vector(const U x, const U y, const U z) noexcept : Matrix(x, y, z)
   {
   }
 
@@ -48,17 +48,17 @@ public:
   /// @param z The z coordinate.
   /// @param w The w coordinate. 0 by default to represent a direction.
   template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 4)>>
-  constexpr explicit Vector(const U x, const U y, const U z, const U w = U{0}) : Matrix(x, y, z, w)
+  constexpr explicit Vector(const U x, const U y, const U z, const U w = U{0}) noexcept : Matrix(x, y, z, w)
   {
   }
 
   template <typename U = T, std::uint16_t M, typename = std::enable_if_t<std::is_same_v<U, T> && (M <= N)>>
-  constexpr explicit Vector(const Vector<U, M>& vector) : Matrix(vector.as_matrix())
+  constexpr explicit Vector(const Vector<U, M>& vector) noexcept : Matrix(vector.as_matrix())
   {
     operator[](M) = U{0}; // Set the last element to 0 to represent a direction.
   }
 
-  constexpr explicit Vector(const Matrix& matrix) : Matrix(matrix) {}
+  constexpr explicit Vector(const Matrix& matrix) noexcept : Matrix(matrix) {}
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
   constexpr const Matrix& as_matrix() const noexcept { return static_cast<const Matrix&>(*this); }
@@ -76,25 +76,25 @@ public:
   constexpr Vector<value_type, 3> xyz() const noexcept { return Vector<value_type, 3>{as_matrix().xyz()}; }
   /// @}
 
-  constexpr Vector& operator+=(const Vector& rhs)
+  constexpr Vector& operator+=(const Vector& rhs) noexcept
   {
     as_matrix() += rhs.as_matrix();
     return *this;
   }
 
-  constexpr Vector& operator-=(const Vector& rhs)
+  constexpr Vector& operator-=(const Vector& rhs) noexcept
   {
     as_matrix() -= rhs.as_matrix();
     return *this;
   }
 
-  constexpr Vector& operator/=(const value_type rhs)
+  constexpr Vector& operator/=(const value_type rhs) noexcept
   {
     as_matrix() /= rhs;
     return *this;
   }
 
-  constexpr Vector& operator*=(const value_type rhs)
+  constexpr Vector& operator*=(const value_type rhs) noexcept
   {
     as_matrix() *= rhs;
     return *this;
@@ -102,38 +102,38 @@ public:
 
   /// Barton-Nackman trick to generate operators.
   /// @{
-  friend constexpr inline Vector operator+(const Vector& lhs, const Vector& rhs)
+  friend constexpr Vector operator+(const Vector& lhs, const Vector& rhs) noexcept
   {
     return Vector{lhs.as_matrix() + rhs.as_matrix()};
   }
 
-  friend constexpr inline Vector operator-(const Vector& lhs, const Vector& rhs)
+  friend constexpr Vector operator-(const Vector& lhs, const Vector& rhs) noexcept
   {
     return Vector{lhs.as_matrix() - rhs.as_matrix()};
   }
 
-  friend constexpr inline Vector operator*(const Vector& lhs, const value_type rhs)
+  friend constexpr Vector operator*(const Vector& lhs, const value_type rhs) noexcept
   {
     return Vector{lhs.as_matrix() * rhs};
   }
 
-  friend constexpr inline Vector operator*(const value_type lhs, const Vector& rhs) { return rhs * lhs; }
+  friend constexpr Vector operator*(const value_type lhs, const Vector& rhs) noexcept { return rhs * lhs; }
 
-  friend constexpr inline Vector operator/(const Vector& lhs, const value_type rhs)
+  friend constexpr Vector operator/(const Vector& lhs, const value_type rhs) noexcept
   {
     return Vector{lhs.as_matrix() / rhs};
   }
 
-  friend constexpr inline bool operator==(const Vector& lhs, const Vector& rhs)
+  friend constexpr bool operator==(const Vector& lhs, const Vector& rhs) noexcept
   {
     return lhs.as_matrix() == rhs.as_matrix();
   }
 
-  friend constexpr inline bool operator!=(const Vector& lhs, const Vector& rhs) { return !(lhs == rhs); }
+  friend constexpr bool operator!=(const Vector& lhs, const Vector& rhs) noexcept { return !(lhs == rhs); }
 
-  friend constexpr inline Vector operator-(const Vector& vector) { return Vector{-vector.as_matrix()}; }
+  friend constexpr Vector operator-(const Vector& vector) noexcept { return Vector{-vector.as_matrix()}; }
 
-  friend inline std::ostream& operator<<(std::ostream& os, const Vector& vector)
+  friend std::ostream& operator<<(std::ostream& os, const Vector& vector) noexcept
   {
     os << "Vector" << N;
     return vector.as_matrix().operator<<(os);
@@ -163,7 +163,7 @@ using Vector4d = Vector4<double>;
 using Vector4i = Vector4<std::int32_t>;
 
 template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, typename = std::enable_if_t<(P <= M)>>
-constexpr inline Vector<T, N> operator*(const Matrix<T, N, M>& lhs, const Vector<T, P>& rhs)
+constexpr Vector<T, N> operator*(const Matrix<T, N, M>& lhs, const Vector<T, P>& rhs) noexcept
 {
   if constexpr (M == P)
   {
@@ -176,7 +176,7 @@ constexpr inline Vector<T, N> operator*(const Matrix<T, N, M>& lhs, const Vector
 }
 
 template <typename T, std::uint16_t N>
-constexpr inline T dot(const Vector<T, N>& lhs, const Vector<T, N>& rhs)
+constexpr T dot(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 {
   T result{0};
   for (std::uint16_t i = 0U; i < N; ++i)
@@ -187,25 +187,25 @@ constexpr inline T dot(const Vector<T, N>& lhs, const Vector<T, N>& rhs)
 }
 
 template <typename T, std::uint16_t N>
-constexpr inline T norm2(const Vector<T, N>& vector)
+constexpr T norm2(const Vector<T, N>& vector) noexcept
 {
   return dot(vector, vector);
 }
 
 template <typename T, std::uint16_t N>
-inline T norm(const Vector<T, N>& vector)
+T norm(const Vector<T, N>& vector) noexcept
 {
   return std::sqrt(norm2(vector));
 }
 
 template <typename T>
-constexpr inline T cross(const Vector2<T>& lhs, const Vector2<T>& rhs)
+constexpr T cross(const Vector2<T>& lhs, const Vector2<T>& rhs) noexcept
 {
   return determinant(Matrix2x2<T>{lhs.x(), lhs.y(), rhs.x(), rhs.y()});
 }
 
 template <typename T>
-constexpr inline Vector3<T> cross(const Vector3<T>& lhs, const Vector3<T>& rhs)
+constexpr Vector3<T> cross(const Vector3<T>& lhs, const Vector3<T>& rhs) noexcept
 {
   const auto x = lhs.y() * rhs.z() - lhs.z() * rhs.y();
   const auto y = lhs.z() * rhs.x() - lhs.x() * rhs.z();
@@ -214,7 +214,7 @@ constexpr inline Vector3<T> cross(const Vector3<T>& lhs, const Vector3<T>& rhs)
 }
 
 template <typename T, std::uint16_t N>
-inline Vector<T, N> normalize(const Vector<T, N>& vector)
+Vector<T, N> normalize(const Vector<T, N>& vector) noexcept
 {
   return vector / norm(vector);
 }

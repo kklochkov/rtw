@@ -11,7 +11,7 @@ namespace rtw::sw_renderer
 namespace
 {
 
-inline void parse_vertex(const std::string& line, math::Point3f& vertex)
+void parse_vertex(const std::string& line, math::Point3f& vertex)
 {
   std::istringstream iss(line);
   iss.ignore(1); // Ignore "v"
@@ -19,7 +19,7 @@ inline void parse_vertex(const std::string& line, math::Point3f& vertex)
   iss >> vertex.x() >> vertex.y() >> vertex.z();
 }
 
-inline void parse_tex_coord(const std::string& line, TexCoord2f& tex_coord)
+void parse_tex_coord(const std::string& line, TexCoord2f& tex_coord)
 {
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vt"
@@ -27,7 +27,7 @@ inline void parse_tex_coord(const std::string& line, TexCoord2f& tex_coord)
   iss >> tex_coord.u() >> tex_coord.v();
 }
 
-inline void parse_normal(const std::string& line, math::Vector3f& normal)
+void parse_normal(const std::string& line, math::Vector3f& normal)
 {
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vn"
@@ -35,7 +35,7 @@ inline void parse_normal(const std::string& line, math::Vector3f& normal)
   iss >> normal.x() >> normal.y() >> normal.z();
 }
 
-inline bool try_parse_index(std::istringstream& iss, std::uint32_t& index)
+bool try_parse_index(std::istringstream& iss, std::uint32_t& index)
 {
   const bool ok = std::isdigit(iss.peek()) != 0;
   if (ok)
@@ -51,7 +51,7 @@ inline bool try_parse_index(std::istringstream& iss, std::uint32_t& index)
   return ok;
 }
 
-inline void parse_face(const std::string& line, Face& face)
+void parse_face(const std::string& line, Face& face)
 {
   std::istringstream iss(line);
   iss.ignore(1); // Ignore "f"
@@ -80,7 +80,7 @@ inline void parse_face(const std::string& line, Face& face)
   }
 }
 
-inline std::string parse_material(const std::string& line, const std::string_view prefix)
+std::string parse_material(const std::string& line, const std::string_view prefix)
 {
   std::istringstream iss(line);
   iss.ignore(static_cast<std::streamsize>(prefix.size()));
@@ -90,7 +90,7 @@ inline std::string parse_material(const std::string& line, const std::string_vie
   return material;
 }
 
-inline Color parse_color(const std::string& line)
+Color parse_color(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(3); // Ignore "K"
