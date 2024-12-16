@@ -136,10 +136,16 @@ map_Ks specular.png)");
   ASSERT_EQ(material.specular_texture, expected_material.specular_texture);
 }
 
+// NOLINTBEGIN(readability-function-cognitive-complexity)
 TEST(ObjLoader, load_obj_from_file)
 {
   const auto mesh = rtw::sw_renderer::load_obj("sw_renderer/resources/cube.obj");
   ASSERT_TRUE(mesh.has_value());
+
+  if (!mesh.has_value())
+  {
+    return;
+  }
 
   const auto& vertices = mesh->vertices;
   ASSERT_EQ(vertices.size(), 8U);
@@ -174,9 +180,19 @@ TEST(ObjLoader, load_obj_from_file)
   for (std::size_t i = 0U; i < faces.size(); ++i)
   {
     // NOLINTBEGIN(cppcoreguidelines-pro-bounds-constant-array-index)
-    ASSERT_EQ(faces[i].vertex_indices, expected_faces[i].vertex_indices) << "Face " << i;
-    ASSERT_EQ(faces[i].texture_indices, *expected_faces[i].texture_indices) << "Face " << i;
-    ASSERT_EQ(faces[i].normal_indices, *expected_faces[i].normal_indices) << "Face " << i;
+    const auto expected_face = expected_faces[i];
+
+    ASSERT_TRUE(expected_face.texture_indices.has_value());
+    ASSERT_TRUE(expected_face.normal_indices.has_value());
+
+    if (!expected_face.texture_indices.has_value() || !expected_face.normal_indices.has_value())
+    {
+      continue;
+    }
+
+    ASSERT_EQ(faces[i].vertex_indices, expected_face.vertex_indices) << "Face " << i;
+    ASSERT_EQ(faces[i].texture_indices, *expected_face.texture_indices) << "Face " << i;
+    ASSERT_EQ(faces[i].normal_indices, *expected_face.normal_indices) << "Face " << i;
     ASSERT_EQ(faces[i].material, expected_faces[i].material);
     // NOLINTEND(cppcoreguidelines-pro-bounds-constant-array-index)
   }
@@ -234,3 +250,4 @@ TEST(ObjLoader, load_obj_from_file)
     }
   }
 }
+// NOLINTEND(readability-function-cognitive-complexity)
