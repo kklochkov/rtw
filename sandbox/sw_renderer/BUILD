@@ -1,4 +1,5 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("//:cc_defs.bzl", "cc_binary_with_llvm_symbolizer")
 
 cc_library(
     name = "imgui_sdl2_backend",
@@ -10,7 +11,7 @@ cc_library(
     ],
 )
 
-cc_binary(
+cc_binary_with_llvm_symbolizer(
     name = "sw_renderer",
     srcs = ["main.cpp"],
     data = ["//sw_renderer/resources:textured_cube"],

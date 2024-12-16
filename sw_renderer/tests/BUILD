@@ -1,4 +1,4 @@
-load("//:cc_test_with_llvm_symbolizer.bzl", "cc_test_with_llvm_symbolizer")
+load("//:cc_defs.bzl", "cc_test_with_llvm_symbolizer")
 
 cc_test_with_llvm_symbolizer(
     name = "sw_renderer_tests",
