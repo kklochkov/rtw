@@ -1,6 +1,6 @@
-load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//:cc_test_with_llvm_symbolizer.bzl", "cc_test_with_llvm_symbolizer")
 
-cc_test(
+cc_test_with_llvm_symbolizer(
     name = "math_tests",
     srcs = [
         "angle_test.cpp",
@@ -13,7 +13,6 @@ cc_test(
         "transform3_test.cpp",
         "vector_test.cpp",
     ],
-    tags = ["no-clang-tidy"],
     deps = [
         "//math",
         "@googletest//:gtest_main",

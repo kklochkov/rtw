@@ -6,6 +6,7 @@
 # -cppcoreguidelines-avoid-c-arrays - sometimes it's useful, might enable in future
 # -google-readability-todo - irrelevant for now, but might use in future with github's TODOs
 # -google-build-using-namespace - too strict
+# -google-readability-avoid-underscore-in-googletest-name - disabled for now, might either fix in future or switch to Catch2
 # -modernize-use-trailing-return-type - looks a bit unnatural for most of the cases, makes sense for lambdas and when a type needs to be deduced
 # -modernize-use-nodiscard - nice to have, but not a priority
 # -modernize-avoid-c-arrays - same as cppcoreguidelines-avoid-c-arrays
@@ -32,6 +33,7 @@ Checks: >
   -cppcoreguidelines-avoid-c-arrays,
   -google-readability-todo,
   -google-build-using-namespace,
+  -google-readability-avoid-underscore-in-googletest-name,
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
   -modernize-avoid-c-arrays,

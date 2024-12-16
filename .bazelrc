@@ -32,8 +32,12 @@ build --repo_env=CXX=clang++
 build --cxxopt=-Wall
 build --cxxopt=-Wextra
 build --cxxopt=-Wpedantic
+build --cxxopt=-Werror
 
 # Sanitizers
+# The cc_test_with_llvm_symbolizer rule allows to use the llvm-symbolizer to symbolize stack traces from sanitizers using the LLVM toolchain.
+# Alternatively, the llvm-symbolizer can be used directly as follows:
+# MSAN_SYMBOLIZER_PATH=$(realpath external/toolchains_llvm~~llvm~llvm_toolchain_llvm/bin/llvm-symbolizer) bazel run //sandbox/sw_renderer --config=msan
 build:sanitizers --copt=-fno-omit-frame-pointer
 build:sanitizers --copt=-O1
 build:sanitizers --copt=-g
@@ -47,17 +51,23 @@ build:asan --test_env=ASAN_OPTIONS=color=always
 build:tsan --config=sanitizers
 build:tsan --copt -fsanitize=thread
 build:tsan --linkopt -fsanitize=thread
+build:tsan --test_env=TSAN_OPTIONS=color=always
 
 build:msan --config=sanitizers
 build:msan --copt=-fsanitize=memory
+build:msan --copt=-fno-optimize-sibling-calls
+build:msan --copt=-fsanitize-memory-track-origins
+build:msan --copt -fsanitize-memory-use-after-dtor
 build:msan --linkopt=-fsanitize=memory
 build:msan --test_env=MSAN_OPTIONS=color=always
 
 build:ubsan --config=sanitizers
 build:ubsan --copt=-fsanitize=undefined
 build:ubsan --linkopt=-fsanitize=undefined
+build:ubsan --linkopt=-fsanitize-link-c++-runtime
 build:ubsan --test_env=UBSAN_OPTIONS=color=always
 
 build:sssan --config=sanitizers
 build:sssan --copt=-fsanitize=safe-stack
 build:sssan --linkopt=-fsanitize=safe-stack
+build:sssan --test_env=SSSAN_OPTIONS=color=always

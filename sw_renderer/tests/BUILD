@@ -1,6 +1,6 @@
-load("@rules_cc//cc:defs.bzl", "cc_test")
+load("//:cc_test_with_llvm_symbolizer.bzl", "cc_test_with_llvm_symbolizer")
 
-cc_test(
+cc_test_with_llvm_symbolizer(
     name = "sw_renderer_tests",
     srcs = [
         "barycentric_test.cpp",
