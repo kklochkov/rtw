@@ -12,7 +12,6 @@ cc_test_with_llvm_symbolizer(
         "tex_coord_test.cpp",
     ],
     data = ["//sw_renderer/resources:cube"],
-    tags = ["no-clang-tidy"],
     deps = [
         "//sw_renderer",
         "@googletest//:gtest_main",
