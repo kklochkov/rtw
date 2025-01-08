@@ -71,6 +71,12 @@ class Matrix
     return std::array<T, SIZE>{matrix[INDEX]...};
   }
 
+  template <std::uint16_t... INDEX>
+  constexpr static std::array<T, SIZE> make_identity(std::integer_sequence<std::uint16_t, INDEX...> /*index*/) noexcept
+  {
+    return std::array<T, SIZE>{(INDEX % (N + 1) == 0 ? T{1} : T{0})...};
+  }
+
 public:
   using value_type = T;
   using iterator = typename std::array<value_type, SIZE>::iterator;
@@ -85,12 +91,9 @@ public:
 
   constexpr explicit Matrix(UninitializedTag /*tag*/) noexcept {}
   constexpr explicit Matrix(ZeroTag /*tag*/) noexcept : data_{value_type{0}} {}
-  constexpr explicit Matrix(IdentityTag /*tag*/) noexcept : data_{value_type{0}}
+  constexpr explicit Matrix(IdentityTag /*tag*/) noexcept
+      : data_{make_identity(std::make_integer_sequence<std::uint16_t, SIZE>{})}
   {
-    for (std::uint16_t i = 0U; i < N; ++i)
-    {
-      (*this)(i, i) = value_type{1};
-    }
   }
   constexpr Matrix() noexcept : Matrix{math::ZERO} {}
 
@@ -533,6 +536,37 @@ constexpr Matrix3x3<T> inverse(const Matrix3x3<T>& matrix) noexcept
   assert(det != T{0});
   const auto inv_det = T{1} / det;
   return inv_det * Matrix<T, 3, 3>{res_a, res_d, res_g, res_b, res_e, res_h, res_c, res_f, res_i};
+}
+
+template <typename T, std::uint16_t N>
+constexpr T dot(const Matrix<T, N, 1>& lhs, const Matrix<T, N, 1>& rhs) noexcept
+{
+  T result{0};
+  for (std::uint16_t i = 0U; i < N; ++i)
+  {
+    result += lhs[i] * rhs[i];
+  }
+  return result;
+}
+
+template <typename T, std::uint16_t N>
+constexpr T norm2(const Matrix<T, N, 1>& vector) noexcept
+{
+  return dot(vector, vector);
+}
+
+template <typename T, std::uint16_t N>
+constexpr T norm(const Matrix<T, N, 1>& vector) noexcept
+{
+  return std::sqrt(norm2(vector));
+}
+
+template <typename T, std::uint16_t N>
+constexpr Matrix<T, N, 1> normalize(const Matrix<T, N, 1>& vector) noexcept
+{
+  const auto n = norm(vector);
+  assert(n != T{0});
+  return vector / n;
 }
 
 } // namespace rtw::math

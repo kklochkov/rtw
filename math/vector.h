@@ -178,12 +178,7 @@ constexpr Vector<T, N> operator*(const Matrix<T, N, M>& lhs, const Vector<T, P>&
 template <typename T, std::uint16_t N>
 constexpr T dot(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
 {
-  T result{0};
-  for (std::uint16_t i = 0U; i < N; ++i)
-  {
-    result += lhs[i] * rhs[i];
-  }
-  return result;
+  return dot(lhs.as_matrix(), rhs.as_matrix());
 }
 
 template <typename T, std::uint16_t N>
@@ -193,9 +188,9 @@ constexpr T norm2(const Vector<T, N>& vector) noexcept
 }
 
 template <typename T, std::uint16_t N>
-T norm(const Vector<T, N>& vector) noexcept
+constexpr T norm(const Vector<T, N>& vector) noexcept
 {
-  return std::sqrt(norm2(vector));
+  return norm(vector.as_matrix());
 }
 
 template <typename T>
@@ -214,9 +209,9 @@ constexpr Vector3<T> cross(const Vector3<T>& lhs, const Vector3<T>& rhs) noexcep
 }
 
 template <typename T, std::uint16_t N>
-Vector<T, N> normalize(const Vector<T, N>& vector) noexcept
+constexpr Vector<T, N> normalize(const Vector<T, N>& vector) noexcept
 {
-  return vector / norm(vector);
+  return Vector<T, N>{normalize(vector.as_matrix())};
 }
 
 } // namespace rtw::math
