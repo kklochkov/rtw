@@ -340,3 +340,20 @@ TEST(Matrix, inverse_3d)
   constexpr auto IDENTITY = rtw::math::Matrix<float, 3, 3>::identity();
   EXPECT_EQ(M1 * m2, IDENTITY);
 }
+
+TEST(Matrix, minor)
+{
+  constexpr rtw::math::Matrix<int, 3, 3> M{
+    1, 2, 3,
+    4, 5, 6,
+    7, 8, 9
+  };
+  auto m = M.minor(0, 0);
+  EXPECT_THAT(m, ::testing::ElementsAre(5, 6, 8, 9));
+
+  m = M.minor(1, 1);
+  EXPECT_THAT(m, ::testing::ElementsAre(1, 3, 7, 9));
+
+  m = M.minor(2, 2);
+  EXPECT_THAT(m, ::testing::ElementsAre(1, 2, 4, 5));
+}

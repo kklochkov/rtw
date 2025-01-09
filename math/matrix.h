@@ -274,6 +274,25 @@ public:
     return result;
   }
 
+  template <std::uint16_t ROWS = N, std::uint16_t COLUMNS = M,
+            typename = std::enable_if_t<(ROWS == COLUMNS) && (ROWS > 2) && (COLUMNS > 2)>>
+  constexpr Matrix<T, ROWS - 1, COLUMNS - 1> minor(const std::uint16_t row, const std::uint16_t col) const noexcept
+  {
+    assert(row < ROWS);
+    assert(col < COLUMNS);
+    Matrix<T, ROWS - 1, COLUMNS - 1> result{math::UNINITIALIZED};
+    for (std::uint16_t i = 0U; i < ROWS - 1; ++i)
+    {
+      const std::uint16_t r = i < row ? i : i + 1;
+      for (std::uint16_t j = 0U; j < COLUMNS - 1; ++j)
+      {
+        const std::uint16_t c = j < col ? j : j + 1;
+        result(i, j) = (*this)(r, c);
+      }
+    }
+    return result;
+  }
+
   constexpr iterator begin() noexcept { return data_.begin(); }
   constexpr const_iterator begin() const noexcept { return data_.begin(); }
   constexpr const_iterator cbegin() const noexcept { return data_.cbegin(); }
