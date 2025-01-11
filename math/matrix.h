@@ -45,37 +45,37 @@ constexpr IdentityTag IDENTITY{IdentityTag::Tag::TAG};
 /// A matrix that is statically sized.
 /// The matrix is stored in column-major order.
 /// @tparam T The type of the elements.
-/// @tparam N The number of rows.
-/// @tparam M The number of columns.
-template <typename T, std::uint16_t N, std::uint16_t M>
+/// @tparam ROWS The number of rows.
+/// @tparam COLS The number of columns.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
 class Matrix
 {
-  constexpr static std::uint32_t SIZE = N * M;
+  constexpr static std::uint32_t SIZE = ROWS * COLS;
 
-  template <std::uint16_t ROWS>
-  constexpr static bool HAS_X = (ROWS > 0);
+  template <std::uint16_t ROW_COUNT>
+  constexpr static bool HAS_X = (ROW_COUNT > 0);
 
-  template <std::uint16_t ROWS>
-  constexpr static bool HAS_Y = (ROWS > 1);
+  template <std::uint16_t ROW_COUNT>
+  constexpr static bool HAS_Y = (ROW_COUNT > 1);
 
-  template <std::uint16_t ROWS>
-  constexpr static bool HAS_Z = (ROWS > 2);
+  template <std::uint16_t ROW_COUNT>
+  constexpr static bool HAS_Z = (ROW_COUNT > 2);
 
-  template <std::uint16_t ROWS>
-  constexpr static std::uint16_t W_INDEX = (ROWS > 3 ? 3 : 2);
+  template <std::uint16_t ROW_COUNT>
+  constexpr static std::uint16_t W_INDEX = (ROW_COUNT > 3 ? 3 : 2);
 
-  template <typename U = T, std::uint16_t P, std::uint16_t Q, std::uint16_t... INDEX>
-  constexpr static std::array<T, SIZE> from_matrix(const Matrix<U, P, Q>& matrix,
+  template <typename U = T, std::uint16_t OTHER_ROWS, std::uint16_t OTHER_COLS, std::uint16_t... INDEX>
+  constexpr static std::array<T, SIZE> from_matrix(const Matrix<U, OTHER_ROWS, OTHER_COLS>& matrix,
                                                    std::integer_sequence<std::uint16_t, INDEX...> /*index*/) noexcept
   {
-    static_assert((P * Q) <= SIZE, "Too many elements");
+    static_assert((OTHER_ROWS * OTHER_COLS) <= SIZE, "Too many elements");
     return std::array<T, SIZE>{matrix[INDEX]...};
   }
 
   template <std::uint16_t... INDEX>
   constexpr static std::array<T, SIZE> make_identity(std::integer_sequence<std::uint16_t, INDEX...> /*index*/) noexcept
   {
-    return std::array<T, SIZE>{(INDEX % (N + 1) == 0 ? T{1} : T{0})...};
+    return std::array<T, SIZE>{(INDEX % (ROWS + 1) == 0 ? T{1} : T{0})...};
   }
 
 public:
@@ -86,8 +86,8 @@ public:
   using const_pointer = typename std::array<value_type, SIZE>::const_pointer;
   using reference = typename std::array<value_type, SIZE>::reference;
 
-  static_assert(N > 0, "N (number of rows) must be greater than 0");
-  static_assert(M > 0, "M (number of cols) must be greater than 0");
+  static_assert(ROWS > 0, "ROWS must be greater than 0");
+  static_assert(COLS > 0, "COLS must be greater than 0");
   static_assert(std::is_arithmetic_v<value_type>, "T must be arithmetic");
 
   constexpr explicit Matrix(UninitializedTag /*tag*/) noexcept {}
@@ -105,21 +105,21 @@ public:
   {
   }
 
-  template <typename U = value_type, std::uint16_t P, std::uint16_t Q,
-            typename = std::enable_if_t<std::is_same_v<U, value_type> && (P <= N) && (Q <= M)>>
-  constexpr explicit Matrix(const Matrix<U, P, Q>& matrix) noexcept
-      : data_{from_matrix(matrix, std::make_integer_sequence<std::uint16_t, P * Q>{})}
+  template <typename U = value_type, std::uint16_t OTHER_ROWS, std::uint16_t OTHER_COLS,
+            typename = std::enable_if_t<std::is_same_v<U, value_type> && (OTHER_ROWS <= ROWS) && (OTHER_COLS <= COLS)>>
+  constexpr explicit Matrix(const Matrix<U, OTHER_ROWS, OTHER_COLS>& matrix) noexcept
+      : data_{from_matrix(matrix, std::make_integer_sequence<std::uint16_t, OTHER_ROWS * OTHER_COLS>{})}
   {
   }
 
-  constexpr std::uint16_t rows() const noexcept { return N; }
-  constexpr std::uint16_t cols() const noexcept { return M; }
+  constexpr std::uint16_t rows() const noexcept { return ROWS; }
+  constexpr std::uint16_t cols() const noexcept { return COLS; }
   constexpr std::uint32_t size() const noexcept { return SIZE; }
 
   template <typename U = value_type, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  constexpr Matrix<U, N, M> cast() const noexcept
+  constexpr Matrix<U, ROWS, COLS> cast() const noexcept
   {
-    Matrix<U, N, M> result{math::UNINITIALIZED};
+    Matrix<U, ROWS, COLS> result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = static_cast<U>(data_[i]);
@@ -129,15 +129,15 @@ public:
 
   constexpr reference operator()(const std::uint16_t row, const std::uint16_t col) noexcept
   {
-    assert(row < N);
-    assert(col < M);
-    return data_[row * M + col];
+    assert(row < ROWS);
+    assert(col < COLS);
+    return data_[row * COLS + col];
   }
   constexpr value_type operator()(const std::uint16_t row, const std::uint16_t col) const noexcept
   {
-    assert(row < N);
-    assert(col < M);
-    return data_[row * M + col];
+    assert(row < ROWS);
+    assert(col < COLS);
+    return data_[row * COLS + col];
   }
 
   constexpr reference operator[](const std::uint32_t index) noexcept
@@ -153,52 +153,52 @@ public:
 
   /// Accessors for the first column.
   /// @{
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<HAS_X<ROWS>>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<HAS_X<ROW_COUNT>>>
   constexpr value_type x() const noexcept
   {
     return operator[](0);
   }
 
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<HAS_X<ROWS>>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<HAS_X<ROW_COUNT>>>
   constexpr reference x() noexcept
   {
     return operator[](0);
   }
 
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<HAS_Y<ROWS>>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<HAS_Y<ROW_COUNT>>>
   constexpr value_type y() const noexcept
   {
     return operator[](1);
   }
 
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<HAS_Y<ROWS>>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<HAS_Y<ROW_COUNT>>>
   constexpr reference y() noexcept
   {
     return operator[](1);
   }
 
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<HAS_Z<ROWS>>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<HAS_Z<ROW_COUNT>>>
   constexpr value_type z() const noexcept
   {
     return operator[](2);
   }
 
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<HAS_Z<ROWS>>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<HAS_Z<ROW_COUNT>>>
   constexpr reference z() noexcept
   {
     return operator[](2);
   }
 
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<HAS_Z<ROWS>>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<HAS_Z<ROW_COUNT>>>
   constexpr value_type w() const noexcept
   {
-    return operator[](W_INDEX<ROWS>);
+    return operator[](W_INDEX<ROW_COUNT>);
   }
 
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<HAS_Z<ROWS>>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<HAS_Z<ROW_COUNT>>>
   constexpr reference w() noexcept
   {
-    return operator[](W_INDEX<ROWS>);
+    return operator[](W_INDEX<ROW_COUNT>);
   }
   /// @}
 
@@ -240,55 +240,56 @@ public:
 
   /// Swizzle operators.
   /// @{
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<(ROWS > 2)>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<(ROW_COUNT > 2)>>
   constexpr Matrix<value_type, 2, 1> xy() const noexcept
   {
     return Matrix<value_type, 2, 1>{x(), y()};
   }
 
-  template <std::uint16_t ROWS = N, typename = std::enable_if_t<(ROWS > 3)>>
+  template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<(ROW_COUNT > 3)>>
   constexpr Matrix<value_type, 3, 1> xyz() const noexcept
   {
     return Matrix<value_type, 3, 1>{x(), y(), z()};
   }
   /// @}
 
-  constexpr Matrix<T, M, 1> column(const std::uint16_t col) const noexcept
+  constexpr Matrix<T, ROWS, 1> column(const std::uint16_t col) const noexcept
   {
-    assert(col < M);
-    Matrix<T, M, 1> result{math::UNINITIALIZED};
-    for (std::uint16_t i = 0U; i < M; ++i)
+    assert(col < COLS);
+    Matrix<T, ROWS, 1> result{math::UNINITIALIZED};
+    for (std::uint16_t row = 0U; row < ROWS; ++row)
     {
-      result[i] = (*this)(i, col);
+      result[row] = (*this)(row, col);
     }
     return result;
   }
 
-  constexpr Matrix<T, N, 1> row(const std::uint16_t row) const noexcept
-  {
-    assert(row < N);
-    Matrix<T, N, 1> result{math::UNINITIALIZED};
-    for (std::uint16_t i = 0U; i < N; ++i)
-    {
-      result[i] = (*this)(row, i);
-    }
-    return result;
-  }
-
-  template <std::uint16_t ROWS = N, std::uint16_t COLUMNS = M,
-            typename = std::enable_if_t<(ROWS == COLUMNS) && (ROWS > 2) && (COLUMNS > 2)>>
-  constexpr Matrix<T, ROWS - 1, COLUMNS - 1> minor(const std::uint16_t row, const std::uint16_t col) const noexcept
+  constexpr Matrix<T, COLS, 1> row(const std::uint16_t row) const noexcept
   {
     assert(row < ROWS);
-    assert(col < COLUMNS);
-    Matrix<T, ROWS - 1, COLUMNS - 1> result{math::UNINITIALIZED};
-    for (std::uint16_t i = 0U; i < ROWS - 1; ++i)
+    Matrix<T, COLS, 1> result{math::UNINITIALIZED};
+    for (std::uint16_t col = 0U; col < COLS; ++col)
     {
-      const std::uint16_t r = i < row ? i : i + 1;
-      for (std::uint16_t j = 0U; j < COLUMNS - 1; ++j)
+      result[col] = (*this)(row, col);
+    }
+    return result;
+  }
+
+  template <std::uint16_t ROW_COUNT = ROWS, std::uint16_t COL_COUNT = COLS,
+            typename = std::enable_if_t<(ROW_COUNT == COL_COUNT) && (ROW_COUNT > 2) && (COL_COUNT > 2)>>
+  constexpr Matrix<T, ROW_COUNT - 1, COL_COUNT - 1> minor(const std::uint16_t row,
+                                                          const std::uint16_t col) const noexcept
+  {
+    assert(row < ROW_COUNT);
+    assert(col < COL_COUNT);
+    Matrix<T, ROW_COUNT - 1, COL_COUNT - 1> result{math::UNINITIALIZED};
+    for (std::uint16_t r = 0U; r < ROW_COUNT - 1; ++r)
+    {
+      const std::uint16_t rr = r < row ? r : r + 1;
+      for (std::uint16_t c = 0U; c < COL_COUNT - 1; ++c)
       {
-        const std::uint16_t c = j < col ? j : j + 1;
-        result(i, j) = (*this)(r, c);
+        const std::uint16_t cc = c < col ? c : c + 1;
+        result(r, c) = (*this)(rr, cc);
       }
     }
     return result;
@@ -311,12 +312,12 @@ public:
   std::ostream& operator<<(std::ostream& os) const noexcept
   {
     os << std::fixed << std::setprecision(4) << '[';
-    if constexpr (M == 1)
+    if constexpr (COLS == 1)
     {
-      for (std::uint16_t i = 0U; i < N; ++i)
+      for (std::uint16_t row = 0U; row < ROWS; ++row)
       {
-        os << (*this)(i, 0);
-        if (i < N - 1U)
+        os << (*this)(row, 0);
+        if (row < ROWS - 1U)
         {
           os << ' ';
         }
@@ -325,12 +326,12 @@ public:
     else
     {
       os << '\n';
-      for (std::uint16_t i = 0U; i < N; ++i)
+      for (std::uint16_t row = 0U; row < ROWS; ++row)
       {
-        for (std::uint16_t j = 0U; j < M; ++j)
+        for (std::uint16_t col = 0U; col < COLS; ++col)
         {
-          os << std::setw(10) << (*this)(i, j);
-          if (j < M - 1U)
+          os << std::setw(10) << (*this)(row, col);
+          if (col < COLS - 1U)
           {
             os << ' ';
           }
@@ -386,26 +387,28 @@ public:
     return result;
   }
 
-  template <std::uint16_t P>
-  friend constexpr Matrix<value_type, N, P> operator*(const Matrix& lhs, const Matrix<value_type, M, P>& rhs) noexcept
+  template <std::uint16_t OTHER_COLS>
+  friend constexpr Matrix<value_type, ROWS, OTHER_COLS>
+  operator*(const Matrix& lhs, const Matrix<value_type, COLS, OTHER_COLS>& rhs) noexcept
   {
     // TODO: make this more cache friendly.
-    Matrix<value_type, N, P> result{math::ZERO};
-    for (std::uint16_t i = 0U; i < N; ++i)
+    Matrix<value_type, ROWS, OTHER_COLS> result{math::ZERO};
+    for (std::uint16_t row = 0U; row < ROWS; ++row)
     {
-      for (std::uint16_t j = 0U; j < P; ++j)
+      for (std::uint16_t other_col = 0U; other_col < OTHER_COLS; ++other_col)
       {
-        for (std::uint16_t k = 0U; k < M; ++k)
+        for (std::uint16_t col = 0U; col < COLS; ++col)
         {
-          result(i, j) += lhs(i, k) * rhs(k, j);
+          result(row, other_col) += lhs(row, col) * rhs(col, other_col);
         }
       }
     }
     return result;
   }
 
-  template <std::uint16_t P>
-  friend constexpr Matrix<value_type, N, P> operator*(const Matrix<value_type, N, M>& lhs, const Matrix& rhs) noexcept
+  template <std::uint16_t OTHER_COLS>
+  friend constexpr Matrix<value_type, ROWS, OTHER_COLS> operator*(const Matrix<value_type, ROWS, COLS>& lhs,
+                                                                  const Matrix& rhs) noexcept
   {
     return rhs * lhs;
   }
@@ -436,7 +439,7 @@ public:
 
   friend std::ostream& operator<<(std::ostream& os, const Matrix& matrix) noexcept
   {
-    os << "Matrix" << N << "x" << M;
+    os << "Matrix" << ROWS << "x" << COLS;
     return matrix.operator<<(os);
   }
   /// @}
@@ -448,15 +451,15 @@ private:
 /// Compute the transpose of a matrix.
 /// @param[in] matrix The matrix.
 /// @return The transpose of the matrix.
-template <typename T, std::uint16_t N, std::uint16_t M>
-constexpr Matrix<T, M, N> transpose(const Matrix<T, N, M>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
+constexpr Matrix<T, COLS, ROWS> transpose(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
-  Matrix<T, M, N> result{math::UNINITIALIZED};
-  for (std::uint16_t i = 0U; i < N; ++i)
+  Matrix<T, COLS, ROWS> result{math::UNINITIALIZED};
+  for (std::uint16_t row = 0U; row < ROWS; ++row)
   {
-    for (std::uint16_t j = 0U; j < M; ++j)
+    for (std::uint16_t col = 0U; col < COLS; ++col)
     {
-      result(j, i) = matrix(i, j);
+      result(col, row) = matrix(row, col);
     }
   }
   return result;
@@ -558,31 +561,31 @@ constexpr Matrix3x3<T> inverse(const Matrix3x3<T>& matrix) noexcept
   return inv_det * Matrix<T, 3, 3>{res_a, res_d, res_g, res_b, res_e, res_h, res_c, res_f, res_i};
 }
 
-template <typename T, std::uint16_t N>
-constexpr T dot(const Matrix<T, N, 1>& lhs, const Matrix<T, N, 1>& rhs) noexcept
+template <typename T, std::uint16_t ROWS>
+constexpr T dot(const Matrix<T, ROWS, 1>& lhs, const Matrix<T, ROWS, 1>& rhs) noexcept
 {
   T result{0};
-  for (std::uint16_t i = 0U; i < N; ++i)
+  for (std::uint16_t row = 0U; row < ROWS; ++row)
   {
-    result += lhs[i] * rhs[i];
+    result += lhs[row] * rhs[row];
   }
   return result;
 }
 
-template <typename T, std::uint16_t N>
-constexpr T norm2(const Matrix<T, N, 1>& vector) noexcept
+template <typename T, std::uint16_t ROWS>
+constexpr T norm2(const Matrix<T, ROWS, 1>& vector) noexcept
 {
   return dot(vector, vector);
 }
 
-template <typename T, std::uint16_t N>
-constexpr T norm(const Matrix<T, N, 1>& vector) noexcept
+template <typename T, std::uint16_t ROWS>
+constexpr T norm(const Matrix<T, ROWS, 1>& vector) noexcept
 {
   return std::sqrt(norm2(vector));
 }
 
-template <typename T, std::uint16_t N>
-constexpr Matrix<T, N, 1> normalize(const Matrix<T, N, 1>& vector) noexcept
+template <typename T, std::uint16_t ROWS>
+constexpr Matrix<T, ROWS, 1> normalize(const Matrix<T, ROWS, 1>& vector) noexcept
 {
   const auto n = norm(vector);
   assert(n != T{0});
@@ -599,10 +602,10 @@ namespace details
 /// @param[in] m The matrix.
 /// @param[in] col The column.
 /// @return The Householder vector.
-template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
-constexpr Matrix<T, N, 1> get_householder_vector(const Matrix<T, N, M>& m, const std::uint16_t col) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>& m, const std::uint16_t col) noexcept
 {
-  Matrix<T, N, 1> v = m.column(col);
+  Matrix<T, ROWS, 1> v = m.column(col);
 
   // Zero the elements below the diagonal to create a Householder vector.
   for (std::uint16_t c = 0U; c < col; ++c)
@@ -622,15 +625,13 @@ constexpr Matrix<T, N, 1> get_householder_vector(const Matrix<T, N, M>& m, const
 /// https://en.wikipedia.org/wiki/Triangular_matrix#Inversion
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
-template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
-constexpr Matrix<T, N, M> inverse_upper_triangular(const Matrix<T, N, M>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS> inverse_upper_triangular(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
-  Matrix<T, N, M> result{math::IDENTITY};
-  const auto rows = matrix.rows();
-  const auto cols = matrix.cols();
-  for (std::uint16_t row = 0U; row < rows; ++row)
+  Matrix<T, ROWS, COLS> result{math::IDENTITY};
+  for (std::uint16_t row = 0U; row < ROWS; ++row)
   {
-    for (std::uint16_t col = 0U; col < cols; ++col)
+    for (std::uint16_t col = 0U; col < COLS; ++col)
     {
       for (std::uint16_t i = 0U; i < row; ++i)
       {
@@ -644,11 +645,11 @@ constexpr Matrix<T, N, M> inverse_upper_triangular(const Matrix<T, N, M>& matrix
 
 } // namespace details
 
-template <typename T, std::uint16_t N, std::uint16_t M>
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
 struct Decomposition
 {
-  Matrix<T, N, N> q{math::UNINITIALIZED};
-  Matrix<T, N, M> r{math::UNINITIALIZED};
+  Matrix<T, ROWS, ROWS> q{math::UNINITIALIZED};
+  Matrix<T, ROWS, COLS> r{math::UNINITIALIZED};
 };
 
 /// Compute the QR decomposition of a matrix using Householder reflections.
@@ -656,17 +657,17 @@ struct Decomposition
 /// @param[in] matrix The matrix.
 /// @param[out] q The orthogonal matrix. The q matrix is nor transposed.
 /// @param[out] r The upper triangular matrix.
-template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
-constexpr Decomposition<T, N, M> decompose(const Matrix<T, N, M>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
-  Decomposition<T, N, M> result{Matrix<T, N, M>{math::IDENTITY}, matrix};
+  Decomposition<T, ROWS, COLS> result{Matrix<T, ROWS, COLS>{math::IDENTITY}, matrix};
 
   // The number of columns is reduced by one if the matrix is square.
   // The last column is not processed, because it is already upper triangular.
-  const auto cols = matrix.cols() - (matrix.rows() == matrix.cols());
+  const auto cols = COLS - (ROWS == COLS);
   for (std::uint16_t col = 0U; col < cols; ++col)
   {
-    const Matrix<T, N, 1> v = details::get_householder_vector(result.r, col);
+    const Matrix<T, ROWS, 1> v = details::get_householder_vector(result.r, col);
 
     const auto vv_t_doubled = T{2} * v * transpose(v);
     result.r -= vv_t_doubled * result.r;
@@ -679,8 +680,8 @@ constexpr Decomposition<T, N, M> decompose(const Matrix<T, N, M>& matrix) noexce
 /// Compute the inverse of a matrix using the Householder QR decomposition.
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
-template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
-constexpr Matrix<T, N, M> inverse(const Matrix<T, N, M>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
   const auto [q, r] = decompose(matrix);
   const auto r_inv = details::inverse_upper_triangular(r);
@@ -691,16 +692,16 @@ constexpr Matrix<T, N, M> inverse(const Matrix<T, N, M>& matrix) noexcept
 /// @param[in] a The matrix.
 /// @param[in] b The vector.
 /// @return The solution to the system of linear equations.
-template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
-constexpr Matrix<T, N, 1> solve(const Matrix<T, N, M>& a, const Matrix<T, N, 1>& b) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
 {
   return inverse(a) * b;
 }
 
 } // namespace householder::qr
 
-template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M) && (N > 3)>>
-constexpr Matrix<T, N, M> inverse(const Matrix<T, N, M>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS) && (ROWS > 3)>>
+constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
   return householder::qr::inverse(matrix);
 }
