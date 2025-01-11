@@ -3,6 +3,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+constexpr auto EPSILON = 1.0e-3F;
+
 TEST(Matrix, default_ctor)
 {
   constexpr rtw::math::Matrix<int, 2, 2> M;
@@ -328,26 +330,42 @@ TEST(Matrix, unary_minus)
 TEST(Matrix, inverse_2d)
 {
   constexpr rtw::math::Matrix<float, 2, 2> M1{1.0F, 2.0F, 3.0F, 4.0F};
-  const rtw::math::Matrix<float, 2, 2> m2 = rtw::math::inverse(M1);
   constexpr auto IDENTITY = rtw::math::Matrix<float, 2, 2>::identity();
-  EXPECT_EQ(M1 * m2, IDENTITY);
+  {
+    const rtw::math::Matrix<float, 2, 2> m2 = rtw::math::inverse(M1);
+    EXPECT_EQ(M1 * m2, IDENTITY);
+  }
+  {
+    const rtw::math::Matrix<float, 2, 2> m2 = rtw::math::householder::qr::inverse(M1);
+    const auto result = M1 * m2;
+    for (std::uint32_t i = 0U; i < result.size(); ++i)
+    {
+      EXPECT_NEAR(result[i], IDENTITY[i], EPSILON);
+    }
+  }
 }
 
 TEST(Matrix, inverse_3d)
 {
   constexpr rtw::math::Matrix<float, 3, 3> M1{1.0F, 0.0F, 0.0F, 0.0F, 2.0F, 0.0F, 0.0F, 0.0F, 4.0F};
-  const rtw::math::Matrix<float, 3, 3> m2 = rtw::math::inverse(M1);
   constexpr auto IDENTITY = rtw::math::Matrix<float, 3, 3>::identity();
-  EXPECT_EQ(M1 * m2, IDENTITY);
+  {
+    const rtw::math::Matrix<float, 3, 3> m2 = rtw::math::inverse(M1);
+    EXPECT_EQ(M1 * m2, IDENTITY);
+  }
+  {
+    const rtw::math::Matrix<float, 3, 3> m2 = rtw::math::householder::qr::inverse(M1);
+    const auto result = M1 * m2;
+    for (std::uint32_t i = 0U; i < result.size(); ++i)
+    {
+      EXPECT_NEAR(result[i], IDENTITY[i], EPSILON);
+    }
+  }
 }
 
 TEST(Matrix, minor)
 {
-  constexpr rtw::math::Matrix<int, 3, 3> M{
-    1, 2, 3,
-    4, 5, 6,
-    7, 8, 9
-  };
+  constexpr rtw::math::Matrix<int, 3, 3> M{1, 2, 3, 4, 5, 6, 7, 8, 9};
   auto m = M.minor(0, 0);
   EXPECT_THAT(m, ::testing::ElementsAre(5, 6, 8, 9));
 
@@ -356,4 +374,62 @@ TEST(Matrix, minor)
 
   m = M.minor(2, 2);
   EXPECT_THAT(m, ::testing::ElementsAre(1, 2, 4, 5));
+}
+
+TEST(Matrix, householder_qr_decomposition)
+{
+  constexpr rtw::math::Matrix<float, 3, 3> A{12.0F, -51.0F, 4.0F, 6.0F, 167.0F, -68.0F, -4.0F, 24.0F, -41.0F};
+  constexpr rtw::math::Matrix<float, 3, 3> EXPECTED_Q{-0.8571F, -0.4286F, 0.2857F,  0.3943F, -0.9029F,
+                                                      -0.1714F, 0.3314F,  -0.0343F, 0.9429F};
+  constexpr rtw::math::Matrix<float, 3, 3> EXPECTED_R{-14.0000F, -21.0000F, 14.0000F, 0.0000F,  -175.0000F,
+                                                      70.0000F,  0.0000F,   -0.0000F, -35.0000F};
+  const auto [q, r] = rtw::math::householder::qr::decompose(A);
+  for (std::uint32_t i = 0U; i < EXPECTED_Q.size(); ++i)
+  {
+    EXPECT_NEAR(EXPECTED_Q[i], q[i], EPSILON);
+  }
+  for (std::uint32_t i = 0U; i < EXPECTED_R.size(); ++i)
+  {
+    EXPECT_NEAR(EXPECTED_R[i], r[i], EPSILON);
+  }
+
+  const auto qr = rtw::math::transpose(q) * r;
+  for (std::uint32_t i = 0U; i < A.size(); ++i)
+  {
+    EXPECT_NEAR(A[i], qr[i], EPSILON);
+  }
+}
+
+TEST(Matrix, householder_qr_inverse)
+{
+  constexpr auto IDENTITY = rtw::math::Matrix<float, 5, 5>::identity();
+
+  constexpr rtw::math::Matrix<float, 5, 5> A{12.0F, -51.0F, 4.0F,  7.0F,   -2.0F, 6.0F,  167.0F, -68.0F, -3.0F,
+                                             5.0F,  -4.0F,  24.0F, -41.0F, 2.0F,  9.0F,  5.0F,   -6.0F,  7.0F,
+                                             14.0F, -10.0F, -2.0F, 8.0F,   -3.0F, 11.0F, 6.0F};
+
+  const auto identity = rtw::math::inverse(A) * A;
+  for (std::uint32_t i = 0U; i < identity.size(); ++i)
+  {
+    EXPECT_NEAR(identity[i], IDENTITY[i], EPSILON);
+  }
+}
+
+TEST(Matrix, householder_qr_solve)
+{
+  constexpr rtw::math::Matrix<float, 3, 3> A{12.0F, -51.0F, 4.0F, 6.0F, 167.0F, -68.0F, -4.0F, 24.0F, -41.0F};
+  constexpr rtw::math::Matrix<float, 3, 1> B{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::Matrix<float, 3, 1> EXPECTED_X{0.0094F, -0.0243F, -0.0883F};
+
+  const auto x = rtw::math::householder::qr::solve(A, B);
+  for (std::uint32_t i = 0U; i < x.size(); ++i)
+  {
+    EXPECT_NEAR(x[i], EXPECTED_X[i], EPSILON);
+  }
+
+  const auto b = A * x;
+  for (std::uint32_t i = 0U; i < b.size(); ++i)
+  {
+    EXPECT_NEAR(b[i], B[i], EPSILON);
+  }
 }
