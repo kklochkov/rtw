@@ -2,8 +2,6 @@
 
 #include "math/matrix.h"
 
-#include <cmath>
-
 namespace rtw::math
 {
 

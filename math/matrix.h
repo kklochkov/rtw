@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
@@ -586,6 +587,122 @@ constexpr Matrix<T, N, 1> normalize(const Matrix<T, N, 1>& vector) noexcept
   const auto n = norm(vector);
   assert(n != T{0});
   return vector / n;
+}
+
+namespace householder::qr
+{
+
+namespace details
+{
+
+/// Compute the Householder vector for a column of a matrix.
+/// @param[in] m The matrix.
+/// @param[in] col The column.
+/// @return The Householder vector.
+template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
+constexpr Matrix<T, N, 1> get_householder_vector(const Matrix<T, N, M>& m, const std::uint16_t col) noexcept
+{
+  Matrix<T, N, 1> v = m.column(col);
+
+  // Zero the elements below the diagonal to create a Householder vector.
+  for (std::uint16_t c = 0U; c < col; ++c)
+  {
+    v[c] = T{0};
+  }
+
+  constexpr T SIGNS[] = {T{1}, -T{1}};
+  const auto sign = SIGNS[v[col] < T{0}];
+  const auto alpha = sign * norm(v); // Adjust the sign of alpha to prevent numerical instability.
+  v[col] += alpha;                   // v[k] = v[k] + sign(v[k]) * ||v||
+
+  return normalize(v);
+}
+
+/// Compute the inverse of an upper triangular matrix.
+/// https://en.wikipedia.org/wiki/Triangular_matrix#Inversion
+/// @param[in] matrix The matrix.
+/// @return The inverse of the matrix.
+template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
+constexpr Matrix<T, N, M> inverse_upper_triangular(const Matrix<T, N, M>& matrix) noexcept
+{
+  Matrix<T, N, M> result{math::IDENTITY};
+  const auto rows = matrix.rows();
+  const auto cols = matrix.cols();
+  for (std::uint16_t row = 0U; row < rows; ++row)
+  {
+    for (std::uint16_t col = 0U; col < cols; ++col)
+    {
+      for (std::uint16_t i = 0U; i < row; ++i)
+      {
+        result(col, row) -= matrix(i, row) * result(col, i);
+      }
+      result(col, row) /= matrix(row, row);
+    }
+  }
+  return result;
+}
+
+} // namespace details
+
+template <typename T, std::uint16_t N, std::uint16_t M>
+struct Decomposition
+{
+  Matrix<T, N, N> q{math::UNINITIALIZED};
+  Matrix<T, N, M> r{math::UNINITIALIZED};
+};
+
+/// Compute the QR decomposition of a matrix using Householder reflections.
+/// https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections
+/// @param[in] matrix The matrix.
+/// @param[out] q The orthogonal matrix. The q matrix is nor transposed.
+/// @param[out] r The upper triangular matrix.
+template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
+constexpr Decomposition<T, N, M> decompose(const Matrix<T, N, M>& matrix) noexcept
+{
+  Decomposition<T, N, M> result{Matrix<T, N, M>{math::IDENTITY}, matrix};
+
+  // The number of columns is reduced by one if the matrix is square.
+  // The last column is not processed, because it is already upper triangular.
+  const auto cols = matrix.cols() - (matrix.rows() == matrix.cols());
+  for (std::uint16_t col = 0U; col < cols; ++col)
+  {
+    const Matrix<T, N, 1> v = details::get_householder_vector(result.r, col);
+
+    const auto vv_t_doubled = T{2} * v * transpose(v);
+    result.r -= vv_t_doubled * result.r;
+    result.q -= vv_t_doubled * result.q;
+  }
+
+  return result;
+}
+
+/// Compute the inverse of a matrix using the Householder QR decomposition.
+/// @param[in] matrix The matrix.
+/// @return The inverse of the matrix.
+template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
+constexpr Matrix<T, N, M> inverse(const Matrix<T, N, M>& matrix) noexcept
+{
+  const auto [q, r] = decompose(matrix);
+  const auto r_inv = details::inverse_upper_triangular(r);
+  return r_inv * q;
+}
+
+/// Solve a system of linear equations (Ax = b) using the Householder QR decomposition.
+/// @param[in] a The matrix.
+/// @param[in] b The vector.
+/// @return The solution to the system of linear equations.
+template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M)>>
+constexpr Matrix<T, N, 1> solve(const Matrix<T, N, M>& a, const Matrix<T, N, 1>& b) noexcept
+{
+  return inverse(a) * b;
+}
+
+} // namespace householder::qr
+
+template <typename T, std::uint16_t N, std::uint16_t M, typename = std::enable_if_t<(N >= M) && (N > 3)>>
+constexpr Matrix<T, N, M> inverse(const Matrix<T, N, M>& matrix) noexcept
+{
+  return householder::qr::inverse(matrix);
 }
 
 } // namespace rtw::math
