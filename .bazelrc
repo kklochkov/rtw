@@ -23,7 +23,7 @@ test --test_env=GTEST_COLOR=1
 
 # C++17 standard
 build --cxxopt=--std=c++17
-test --cxxopt=--std=c++17
+test --cxxopt=--std=c++17 --test_verbose_timeout_warnings
 build --host_cxxopt=--std=c++17
 build --repo_env=CC=clang
 build --repo_env=CXX=clang++
