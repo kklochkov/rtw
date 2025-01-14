@@ -643,6 +643,28 @@ constexpr Matrix<T, ROWS, COLS> inverse_upper_triangular(const Matrix<T, ROWS, C
   return result;
 }
 
+/// Compute the back substitution of a matrix of a system of linear equations.
+/// https://en.wikipedia.org/wiki/Triangular_matrix#Forward_and_back_substitution
+/// @param[in] matrix The matrix. The matrix must be upper triangular.
+/// @param[in] vector The vector.
+/// @return The solution to the system of linear equations.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1> back_substitution(const Matrix<T, ROWS, COLS>& matrix,
+                                               const Matrix<T, ROWS, 1>& vector) noexcept
+{
+  Matrix<T, ROWS, 1> result{math::UNINITIALIZED};
+  for (std::uint16_t row = ROWS - 1U; row < ROWS; --row)
+  {
+    result[row] = vector[row];
+    for (std::uint16_t col = row + 1U; col < COLS; ++col)
+    {
+      result[row] -= matrix(row, col) * result[col];
+    }
+    result[row] /= matrix(row, row);
+  }
+  return result;
+}
+
 } // namespace details
 
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
@@ -695,7 +717,8 @@ constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noe
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
 constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
 {
-  return inverse(a) * b;
+  const auto [q, r] = decompose(a);
+  return details::back_substitution(r, q * b);
 }
 
 } // namespace householder::qr

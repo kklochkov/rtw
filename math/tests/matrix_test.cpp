@@ -421,15 +421,31 @@ TEST(Matrix, householder_qr_solve)
   constexpr rtw::math::Matrix<float, 3, 1> B{1.0F, 2.0F, 3.0F};
   constexpr rtw::math::Matrix<float, 3, 1> EXPECTED_X{0.0094F, -0.0243F, -0.0883F};
 
-  const auto x = rtw::math::householder::qr::solve(A, B);
-  for (std::uint32_t i = 0U; i < x.size(); ++i)
   {
-    EXPECT_NEAR(x[i], EXPECTED_X[i], EPSILON);
-  }
+    const auto x = rtw::math::householder::qr::solve(A, B);
+    for (std::uint32_t i = 0U; i < x.size(); ++i)
+    {
+      EXPECT_NEAR(x[i], EXPECTED_X[i], EPSILON);
+    }
 
-  const auto b = A * x;
-  for (std::uint32_t i = 0U; i < b.size(); ++i)
+    const auto b = A * x;
+    for (std::uint32_t i = 0U; i < b.size(); ++i)
+    {
+      EXPECT_NEAR(b[i], B[i], EPSILON);
+    }
+  }
   {
-    EXPECT_NEAR(b[i], B[i], EPSILON);
+    const auto a_inv = rtw::math::householder::qr::inverse(A);
+    const auto x = a_inv * B;
+    for (std::uint32_t i = 0U; i < x.size(); ++i)
+    {
+      EXPECT_NEAR(x[i], EXPECTED_X[i], EPSILON);
+    }
+
+    const auto b = A * x;
+    for (std::uint32_t i = 0U; i < b.size(); ++i)
+    {
+      EXPECT_NEAR(b[i], B[i], EPSILON);
+    }
   }
 }
