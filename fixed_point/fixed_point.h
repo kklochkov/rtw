@@ -49,12 +49,6 @@ class FixedPoint
   constexpr static PrivateCtorTag PRIVATE_CTOR = {};
   FixedPoint(PrivateCtorTag /*tag*/, const T value) noexcept : value_(value) {}
 
-  enum class ArithmeticType : std::uint8_t
-  {
-    INTEGRAL,
-    FLOATING_POINT,
-  };
-
 public:
   using type = T;
   using saturation_type = SaturationT;
@@ -79,8 +73,9 @@ public:
 
   constexpr FixedPoint() noexcept = default;
 
-  template <typename U, std::enable_if_t<std::is_integral_v<U>, ArithmeticType> = ArithmeticType::INTEGRAL>
-  explicit FixedPoint(const U value) noexcept
+  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
+  template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
+  FixedPoint(const I value) noexcept
   {
     if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
     {
@@ -98,8 +93,8 @@ public:
     }
   }
 
-  template <typename U, std::enable_if_t<std::is_floating_point_v<U>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
-  explicit FixedPoint(const U value) noexcept
+  template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
+  FixedPoint(const F value) noexcept
   {
     // std::lround is constexpr since C++20
     if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
@@ -117,20 +112,21 @@ public:
       static_assert(sizeof(T) == 0, "Unknown overflow policy"); // workaround before CWG2518/P2593R1
     }
   }
+  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
 
   constexpr static FixedPoint min() noexcept { return FixedPoint(PRIVATE_CTOR, MIN_INTEGER); }
   constexpr static FixedPoint max() noexcept { return FixedPoint(PRIVATE_CTOR, MAX_INTEGER); }
 
-  template <typename U, std::enable_if_t<std::is_integral_v<U>, ArithmeticType> = ArithmeticType::INTEGRAL>
-  constexpr explicit operator U() const noexcept
+  template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
+  constexpr explicit operator I() const noexcept
   {
-    return static_cast<U>(value_ >> FRACTIONAL_BITS);
+    return static_cast<I>(value_ >> FRACTIONAL_BITS);
   }
 
-  template <typename U, std::enable_if_t<std::is_floating_point_v<U>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
-  constexpr explicit operator U() const noexcept
+  template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
+  constexpr explicit operator F() const noexcept
   {
-    return static_cast<U>(value_) * static_cast<U>(RESOLUTION);
+    return static_cast<F>(value_) * static_cast<F>(RESOLUTION);
   }
 
   template <typename U = T, typename = std::enable_if_t<std::is_signed_v<U>>>
@@ -239,92 +235,38 @@ public:
     }
   }
 
-  constexpr bool operator==(const FixedPoint rhs) const noexcept { return value_ == rhs.value_; }
-  constexpr bool operator!=(const FixedPoint rhs) const noexcept { return value_ != rhs.value_; }
-  constexpr bool operator<(const FixedPoint rhs) const noexcept { return value_ < rhs.value_; }
-  constexpr bool operator>(const FixedPoint rhs) const noexcept { return value_ > rhs.value_; }
-  constexpr bool operator<=(const FixedPoint rhs) const noexcept { return value_ <= rhs.value_; }
-  constexpr bool operator>=(const FixedPoint rhs) const noexcept { return value_ >= rhs.value_; }
-
-  template <typename U = T, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  constexpr bool operator==(const U rhs) const noexcept
-  {
-    return *this == FixedPoint(rhs);
-  }
-
-  template <typename U = T, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  constexpr bool operator!=(const U rhs) const noexcept
-  {
-    return *this != FixedPoint(rhs);
-  }
-
-  template <typename U = T, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  constexpr bool operator<(const U rhs) const noexcept
-  {
-    return *this < FixedPoint(rhs);
-  }
-
-  template <typename U = T, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  constexpr bool operator>(const U rhs) const noexcept
-  {
-    return *this > FixedPoint(rhs);
-  }
-
-  template <typename U = T, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  constexpr bool operator<=(const U rhs) const noexcept
-  {
-    return *this <= FixedPoint(rhs);
-  }
-
-  template <typename U = T, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  constexpr bool operator>=(const U rhs) const noexcept
-  {
-    return *this >= FixedPoint(rhs);
-  }
-
   /// Barton-Nackman trick to generate operators.
   /// @{
-  friend constexpr FixedPoint operator+(FixedPoint lhs, FixedPoint rhs) noexcept { return lhs += rhs; }
-  friend constexpr FixedPoint operator-(FixedPoint lhs, FixedPoint rhs) noexcept { return lhs -= rhs; }
-  friend constexpr FixedPoint operator*(FixedPoint lhs, FixedPoint rhs) noexcept { return lhs *= rhs; }
-  friend constexpr FixedPoint operator/(FixedPoint lhs, FixedPoint rhs) noexcept { return lhs /= rhs; }
+  friend constexpr FixedPoint operator+(FixedPoint lhs, const FixedPoint rhs) noexcept { return lhs += rhs; }
+  friend constexpr FixedPoint operator-(FixedPoint lhs, const FixedPoint rhs) noexcept { return lhs -= rhs; }
+  friend constexpr FixedPoint operator*(FixedPoint lhs, const FixedPoint rhs) noexcept { return lhs *= rhs; }
+  friend constexpr FixedPoint operator/(FixedPoint lhs, const FixedPoint rhs) noexcept { return lhs /= rhs; }
 
   /// Comparison operators
   /// @{
-  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  friend constexpr bool operator==(const U lhs, const FixedPoint rhs) noexcept
+  friend constexpr bool operator==(const FixedPoint lhs, const FixedPoint rhs) noexcept
   {
-    return FixedPoint(lhs) == rhs;
+    return lhs.value_ == rhs.value_;
   }
-
-  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  friend constexpr bool operator!=(const U lhs, const FixedPoint rhs) noexcept
+  friend constexpr bool operator!=(const FixedPoint lhs, const FixedPoint rhs) noexcept
   {
-    return FixedPoint(lhs) != rhs;
+    return lhs.value_ != rhs.value_;
   }
-
-  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  friend constexpr bool operator<(const U lhs, const FixedPoint rhs) noexcept
+  friend constexpr bool operator<(const FixedPoint lhs, const FixedPoint rhs) noexcept
   {
-    return FixedPoint(lhs) < rhs;
+    return lhs.value_ < rhs.value_;
   }
-
-  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  friend constexpr bool operator>(const U lhs, const FixedPoint rhs) noexcept
+  friend constexpr bool operator>(const FixedPoint lhs, const FixedPoint rhs) noexcept
   {
-    return FixedPoint(lhs) > rhs;
+    return lhs.value_ > rhs.value_;
   }
-
-  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  friend constexpr bool operator<=(const U lhs, const FixedPoint rhs) noexcept
+  friend constexpr bool operator<=(const FixedPoint lhs, const FixedPoint rhs) noexcept
   {
-    return FixedPoint(lhs) <= rhs;
+    return lhs.value_ <= rhs.value_;
   }
-
-  template <typename U, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
-  friend constexpr bool operator>=(const U lhs, const FixedPoint rhs) noexcept
+  friend constexpr bool operator>=(const FixedPoint lhs, const FixedPoint rhs) noexcept
   {
-    return FixedPoint(lhs) >= rhs;
+    return lhs.value_ >= rhs.value_;
   }
   /// @}
 

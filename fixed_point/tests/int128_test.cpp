@@ -54,7 +54,8 @@ constexpr PackedIntT pack_hi_lo(const HiIntT hi, const LoIntT lo)
   }
   else
   {
-    static_assert(true, "Unsupported type");
+    static_assert(sizeof(PackedIntT) == 0,
+                  "Unsupported type"); // workaround before CWG2518/P2593R1
   }
   return 0;
 }
@@ -118,11 +119,12 @@ void check_conversion_ctor(const ContainerT& test_case)
   }
 }
 
-template <typename IntT, typename ResultT, typename CustomIntT = rtw::fixed_point::Int<IntT>>
+template <typename IntT, typename ResultT, typename CustomIntT>
 constexpr void check_result(const CustomIntT result, const ResultT expected)
 {
+  using LoIntT = std::make_unsigned_t<IntT>;
   IntT expected_hi;
-  typename CustomIntT::lo_type expected_lo;
+  LoIntT expected_lo;
   unpack_hi_lo(expected, expected_hi, expected_lo);
   const auto result_t = pack_hi_lo<ResultT>(result.hi(), result.lo());
   EXPECT_EQ(result_t, expected);
@@ -140,7 +142,7 @@ enum class OperationType : std::uint8_t
 };
 
 // NOLINTBEGIN(readability-function-cognitive-complexity)
-template <typename IntT, typename ResultT, OperationType OPERATION, typename CustomIntT = rtw::fixed_point::Int<IntT>>
+template <typename IntT, typename ResultT, OperationType OPERATION, typename CustomIntT>
 void check_operation(const typename CustomIntT::hi_type a, const typename CustomIntT::hi_type b)
 {
   if constexpr (OPERATION == OperationType::ADD)
@@ -178,13 +180,14 @@ void check_operation(const typename CustomIntT::hi_type a, const typename Custom
 }
 // NOLINTEND(readability-function-cognitive-complexity)
 
-template <typename IntT, typename ResultT, OperationType OPERATION, typename ContainerT>
+template <typename IntT, typename ResultT, OperationType OPERATION, typename ContainerT,
+          typename CustomIntT = rtw::fixed_point::Int<IntT>>
 void check(const ContainerT& test_case)
 {
   for (const auto& [a, b] : test_case)
   {
-    check_operation<IntT, ResultT, OPERATION>(a, b);
-    check_operation<IntT, ResultT, OPERATION>(b, a);
+    check_operation<IntT, ResultT, OPERATION, CustomIntT>(a, b);
+    check_operation<IntT, ResultT, OPERATION, CustomIntT>(b, a);
   }
 }
 } // namespace
@@ -386,8 +389,187 @@ TEST(Int64u, arithmetic_operations)
   check<std::uint32_t, std::uint64_t, OperationType::MOD>(TEST_CASE);
 }
 
+template <typename T>
+class IntTest : public ::testing::Test
+{};
+
+using IntTypes = ::testing::Types<rtw::fixed_point::Int16, rtw::fixed_point::Int16u, rtw::fixed_point::Int32,
+                                  rtw::fixed_point::Int32u, rtw::fixed_point::Int64, rtw::fixed_point::Int64u,
+                                  rtw::fixed_point::Int128, rtw::fixed_point::Int128u>;
+TYPED_TEST_SUITE(IntTest, IntTypes, );
+
+TYPED_TEST(IntTest, traits)
+{
+  static_assert(std::is_trivially_default_constructible_v<TypeParam>);
+  static_assert(std::is_nothrow_default_constructible_v<TypeParam>);
+  static_assert(std::is_trivially_copy_constructible_v<TypeParam>);
+  static_assert(std::is_trivially_copy_assignable_v<TypeParam>);
+  static_assert(std::is_trivially_destructible_v<TypeParam>);
+  static_assert(std::is_nothrow_move_constructible_v<TypeParam>);
+  static_assert(std::is_nothrow_move_assignable_v<TypeParam>);
+  static_assert(std::is_nothrow_swappable_v<TypeParam>);
+}
+
+TEST(Int128, arithmetic_operations)
+{
+  using rtw::fixed_point::Int128;
+
+  {
+    // Addition
+    EXPECT_EQ(Int128{0} + Int128{0}, 0);
+    EXPECT_EQ(Int128{0} + Int128{-1}, -1);
+    EXPECT_EQ(Int128{1} + Int128{0}, 1);
+    EXPECT_EQ(Int128{42} + Int128{42}, 84);
+    EXPECT_EQ(Int128{42} + Int128{-42}, 0);
+    EXPECT_EQ(Int128{-42} + Int128{-42}, -84);
+    EXPECT_EQ(Int128::max() + Int128::min(), -1);
+    EXPECT_EQ(Int128::min() + Int128::max(), -1);
+  }
+  {
+    // Subtraction
+    EXPECT_EQ(Int128{0} - Int128{0}, 0);
+    EXPECT_EQ(Int128{0} - Int128{-1}, 1);
+    EXPECT_EQ(Int128{1} - Int128{0}, 1);
+    EXPECT_EQ(Int128{42} - Int128{42}, 0);
+    EXPECT_EQ(Int128{42} - Int128{-42}, 84);
+    EXPECT_EQ(Int128{-42} - Int128{-42}, 0);
+    EXPECT_EQ(Int128::max() - Int128::max(), 0);
+    EXPECT_EQ(Int128::min() - Int128::min(), 0);
+  }
+  {
+    // Multiplication
+    EXPECT_EQ(Int128{0} * Int128{0}, 0);
+    EXPECT_EQ(Int128{0} * Int128{-1}, 0);
+    EXPECT_EQ(Int128{1} * Int128{0}, 0);
+    EXPECT_EQ(Int128{42} * Int128{42}, 1'764);
+    EXPECT_EQ(Int128{42} * Int128{-42}, -1'764);
+    EXPECT_EQ(Int128{-42} * Int128{-42}, 1'764);
+    EXPECT_EQ(Int128::max() * -1, Int128::min() + 1);
+    EXPECT_EQ(Int128::min() * -1, Int128::max() + 1);
+  }
+  {
+    // Division
+    EXPECT_EQ(Int128{0} / Int128{1}, 0);
+    EXPECT_EQ(Int128{1} / Int128{1}, 1);
+    EXPECT_EQ(Int128{42} / Int128{42}, 1);
+    EXPECT_EQ(Int128{42} / Int128{-42}, -1);
+    EXPECT_EQ(Int128{-42} / Int128{-42}, 1);
+    EXPECT_EQ(Int128::max() / Int128::max(), 1);
+    EXPECT_EQ(Int128::min() / Int128::min(), 1);
+    EXPECT_DEATH(Int128{-1} / Int128{0}, "");
+  }
+  {
+    // Modulo
+    EXPECT_EQ(Int128{0} % Int128{1}, 0);
+    EXPECT_EQ(Int128{1} % Int128{1}, 0);
+    EXPECT_EQ(Int128{42} % Int128{42}, 0);
+    EXPECT_EQ(Int128{42} % Int128{-42}, 0);
+    EXPECT_EQ(Int128{-42} % Int128{-42}, 0);
+    EXPECT_EQ(Int128::max() % Int128::max(), 0);
+    EXPECT_EQ(Int128::min() % Int128::min(), 0);
+    EXPECT_DEATH(Int128{-1} % Int128{0}, "");
+  }
+}
+
+TEST(Int128u, arithmetic_operations)
+{
+  using rtw::fixed_point::Int128u;
+
+  {
+    // Addition
+    EXPECT_EQ(Int128u{0} + Int128u{0}, 0);
+    EXPECT_EQ(Int128u{0} + Int128u{1}, 1);
+    EXPECT_EQ(Int128u{1} + Int128u{0}, 1);
+    EXPECT_EQ(Int128u{42} + Int128u{42}, 84);
+
+    auto result =
+        Int128u{std::numeric_limits<std::uint64_t>::max()} + Int128u{std::numeric_limits<std::uint64_t>::max()};
+    EXPECT_EQ(result.hi(), 1);
+    EXPECT_EQ(result.lo(), std::numeric_limits<std::uint64_t>::max() - 1);
+
+    result = Int128u::max() + Int128u::max();
+    EXPECT_EQ(result.hi(), std::numeric_limits<std::uint64_t>::max());
+    EXPECT_EQ(result.lo(), std::numeric_limits<std::uint64_t>::max() - 1);
+
+    EXPECT_EQ(Int128u::max() + Int128u{1}, 0);
+    EXPECT_EQ(Int128u{1} + Int128u::max(), 0);
+  }
+
+  {
+    // Subtraction
+    EXPECT_EQ(Int128u{0} - Int128u{0}, 0);
+    EXPECT_EQ(Int128u{1} - Int128u{0}, 1);
+    EXPECT_EQ(Int128u{1} - Int128u{1}, 0);
+    EXPECT_EQ(Int128u{42} - Int128u{42}, 0);
+
+    auto result = Int128u{std::numeric_limits<std::uint64_t>::max()} - Int128u{0};
+    EXPECT_EQ(result, std::numeric_limits<std::uint64_t>::max());
+
+    result = Int128u{0} - Int128u{std::numeric_limits<std::uint64_t>::max()};
+    EXPECT_EQ(result.hi(), std::numeric_limits<std::uint64_t>::max());
+    EXPECT_EQ(result.lo(), 1);
+
+    result = Int128u{0} - Int128u{1};
+    EXPECT_EQ(result.hi(), std::numeric_limits<std::uint64_t>::max());
+    EXPECT_EQ(result.lo(), std::numeric_limits<std::uint64_t>::max());
+  }
+
+  {
+    // Multiplication
+    EXPECT_EQ(Int128u{0} * Int128u{0}, 0);
+    EXPECT_EQ(Int128u{1} * Int128u{0}, 0);
+    EXPECT_EQ(Int128u{42} * 2, 84);
+
+    auto result = Int128u{std::numeric_limits<std::uint64_t>::max()} * Int128u{0};
+    EXPECT_EQ(result, 0);
+
+    result = Int128u{0} * Int128u{std::numeric_limits<std::uint64_t>::max()};
+    EXPECT_EQ(result, 0);
+
+    result = Int128u{std::numeric_limits<std::uint64_t>::max()} * Int128u{1};
+    EXPECT_EQ(result, std::numeric_limits<std::uint64_t>::max());
+
+    EXPECT_EQ(Int128u::max() * Int128u::max(), 1);
+    EXPECT_EQ(Int128u::max() * 2, Int128u::max() - 1);
+    EXPECT_EQ(Int128u::max() * 2, Int128u::max() << 1);
+  }
+
+  {
+    // Division
+    EXPECT_EQ(Int128u{0} / Int128u{1}, 0);
+    EXPECT_EQ(Int128u{1} / Int128u{1}, 1);
+    EXPECT_EQ(Int128u{42} / 2, 21);
+    EXPECT_DEATH(Int128u{1} / Int128u{0}, "");
+
+    auto result = Int128u{std::numeric_limits<std::uint64_t>::max()} / Int128u{1};
+    EXPECT_EQ(result, std::numeric_limits<std::uint64_t>::max());
+
+    result = Int128u::max() / 2;
+    EXPECT_EQ(result, Int128u::max() >> 1);
+
+    EXPECT_EQ(Int128u::max() / Int128u::max(), 1);
+  }
+
+  {
+    // Modulo
+    EXPECT_EQ(Int128u{0} % Int128u{1}, 0);
+    EXPECT_EQ(Int128u{1} % Int128u{1}, 0);
+    EXPECT_EQ(Int128u{42} % 2, 0);
+    EXPECT_DEATH(Int128u{1} % Int128u{0}, "");
+
+    auto result = Int128u{std::numeric_limits<std::uint64_t>::max()} % Int128u{1};
+    EXPECT_EQ(result, 0);
+
+    result = Int128u::max() % 2;
+    EXPECT_EQ(result, 1);
+
+    EXPECT_EQ(Int128u::max() % Int128u::max(), 0);
+  }
+}
+
 TEST(Int, negate)
 {
+  using rtw::fixed_point::Int128;
   using rtw::fixed_point::Int16;
   using rtw::fixed_point::Int32;
   using rtw::fixed_point::Int64;
@@ -404,7 +586,12 @@ TEST(Int, negate)
     EXPECT_EQ(-Int64(369), Int64(-369));
     EXPECT_EQ(-Int64(-369), Int64(369));
   }
+  {
+    EXPECT_EQ(-Int128(369), Int128(-369));
+    EXPECT_EQ(-Int128(-369), Int128(369));
+  }
 
+  using rtw::fixed_point::Int128u;
   using rtw::fixed_point::Int16u;
   using rtw::fixed_point::Int32u;
   using rtw::fixed_point::Int64u;
@@ -420,6 +607,10 @@ TEST(Int, negate)
   {
     EXPECT_EQ(-Int64u(369), Int64u(-369));
     EXPECT_EQ(-Int64u(-369), Int64u(369));
+  }
+  {
+    EXPECT_EQ(-Int128u(369), Int128u(-369));
+    EXPECT_EQ(-Int128u(-369), Int128u(369));
   }
 }
 
