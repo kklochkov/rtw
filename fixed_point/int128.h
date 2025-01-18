@@ -4,9 +4,16 @@
 
 #include <cassert>
 #include <cstdint>
+#include <limits>
 
 namespace rtw::fixed_point
 {
+
+enum class ArithmeticType : std::uint8_t
+{
+  INTEGRAL,
+  FLOATING_POINT,
+};
 
 template <typename T>
 class Int
@@ -20,23 +27,22 @@ public:
   constexpr static std::uint32_t HI_BITS = sizeof(hi_type) * 8U;
   constexpr static std::uint32_t LO_BITS = sizeof(lo_type) * 8U;
   constexpr static std::uint32_t BITS = HI_BITS + LO_BITS;
-  constexpr static hi_type MAX_HI =
-      std::is_signed_v<hi_type> ? ((hi_type{1U} << (HI_BITS - 1U)) - 1U) : (hi_type{1U} << HI_BITS);
-  constexpr static hi_type MIN_HI = std::is_signed_v<hi_type> ? -MAX_HI - 1U : 0U;
-  constexpr static lo_type MAX_LO = lo_type{1U} << LO_BITS;
+  constexpr static lo_type MAX_LO = ~lo_type{0U};
   constexpr static lo_type MIN_LO = 0U;
+  constexpr static hi_type MAX_HI = std::is_signed_v<hi_type> ? hi_type{(lo_type{1U} << (HI_BITS - 1U)) - 1U} : MAX_LO;
+  constexpr static hi_type MIN_HI = std::is_signed_v<hi_type> ? -MAX_HI - 1U : MIN_LO;
 
   constexpr Int() noexcept = default;
   constexpr Int(const hi_type hi, const lo_type lo) noexcept : hi_{hi}, lo_{lo} {}
 
   // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
-  template <typename U, typename = std::enable_if_t<std::is_integral_v<U>>>
-  constexpr Int(const U value) noexcept : hi_{static_cast<hi_type>(-sign_bit(value))}, lo_{static_cast<lo_type>(value)}
+  template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
+  constexpr Int(const I value) noexcept : hi_{static_cast<hi_type>(-sign_bit(value))}, lo_{static_cast<lo_type>(value)}
   {
   }
 
-  template <typename U, typename = std::enable_if_t<std::is_integral_v<U>>>
-  constexpr Int(const Int<U> other) noexcept
+  template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
+  constexpr Int(const Int<I> other) noexcept
       : hi_{static_cast<hi_type>(other.hi())}, lo_{static_cast<lo_type>(other.lo())}
   {
   }
@@ -45,25 +51,36 @@ public:
   constexpr hi_type hi() const noexcept { return hi_; }
   constexpr lo_type lo() const noexcept { return lo_; }
 
-  constexpr Int min() const noexcept { return Int{MIN_HI, MIN_LO}; }
-  constexpr Int max() const noexcept { return Int{MAX_HI, MAX_LO}; }
+  constexpr static Int min() noexcept { return Int{MIN_HI, MIN_LO}; }
+  constexpr static Int max() noexcept { return Int{MAX_HI, MAX_LO}; }
 
-  constexpr explicit operator double() const noexcept
+  constexpr explicit operator bool() const noexcept { return hi_ || lo_; }
+
+  template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
+  constexpr explicit operator I() const noexcept
   {
-    constexpr double POW_2_64 = 18'446'744'073'709'551'616.0;
+    return static_cast<I>(lo_);
+  }
+
+  template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
+  constexpr explicit operator F() const noexcept
+  {
+    constexpr F POW_2_64{18'446'744'073'709'551'616.0};
     if constexpr (std::is_signed_v<hi_type>)
     {
       if ((hi_ < 0) && (hi_ != MIN_HI) && (lo_ != MIN_LO))
       {
-        return -static_cast<double>(-*this);
+        return -static_cast<F>(-*this);
       }
+    }
 
-      return static_cast<double>(hi_) * POW_2_64 + static_cast<double>(lo_);
-    }
-    else
-    {
-      return static_cast<double>(hi_) * POW_2_64 + static_cast<double>(lo_);
-    }
+    return static_cast<F>(hi_) * POW_2_64 + static_cast<F>(lo_);
+  }
+
+  template <typename U = T, typename = std::enable_if_t<std::is_signed_v<U>>>
+  constexpr Int operator-() const noexcept
+  {
+    return Int{-hi_, -lo_};
   }
 
   constexpr Int& operator<<=(const std::uint32_t shift) noexcept
@@ -86,7 +103,14 @@ public:
     if (shift >= LO_BITS)
     {
       lo_ = hi_ >> (shift - LO_BITS);
-      hi_ = hi_type{0U};
+      if constexpr (std::is_unsigned_v<hi_type>)
+      {
+        hi_ = hi_type{0U};
+      }
+      else
+      {
+        hi_ >>= (LO_BITS - 1U); // Fill with the sign bit.
+      }
     }
     else if (shift > 0U)
     {
@@ -151,24 +175,34 @@ public:
     return *this;
   }
 
-  constexpr bool operator==(const Int rhs) const noexcept { return (hi_ == rhs.hi_) && (lo_ == rhs.lo_); }
-  constexpr bool operator!=(const Int rhs) const noexcept { return !(*this == rhs); }
-  constexpr bool operator<(const Int rhs) const noexcept
+  constexpr Int& operator++() noexcept
   {
-    return (hi_ < rhs.hi_) || ((hi_ == rhs.hi_) && (lo_ < rhs.lo_));
+    *this += Int{1};
+    return *this;
   }
-  constexpr bool operator>(const Int rhs) const noexcept { return rhs < *this; }
-  constexpr bool operator<=(const Int rhs) const noexcept { return !(*this > rhs); }
-  constexpr bool operator>=(const Int rhs) const noexcept { return !(*this < rhs); }
+
+  constexpr Int operator++(int) noexcept
+  {
+    const auto result = *this;
+    ++(*this);
+    return result;
+  }
+
+  constexpr Int& operator--() noexcept
+  {
+    *this -= Int{1};
+    return *this;
+  }
+
+  constexpr Int operator--(int) noexcept
+  {
+    const auto result = *this;
+    --(*this);
+    return result;
+  }
 
   /// Barton-Nackman trick to generate operators.
   /// @{
-  friend constexpr Int operator+(Int lhs) noexcept { return lhs; }
-  friend constexpr Int operator-(Int lhs) noexcept
-  {
-    return Int{static_cast<hi_type>(~lhs.hi_ + static_cast<hi_type>(lhs.lo_ == 0U)),
-               static_cast<lo_type>(~lhs.lo_ + 1U)};
-  }
   friend constexpr Int operator+(Int lhs, const Int rhs) noexcept { return lhs += rhs; }
   friend constexpr Int operator-(Int lhs, const Int rhs) noexcept { return lhs -= rhs; }
   friend constexpr Int operator*(Int lhs, const Int rhs) noexcept { return lhs *= rhs; }
@@ -180,6 +214,30 @@ public:
   friend constexpr Int operator|(Int lhs, const Int rhs) noexcept { return lhs |= rhs; }
   friend constexpr Int operator^(Int lhs, const Int rhs) noexcept { return lhs ^= rhs; }
   friend constexpr Int operator~(Int lhs) noexcept { return Int{~lhs.hi(), ~lhs.lo()}; }
+  /// @}
+
+  /// Comparison operators
+  /// @{
+  friend constexpr bool operator!(const Int lhs) noexcept { return (lhs.hi_ == 0U) && (lhs.lo_ == 0U); }
+  friend constexpr bool operator==(const Int lhs, const Int rhs) noexcept
+  {
+    return (lhs.hi_ == rhs.hi_) && (lhs.lo_ == rhs.lo_);
+  }
+  friend constexpr bool operator!=(const Int lhs, const Int rhs) noexcept { return !(lhs == rhs); }
+  friend constexpr bool operator<(const Int lhs, const Int rhs) noexcept
+  {
+    return (lhs.hi_ < rhs.hi_) || ((lhs.hi_ == rhs.hi_) && (lhs.lo_ < rhs.lo_));
+  }
+  friend constexpr bool operator>(const Int lhs, const Int rhs) noexcept { return rhs < lhs; }
+  friend constexpr bool operator<=(const Int lhs, const Int rhs) noexcept { return !(lhs > rhs); }
+  friend constexpr bool operator>=(const Int lhs, const Int rhs) noexcept { return !(lhs < rhs); }
+
+  friend constexpr Int operator+(Int lhs) noexcept { return lhs; }
+  friend constexpr Int operator-(Int lhs) noexcept
+  {
+    return Int{static_cast<hi_type>(~lhs.hi_ + static_cast<hi_type>(lhs.lo_ == 0U)),
+               static_cast<lo_type>(~lhs.lo_ + 1U)};
+  }
   /// @}
 
 private:
@@ -321,8 +379,8 @@ private:
   /// @}
 
 private:
-  hi_type hi_{};
-  lo_type lo_{};
+  hi_type hi_;
+  lo_type lo_;
 };
 
 using Int128 = Int<std::int64_t>;
@@ -338,3 +396,88 @@ constexpr std::int32_t count_leading_zero(const Int<T> value)
 }
 
 } // namespace rtw::fixed_point
+
+// std traits
+namespace std
+{
+// NOLINTBEGIN(readability-identifier-naming)
+template <>
+class numeric_limits<rtw::fixed_point::Int128>
+{
+public:
+  constexpr static bool is_specialized = true;
+  constexpr static bool is_signed = true;
+  constexpr static bool is_integer = true;
+  constexpr static bool is_exact = true;
+  constexpr static bool has_infinity = false;
+  constexpr static bool has_quiet_NaN = false;
+  constexpr static bool has_signaling_NaN = false;
+  constexpr static float_denorm_style has_denorm = denorm_absent;
+  constexpr static bool has_denorm_loss = false;
+  constexpr static float_round_style round_style = round_toward_zero;
+  constexpr static bool is_iec559 = false;
+  constexpr static bool is_bounded = true;
+  constexpr static bool is_modulo = false;
+  constexpr static int digits = rtw::fixed_point::Int128::BITS - 1U; // Excluding the sign bit, 127
+  constexpr static int digits10 = 38;
+  constexpr static int max_digits10 = 0;
+  constexpr static int radix = 2;
+  constexpr static int min_exponent = 0;
+  constexpr static int min_exponent10 = 0;
+  constexpr static int max_exponent = 0;
+  constexpr static int max_exponent10 = 0;
+  constexpr static bool traps = numeric_limits<std::uint64_t>::traps;
+  constexpr static bool tinyness_before = false;
+
+  constexpr static rtw::fixed_point::Int128 min() { return rtw::fixed_point::Int128::min(); }
+  constexpr static rtw::fixed_point::Int128 lowest() { return rtw::fixed_point::Int128::min(); }
+  constexpr static rtw::fixed_point::Int128 max() { return rtw::fixed_point::Int128::max(); }
+  constexpr static rtw::fixed_point::Int128 epsilon() { return 0; }
+  constexpr static rtw::fixed_point::Int128 round_error() { return 0; }
+  constexpr static rtw::fixed_point::Int128 infinity() { return 0; }
+  constexpr static rtw::fixed_point::Int128 quiet_NaN() { return 0; }
+  constexpr static rtw::fixed_point::Int128 signaling_NaN() { return 0; }
+  constexpr static rtw::fixed_point::Int128 denorm_min() { return 0; }
+};
+
+template <>
+class numeric_limits<rtw::fixed_point::Int128u>
+{
+public:
+  constexpr static bool is_specialized = true;
+  constexpr static bool is_signed = false;
+  constexpr static bool is_integer = true;
+  constexpr static bool is_exact = true;
+  constexpr static bool has_infinity = false;
+  constexpr static bool has_quiet_NaN = false;
+  constexpr static bool has_signaling_NaN = false;
+  constexpr static float_denorm_style has_denorm = denorm_absent;
+  constexpr static bool has_denorm_loss = false;
+  constexpr static float_round_style round_style = round_toward_zero;
+  constexpr static bool is_iec559 = false;
+  constexpr static bool is_bounded = true;
+  constexpr static bool is_modulo = true;
+  constexpr static int digits = rtw::fixed_point::Int128u::BITS; // 128
+  constexpr static int digits10 = 38;
+  constexpr static int max_digits10 = 0;
+  constexpr static int radix = 2;
+  constexpr static int min_exponent = 0;
+  constexpr static int min_exponent10 = 0;
+  constexpr static int max_exponent = 0;
+  constexpr static int max_exponent10 = 0;
+  constexpr static bool traps = numeric_limits<std::uint64_t>::traps;
+  constexpr static bool tinyness_before = false;
+
+  constexpr static rtw::fixed_point::Int128u min() { return 0; }
+  constexpr static rtw::fixed_point::Int128u lowest() { return 0; }
+  constexpr static rtw::fixed_point::Int128u max() { return rtw::fixed_point::Int128u::max(); }
+  constexpr static rtw::fixed_point::Int128u epsilon() { return 0; }
+  constexpr static rtw::fixed_point::Int128u round_error() { return 0; }
+  constexpr static rtw::fixed_point::Int128u infinity() { return 0; }
+  constexpr static rtw::fixed_point::Int128u quiet_NaN() { return 0; }
+  constexpr static rtw::fixed_point::Int128u signaling_NaN() { return 0; }
+  constexpr static rtw::fixed_point::Int128u denorm_min() { return 0; }
+};
+// NOLINTEND(readability-identifier-naming)
+
+} // namespace std

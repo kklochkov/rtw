@@ -101,7 +101,7 @@ CheckOptions:
   - key: readability-identifier-naming.TypeTemplateParameterSuffix
     value: T
   - key: readability-identifier-naming.TypeTemplateParameterIgnoredRegexp
-    value: '^(T|U)$'
+    value: '^(T|U|I|F)$'
   - key: readability-identifier-naming.ValueTemplateParameterCase
     value: UPPER_CASE
   - key: readability-implicit-bool-conversion.AllowIntegerConditions
