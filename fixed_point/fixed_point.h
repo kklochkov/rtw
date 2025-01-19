@@ -51,24 +51,23 @@ class FixedPoint
 
 public:
   using type = T;
+  using unsigned_type = std::make_unsigned_t<T>;
   using saturation_type = SaturationT;
 
   constexpr static OverflowPolicy OVERFLOW_POLICY = POLICY;
-  constexpr static std::uint8_t BITS = sizeof(T) * 8U;
-  constexpr static std::uint8_t SATURATION_BITS = sizeof(SaturationT) * 8U;
-  constexpr static std::uint8_t SIGN_BIT = std::is_signed_v<T> ? 1U : 0U;
-  constexpr static std::uint8_t FRACTIONAL_BITS = FRAC_BITS;
-  constexpr static std::uint8_t INTEGER_BITS = BITS - FRACTIONAL_BITS - SIGN_BIT;
+  constexpr static std::uint32_t BITS = sizeof(T) * 8U;
+  constexpr static std::uint32_t FRACTIONAL_BITS = FRAC_BITS;
+  constexpr static std::uint32_t INTEGER_BITS = BITS - FRACTIONAL_BITS - std::uint32_t{std::is_signed_v<T>};
   constexpr static T ONE = 1UL << FRACTIONAL_BITS;
   constexpr static double RESOLUTION = 1.0 / static_cast<double>(ONE);
-  constexpr static T MAX_INTEGER = (SaturationT(1) << (BITS - SIGN_BIT)) - 1U;
+  constexpr static T MAX_INTEGER = std::is_signed_v<T> ? (unsigned_type{1U} << (BITS - 1U)) - 1U : ~unsigned_type{0U};
   constexpr static T MIN_INTEGER = std::is_signed_v<T> ? -MAX_INTEGER - 1U : 0U;
-  constexpr static T MAX = (1U << INTEGER_BITS) - (1U >> FRACTIONAL_BITS) - 1U;
+  constexpr static T MAX = (unsigned_type{1U} << INTEGER_BITS) - (unsigned_type{1U} >> FRACTIONAL_BITS) - 1U;
   constexpr static T MIN = std::is_signed_v<T> ? -MAX - 1U : 0U;
 
   static_assert(FRACTIONAL_BITS < BITS, "The number of fractional bits must be less than the total bits");
   static_assert(std::is_integral_v<T>, "The underlying type must be an integral type");
-  static_assert(std::is_signed_v<SaturationT> == std::is_signed_v<T>,
+  static_assert((std::is_signed_v<SaturationT> == std::is_signed_v<T>) || (std::is_same_v<SaturationT, Int128>),
                 "The saturation type must have the same sign as the underlying type");
 
   constexpr FixedPoint() noexcept = default;
@@ -96,16 +95,18 @@ public:
   template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
   FixedPoint(const F value) noexcept
   {
-    // std::lround is constexpr since C++20
+    // std::lround and std::round are constexpr since C++20
     if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
     {
+      // Round to the nearest integer in integer space, without truncating to avoid precision loss
       auto result = static_cast<SaturationT>(std::lround(value * ONE));
       result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
       value_ = static_cast<T>(result);
     }
     else if constexpr (OVERFLOW_POLICY == OverflowPolicy::WRAP)
     {
-      value_ = static_cast<T>(std::lround(value * ONE));
+      // Round to the nearest integer in fixed-point space to prevent integer overflow and then truncate
+      value_ = static_cast<T>(std::round(value * ONE));
     }
     else
     {
@@ -296,7 +297,7 @@ public:
   }
   /// @}
 private:
-  T value_{};
+  T value_;
 };
 
 using FixedPoint8 = FixedPoint<std::int16_t, 8, std::int32_t, OverflowPolicy::SATURATE>;

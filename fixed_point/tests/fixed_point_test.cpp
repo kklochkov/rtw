@@ -1,6 +1,7 @@
 #include "fixed_point/fixed_point.h"
 
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 TEST(FixedPoint8, constants)
 {
@@ -11,7 +12,6 @@ TEST(FixedPoint8, constants)
                     == rtw::fixed_point::FixedPoint8::MAX_INTEGER,
                 "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::FixedPoint8::BITS, 16);
-  EXPECT_EQ(rtw::fixed_point::FixedPoint8::SIGN_BIT, 1);
   EXPECT_EQ(rtw::fixed_point::FixedPoint8::FRACTIONAL_BITS, 8);
   EXPECT_EQ(rtw::fixed_point::FixedPoint8::INTEGER_BITS, 7);
   EXPECT_EQ(rtw::fixed_point::FixedPoint8::ONE, 256);
@@ -31,7 +31,6 @@ TEST(FixedPoint8u, constants)
                     == rtw::fixed_point::FixedPoint8u::MAX_INTEGER,
                 "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::FixedPoint8u::BITS, 16);
-  EXPECT_EQ(rtw::fixed_point::FixedPoint8u::SIGN_BIT, 0);
   EXPECT_EQ(rtw::fixed_point::FixedPoint8u::FRACTIONAL_BITS, 8);
   EXPECT_EQ(rtw::fixed_point::FixedPoint8u::INTEGER_BITS, 8);
   EXPECT_EQ(rtw::fixed_point::FixedPoint8u::ONE, 256);
@@ -51,7 +50,6 @@ TEST(FixedPoint16, constants)
                     == rtw::fixed_point::FixedPoint16::MAX_INTEGER,
                 "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::FixedPoint16::BITS, 32);
-  EXPECT_EQ(rtw::fixed_point::FixedPoint16::SIGN_BIT, 1);
   EXPECT_EQ(rtw::fixed_point::FixedPoint16::FRACTIONAL_BITS, 16);
   EXPECT_EQ(rtw::fixed_point::FixedPoint16::INTEGER_BITS, 15);
   EXPECT_EQ(rtw::fixed_point::FixedPoint16::ONE, 65'536);
@@ -71,7 +69,6 @@ TEST(FixedPoint16u, constants)
                     == rtw::fixed_point::FixedPoint16u::MAX_INTEGER,
                 "The maximum value of the underlying type must be correct");
   EXPECT_EQ(rtw::fixed_point::FixedPoint16u::BITS, 32);
-  EXPECT_EQ(rtw::fixed_point::FixedPoint16u::SIGN_BIT, 0);
   EXPECT_EQ(rtw::fixed_point::FixedPoint16u::FRACTIONAL_BITS, 16);
   EXPECT_EQ(rtw::fixed_point::FixedPoint16u::INTEGER_BITS, 16);
   EXPECT_EQ(rtw::fixed_point::FixedPoint16u::ONE, 65'536);
@@ -81,18 +78,69 @@ TEST(FixedPoint16u, constants)
   EXPECT_EQ(rtw::fixed_point::FixedPoint16u::MIN, 0);
   EXPECT_EQ(rtw::fixed_point::FixedPoint16u::MAX, 65'535);
 }
+
+TEST(FixedPoint32, constants)
+{
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint32::type>::min()
+                    == rtw::fixed_point::FixedPoint32::MIN_INTEGER,
+                "The minimum value of the underlying type must be correct");
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint32::type>::max()
+                    == rtw::fixed_point::FixedPoint32::MAX_INTEGER,
+                "The maximum value of the underlying type must be correct");
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::BITS, 64);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::FRACTIONAL_BITS, 32);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::INTEGER_BITS, 31);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::ONE, 4'294'967'296);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::RESOLUTION, 0.00000000023283064365386962890625);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::min(), -2147483648);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::max(), 2147483648);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::MIN, -2'147'483'648);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32::MAX, 2'147'483'647);
+}
+
+TEST(FixedPoint32u, constants)
+{
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint32u::type>::min()
+                    == rtw::fixed_point::FixedPoint32u::MIN_INTEGER,
+                "The minimum value of the underlying type must be correct");
+  static_assert(std::numeric_limits<rtw::fixed_point::FixedPoint32u::type>::max()
+                    == rtw::fixed_point::FixedPoint32u::MAX_INTEGER,
+                "The maximum value of the underlying type must be correct");
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::BITS, 64);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::FRACTIONAL_BITS, 32);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::INTEGER_BITS, 32);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::ONE, 4'294'967'296);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::RESOLUTION, 0.00000000023283064365386962890625);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::min(), 0.0);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::max(), 4294967296.0);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::MIN, 0);
+  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::MAX, 4'294'967'295);
+}
 // -----------------------------------------------------------------------------------------------
 template <typename T>
 class FixedPointTest : public ::testing::Test
 {};
 
-using FixedPointTypes = ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint8u,
-                                         rtw::fixed_point::FixedPoint16, rtw::fixed_point::FixedPoint16u>;
+using FixedPointTypes =
+    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16,
+                     rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32, rtw::fixed_point::FixedPoint32u>;
 TYPED_TEST_SUITE(FixedPointTest, FixedPointTypes, );
+
+TYPED_TEST(FixedPointTest, traits)
+{
+  static_assert(std::is_trivially_default_constructible_v<TypeParam>);
+  static_assert(std::is_nothrow_default_constructible_v<TypeParam>);
+  static_assert(std::is_trivially_copy_constructible_v<TypeParam>);
+  static_assert(std::is_trivially_copy_assignable_v<TypeParam>);
+  static_assert(std::is_trivially_destructible_v<TypeParam>);
+  static_assert(std::is_nothrow_move_constructible_v<TypeParam>);
+  static_assert(std::is_nothrow_move_assignable_v<TypeParam>);
+  static_assert(std::is_nothrow_swappable_v<TypeParam>);
+}
 
 TYPED_TEST(FixedPointTest, ctor_default)
 {
-  constexpr TypeParam FP;
+  constexpr TypeParam FP{};
   EXPECT_EQ(static_cast<float>(FP), 0.0F);
   EXPECT_EQ(static_cast<double>(FP), 0.0);
   EXPECT_EQ(static_cast<std::int32_t>(FP), 0);
@@ -226,7 +274,8 @@ public:
   constexpr static std::array<std::uint32_t, 10> CTOR_TEST_EXPECTED_UINT32 = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
 };
 
-using SignedFixedPointTypes = ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint16>;
+using SignedFixedPointTypes =
+    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint16, rtw::fixed_point::FixedPoint32>;
 TYPED_TEST_SUITE(SignedFixedPointTest, SignedFixedPointTypes, );
 
 TYPED_TEST(SignedFixedPointTest, ctor)
@@ -269,7 +318,6 @@ TYPED_TEST(SignedFixedPointTest, arithmetic)
     const TypeParam b(2.3);
     const TypeParam c = a - b;
     EXPECT_EQ(c, -0.8);
-    EXPECT_NEAR(static_cast<float>(c), 1.5F - 2.3F, TypeParam::RESOLUTION);
     EXPECT_NEAR(static_cast<double>(c), 1.5 - 2.3, TypeParam::RESOLUTION);
   }
   {
@@ -393,7 +441,8 @@ public:
   constexpr static std::array<std::uint32_t, 10> CTOR_TEST_EXPECTED_UINT32 = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
 };
 
-using UnsignedFixedPointTypes = ::testing::Types<rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16u>;
+using UnsignedFixedPointTypes =
+    ::testing::Types<rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32u>;
 TYPED_TEST_SUITE(UnsignedFixedPointTest, UnsignedFixedPointTypes, );
 
 TYPED_TEST(UnsignedFixedPointTest, ctor)
@@ -431,7 +480,6 @@ TYPED_TEST(UnsignedFixedPointTest, arithmetic)
     const TypeParam a(2.3);
     const TypeParam b(1.5);
     const TypeParam c = a - b;
-    EXPECT_NEAR(static_cast<float>(c), 2.3F - 1.5F, TypeParam::RESOLUTION);
     EXPECT_NEAR(static_cast<double>(c), 2.3 - 1.5, TypeParam::RESOLUTION);
   }
   {
@@ -458,6 +506,8 @@ TYPED_TEST(UnsignedFixedPointTest, arithmetic_saturate)
   }
   {
     const TypeParam a(-1.0);
+    const TypeParam b(-1);
+    EXPECT_EQ(a, b);
     EXPECT_EQ(a, TypeParam::max()); // See the comment in the implementation.
   }
   {
@@ -536,6 +586,11 @@ using WrapFixedPoint16 =
                                  rtw::fixed_point::FixedPoint16::saturation_type,
                                  rtw::fixed_point::OverflowPolicy::WRAP>;
 
+using WrapFixedPoint32 =
+    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint32::type, rtw::fixed_point::FixedPoint32::FRACTIONAL_BITS,
+                                 rtw::fixed_point::FixedPoint32::saturation_type,
+                                 rtw::fixed_point::OverflowPolicy::WRAP>;
+
 using WrapFixedPoint8u =
     rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint8u::type, rtw::fixed_point::FixedPoint8u::FRACTIONAL_BITS,
                                  rtw::fixed_point::FixedPoint8u::saturation_type,
@@ -544,6 +599,10 @@ using WrapFixedPoint8u =
 using WrapFixedPoint16u = rtw::fixed_point::FixedPoint<
     rtw::fixed_point::FixedPoint16u::type, rtw::fixed_point::FixedPoint16u::FRACTIONAL_BITS,
     rtw::fixed_point::FixedPoint16u::saturation_type, rtw::fixed_point::OverflowPolicy::WRAP>;
+
+using WrapFixedPoint32u = rtw::fixed_point::FixedPoint<
+    rtw::fixed_point::FixedPoint32u::type, rtw::fixed_point::FixedPoint32u::FRACTIONAL_BITS,
+    rtw::fixed_point::FixedPoint32u::saturation_type, rtw::fixed_point::OverflowPolicy::WRAP>;
 
 template <typename T>
 class WrapFixedPointTest : public ::testing::Test
@@ -561,6 +620,10 @@ public:
     {
       return static_cast<double>(static_cast<std::int16_t>(std::int16_t{32'767} + std::int16_t{1}));
     }
+    else if constexpr (std::is_same_v<typename T::type, std::int64_t>)
+    {
+      return static_cast<double>(static_cast<std::int32_t>(std::numeric_limits<std::int32_t>::max() + 1L));
+    }
     else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
       return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{255} + std::uint8_t{1}));
@@ -568,6 +631,11 @@ public:
     else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
       return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{65'535} + std::uint16_t{1}));
+    }
+    else if constexpr (std::is_same_v<typename T::type, std::uint64_t>)
+    {
+      return static_cast<double>(
+          static_cast<std::uint32_t>(/*std::numeric_limits<std::uint32_t>::max()*/ 4'294'967'295U + 1U));
     }
     else
     {
@@ -586,6 +654,10 @@ public:
     {
       return static_cast<double>(static_cast<std::int16_t>(std::int16_t{-32'768} + std::int16_t{-1}));
     }
+    else if constexpr (std::is_same_v<typename T::type, std::int64_t>)
+    {
+      return static_cast<double>(static_cast<std::int32_t>(std::numeric_limits<std::int32_t>::min() + -1L));
+    }
     else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
       return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{0} + static_cast<std::uint8_t>(-1)));
@@ -593,6 +665,10 @@ public:
     else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
       return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{0} + static_cast<std::uint16_t>(-1)));
+    }
+    else if constexpr (std::is_same_v<typename T::type, std::uint64_t>)
+    {
+      return static_cast<double>(static_cast<std::uint32_t>(std::uint32_t{0} + static_cast<std::uint32_t>(-1)));
     }
     else
     {
@@ -611,6 +687,10 @@ public:
     {
       return static_cast<double>(static_cast<std::int16_t>(std::int16_t{32'767} - std::int16_t{-1}));
     }
+    else if constexpr (std::is_same_v<typename T::type, std::int64_t>)
+    {
+      return static_cast<double>(static_cast<std::int32_t>(std::numeric_limits<std::int32_t>::max() - -1L));
+    }
     else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
       return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{255} - static_cast<std::uint8_t>(-1)));
@@ -618,6 +698,11 @@ public:
     else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
       return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{65'535} - static_cast<std::uint16_t>(-1)));
+    }
+    else if constexpr (std::is_same_v<typename T::type, std::uint64_t>)
+    {
+      return static_cast<double>(
+          static_cast<std::uint32_t>(std::numeric_limits<std::uint32_t>::max() - static_cast<std::uint32_t>(-1)));
     }
     else
     {
@@ -636,6 +721,10 @@ public:
     {
       return static_cast<double>(static_cast<std::int16_t>(std::int16_t{-32'768} - std::int16_t{1}));
     }
+    else if constexpr (std::is_same_v<typename T::type, std::int64_t>)
+    {
+      return static_cast<double>(static_cast<std::int32_t>(std::numeric_limits<std::int32_t>::min() - 1L));
+    }
     else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
       return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{0} - static_cast<std::uint8_t>(1)));
@@ -643,6 +732,10 @@ public:
     else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
       return static_cast<double>(static_cast<std::uint16_t>(std::int16_t{0} - static_cast<std::uint16_t>(1)));
+    }
+    else if constexpr (std::is_same_v<typename T::type, std::uint64_t>)
+    {
+      return static_cast<double>(static_cast<std::uint32_t>(std::int32_t{0} - static_cast<std::uint32_t>(1)));
     }
     else
     {
@@ -661,6 +754,10 @@ public:
     {
       return static_cast<double>(static_cast<std::int16_t>(std::int16_t{32'767} * std::int16_t{2}));
     }
+    else if constexpr (std::is_same_v<typename T::type, std::int64_t>)
+    {
+      return static_cast<double>(static_cast<std::int32_t>(std::numeric_limits<std::int32_t>::max() * 2L));
+    }
     else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
       return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{255} * static_cast<std::uint8_t>(2)));
@@ -668,6 +765,11 @@ public:
     else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
       return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{65'535} * static_cast<std::uint16_t>(2)));
+    }
+    else if constexpr (std::is_same_v<typename T::type, std::uint64_t>)
+    {
+      return static_cast<double>(
+          static_cast<std::uint32_t>(std::numeric_limits<std::uint32_t>::max() * static_cast<std::uint32_t>(2)));
     }
     else
     {
@@ -686,6 +788,10 @@ public:
     {
       return static_cast<double>(static_cast<std::int16_t>(std::int16_t{-32'768} * std::int16_t{2}));
     }
+    else if constexpr (std::is_same_v<typename T::type, std::int64_t>)
+    {
+      return static_cast<double>(static_cast<std::int32_t>(std::numeric_limits<std::int32_t>::min() * 2L));
+    }
     else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
       return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{0} * static_cast<std::uint8_t>(2)));
@@ -693,6 +799,10 @@ public:
     else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
       return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{0} * static_cast<std::uint16_t>(2)));
+    }
+    else if constexpr (std::is_same_v<typename T::type, std::uint64_t>)
+    {
+      return static_cast<double>(static_cast<std::uint32_t>(std::uint32_t{0} * static_cast<std::uint32_t>(2)));
     }
     else
     {
@@ -711,6 +821,10 @@ public:
     {
       return static_cast<double>(static_cast<std::int16_t>(std::int16_t{32'767} * (std::int16_t{1} / std::int16_t{2})));
     }
+    else if constexpr (std::is_same_v<typename T::type, std::int64_t>)
+    {
+      return static_cast<double>(static_cast<std::int32_t>(std::int32_t{32'767} * (std::int32_t{1} / std::int32_t{2})));
+    }
     else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
       return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{255} * (std::uint8_t{1} / std::uint8_t{2})));
@@ -719,6 +833,11 @@ public:
     {
       return static_cast<double>(
           static_cast<std::uint16_t>(std::uint16_t{65'535} * (std::uint16_t{1} / std::uint16_t{2})));
+    }
+    else if constexpr (std::is_same_v<typename T::type, std::uint64_t>)
+    {
+      return static_cast<double>(
+          static_cast<std::uint32_t>(std::uint32_t{65'535} * (std::uint32_t{1} / std::uint32_t{2})));
     }
     else
     {
@@ -738,6 +857,11 @@ public:
       return static_cast<double>(
           static_cast<std::int16_t>(std::int16_t{-32'767} * (std::int16_t{1} / std::int16_t{2})));
     }
+    else if constexpr (std::is_same_v<typename T::type, std::int64_t>)
+    {
+      return static_cast<double>(
+          static_cast<std::int32_t>(std::int32_t{-32'767} * (std::int32_t{1} / std::int32_t{2})));
+    }
     else if constexpr (std::is_same_v<typename T::type, std::uint16_t>)
     {
       return static_cast<double>(static_cast<std::uint8_t>(std::uint8_t{0} * (std::uint8_t{1} / std::uint8_t{2})));
@@ -745,6 +869,10 @@ public:
     else if constexpr (std::is_same_v<typename T::type, std::uint32_t>)
     {
       return static_cast<double>(static_cast<std::uint16_t>(std::uint16_t{0} * (std::uint16_t{1} / std::uint16_t{2})));
+    }
+    else if constexpr (std::is_same_v<typename T::type, std::uint64_t>)
+    {
+      return static_cast<double>(static_cast<std::uint32_t>(std::uint32_t{0} * (std::uint32_t{1} / std::uint32_t{2})));
     }
     else
     {
@@ -755,7 +883,8 @@ public:
   /// @}
 };
 
-using WrapFixedPointTypes = ::testing::Types<WrapFixedPoint8, WrapFixedPoint16, WrapFixedPoint8u, WrapFixedPoint16u>;
+using WrapFixedPointTypes = ::testing::Types<WrapFixedPoint8, WrapFixedPoint16, WrapFixedPoint32, WrapFixedPoint8u,
+                                             WrapFixedPoint16u, WrapFixedPoint32u>;
 TYPED_TEST_SUITE(WrapFixedPointTest, WrapFixedPointTypes, );
 
 TYPED_TEST(WrapFixedPointTest, arithmetic_wrap)
@@ -828,6 +957,12 @@ TEST(fixed_point, operator_stream)
     EXPECT_EQ(ss.str(), "fp16s(1.23)");
   }
   {
+    const rtw::fixed_point::FixedPoint32 a(1.23);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "fp32s(1.23)");
+  }
+  {
     const rtw::fixed_point::FixedPoint8u a(1.23);
     std::stringstream ss;
     ss << a;
@@ -838,6 +973,12 @@ TEST(fixed_point, operator_stream)
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp16s(1.23)");
+  }
+  {
+    const rtw::fixed_point::FixedPoint32u a(1.23);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "ufp32s(1.23)");
   }
   {
     const WrapFixedPoint8 a(1.23);
@@ -852,6 +993,12 @@ TEST(fixed_point, operator_stream)
     EXPECT_EQ(ss.str(), "fp16w(1.23)");
   }
   {
+    const WrapFixedPoint32 a(1.23);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "fp32w(1.23)");
+  }
+  {
     const WrapFixedPoint8u a(1.23);
     std::stringstream ss;
     ss << a;
@@ -864,9 +1011,27 @@ TEST(fixed_point, operator_stream)
     EXPECT_EQ(ss.str(), "ufp16w(1.23)");
   }
   {
+    const WrapFixedPoint32u a(1.23);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "ufp32w(1.23)");
+  }
+  {
+    const rtw::fixed_point::FixedPoint8 a(-123);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "fp8s(-123)");
+  }
+  {
     const rtw::fixed_point::FixedPoint16 a(-123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "fp16s(-123)");
+  }
+  {
+    const rtw::fixed_point::FixedPoint32 a(-123);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "fp32s(-123)");
   }
 }

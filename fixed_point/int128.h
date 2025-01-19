@@ -4,6 +4,8 @@
 
 #include <cassert>
 #include <cstdint>
+#include <iomanip>
+#include <iostream>
 #include <limits>
 
 namespace rtw::fixed_point
@@ -22,14 +24,14 @@ public:
   static_assert(std::is_integral_v<T>, "T must be an integral type");
 
   using hi_type = T;
-  using lo_type = std::conditional_t<std::is_signed_v<T>, std::make_unsigned_t<T>, T>;
+  using lo_type = std::make_unsigned_t<T>;
 
   constexpr static std::uint32_t HI_BITS = sizeof(hi_type) * 8U;
   constexpr static std::uint32_t LO_BITS = sizeof(lo_type) * 8U;
   constexpr static std::uint32_t BITS = HI_BITS + LO_BITS;
   constexpr static lo_type MAX_LO = ~lo_type{0U};
   constexpr static lo_type MIN_LO = 0U;
-  constexpr static hi_type MAX_HI = std::is_signed_v<hi_type> ? hi_type{(lo_type{1U} << (HI_BITS - 1U)) - 1U} : MAX_LO;
+  constexpr static hi_type MAX_HI = std::is_signed_v<hi_type> ? (lo_type{1U} << (HI_BITS - 1U)) - 1U : MAX_LO;
   constexpr static hi_type MIN_HI = std::is_signed_v<hi_type> ? -MAX_HI - 1U : MIN_LO;
 
   constexpr Int() noexcept = default;
@@ -39,6 +41,28 @@ public:
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
   constexpr Int(const I value) noexcept : hi_{static_cast<hi_type>(-sign_bit(value))}, lo_{static_cast<lo_type>(value)}
   {
+  }
+
+  template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
+  constexpr Int(const F value) noexcept
+  {
+    constexpr F POW_2_64{18'446'744'073'709'551'616.0};
+    if constexpr (std::is_signed_v<hi_type>)
+    {
+      if (value < 0)
+      {
+        lo_ = static_cast<lo_type>(std::fmod(-value, POW_2_64));
+        hi_ = static_cast<hi_type>(-value / POW_2_64);
+
+        hi_ = -hi_ - static_cast<hi_type>(lo_ > 0);
+        lo_ = lo_ ? MAX_LO - lo_ + 1 : 0;
+
+        return;
+      }
+    }
+
+    lo_ = static_cast<lo_type>(std::fmod(value, POW_2_64));
+    hi_ = static_cast<hi_type>(value / POW_2_64);
   }
 
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
@@ -240,6 +264,13 @@ public:
   }
   /// @}
 
+  friend std::ostream& operator<<(std::ostream& os, const Int value) noexcept
+  {
+    os << "0x" << std::hex << std::setw(16) << std::setfill('0') << value.hi_ << std::hex << std::setw(16)
+       << std::setfill('0') << value.lo_;
+    return os;
+  }
+
 private:
   /// Multiplication algorithm. Adjusted version of the algorithm from: Hacker's Delight, 2nd Edition
   /// @param a The first operand.
@@ -393,6 +424,12 @@ constexpr std::int32_t count_leading_zero(const Int<T> value)
 {
   const auto hi_count = count_leading_zero(value.hi());
   return hi_count + static_cast<std::uint32_t>(hi_count == Int<T>::HI_BITS) * count_leading_zero(value.lo());
+}
+
+template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+constexpr bool sign_bit(const Int<T> value) noexcept
+{
+  return sign_bit(value.hi());
 }
 
 } // namespace rtw::fixed_point
