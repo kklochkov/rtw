@@ -4,7 +4,6 @@
 #include "fixed_point/operations.h"
 
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <iostream>
 
@@ -38,8 +37,6 @@ enum class OverflowPolicy : std::uint8_t
 /// @tparam FRAC_BITS The number of fractional bits.
 /// @tparam SaturationT The type used for saturation.
 /// @tparam POLICY The overflow policy. It can be SATURATE or WRAP.
-/// TODO: Multiplication should return a greater precision fixed-point type,
-/// i.e. fp8_t * fp8_t = fp16_t, fp16_t * fp16_t = fp32_t (this requires Int128/UInt128).
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT, OverflowPolicy POLICY>
 class FixedPoint
 {
@@ -47,7 +44,7 @@ class FixedPoint
   struct PrivateCtorTag {};
   // clang-format on
   constexpr static PrivateCtorTag PRIVATE_CTOR = {};
-  FixedPoint(PrivateCtorTag /*tag*/, const T value) noexcept : value_(value) {}
+  constexpr FixedPoint(PrivateCtorTag /*tag*/, const T value) noexcept : value_(value) {}
 
 public:
   using type = T;
@@ -59,11 +56,9 @@ public:
   constexpr static std::uint32_t FRACTIONAL_BITS = FRAC_BITS;
   constexpr static std::uint32_t INTEGER_BITS = BITS - FRACTIONAL_BITS - std::uint32_t{std::is_signed_v<T>};
   constexpr static T ONE = 1UL << FRACTIONAL_BITS;
-  constexpr static double RESOLUTION = 1.0 / static_cast<double>(ONE);
-  constexpr static T MAX_INTEGER = std::is_signed_v<T> ? (unsigned_type{1U} << (BITS - 1U)) - 1U : ~unsigned_type{0U};
-  constexpr static T MIN_INTEGER = std::is_signed_v<T> ? -MAX_INTEGER - 1U : 0U;
-  constexpr static T MAX = (unsigned_type{1U} << INTEGER_BITS) - (unsigned_type{1U} >> FRACTIONAL_BITS) - 1U;
-  constexpr static T MIN = std::is_signed_v<T> ? -MAX - 1U : 0U;
+  constexpr static double RESOLUTION = 1.0L / static_cast<double>(ONE);
+  constexpr static T MAX_INTEGER = std::numeric_limits<T>::max();
+  constexpr static T MIN_INTEGER = std::numeric_limits<T>::min();
 
   static_assert(FRACTIONAL_BITS < BITS, "The number of fractional bits must be less than the total bits");
   static_assert(std::is_integral_v<T>, "The underlying type must be an integral type");
@@ -74,44 +69,30 @@ public:
 
   // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
-  FixedPoint(const I value) noexcept
+  constexpr FixedPoint(const I value) noexcept
   {
+    auto result = static_cast<SaturationT>(value) << FRACTIONAL_BITS;
+
     if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
     {
-      auto result = static_cast<SaturationT>(value) << FRACTIONAL_BITS;
       result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-      value_ = static_cast<T>(result);
     }
-    else if constexpr (OVERFLOW_POLICY == OverflowPolicy::WRAP)
-    {
-      value_ = static_cast<T>(value) << FRACTIONAL_BITS;
-    }
-    else
-    {
-      static_assert(sizeof(T) == 0, "Unknown overflow policy"); // workaround before CWG2518/P2593R1
-    }
+
+    value_ = static_cast<T>(result);
   }
 
   template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
-  FixedPoint(const F value) noexcept
+  constexpr FixedPoint(const F value) noexcept
   {
-    // std::lround and std::round are constexpr since C++20
+    const auto rounding = value < F{0} ? F{-0.5} : F{0.5};
+    auto result = static_cast<SaturationT>(value * ONE + rounding); // Round to nearest integer
+
     if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
     {
-      // Round to the nearest integer in integer space, without truncating to avoid precision loss
-      auto result = static_cast<SaturationT>(std::lround(value * ONE));
       result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-      value_ = static_cast<T>(result);
     }
-    else if constexpr (OVERFLOW_POLICY == OverflowPolicy::WRAP)
-    {
-      // Round to the nearest integer in fixed-point space to prevent integer overflow and then truncate
-      value_ = static_cast<T>(std::round(value * ONE));
-    }
-    else
-    {
-      static_assert(sizeof(T) == 0, "Unknown overflow policy"); // workaround before CWG2518/P2593R1
-    }
+
+    value_ = static_cast<T>(result);
   }
   // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
 
@@ -138,42 +119,28 @@ public:
 
   constexpr FixedPoint& operator+=(const FixedPoint rhs) noexcept
   {
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::WRAP)
+    auto result = static_cast<SaturationT>(value_) + static_cast<SaturationT>(rhs.value_);
+
+    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
     {
-      value_ += rhs.value_;
-      return *this;
-    }
-    else if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      auto result = static_cast<SaturationT>(value_) + static_cast<SaturationT>(rhs.value_);
       result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-      value_ = static_cast<T>(result);
-      return *this;
     }
-    else
-    {
-      static_assert(sizeof(T) == 0, "Unknown overflow policy"); // workaround before CWG2518/P2593R1
-    }
+
+    value_ = static_cast<T>(result);
+    return *this;
   }
 
   constexpr FixedPoint& operator-=(const FixedPoint rhs) noexcept
   {
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::WRAP)
+    auto result = static_cast<SaturationT>(value_) - static_cast<SaturationT>(rhs.value_);
+
+    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
     {
-      value_ -= rhs.value_;
-      return *this;
-    }
-    else if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      auto result = static_cast<SaturationT>(value_) - static_cast<SaturationT>(rhs.value_);
       result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-      value_ = static_cast<T>(result);
-      return *this;
     }
-    else
-    {
-      static_assert(sizeof(T) == 0, "Unknown overflow policy"); // workaround before CWG2518/P2593R1
-    }
+
+    value_ = static_cast<T>(result);
+    return *this;
   }
 
   constexpr FixedPoint& operator*=(const FixedPoint rhs) noexcept
@@ -186,21 +153,13 @@ public:
     // Scale back to the original number of fractional bits
     result >>= FRACTIONAL_BITS;
 
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::WRAP)
-    {
-      value_ = static_cast<T>(result);
-      return *this;
-    }
-    else if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
+    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
     {
       result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-      value_ = static_cast<T>(result);
-      return *this;
     }
-    else
-    {
-      static_assert(sizeof(T) == 0, "Unknown overflow policy"); // workaround before CWG2518/P2593R1
-    }
+
+    value_ = static_cast<T>(result);
+    return *this;
   }
 
   constexpr FixedPoint& operator/=(const FixedPoint rhs) noexcept
@@ -219,21 +178,39 @@ public:
     // Divide
     result /= rhs_value;
 
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::WRAP)
-    {
-      value_ = static_cast<T>(result);
-      return *this;
-    }
-    else if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
+    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
     {
       result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-      value_ = static_cast<T>(result);
-      return *this;
     }
-    else
-    {
-      static_assert(sizeof(T) == 0, "Unknown overflow policy"); // workaround before CWG2518/P2593R1
-    }
+
+    value_ = static_cast<T>(result);
+    return *this;
+  }
+
+  constexpr FixedPoint& operator++() noexcept
+  {
+    *this += FixedPoint(PRIVATE_CTOR, 1);
+    return *this;
+  }
+
+  constexpr FixedPoint operator++(int) noexcept
+  {
+    const auto tmp = *this;
+    ++(*this);
+    return tmp;
+  }
+
+  constexpr FixedPoint& operator--() noexcept
+  {
+    *this -= FixedPoint(PRIVATE_CTOR, 1);
+    return *this;
+  }
+
+  constexpr FixedPoint operator--(int) noexcept
+  {
+    const auto tmp = *this;
+    --(*this);
+    return tmp;
   }
 
   /// Barton-Nackman trick to generate operators.
