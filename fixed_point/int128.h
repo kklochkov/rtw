@@ -20,6 +20,12 @@ enum class ArithmeticType : std::uint8_t
 template <typename T>
 class Int
 {
+  template <typename F>
+  constexpr static F get_pow_2_64() noexcept
+  {
+    return static_cast<F>(18'446'744'073'709'551'616.0);
+  }
+
 public:
   static_assert(std::is_integral_v<T>, "T must be an integral type");
 
@@ -46,23 +52,28 @@ public:
   template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
   constexpr Int(const F value) noexcept
   {
-    constexpr F POW_2_64{18'446'744'073'709'551'616.0};
-    if constexpr (std::is_signed_v<hi_type>)
+    constexpr auto POW_2_64 = get_pow_2_64<F>();
+    if (value < 0)
     {
-      if (value < 0)
+      if constexpr (std::is_signed_v<hi_type>)
       {
         lo_ = static_cast<lo_type>(std::fmod(-value, POW_2_64));
         hi_ = static_cast<hi_type>(-value / POW_2_64);
 
-        hi_ = -hi_ - static_cast<hi_type>(lo_ > 0);
-        lo_ = lo_ ? MAX_LO - lo_ + 1 : 0;
-
-        return;
+        lo_ = ~lo_ + 1U;
+        hi_ = ~hi_ + static_cast<hi_type>(lo_ == 0U);
+      }
+      else
+      {
+        hi_ = hi_type{0U};
+        lo_ = static_cast<lo_type>(value);
       }
     }
-
-    lo_ = static_cast<lo_type>(std::fmod(value, POW_2_64));
-    hi_ = static_cast<hi_type>(value / POW_2_64);
+    else
+    {
+      lo_ = static_cast<lo_type>(std::fmod(value, POW_2_64));
+      hi_ = static_cast<hi_type>(value / POW_2_64);
+    }
   }
 
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
@@ -89,7 +100,6 @@ public:
   template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
   constexpr explicit operator F() const noexcept
   {
-    constexpr F POW_2_64{18'446'744'073'709'551'616.0};
     if constexpr (std::is_signed_v<hi_type>)
     {
       if ((hi_ < 0) && (hi_ != MIN_HI) && (lo_ != MIN_LO))
@@ -98,6 +108,7 @@ public:
       }
     }
 
+    constexpr auto POW_2_64 = get_pow_2_64<F>();
     return static_cast<F>(hi_) * POW_2_64 + static_cast<F>(lo_);
   }
 
