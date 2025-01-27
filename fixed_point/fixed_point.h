@@ -10,16 +10,8 @@
 namespace rtw::fixed_point
 {
 
-/// The overflow policy.
-/// - SATURATE: The result is saturated to the minimum or maximum value.
-/// - WRAP: The result wraps around.
-enum class OverflowPolicy : std::uint8_t
-{
-  SATURATE,
-  WRAP
-};
-
 /// Fixed-point number representation using QM.N format (ARM notation).
+/// Overflows are handled by saturating the result to the minimum or maximum value.
 /// See https://en.wikipedia.org/wiki/Q_(number_format) for more information.
 /// More information about fixed-point arithmetic can be found here:
 /// https://en.m.wikipedia.org/wiki/Fixed-point_arithmetic
@@ -36,8 +28,7 @@ enum class OverflowPolicy : std::uint8_t
 /// @tparam T The underlying type of the fixed-point number.
 /// @tparam FRAC_BITS The number of fractional bits.
 /// @tparam SaturationT The type used for saturation.
-/// @tparam POLICY The overflow policy. It can be SATURATE or WRAP.
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT, OverflowPolicy POLICY>
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 class FixedPoint
 {
   // clang-format off
@@ -46,12 +37,16 @@ class FixedPoint
   constexpr static PrivateCtorTag PRIVATE_CTOR = {};
   constexpr FixedPoint(PrivateCtorTag /*tag*/, const T value) noexcept : value_(value) {}
 
+  constexpr static T saturate_and_cast(const SaturationT value) noexcept
+  {
+    return static_cast<T>(
+        std::clamp(value, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER)));
+  }
+
 public:
-  using type = T;
-  using unsigned_type = std::make_unsigned_t<T>;
+  using underlying_type = T;
   using saturation_type = SaturationT;
 
-  constexpr static OverflowPolicy OVERFLOW_POLICY = POLICY;
   constexpr static std::uint32_t BITS = sizeof(T) * 8U;
   constexpr static std::uint32_t FRACTIONAL_BITS = FRAC_BITS;
   constexpr static std::uint32_t INTEGER_BITS = BITS - FRACTIONAL_BITS - std::uint32_t{std::is_signed_v<T>};
@@ -71,28 +66,16 @@ public:
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
   constexpr FixedPoint(const I value) noexcept
   {
-    auto result = static_cast<SaturationT>(value) << FRACTIONAL_BITS;
-
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-    }
-
-    value_ = static_cast<T>(result);
+    const auto result = static_cast<SaturationT>(value) << FRACTIONAL_BITS;
+    value_ = saturate_and_cast(result);
   }
 
   template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
   constexpr FixedPoint(const F value) noexcept
   {
     const auto rounding = value < F{0} ? F{-0.5} : F{0.5};
-    auto result = static_cast<SaturationT>(value * ONE + rounding); // Round to nearest integer
-
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-    }
-
-    value_ = static_cast<T>(result);
+    const auto result = static_cast<SaturationT>(value * ONE + rounding); // Round to nearest integer
+    value_ = saturate_and_cast(result);
   }
   // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
 
@@ -119,27 +102,15 @@ public:
 
   constexpr FixedPoint& operator+=(const FixedPoint rhs) noexcept
   {
-    auto result = static_cast<SaturationT>(value_) + static_cast<SaturationT>(rhs.value_);
-
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-    }
-
-    value_ = static_cast<T>(result);
+    const auto result = static_cast<SaturationT>(value_) + static_cast<SaturationT>(rhs.value_);
+    value_ = saturate_and_cast(result);
     return *this;
   }
 
   constexpr FixedPoint& operator-=(const FixedPoint rhs) noexcept
   {
-    auto result = static_cast<SaturationT>(value_) - static_cast<SaturationT>(rhs.value_);
-
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-    }
-
-    value_ = static_cast<T>(result);
+    const auto result = static_cast<SaturationT>(value_) - static_cast<SaturationT>(rhs.value_);
+    value_ = saturate_and_cast(result);
     return *this;
   }
 
@@ -153,12 +124,7 @@ public:
     // Scale back to the original number of fractional bits
     result >>= FRACTIONAL_BITS;
 
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-    }
-
-    value_ = static_cast<T>(result);
+    value_ = saturate_and_cast(result);
     return *this;
   }
 
@@ -178,12 +144,7 @@ public:
     // Divide
     result /= rhs_value;
 
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      result = std::clamp(result, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER));
-    }
-
-    value_ = static_cast<T>(result);
+    value_ = saturate_and_cast(result);
     return *this;
   }
 
@@ -252,23 +213,14 @@ public:
   {
     if constexpr (std::is_signed_v<T>)
     {
-      os << "fp";
+      os << "fp" << static_cast<std::int32_t>(INTEGER_BITS + 1U);
     }
     else
     {
-      os << "ufp";
+      os << "ufp" << static_cast<std::int32_t>(INTEGER_BITS);
     }
 
-    os << static_cast<std::int32_t>(FRACTIONAL_BITS);
-
-    if constexpr (OVERFLOW_POLICY == OverflowPolicy::SATURATE)
-    {
-      os << "s";
-    }
-    else
-    {
-      os << "w";
-    }
+    os << '.' << static_cast<std::int32_t>(FRACTIONAL_BITS);
 
     return os << "(" << static_cast<double>(value) << ")";
   }
@@ -277,12 +229,12 @@ private:
   T value_;
 };
 
-using FixedPoint8 = FixedPoint<std::int16_t, 8, std::int32_t, OverflowPolicy::SATURATE>;
-using FixedPoint16 = FixedPoint<std::int32_t, 16, std::int64_t, OverflowPolicy::SATURATE>;
-using FixedPoint32 = FixedPoint<std::int64_t, 32, Int128, OverflowPolicy::SATURATE>;
+using FixedPoint8 = FixedPoint<std::int16_t, 8, std::int32_t>;
+using FixedPoint16 = FixedPoint<std::int32_t, 16, std::int64_t>;
+using FixedPoint32 = FixedPoint<std::int64_t, 32, Int128>;
 
-using FixedPoint8u = FixedPoint<std::uint16_t, 8, std::uint32_t, OverflowPolicy::SATURATE>;
-using FixedPoint16u = FixedPoint<std::uint32_t, 16, std::uint64_t, OverflowPolicy::SATURATE>;
-using FixedPoint32u = FixedPoint<std::uint64_t, 32, Int128u, OverflowPolicy::SATURATE>;
+using FixedPoint8u = FixedPoint<std::uint16_t, 8, std::uint32_t>;
+using FixedPoint16u = FixedPoint<std::uint32_t, 16, std::uint64_t>;
+using FixedPoint32u = FixedPoint<std::uint64_t, 32, Int128u>;
 
 } // namespace rtw::fixed_point
