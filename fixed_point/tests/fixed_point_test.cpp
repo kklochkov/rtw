@@ -71,43 +71,13 @@ TEST(FixedPoint32u, constants)
   EXPECT_EQ(rtw::fixed_point::FixedPoint32u::max(), 4294967296.0);
 }
 // -----------------------------------------------------------------------------------------------
-using WrapFixedPoint8 =
-    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint8::type, rtw::fixed_point::FixedPoint8::FRACTIONAL_BITS,
-                                 rtw::fixed_point::FixedPoint8::saturation_type,
-                                 rtw::fixed_point::OverflowPolicy::WRAP>;
-
-using WrapFixedPoint16 =
-    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint16::type, rtw::fixed_point::FixedPoint16::FRACTIONAL_BITS,
-                                 rtw::fixed_point::FixedPoint16::saturation_type,
-                                 rtw::fixed_point::OverflowPolicy::WRAP>;
-
-using WrapFixedPoint32 =
-    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint32::type, rtw::fixed_point::FixedPoint32::FRACTIONAL_BITS,
-                                 rtw::fixed_point::FixedPoint32::saturation_type,
-                                 rtw::fixed_point::OverflowPolicy::WRAP>;
-
-using WrapFixedPoint8u =
-    rtw::fixed_point::FixedPoint<rtw::fixed_point::FixedPoint8u::type, rtw::fixed_point::FixedPoint8u::FRACTIONAL_BITS,
-                                 rtw::fixed_point::FixedPoint8u::saturation_type,
-                                 rtw::fixed_point::OverflowPolicy::WRAP>;
-
-using WrapFixedPoint16u = rtw::fixed_point::FixedPoint<
-    rtw::fixed_point::FixedPoint16u::type, rtw::fixed_point::FixedPoint16u::FRACTIONAL_BITS,
-    rtw::fixed_point::FixedPoint16u::saturation_type, rtw::fixed_point::OverflowPolicy::WRAP>;
-
-using WrapFixedPoint32u = rtw::fixed_point::FixedPoint<
-    rtw::fixed_point::FixedPoint32u::type, rtw::fixed_point::FixedPoint32u::FRACTIONAL_BITS,
-    rtw::fixed_point::FixedPoint32u::saturation_type, rtw::fixed_point::OverflowPolicy::WRAP>;
-
 template <typename T>
 class FixedPointTest : public ::testing::Test
 {};
 
 using FixedPointTypes =
     ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16,
-                     rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32, rtw::fixed_point::FixedPoint32u,
-                     WrapFixedPoint8, WrapFixedPoint8u, WrapFixedPoint16, WrapFixedPoint16u, WrapFixedPoint32,
-                     WrapFixedPoint32u>;
+                     rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32, rtw::fixed_point::FixedPoint32u>;
 TYPED_TEST_SUITE(FixedPointTest, FixedPointTypes, );
 
 TYPED_TEST(FixedPointTest, traits)
@@ -259,8 +229,7 @@ public:
 };
 
 using SignedFixedPointTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint16, rtw::fixed_point::FixedPoint32,
-                     WrapFixedPoint8, WrapFixedPoint16, WrapFixedPoint32>;
+    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint16, rtw::fixed_point::FixedPoint32>;
 TYPED_TEST_SUITE(SignedFixedPointTest, SignedFixedPointTypes, );
 
 TYPED_TEST(SignedFixedPointTest, ctor)
@@ -437,8 +406,7 @@ public:
 };
 
 using UnsignedFixedPointTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32u,
-                     WrapFixedPoint8u, WrapFixedPoint16u, WrapFixedPoint32u>;
+    ::testing::Types<rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32u>;
 TYPED_TEST_SUITE(UnsignedFixedPointTest, UnsignedFixedPointTypes, );
 
 TYPED_TEST(UnsignedFixedPointTest, ctor)
@@ -580,135 +548,78 @@ TYPED_TEST(UnsignedFixedPointSaturationTest, arithmetic_saturate)
   }
 }
 // -----------------------------------------------------------------------------------------------
-template <typename T>
-class WrapFixedPointTest : public ::testing::Test
-{};
-
-using WrapFixedPointTypes = ::testing::Types<WrapFixedPoint8, WrapFixedPoint16, WrapFixedPoint32, WrapFixedPoint8u,
-                                             WrapFixedPoint16u, WrapFixedPoint32u>;
-TYPED_TEST_SUITE(WrapFixedPointTest, WrapFixedPointTypes, );
-
-TYPED_TEST(WrapFixedPointTest, arithmetic_wrap)
-{
-  {
-    const TypeParam one(1.0);
-    EXPECT_NEAR(static_cast<double>(TypeParam::min() - one), static_cast<double>(TypeParam::max() - one),
-                TypeParam::RESOLUTION);
-    EXPECT_NEAR(static_cast<double>(TypeParam::max() + one), static_cast<double>(one - TypeParam::min()),
-                TypeParam::RESOLUTION);
-  }
-  if constexpr (std::is_signed_v<typename TypeParam::type>)
-  {
-    const TypeParam one(-1.0);
-    EXPECT_NEAR(static_cast<double>(TypeParam::min() + one), static_cast<double>(one - TypeParam::max()),
-                TypeParam::RESOLUTION);
-    EXPECT_NEAR(static_cast<double>(TypeParam::max() - one), static_cast<double>(TypeParam::min() - one),
-                TypeParam::RESOLUTION);
-  }
-  {
-    const TypeParam a(0.0);
-    const TypeParam b(2.0);
-    const TypeParam c = a * b;
-    EXPECT_EQ(c, 0.0);
-  }
-  {
-    const TypeParam a(0.0);
-    const TypeParam b(TypeParam::RESOLUTION);
-    const TypeParam c = a / b;
-    EXPECT_EQ(c, 0.0);
-  }
-}
-// -----------------------------------------------------------------------------------------------
 TEST(fixed_point, operator_stream)
 {
   {
     const rtw::fixed_point::FixedPoint8 a(1.23);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "fp8s(1.23047)");
+    EXPECT_EQ(ss.str(), "fp8.8(1.23047)");
   }
   {
     const rtw::fixed_point::FixedPoint16 a(1.23);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "fp16s(1.23)");
+    EXPECT_EQ(ss.str(), "fp16.16(1.23)");
   }
   {
     const rtw::fixed_point::FixedPoint32 a(1.23);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "fp32s(1.23)");
+    EXPECT_EQ(ss.str(), "fp32.32(1.23)");
   }
   {
     const rtw::fixed_point::FixedPoint8u a(1.23);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "ufp8s(1.23047)");
+    EXPECT_EQ(ss.str(), "ufp8.8(1.23047)");
   }
   {
     const rtw::fixed_point::FixedPoint16u a(1.23);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "ufp16s(1.23)");
+    EXPECT_EQ(ss.str(), "ufp16.16(1.23)");
   }
   {
     const rtw::fixed_point::FixedPoint32u a(1.23);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "ufp32s(1.23)");
-  }
-  {
-    const WrapFixedPoint8 a(1.23);
-    std::stringstream ss;
-    ss << a;
-    EXPECT_EQ(ss.str(), "fp8w(1.23047)");
-  }
-  {
-    const WrapFixedPoint16 a(1.23);
-    std::stringstream ss;
-    ss << a;
-    EXPECT_EQ(ss.str(), "fp16w(1.23)");
-  }
-  {
-    const WrapFixedPoint32 a(1.23);
-    std::stringstream ss;
-    ss << a;
-    EXPECT_EQ(ss.str(), "fp32w(1.23)");
-  }
-  {
-    const WrapFixedPoint8u a(1.23);
-    std::stringstream ss;
-    ss << a;
-    EXPECT_EQ(ss.str(), "ufp8w(1.23047)");
-  }
-  {
-    const WrapFixedPoint16u a(1.23);
-    std::stringstream ss;
-    ss << a;
-    EXPECT_EQ(ss.str(), "ufp16w(1.23)");
-  }
-  {
-    const WrapFixedPoint32u a(1.23);
-    std::stringstream ss;
-    ss << a;
-    EXPECT_EQ(ss.str(), "ufp32w(1.23)");
+    EXPECT_EQ(ss.str(), "ufp32.32(1.23)");
   }
   {
     const rtw::fixed_point::FixedPoint8 a(-123);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "fp8s(-123)");
+    EXPECT_EQ(ss.str(), "fp8.8(-123)");
   }
   {
     const rtw::fixed_point::FixedPoint16 a(-123);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "fp16s(-123)");
+    EXPECT_EQ(ss.str(), "fp16.16(-123)");
   }
   {
     const rtw::fixed_point::FixedPoint32 a(-123);
     std::stringstream ss;
     ss << a;
-    EXPECT_EQ(ss.str(), "fp32s(-123)");
+    EXPECT_EQ(ss.str(), "fp32.32(-123)");
+  }
+  {
+    const rtw::fixed_point::FixedPoint8u a(123);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "ufp8.8(123)");
+  }
+  {
+    const rtw::fixed_point::FixedPoint16u a(123);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "ufp16.16(123)");
+  }
+  {
+    const rtw::fixed_point::FixedPoint32u a(123);
+    std::stringstream ss;
+    ss << a;
+    EXPECT_EQ(ss.str(), "ufp32.32(123)");
   }
 }
