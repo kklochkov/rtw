@@ -10,6 +10,29 @@
 namespace rtw::fixed_point
 {
 
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+class FixedPoint;
+
+namespace math
+{
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> floor(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> ceil(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> round(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> sqrt(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
+
+} // namespace math
+
 /// Fixed-point number representation using QM.N format (ARM notation).
 /// Overflows are handled by saturating the result to the minimum or maximum value.
 /// See https://en.wikipedia.org/wiki/Q_(number_format) for more information.
@@ -51,9 +74,12 @@ public:
   constexpr static std::uint32_t FRACTIONAL_BITS = FRAC_BITS;
   constexpr static std::uint32_t INTEGER_BITS = BITS - FRACTIONAL_BITS - std::uint32_t{std::is_signed_v<T>};
   constexpr static T ONE = 1UL << FRACTIONAL_BITS;
+  constexpr static T HALF = ONE >> 1U;
   constexpr static double RESOLUTION = 1.0L / static_cast<double>(ONE);
   constexpr static T MAX_INTEGER = std::numeric_limits<T>::max();
   constexpr static T MIN_INTEGER = std::numeric_limits<T>::min();
+  constexpr static T FRACTION_MASK = ONE - 1U;
+  constexpr static T INTEGER_MASK = ~FRACTION_MASK;
 
   static_assert(FRACTIONAL_BITS < BITS, "The number of fractional bits must be less than the total bits");
   static_assert(std::is_integral_v<T>, "The underlying type must be an integral type");
@@ -224,7 +250,16 @@ public:
 
     return os << "(" << static_cast<double>(value) << ")";
   }
+
+  /// Math functions
+  /// @{
+  friend constexpr FixedPoint math::abs(const FixedPoint value) noexcept;
+  friend constexpr FixedPoint math::floor(const FixedPoint value) noexcept;
+  friend constexpr FixedPoint math::ceil(const FixedPoint value) noexcept;
+  friend constexpr FixedPoint math::round(const FixedPoint value) noexcept;
+  friend constexpr FixedPoint math::sqrt(const FixedPoint value) noexcept;
   /// @}
+
 private:
   T value_;
 };

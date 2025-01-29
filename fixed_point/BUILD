@@ -5,6 +5,7 @@ cc_library(
     hdrs = [
         "fixed_point.h",
         "int128.h",
+        "math.h",
         "operations.h",
     ],
     visibility = ["//visibility:public"],
