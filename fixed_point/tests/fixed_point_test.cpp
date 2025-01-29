@@ -333,16 +333,8 @@ TYPED_TEST(SignedFixedPointTest, assignment)
     EXPECT_NEAR(static_cast<double>(a), 1.23 / 2.34, TypeParam::RESOLUTION);
   }
 }
-// -----------------------------------------------------------------------------------------------
-template <typename T>
-struct SignedFixedPointSaturationTest : public ::testing::Test
-{};
 
-using SignedFixedPointSaturationTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint16, rtw::fixed_point::FixedPoint32>;
-TYPED_TEST_SUITE(SignedFixedPointSaturationTest, SignedFixedPointSaturationTypes, );
-
-TYPED_TEST(SignedFixedPointSaturationTest, arithmetic_saturate)
+TYPED_TEST(SignedFixedPointTest, arithmetic_saturate)
 {
   {
     const TypeParam a(TypeParam::max());
@@ -491,16 +483,8 @@ TYPED_TEST(UnsignedFixedPointTest, assignment)
     EXPECT_NEAR(static_cast<double>(a), 1.23 / 2.34, TypeParam::RESOLUTION);
   }
 }
-// -----------------------------------------------------------------------------------------------
-template <typename T>
-struct UnsignedFixedPointSaturationTest : public ::testing::Test
-{};
 
-using UnsignedFixedPointSaturationTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32u>;
-TYPED_TEST_SUITE(UnsignedFixedPointSaturationTest, UnsignedFixedPointSaturationTypes, );
-
-TYPED_TEST(UnsignedFixedPointSaturationTest, arithmetic_saturate)
+TYPED_TEST(UnsignedFixedPointTest, arithmetic_saturate)
 {
   {
     const TypeParam a(-1);

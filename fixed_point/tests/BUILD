@@ -6,6 +6,7 @@ cc_test_with_llvm_symbolizer(
     srcs = [
         "fixed_point_test.cpp",
         "int128_test.cpp",
+        "math_tests.cpp",
         "operations_test.cpp",
     ],
     deps = [
