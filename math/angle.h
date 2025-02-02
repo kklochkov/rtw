@@ -1,5 +1,7 @@
 #pragma once
 
+#include "constants/math_constants.h"
+
 #include <cmath>
 #include <type_traits>
 
@@ -10,10 +12,10 @@ template <typename T>
 class Angle;
 
 template <typename T>
-constexpr Angle<T> PI{3.141592653589793238462643383279502884197169399375105820974944592307816406286};
+constexpr Angle<T> PI{math_constants::PI<T>};
 
 template <typename T>
-constexpr Angle<T> TAO = T{2} * PI<T>;
+constexpr Angle<T> TAU = T{2} * PI<T>;
 
 template <typename T>
 constexpr Angle<T> PI_2 = PI<T> / T{2};
@@ -50,11 +52,14 @@ public:
 
   constexpr Angle() noexcept = default;
   constexpr explicit Angle(const value_type value) noexcept : rad_(value) {}
-  constexpr Angle(DegTag /*tag*/, const value_type value) noexcept : rad_(value * PI<value_type> / value_type{180}) {}
+  constexpr Angle(DegTag /*tag*/, const value_type value) noexcept
+      : rad_(value * math_constants::DEG_TO_RAD<value_type>)
+  {
+  }
   constexpr Angle(RadTag /*tag*/, const value_type value) noexcept : Angle(value) {}
 
   constexpr value_type rad() const noexcept { return rad_; }
-  constexpr value_type deg() const noexcept { return rad_ * value_type{180} / PI<value_type>; }
+  constexpr value_type deg() const noexcept { return rad_ * math_constants::RAD_TO_DEG<value_type>; }
   // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
   constexpr operator value_type() const noexcept { return rad_; }
 
@@ -96,7 +101,7 @@ public:
   {
     // TODO: Floating point comparison is hard.
     return lhs.rad() == rhs.rad()
-        || lhs.rad() == rhs.rad() + TAO<value_type> || lhs.rad() == rhs.rad() - TAO<value_type>;
+        || lhs.rad() == rhs.rad() + TAU<value_type> || lhs.rad() == rhs.rad() - TAU<value_type>;
   }
   friend constexpr bool operator!=(const Angle& lhs, const Angle& rhs) noexcept { return !(lhs == rhs); }
   friend constexpr bool operator<(const Angle& lhs, const Angle& rhs) noexcept { return lhs.rad() < rhs.rad(); }
@@ -116,10 +121,10 @@ template <typename T>
 Angle<T> normalize(const Angle<T>& angle) noexcept
 {
   // std::fmod is not constexpr in C++17, but it is in C++20.
-  Angle<T> result{std::fmod(angle + PI<T>, TAO<T>)};
+  Angle<T> result{std::fmod(angle + PI<T>, TAU<T>)};
   if (result < 0)
   {
-    result += TAO<T>;
+    result += TAU<T>;
   }
   return result - PI<T>;
 }

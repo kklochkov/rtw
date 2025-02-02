@@ -1,5 +1,6 @@
 #pragma once
 
+#include "constants/math_constants.h"
 #include "fixed_point/int128.h"
 #include "fixed_point/operations.h"
 
@@ -30,6 +31,12 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> round(const FixedPoint<T, FRAC_B
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> sqrt(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> sin(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> cos(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
 
 } // namespace math
 
@@ -80,6 +87,10 @@ public:
   constexpr static T MIN_INTEGER = std::numeric_limits<T>::min();
   constexpr static T FRACTION_MASK = ONE - 1U;
   constexpr static T INTEGER_MASK = ~FRACTION_MASK;
+  constexpr static T PI_INTEGER = round_to_nearest_integer(math_constants::PI<double> * ONE);
+  constexpr static T PI_2_INTEGER = round_to_nearest_integer(math_constants::PI_2<double> * ONE);
+  constexpr static T PI_4_INTEGER = round_to_nearest_integer(math_constants::PI_4<double> * ONE);
+  constexpr static T TWO_PI_INTEGER = round_to_nearest_integer(math_constants::TWO_PI<double> * ONE);
 
   static_assert(FRACTIONAL_BITS < BITS, "The number of fractional bits must be less than the total bits");
   static_assert(std::is_integral_v<T>, "The underlying type must be an integral type");
@@ -99,14 +110,22 @@ public:
   template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
   constexpr FixedPoint(const F value) noexcept
   {
-    const auto rounding = value < F{0} ? F{-0.5} : F{0.5};
-    const auto result = static_cast<SaturationT>(value * ONE + rounding); // Round to nearest integer
+    const auto result = static_cast<SaturationT>(round_to_nearest_integer(value * ONE));
     value_ = saturate_and_cast(result);
   }
   // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
 
   constexpr static FixedPoint min() noexcept { return FixedPoint(PRIVATE_CTOR, MIN_INTEGER); }
   constexpr static FixedPoint max() noexcept { return FixedPoint(PRIVATE_CTOR, MAX_INTEGER); }
+
+  /// Constants
+  /// @{
+  constexpr static FixedPoint pi() noexcept { return FixedPoint(PRIVATE_CTOR, PI_INTEGER); }
+  constexpr static FixedPoint pi_2() noexcept { return FixedPoint(PRIVATE_CTOR, PI_2_INTEGER); }
+  constexpr static FixedPoint pi_4() noexcept { return FixedPoint(PRIVATE_CTOR, PI_4_INTEGER); }
+  constexpr static FixedPoint two_pi() noexcept { return FixedPoint(PRIVATE_CTOR, TWO_PI_INTEGER); }
+  constexpr static FixedPoint tau() noexcept { return two_pi(); }
+  /// @}
 
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
   constexpr explicit operator I() const noexcept
@@ -174,6 +193,13 @@ public:
     return *this;
   }
 
+  constexpr FixedPoint& operator%=(const FixedPoint rhs) noexcept
+  {
+    const auto result = static_cast<SaturationT>(value_) % static_cast<SaturationT>(rhs.value_);
+    value_ = saturate_and_cast(result);
+    return *this;
+  }
+
   constexpr FixedPoint& operator++() noexcept
   {
     *this += FixedPoint(PRIVATE_CTOR, 1);
@@ -206,6 +232,7 @@ public:
   friend constexpr FixedPoint operator-(FixedPoint lhs, const FixedPoint rhs) noexcept { return lhs -= rhs; }
   friend constexpr FixedPoint operator*(FixedPoint lhs, const FixedPoint rhs) noexcept { return lhs *= rhs; }
   friend constexpr FixedPoint operator/(FixedPoint lhs, const FixedPoint rhs) noexcept { return lhs /= rhs; }
+  friend constexpr FixedPoint operator%(FixedPoint lhs, const FixedPoint rhs) noexcept { return lhs %= rhs; }
 
   /// Comparison operators
   /// @{
@@ -258,6 +285,8 @@ public:
   friend constexpr FixedPoint math::ceil(const FixedPoint value) noexcept;
   friend constexpr FixedPoint math::round(const FixedPoint value) noexcept;
   friend constexpr FixedPoint math::sqrt(const FixedPoint value) noexcept;
+  friend constexpr FixedPoint math::sin(const FixedPoint value) noexcept;
+  friend constexpr FixedPoint math::cos(const FixedPoint value) noexcept;
   /// @}
 
 private:

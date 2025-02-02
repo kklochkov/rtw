@@ -14,6 +14,7 @@ TEST(FixedPoint8, constants)
   static_assert(rtw::fixed_point::FixedPoint8::RESOLUTION == 0.00390625);
   static_assert(rtw::fixed_point::FixedPoint8::min() == -128.0);
   static_assert(rtw::fixed_point::FixedPoint8::max() == 127.99609375);
+  static_assert(rtw::fixed_point::FixedPoint8::PI_INTEGER == 804);
 }
 
 TEST(FixedPoint8u, constants)
@@ -25,6 +26,7 @@ TEST(FixedPoint8u, constants)
   static_assert(rtw::fixed_point::FixedPoint8u::RESOLUTION == 0.00390625);
   static_assert(rtw::fixed_point::FixedPoint8u::min() == 0.0);
   static_assert(rtw::fixed_point::FixedPoint8u::max() == 255.99609375);
+  static_assert(rtw::fixed_point::FixedPoint8u::PI_INTEGER == 804);
 }
 
 TEST(FixedPoint16, constants)
@@ -36,6 +38,7 @@ TEST(FixedPoint16, constants)
   static_assert(rtw::fixed_point::FixedPoint16::RESOLUTION == 0.0000152587890625);
   static_assert(rtw::fixed_point::FixedPoint16::min() == -32768.0);
   static_assert(rtw::fixed_point::FixedPoint16::max() == 32767.999984741211);
+  static_assert(rtw::fixed_point::FixedPoint16::PI_INTEGER == 205'887);
 }
 
 TEST(FixedPoint16u, constants)
@@ -47,6 +50,7 @@ TEST(FixedPoint16u, constants)
   static_assert(rtw::fixed_point::FixedPoint16u::RESOLUTION == 0.0000152587890625);
   static_assert(rtw::fixed_point::FixedPoint16u::min() == 0.0);
   static_assert(rtw::fixed_point::FixedPoint16u::max() == 65535.999984741211);
+  static_assert(rtw::fixed_point::FixedPoint16u::PI_INTEGER == 205'887);
 }
 
 TEST(FixedPoint32, constants)
@@ -58,6 +62,7 @@ TEST(FixedPoint32, constants)
   static_assert(rtw::fixed_point::FixedPoint32::RESOLUTION == 0.00000000023283064365386962890625);
   EXPECT_EQ(rtw::fixed_point::FixedPoint32::min(), -2147483648.0); // std::fmod is constexpr since C++23
   EXPECT_EQ(rtw::fixed_point::FixedPoint32::max(), 2147483648.0);
+  static_assert(rtw::fixed_point::FixedPoint32::PI_INTEGER == 13'493'037'705);
 }
 
 TEST(FixedPoint32u, constants)
@@ -69,6 +74,7 @@ TEST(FixedPoint32u, constants)
   static_assert(rtw::fixed_point::FixedPoint32u::RESOLUTION == 0.00000000023283064365386962890625);
   EXPECT_EQ(rtw::fixed_point::FixedPoint32u::min(), 0.0); // std::fmod is constexpr since C++23
   EXPECT_EQ(rtw::fixed_point::FixedPoint32u::max(), 4294967296.0);
+  static_assert(rtw::fixed_point::FixedPoint32u::PI_INTEGER == 13'493'037'705);
 }
 // -----------------------------------------------------------------------------------------------
 template <typename T>
