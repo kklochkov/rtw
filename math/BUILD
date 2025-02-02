@@ -14,6 +14,7 @@ cc_library(
         "vector.h",
     ],
     visibility = ["//visibility:public"],
+    deps = ["//constants:math_constants"],
 )
 
 cc_library(

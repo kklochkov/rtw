@@ -9,5 +9,8 @@ cc_library(
         "operations.h",
     ],
     visibility = ["//visibility:public"],
-    deps = ["@fmt"],
+    deps = [
+        "//constants:math_constants",
+        "@fmt",
+    ],
 )

@@ -5,7 +5,26 @@
 
 template <typename T>
 class SignedFixedPointMathTest : public ::testing::Test
-{};
+{
+public:
+  constexpr static double get_trigonometric_abs_error() noexcept
+  {
+    if constexpr (std::is_same_v<T, rtw::fixed_point::FixedPoint8>)
+    {
+      return 0.03;
+    }
+    else if constexpr ((std::is_same_v<T, rtw::fixed_point::FixedPoint16>)
+                       || (std::is_same_v<T, rtw::fixed_point::FixedPoint32>))
+    {
+      return 0.000897;
+    }
+    else
+    {
+      static_assert(sizeof(T) == 0,
+                    "Unsupported type"); // workaround before CWG2518/P2593R1
+    }
+  }
+};
 
 using SignedFixedPointTypes =
     ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint16, rtw::fixed_point::FixedPoint32>;
@@ -58,6 +77,25 @@ TYPED_TEST(SignedFixedPointMathTest, sqrt)
   EXPECT_EQ(rtw::fixed_point::math::sqrt(TypeParam(0.0)), std::sqrt(0.0));
 
   EXPECT_DEATH(rtw::fixed_point::math::sqrt(TypeParam(-1.0)), "");
+}
+
+TYPED_TEST(SignedFixedPointMathTest, sin)
+{
+  EXPECT_EQ(TypeParam::pi(), 3.14159265358979323846);
+  for (std::int16_t deg = -90; deg <= 90; ++deg)
+  {
+    const auto rad = deg * rtw::math_constants::DEG_TO_RAD<double>;
+    const auto result_sin = rtw::fixed_point::math::sin(TypeParam(rad));
+    const auto expected_sin = std::sin(rad);
+    EXPECT_NEAR(static_cast<double>(result_sin), expected_sin, this->get_trigonometric_abs_error());
+  }
+  for (std::int16_t deg = -90; deg <= 90; ++deg)
+  {
+    const auto rad = deg * rtw::math_constants::DEG_TO_RAD<double>;
+    const auto result_cos = rtw::fixed_point::math::cos(TypeParam(rad));
+    const auto expected_cos = std::cos(rad);
+    EXPECT_NEAR(static_cast<double>(result_cos), expected_cos, this->get_trigonometric_abs_error());
+  }
 }
 // -----------------------------------------------------------------------------------------------
 template <typename T>

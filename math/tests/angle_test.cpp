@@ -23,9 +23,9 @@ TEST(Angle, normalize)
   using namespace rtw::math::angle_literals;
   EXPECT_NEAR(rtw::math::normalize(0.5_rad).rad(), 0.5, EPSILON);
   EXPECT_NEAR(rtw::math::normalize(0.5_deg).deg(), 0.5, EPSILON);
-  EXPECT_NEAR(rtw::math::normalize(0.5_rad + rtw::math::TAO<double>).rad(), 0.5, EPSILON);
+  EXPECT_NEAR(rtw::math::normalize(0.5_rad + rtw::math::TAU<double>).rad(), 0.5, EPSILON);
   EXPECT_NEAR(rtw::math::normalize(0.5_deg + 360.0_deg).deg(), 0.5, EPSILON);
-  EXPECT_NEAR(rtw::math::normalize(0.5_rad - rtw::math::TAO<double>).rad(), 0.5, EPSILON);
+  EXPECT_NEAR(rtw::math::normalize(0.5_rad - rtw::math::TAU<double>).rad(), 0.5, EPSILON);
   EXPECT_NEAR(rtw::math::normalize(0.5_deg - 360.0_deg).deg(), 0.5, EPSILON);
 }
 
@@ -34,9 +34,9 @@ TEST(Angle, distance)
   using namespace rtw::math::angle_literals;
   EXPECT_NEAR(rtw::math::distance(0.5_rad, 0.5_rad), 0.0, EPSILON);
   EXPECT_NEAR(rtw::math::distance(0.5_deg, 0.5_deg), 0.0, EPSILON);
-  EXPECT_NEAR(rtw::math::distance(0.5_rad, 0.5_rad + rtw::math::TAO<double>), 0.0, EPSILON);
+  EXPECT_NEAR(rtw::math::distance(0.5_rad, 0.5_rad + rtw::math::TAU<double>), 0.0, EPSILON);
   EXPECT_NEAR(rtw::math::distance(0.5_deg, 0.5_deg + 360.0_deg), 0.0, EPSILON);
-  EXPECT_NEAR(rtw::math::distance(0.5_rad, 0.5_rad - rtw::math::TAO<double>), 0.0, EPSILON);
+  EXPECT_NEAR(rtw::math::distance(0.5_rad, 0.5_rad - rtw::math::TAU<double>), 0.0, EPSILON);
   EXPECT_NEAR(rtw::math::distance(0.5_deg, 0.5_deg - 360.0_deg), 0.0, EPSILON);
   EXPECT_NEAR(rtw::math::distance(0.5_rad, 0.5_rad + rtw::math::PI_2<double>), rtw::math::PI_2<double>, EPSILON);
   EXPECT_NEAR(rtw::math::distance(0.5_deg, 0.5_deg + 90.0_deg), 90.0_deg, EPSILON);
