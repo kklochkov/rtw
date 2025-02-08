@@ -76,24 +76,86 @@ constexpr std::uint64_t factorial(const std::uint64_t n) noexcept
   return result;
 }
 
-constexpr double ONE_OVER_TWO_FACTORIAL = 1.0 / factorial(2U);
-constexpr double ONE_OVER_THREE_FACTORIAL = 1.0 / factorial(3U);
-constexpr double ONE_OVER_FOUR_FACTORIAL = 1.0 / factorial(4U);
-constexpr double ONE_OVER_FIVE_FACTORIAL = 1.0 / factorial(5U);
-constexpr double ONE_OVER_SIX_FACTORIAL = 1.0 / factorial(6U);
-constexpr double ONE_OVER_SEVEN_FACTORIAL = 1.0 / factorial(7U);
+constexpr std::array INV_FACTORIALS{1.0 / factorial(0U), 1.0 / factorial(1U), 1.0 / factorial(2U), 1.0 / factorial(3U),
+                                    1.0 / factorial(4U), 1.0 / factorial(5U), 1.0 / factorial(6U), 1.0 / factorial(7U),
+                                    1.0 / factorial(8U), 1.0 / factorial(9U)};
+
+enum class Quadrant : std::uint8_t
+{
+  I,
+  II,
+  III,
+  IV
+};
+
+constexpr std::int8_t sin_sign(const Quadrant quadrant) noexcept
+{
+  constexpr std::array<std::int8_t, 4> SIGNS{1, 1, -1, -1};
+  return SIGNS[static_cast<std::uint8_t>(quadrant)]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+}
+
+constexpr std::int8_t cos_sign(const Quadrant quadrant) noexcept
+{
+  constexpr std::array<std::int8_t, 4> SIGNS{1, -1, -1, 1};
+  return SIGNS[static_cast<std::uint8_t>(quadrant)]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+}
+
+/// Normalize the angle to the range [-PI/2, PI/2] and determine the quadrant.
+/// @param[in] angle The angle in radians.
+/// @param[out] quadrant The quadrant of the angle.
+/// @return The normalized angle in the range [-PI/2, PI/2].
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> normalize_angle(FixedPoint<T, FRAC_BITS, SaturationT> angle,
+                                                                Quadrant& quadrant) noexcept
+{
+  using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
+  constexpr FixedPoint PI_2 = FixedPoint::pi_2();
+  constexpr FixedPoint PI = FixedPoint::pi();
+  constexpr FixedPoint TWO_PI = FixedPoint::two_pi();
+  constexpr FixedPoint THREE_PI_2 = 3 * PI_2;
+
+  // Normalize the angle to the range [0, 2*PI]
+  angle %= TWO_PI;
+  if (angle < 0)
+  {
+    angle += TWO_PI;
+  }
+
+  // Determine the quadrant and map the angle to [-PI/2, PI/2]
+  if (angle <= PI_2)
+  {
+    quadrant = Quadrant::I;
+    return angle;
+  }
+
+  if (angle <= PI)
+  {
+    quadrant = Quadrant::II;
+    return PI - angle;
+  }
+
+  if (angle <= THREE_PI_2)
+  {
+    quadrant = Quadrant::III;
+    return angle - PI;
+  }
+
+  quadrant = Quadrant::IV;
+  return TWO_PI - angle;
+}
 
 } // namespace details
 
 /// Calculate the sine/cosine of a fixed-point number using the Taylor series expansion.
-/// We take first four terms of the Taylor series expansion and reduce the input angle to the range [-PI/2, PI/2].
-/// sin(x) = x - x^3/3! + x^5/5! - x^7/7!
-/// cos(x) = 1 - x^2/2! + x^4/4! - x^6/6!
+/// We take first five terms of the Taylor series expansion and reduce the input angle to the range [-PI/2, PI/2].
+/// sin(x) = x - x^3/3! + x^5/5! - x^7/7! + x^9/9!
+/// cos(x) = 1 - x^2/2! + x^4/4! - x^6/6! + x^8/8!
 /// where x is in the range [-PI/2, PI/2].
-/// The absolute error is less than 0.000897.
+/// The absolute error is less than 0.0003.
 /// Side note: an alternative approach is to use Chebyshev polynomials or Bhaskara I's sine approximation formula.
 /// Robin Green's "Even Faster Math Functions" provides a good overview of the different approaches.
 /// https://basesandframes.wordpress.com/2020/04/04/even-faster-math-functions/
+/// See also fixed_point/analysis/chebyshev_trig.py for comparing the Taylor series and Chebyshev polynomials.
 /// @param value The angle in radians. The angle must be in the range [-PI/2, PI/2].
 /// @return The sine of the angle.
 /// @{
@@ -102,17 +164,22 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> sin(const FixedPoint<T, FRAC_BIT
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
 
-  const FixedPoint x_pow_2 = value * value;
-  const FixedPoint x_pow_3 = value * x_pow_2;
+  details::Quadrant quadrant{details::Quadrant::I};
+  const FixedPoint x = details::normalize_angle(value, quadrant);
+
+  const FixedPoint x_pow_2 = x * x;
+  const FixedPoint x_pow_3 = x * x_pow_2;
   const FixedPoint x_pow_5 = x_pow_3 * x_pow_2;
   const FixedPoint x_pow_7 = x_pow_5 * x_pow_2;
+  const FixedPoint x_pow_9 = x_pow_7 * x_pow_2;
 
-  FixedPoint result = value;
-  result -= x_pow_3 * details::ONE_OVER_THREE_FACTORIAL;
-  result += x_pow_5 * details::ONE_OVER_FIVE_FACTORIAL;
-  result -= x_pow_7 * details::ONE_OVER_SEVEN_FACTORIAL;
+  FixedPoint result = x;
+  result -= x_pow_3 * details::INV_FACTORIALS[3];
+  result += x_pow_5 * details::INV_FACTORIALS[5];
+  result -= x_pow_7 * details::INV_FACTORIALS[7];
+  result += x_pow_9 * details::INV_FACTORIALS[9];
 
-  return result;
+  return result * sin_sign(quadrant);
 }
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
@@ -120,16 +187,21 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> cos(const FixedPoint<T, FRAC_BIT
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
 
-  const FixedPoint x_pow_2 = value * value;
+  details::Quadrant quadrant{details::Quadrant::I};
+  const FixedPoint x = details::normalize_angle(value, quadrant);
+
+  const FixedPoint x_pow_2 = x * x;
   const FixedPoint x_pow_4 = x_pow_2 * x_pow_2;
   const FixedPoint x_pow_6 = x_pow_4 * x_pow_2;
+  const FixedPoint x_pow_8 = x_pow_6 * x_pow_2;
 
   FixedPoint result{1};
-  result -= x_pow_2 * details::ONE_OVER_TWO_FACTORIAL;
-  result += x_pow_4 * details::ONE_OVER_FOUR_FACTORIAL;
-  result -= x_pow_6 * details::ONE_OVER_SIX_FACTORIAL;
+  result -= x_pow_2 * details::INV_FACTORIALS[2];
+  result += x_pow_4 * details::INV_FACTORIALS[4];
+  result -= x_pow_6 * details::INV_FACTORIALS[6];
+  result += x_pow_8 * details::INV_FACTORIALS[8];
 
-  return result;
+  return result * details::cos_sign(quadrant);
 }
 /// @}
 

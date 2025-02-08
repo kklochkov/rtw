@@ -16,7 +16,7 @@ public:
     else if constexpr ((std::is_same_v<T, rtw::fixed_point::FixedPoint16>)
                        || (std::is_same_v<T, rtw::fixed_point::FixedPoint32>))
     {
-      return 0.000897;
+      return 0.0003;
     }
     else
     {
@@ -79,17 +79,17 @@ TYPED_TEST(SignedFixedPointMathTest, sqrt)
   EXPECT_DEATH(rtw::fixed_point::math::sqrt(TypeParam(-1.0)), "");
 }
 
-TYPED_TEST(SignedFixedPointMathTest, sin)
+TYPED_TEST(SignedFixedPointMathTest, sin_cos)
 {
   EXPECT_EQ(TypeParam::pi(), 3.14159265358979323846);
-  for (std::int16_t deg = -90; deg <= 90; ++deg)
+  for (std::int16_t deg = -360; deg <= 360; ++deg)
   {
     const auto rad = deg * rtw::math_constants::DEG_TO_RAD<double>;
     const auto result_sin = rtw::fixed_point::math::sin(TypeParam(rad));
     const auto expected_sin = std::sin(rad);
     EXPECT_NEAR(static_cast<double>(result_sin), expected_sin, this->get_trigonometric_abs_error());
   }
-  for (std::int16_t deg = -90; deg <= 90; ++deg)
+  for (std::int16_t deg = -360; deg <= 360; ++deg)
   {
     const auto rad = deg * rtw::math_constants::DEG_TO_RAD<double>;
     const auto result_cos = rtw::fixed_point::math::cos(TypeParam(rad));
