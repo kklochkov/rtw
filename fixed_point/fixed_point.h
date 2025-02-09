@@ -94,7 +94,8 @@ public:
 
   static_assert(FRACTIONAL_BITS < BITS, "The number of fractional bits must be less than the total bits");
   static_assert(std::is_integral_v<T>, "The underlying type must be an integral type");
-  static_assert((std::is_signed_v<SaturationT> == std::is_signed_v<T>) || (std::is_same_v<SaturationT, Int128>),
+  static_assert((std::is_signed_v<SaturationT> == std::is_signed_v<T>)
+                    || (IS_BIG_INT_V<SaturationT> && (IS_SIGNED_BIG_INT_V<SaturationT> == std::is_signed_v<T>)),
                 "The saturation type must have the same sign as the underlying type");
 
   constexpr FixedPoint() noexcept = default;
@@ -300,6 +301,31 @@ using FixedPoint32 = FixedPoint<std::int64_t, 32, Int128>;
 using FixedPoint8u = FixedPoint<std::uint16_t, 8, std::uint32_t>;
 using FixedPoint16u = FixedPoint<std::uint32_t, 16, std::uint64_t>;
 using FixedPoint32u = FixedPoint<std::uint64_t, 32, Int128u>;
+
+template <typename T>
+struct IsFixedPoint : std::false_type
+{};
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+struct IsFixedPoint<FixedPoint<T, FRAC_BITS, SaturationT>> : std::true_type
+{};
+
+template <typename T>
+constexpr bool IS_FIXED_POINT_V = IsFixedPoint<T>::value;
+
+template <typename T>
+struct IsFixedPointSigned : std::false_type
+{};
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+struct IsFixedPointSigned<FixedPoint<T, FRAC_BITS, SaturationT>> : std::bool_constant<std::is_signed_v<T>>
+{};
+
+template <typename T>
+constexpr bool IS_SIGNED_FIXED_POINT_V = IsFixedPointSigned<T>::value;
+
+template <typename T>
+constexpr bool IS_ARITHMETIC_V = std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T>;
 
 } // namespace rtw::fixed_point
 

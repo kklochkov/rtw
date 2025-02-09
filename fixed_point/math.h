@@ -90,13 +90,13 @@ enum class Quadrant : std::uint8_t
 
 constexpr std::int8_t sin_sign(const Quadrant quadrant) noexcept
 {
-  constexpr std::array<std::int8_t, 4> SIGNS{1, 1, -1, -1};
+  constexpr std::int8_t SIGNS[] = {1, 1, -1, -1};
   return SIGNS[static_cast<std::uint8_t>(quadrant)]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 }
 
 constexpr std::int8_t cos_sign(const Quadrant quadrant) noexcept
 {
-  constexpr std::array<std::int8_t, 4> SIGNS{1, -1, -1, 1};
+  constexpr std::int8_t SIGNS[] = {1, -1, -1, 1};
   return SIGNS[static_cast<std::uint8_t>(quadrant)]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 }
 

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "fixed_point/fixed_point.h"
+#include "fixed_point/math.h"
+
 #include <array>
 #include <cassert>
 #include <cmath>
@@ -88,7 +91,7 @@ public:
 
   static_assert(ROWS > 0, "ROWS must be greater than 0");
   static_assert(COLS > 0, "COLS must be greater than 0");
-  static_assert(std::is_arithmetic_v<value_type>, "T must be arithmetic");
+  static_assert(fixed_point::IS_ARITHMETIC_V<T>, "T must be arithmetic");
 
   constexpr explicit Matrix(UninitializedTag /*tag*/) noexcept {}
   constexpr explicit Matrix(ZeroTag /*tag*/) noexcept : data_{value_type{0}} {}
@@ -99,8 +102,9 @@ public:
   constexpr Matrix() noexcept : Matrix{math::ZERO} {}
 
   template <typename... ArgsT,
-            typename = std::enable_if_t<(sizeof...(ArgsT) <= SIZE)
-                                        && (std::is_arithmetic_v<std::remove_reference_t<ArgsT>> && ...)>>
+            typename = std::enable_if_t<
+                (sizeof...(ArgsT) <= SIZE)
+                && (fixed_point::IS_ARITHMETIC_V<std::remove_cv_t<std::remove_reference_t<ArgsT>>> && ...)>>
   constexpr explicit Matrix(ArgsT&&... args) noexcept : data_{std::forward<ArgsT>(args)...}
   {
   }
@@ -116,7 +120,7 @@ public:
   constexpr std::uint16_t cols() const noexcept { return COLS; }
   constexpr std::uint32_t size() const noexcept { return SIZE; }
 
-  template <typename U = value_type, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
+  template <typename U = value_type, typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<U>>>
   constexpr Matrix<U, ROWS, COLS> cast() const noexcept
   {
     Matrix<U, ROWS, COLS> result{math::UNINITIALIZED};
@@ -469,16 +473,22 @@ template <typename T>
 using Matrix2x2 = Matrix<T, 2, 2>;
 using Matrix2x2f = Matrix2x2<float>;
 using Matrix2x2d = Matrix2x2<double>;
+using Matrix2x2q16 = Matrix2x2<fixed_point::FixedPoint16>;
+using Matrix2x2q32 = Matrix2x2<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Matrix3x3 = Matrix<T, 3, 3>;
 using Matrix3x3f = Matrix3x3<float>;
 using Matrix3x3d = Matrix3x3<double>;
+using Matrix3x3q16 = Matrix3x3<fixed_point::FixedPoint16>;
+using Matrix3x3q32 = Matrix3x3<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Matrix4x4 = Matrix<T, 4, 4>;
 using Matrix4x4f = Matrix4x4<float>;
 using Matrix4x4d = Matrix4x4<double>;
+using Matrix4x4q16 = Matrix4x4<fixed_point::FixedPoint16>;
+using Matrix4x4q32 = Matrix4x4<fixed_point::FixedPoint32>;
 
 /// Compute the determinant of a square, 2 by 2 matrix.
 /// https://en.m.wikipedia.org/wiki/Determinant
@@ -513,6 +523,19 @@ constexpr T determinant(const Matrix3x3<T>& matrix) noexcept
   return a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h;
 }
 
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS == COLS) && (ROWS > 3)>>
+constexpr T determinant(const Matrix<T, ROWS, COLS>& matrix) noexcept
+{
+  T det{0};
+  constexpr std::int8_t SIGNS[] = {1, -1};
+  for (std::uint16_t col = 0U; col < COLS; ++col)
+  {
+    const auto sign = SIGNS[col % 2]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    det += sign * matrix(0, col) * determinant(matrix.minor(0, col));
+  }
+  return det;
+}
+
 /// Compute the inverse of a square, 2 by 2 matrix.
 /// https://en.m.wikipedia.org/wiki/Invertible_matrix#Inversion_of_2_%C3%97_2_matrices
 /// @param[in] matrix The matrix.
@@ -527,7 +550,7 @@ constexpr Matrix2x2<T> inverse(const Matrix2x2<T>& matrix) noexcept
   const auto det = determinant(matrix);
   assert(det != T{0});
   const auto inv_det = T{1} / det;
-  return inv_det * Matrix<T, 2, 2>{d, -b, -c, a};
+  return inv_det * Matrix2x2<T>{d, -b, -c, a};
 }
 
 /// Compute the inverse of a square, 3 by 3 matrix.
@@ -558,7 +581,7 @@ constexpr Matrix3x3<T> inverse(const Matrix3x3<T>& matrix) noexcept
   const auto det = determinant(matrix);
   assert(det != T{0});
   const auto inv_det = T{1} / det;
-  return inv_det * Matrix<T, 3, 3>{res_a, res_d, res_g, res_b, res_e, res_h, res_c, res_f, res_i};
+  return inv_det * Matrix3x3<T>{res_a, res_d, res_g, res_b, res_e, res_h, res_c, res_f, res_i};
 }
 
 template <typename T, std::uint16_t ROWS>
@@ -581,7 +604,9 @@ constexpr T norm2(const Matrix<T, ROWS, 1>& vector) noexcept
 template <typename T, std::uint16_t ROWS>
 constexpr T norm(const Matrix<T, ROWS, 1>& vector) noexcept
 {
-  return std::sqrt(norm2(vector));
+  using fixed_point::math::sqrt;
+  using std::sqrt;
+  return sqrt(norm2(vector));
 }
 
 template <typename T, std::uint16_t ROWS>
@@ -613,8 +638,8 @@ constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>&
     v[c] = T{0};
   }
 
-  constexpr T SIGNS[] = {T{1}, -T{1}};
-  const auto sign = SIGNS[v[col] < T{0}];
+  constexpr std::int8_t SIGNS[] = {1, -1};
+  const auto sign = SIGNS[v[col] < 0];
   const auto alpha = sign * norm(v); // Adjust the sign of alpha to prevent numerical instability.
   v[col] += alpha;                   // v[k] = v[k] + sign(v[k]) * ||v||
 

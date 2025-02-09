@@ -41,10 +41,16 @@ constexpr std::int32_t count_leading_zero(const T value) noexcept
   return count;
 }
 
-  template <typename F, typename = std::enable_if_t<std::is_floating_point_v<F>>>
-  constexpr static F round_to_nearest_integer(const F value) noexcept
-  {
-    return value < F{0} ? value - F{0.5} : value + F{0.5};
-  }
+template <typename F, typename = std::enable_if_t<std::is_floating_point_v<F>>>
+constexpr F round_to_nearest_integer(const F value) noexcept
+{
+  return value < F{0} ? value - F{0.5} : value + F{0.5};
+}
+
+template <typename F, typename = std::enable_if_t<std::is_floating_point_v<F>>>
+constexpr F fmod(const F dividend, const F divisor) noexcept
+{
+  return dividend - divisor * static_cast<F>(static_cast<std::int64_t>(dividend / divisor));
+}
 
 } // namespace rtw::fixed_point
