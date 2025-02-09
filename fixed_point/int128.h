@@ -1,5 +1,6 @@
 #pragma once
 
+#include "constants/math_constants.h"
 #include "fixed_point/operations.h"
 
 #include <cassert>
@@ -449,12 +450,14 @@ constexpr bool sign_bit(const Int<T> value) noexcept
 namespace std
 {
 // NOLINTBEGIN(readability-identifier-naming)
-template <>
-class numeric_limits<rtw::fixed_point::Int128>
+
+template <typename T>
+struct numeric_limits<rtw::fixed_point::Int<T>>
 {
-public:
+  using Int = rtw::fixed_point::Int<T>;
+
   constexpr static bool is_specialized = true;
-  constexpr static bool is_signed = true;
+  constexpr static bool is_signed = std::is_signed_v<T>;
   constexpr static bool is_integer = true;
   constexpr static bool is_exact = true;
   constexpr static bool has_infinity = false;
@@ -465,66 +468,27 @@ public:
   constexpr static float_round_style round_style = round_toward_zero;
   constexpr static bool is_iec559 = false;
   constexpr static bool is_bounded = true;
-  constexpr static bool is_modulo = false;
-  constexpr static int digits = rtw::fixed_point::Int128::BITS - 1U; // Excluding the sign bit, 127
-  constexpr static int digits10 = 38;
+  constexpr static bool is_modulo = !std::is_signed_v<T>;
+  constexpr static int digits = Int::BITS - std::is_signed_v<T>; // Excluding the sign bit
+  constexpr static int digits10 = static_cast<int>(Int::BITS * rtw::math_constants::LOG10_2<double>);
   constexpr static int max_digits10 = 0;
   constexpr static int radix = 2;
   constexpr static int min_exponent = 0;
   constexpr static int min_exponent10 = 0;
   constexpr static int max_exponent = 0;
   constexpr static int max_exponent10 = 0;
-  constexpr static bool traps = numeric_limits<std::uint64_t>::traps;
+  constexpr static bool traps = numeric_limits<T>::traps;
   constexpr static bool tinyness_before = false;
 
-  constexpr static rtw::fixed_point::Int128 min() { return rtw::fixed_point::Int128::min(); }
-  constexpr static rtw::fixed_point::Int128 lowest() { return rtw::fixed_point::Int128::min(); }
-  constexpr static rtw::fixed_point::Int128 max() { return rtw::fixed_point::Int128::max(); }
-  constexpr static rtw::fixed_point::Int128 epsilon() { return 0; }
-  constexpr static rtw::fixed_point::Int128 round_error() { return 0; }
-  constexpr static rtw::fixed_point::Int128 infinity() { return 0; }
-  constexpr static rtw::fixed_point::Int128 quiet_NaN() { return 0; }
-  constexpr static rtw::fixed_point::Int128 signaling_NaN() { return 0; }
-  constexpr static rtw::fixed_point::Int128 denorm_min() { return 0; }
-};
-
-template <>
-class numeric_limits<rtw::fixed_point::Int128u>
-{
-public:
-  constexpr static bool is_specialized = true;
-  constexpr static bool is_signed = false;
-  constexpr static bool is_integer = true;
-  constexpr static bool is_exact = true;
-  constexpr static bool has_infinity = false;
-  constexpr static bool has_quiet_NaN = false;
-  constexpr static bool has_signaling_NaN = false;
-  constexpr static float_denorm_style has_denorm = denorm_absent;
-  constexpr static bool has_denorm_loss = false;
-  constexpr static float_round_style round_style = round_toward_zero;
-  constexpr static bool is_iec559 = false;
-  constexpr static bool is_bounded = true;
-  constexpr static bool is_modulo = true;
-  constexpr static int digits = rtw::fixed_point::Int128u::BITS; // 128
-  constexpr static int digits10 = 38;
-  constexpr static int max_digits10 = 0;
-  constexpr static int radix = 2;
-  constexpr static int min_exponent = 0;
-  constexpr static int min_exponent10 = 0;
-  constexpr static int max_exponent = 0;
-  constexpr static int max_exponent10 = 0;
-  constexpr static bool traps = numeric_limits<std::uint64_t>::traps;
-  constexpr static bool tinyness_before = false;
-
-  constexpr static rtw::fixed_point::Int128u min() { return 0; }
-  constexpr static rtw::fixed_point::Int128u lowest() { return 0; }
-  constexpr static rtw::fixed_point::Int128u max() { return rtw::fixed_point::Int128u::max(); }
-  constexpr static rtw::fixed_point::Int128u epsilon() { return 0; }
-  constexpr static rtw::fixed_point::Int128u round_error() { return 0; }
-  constexpr static rtw::fixed_point::Int128u infinity() { return 0; }
-  constexpr static rtw::fixed_point::Int128u quiet_NaN() { return 0; }
-  constexpr static rtw::fixed_point::Int128u signaling_NaN() { return 0; }
-  constexpr static rtw::fixed_point::Int128u denorm_min() { return 0; }
+  constexpr static Int min() noexcept { return Int::min(); }
+  constexpr static Int lowest() noexcept { return Int::min(); }
+  constexpr static Int max() noexcept { return Int::max(); }
+  constexpr static Int epsilon() noexcept { return 0; }
+  constexpr static Int round_error() noexcept { return 0; }
+  constexpr static Int infinity() noexcept { return 0; }
+  constexpr static Int quiet_NaN() noexcept { return 0; }
+  constexpr static Int signaling_NaN() noexcept { return 0; }
+  constexpr static Int denorm_min() noexcept { return 0; }
 };
 // NOLINTEND(readability-identifier-naming)
 

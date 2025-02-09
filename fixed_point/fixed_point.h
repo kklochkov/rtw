@@ -302,3 +302,53 @@ using FixedPoint16u = FixedPoint<std::uint32_t, 16, std::uint64_t>;
 using FixedPoint32u = FixedPoint<std::uint64_t, 32, Int128u>;
 
 } // namespace rtw::fixed_point
+
+// std traits
+namespace std
+{
+
+// NOLINTBEGIN(readability-identifier-naming)
+template <typename T, std::int8_t FRAC_BITS, typename SaturationT>
+struct numeric_limits<rtw::fixed_point::FixedPoint<T, FRAC_BITS, SaturationT>>
+{
+  using FixedPoint = rtw::fixed_point::FixedPoint<T, FRAC_BITS, SaturationT>;
+
+  constexpr static bool is_specialized = true;
+  constexpr static bool is_signed = std::is_signed_v<T>;
+  constexpr static bool is_integer = false;
+  constexpr static bool is_exact = true;
+  constexpr static bool has_infinity = false;
+  constexpr static bool has_quiet_NaN = false;
+  constexpr static bool has_signaling_NaN = false;
+  constexpr static float_denorm_style has_denorm = denorm_absent;
+  constexpr static bool has_denorm_loss = false;
+  constexpr static float_round_style round_style = round_to_nearest;
+  constexpr static bool is_iec559 = false;
+  constexpr static bool is_bounded = true;
+  constexpr static bool is_modulo = false;
+  constexpr static int digits = static_cast<int>(FixedPoint::FRACTIONAL_BITS);
+  constexpr static int digits10 = static_cast<int>(FixedPoint::FRACTIONAL_BITS * rtw::math_constants::LOG10_2<double>);
+  constexpr static int max_digits10 =
+      static_cast<int>((FixedPoint::INTEGER_BITS + FixedPoint::FRACTIONAL_BITS) * rtw::math_constants::LOG10_2<double>);
+  constexpr static int radix = 2;
+  constexpr static int min_exponent = -static_cast<int>(FixedPoint::FRACTIONAL_BITS) + std::is_signed_v<T>;
+  constexpr static int max_exponent = static_cast<int>(FixedPoint::INTEGER_BITS);
+  constexpr static int min_exponent10 =
+      -static_cast<int>(FixedPoint::FRACTIONAL_BITS) * std::log10(2) + std::is_signed_v<T>;
+  constexpr static int max_exponent10 = static_cast<int>(FixedPoint::INTEGER_BITS * std::log10(2));
+  constexpr static bool traps = numeric_limits<T>::traps;
+  constexpr static bool tinyness_before = false;
+
+  constexpr static FixedPoint lowest() noexcept { return FixedPoint::min(); }
+  constexpr static FixedPoint min() noexcept { return FixedPoint::min(); }
+  constexpr static FixedPoint max() noexcept { return FixedPoint::max(); }
+  constexpr static FixedPoint epsilon() noexcept { return FixedPoint{1}; }
+  constexpr static FixedPoint round_error() noexcept { return FixedPoint{1} >> 1; }
+  constexpr static FixedPoint infinity() noexcept { return FixedPoint{0}; }
+  constexpr static FixedPoint quiet_NaN() noexcept { return FixedPoint{0}; }
+  constexpr static FixedPoint signaling_NaN() noexcept { return FixedPoint{0}; }
+  constexpr static FixedPoint denorm_min() noexcept { return min(); }
+};
+// NOLINTEND(readability-identifier-naming)
+
+} // namespace std
