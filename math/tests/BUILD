@@ -14,6 +14,7 @@ cc_test_with_llvm_symbolizer(
         "transform3_test.cpp",
         "vector_test.cpp",
     ],
+    tags = ["no-clang-tidy"],
     deps = [
         "//math",
         "@googletest//:gtest_main",
