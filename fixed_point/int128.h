@@ -58,7 +58,7 @@ public:
     {
       if constexpr (std::is_signed_v<hi_type>)
       {
-        lo_ = static_cast<lo_type>(std::fmod(-value, POW_2_64));
+        lo_ = static_cast<lo_type>(fmod(-value, POW_2_64));
         hi_ = static_cast<hi_type>(-value / POW_2_64);
 
         lo_ = ~lo_ + 1U;
@@ -72,7 +72,7 @@ public:
     }
     else
     {
-      lo_ = static_cast<lo_type>(std::fmod(value, POW_2_64));
+      lo_ = static_cast<lo_type>(fmod(value, POW_2_64));
       hi_ = static_cast<hi_type>(value / POW_2_64);
     }
   }
@@ -443,6 +443,28 @@ constexpr bool sign_bit(const Int<T> value) noexcept
 {
   return sign_bit(value.hi());
 }
+
+template <typename T>
+struct IsBigInt : std::false_type
+{};
+
+template <typename T>
+struct IsBigInt<Int<T>> : std::true_type
+{};
+
+template <typename T>
+constexpr bool IS_BIG_INT_V = IsBigInt<T>::value;
+
+template <typename T>
+struct IsSignedBigInt : std::false_type
+{};
+
+template <typename T>
+struct IsSignedBigInt<Int<T>> : std::bool_constant<std::is_signed_v<T>>
+{};
+
+template <typename T>
+constexpr bool IS_SIGNED_BIG_INT_V = IsSignedBigInt<T>::value;
 
 } // namespace rtw::fixed_point
 
