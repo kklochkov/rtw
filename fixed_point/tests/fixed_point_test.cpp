@@ -60,8 +60,8 @@ TEST(FixedPoint32, constants)
   static_assert(rtw::fixed_point::FixedPoint32::INTEGER_BITS == 31);
   static_assert(rtw::fixed_point::FixedPoint32::ONE == 4'294'967'296);
   static_assert(rtw::fixed_point::FixedPoint32::RESOLUTION == 0.00000000023283064365386962890625);
-  EXPECT_EQ(rtw::fixed_point::FixedPoint32::min(), -2147483648.0); // std::fmod is constexpr since C++23
-  EXPECT_EQ(rtw::fixed_point::FixedPoint32::max(), 2147483648.0);
+  static_assert(rtw::fixed_point::FixedPoint32::min() == -2147483648.0);
+  static_assert(rtw::fixed_point::FixedPoint32::max() == 2147483648.0);
   static_assert(rtw::fixed_point::FixedPoint32::PI_INTEGER == 13'493'037'705);
 }
 
@@ -72,8 +72,8 @@ TEST(FixedPoint32u, constants)
   static_assert(rtw::fixed_point::FixedPoint32u::INTEGER_BITS == 32);
   static_assert(rtw::fixed_point::FixedPoint32u::ONE == 4'294'967'296);
   static_assert(rtw::fixed_point::FixedPoint32u::RESOLUTION == 0.00000000023283064365386962890625);
-  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::min(), 0.0); // std::fmod is constexpr since C++23
-  EXPECT_EQ(rtw::fixed_point::FixedPoint32u::max(), 4294967296.0);
+  static_assert(rtw::fixed_point::FixedPoint32u::min() == 0.0);
+  static_assert(rtw::fixed_point::FixedPoint32u::max() == 4294967296.0);
   static_assert(rtw::fixed_point::FixedPoint32u::PI_INTEGER == 13'493'037'705);
 }
 // -----------------------------------------------------------------------------------------------
