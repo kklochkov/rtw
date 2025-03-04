@@ -162,10 +162,12 @@ public:
 
   constexpr FixedPoint& operator*=(const FixedPoint rhs) noexcept
   {
+    // Scale up to avoid losing precision
     auto result = static_cast<SaturationT>(value_) * static_cast<SaturationT>(rhs.value_);
 
-    // Rounding, if the result is negative, add 1/2 to the result
-    result += (1U << (FRACTIONAL_BITS - 1U));
+    // Rounding to the nearest integer by adding 1/2 to the fractional part.
+    // This rounding works symmetrically for positive and negative numbers.
+    result += HALF;
 
     // Scale back to the original number of fractional bits
     result >>= FRACTIONAL_BITS;
@@ -180,7 +182,8 @@ public:
     auto result = static_cast<SaturationT>(value_) << FRACTIONAL_BITS;
     const auto rhs_value = static_cast<SaturationT>(rhs.value_);
 
-    // Rounding, if signs are same, add 1/2 to the result, otherwise subtract 1/2.
+    // Rounding to the nearest.
+    // If signs are same, add rhs_value/2 to the result, otherwise subtract rhs_value/2.
     // This is to ensure that the result is rounded up for positive numbers and rounded down for negative numbers.
     const auto same_sign = sign_bit(result) == sign_bit(rhs_value);
     const auto half = rhs_value >> 1U;
