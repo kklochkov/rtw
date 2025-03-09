@@ -617,34 +617,8 @@ constexpr Matrix<T, ROWS, 1> normalize(const Matrix<T, ROWS, 1>& vector) noexcep
   return vector / n;
 }
 
-namespace householder::qr
+namespace matrix_decomposition
 {
-
-namespace details
-{
-
-/// Compute the Householder vector for a column of a matrix.
-/// @param[in] m The matrix.
-/// @param[in] col The column.
-/// @return The Householder vector.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>& m, const std::uint16_t col) noexcept
-{
-  Matrix<T, ROWS, 1> v = m.column(col);
-
-  // Zero the elements below the diagonal to create a Householder vector.
-  for (std::uint16_t c = 0U; c < col; ++c)
-  {
-    v[c] = T{0};
-  }
-
-  constexpr std::int8_t SIGNS[] = {1, -1};
-  const auto sign = SIGNS[v[col] < 0];
-  const auto alpha = sign * norm(v); // Adjust the sign of alpha to prevent numerical instability.
-  v[col] += alpha;                   // v[k] = v[k] + sign(v[k]) * ||v||
-
-  return normalize(v);
-}
 
 /// Compute the inverse of an upper triangular matrix.
 /// https://en.wikipedia.org/wiki/Triangular_matrix#Inversion
@@ -690,7 +664,8 @@ constexpr Matrix<T, ROWS, 1> back_substitution(const Matrix<T, ROWS, COLS>& matr
   return result;
 }
 
-} // namespace details
+namespace qr
+{
 
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
 struct Decomposition
@@ -699,28 +674,72 @@ struct Decomposition
   Matrix<T, ROWS, COLS> r{math::UNINITIALIZED};
 };
 
+namespace householder
+{
+
+namespace details
+{
+
+/// Compute the Householder vector for a column of a matrix.
+/// @param[in] matrix The matrix.
+/// @param[in] col The column.
+/// @return The Householder vector.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>& matrix,
+                                                    const std::uint16_t col) noexcept
+{
+  Matrix<T, ROWS, 1U> v{math::ZERO};
+  for (std::uint16_t row = col; row < ROWS; ++row)
+  {
+    v[row] = matrix(row, col);
+  }
+
+  constexpr std::int8_t SIGNS[] = {1, -1};
+  const auto sign = SIGNS[v[col] < 0];
+  const auto alpha = sign * norm(v); // Adjust the sign of norm to prevent numerical instability.
+  v[col] += alpha;                   // v[col] = v[col] + sign(v[col]) * ||v||
+
+  assert(v[col] != T{0});
+
+  // Normalize the Householder vector.
+  {
+    for (std::uint16_t row = col + 1U; row < ROWS; ++row)
+    {
+      v[row] /= v[col];
+    }
+    v[col] = T{1};
+  }
+
+  return v;
+}
+
+} // namespace details
+
 /// Compute the QR decomposition of a matrix using Householder reflections.
 /// https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections
 /// @param[in] matrix The matrix.
-/// @param[out] q The orthogonal matrix. The q matrix is nor transposed.
-/// @param[out] r The upper triangular matrix.
+/// @return The QR decomposition of the matrix.
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
 constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
   Decomposition<T, ROWS, COLS> result{Matrix<T, ROWS, COLS>{math::IDENTITY}, matrix};
+  const Matrix<T, ROWS, COLS> identity{math::IDENTITY};
 
-  // The number of columns is reduced by one if the matrix is square.
-  // The last column is not processed, because it is already upper triangular.
-  const auto cols = COLS - (ROWS == COLS);
-  for (std::uint16_t col = 0U; col < cols; ++col)
+  for (std::uint16_t col = 0U; col < COLS; ++col)
   {
-    const Matrix<T, ROWS, 1> v = details::get_householder_vector(result.r, col);
+    const auto v = details::get_householder_vector(result.r, col);
+    const auto vt = transpose(v);
+    const Matrix<T, 1U, 1U> denominator = vt * v;
 
-    const auto vv_t_doubled = T{2} * v * transpose(v);
-    result.r -= vv_t_doubled * result.r;
-    result.q -= vv_t_doubled * result.q;
+    assert(denominator[0U] != T{0});
+
+    const auto beta = T{2} / denominator[0U];
+    const auto h = identity - beta * v * vt;
+    result.r = h * result.r;
+    result.q = result.q * h;
   }
 
+  result.q = transpose(result.q);
   return result;
 }
 
@@ -731,7 +750,7 @@ template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::en
 constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
   const auto [q, r] = decompose(matrix);
-  const auto r_inv = details::inverse_upper_triangular(r);
+  const auto r_inv = inverse_upper_triangular(r);
   return r_inv * q;
 }
 
@@ -743,15 +762,169 @@ template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::en
 constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
 {
   const auto [q, r] = decompose(a);
-  return details::back_substitution(r, q * b);
+  return back_substitution(r, q * b);
 }
 
-} // namespace householder::qr
+} // namespace householder
+
+namespace givens
+{
+
+namespace details
+{
+
+template <typename T>
+constexpr T hypot(const T a, const T b) noexcept
+{
+  using fixed_point::math::sqrt;
+  using std::sqrt;
+  return sqrt(a * a + b * b);
+}
+
+} // namespace details
+
+/// Compute the QR decomposition of a matrix using Givens rotations.
+/// https://en.wikipedia.org/wiki/QR_decomposition#Using_Givens_rotations
+/// @param[in] matrix The matrix.
+/// @return The QR decomposition of the matrix.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
+{
+  Decomposition<T, ROWS, COLS> result{Matrix<T, ROWS, ROWS>{math::IDENTITY}, matrix};
+
+  for (std::uint16_t col = 0U; col < COLS - 1U; ++col)
+  {
+    for (std::uint16_t row = col + 1U; row < ROWS; ++row)
+    {
+      const auto a = result.r(col, col);
+      const auto b = result.r(row, col);
+      const auto r = details::hypot(a, b);
+
+      assert(r != T{0});
+
+      const auto c = a / r;
+      const auto s = -b / r;
+
+      Matrix<T, ROWS, ROWS> g{math::IDENTITY};
+      g(col, col) = c;
+      g(row, row) = c;
+      g(col, row) = -s;
+      g(row, col) = s;
+
+      result.r = g * result.r;
+      result.q = result.q * transpose(g);
+    }
+  }
+
+  result.q = transpose(result.q);
+  return result;
+}
+
+/// Compute the inverse of a matrix using the Givens QR decomposition.
+/// @param[in] matrix The matrix.
+/// @return The inverse of the matrix.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
+{
+  const auto [q, r] = decompose(matrix);
+  const auto r_inv = inverse_upper_triangular(r);
+  return r_inv * q;
+}
+
+/// Solve a system of linear equations (Ax = b) using the Givens QR decomposition.
+/// @param[in] a The matrix.
+/// @param[in] b The vector.
+/// @return The solution to the system of linear equations.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
+{
+  const auto [q, r] = decompose(a);
+  return back_substitution(r, q * b);
+}
+
+} // namespace givens
+
+namespace modified_gram_schmidt
+{
+
+/// Compute the QR decomposition of a matrix using the Modified Gram-Schmidt algorithm.
+/// https://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process#Numerical_stability
+/// @param[in] matrix The matrix.
+/// @return The QR decomposition of the matrix.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
+{
+  Decomposition<T, ROWS, COLS> result{Matrix<T, ROWS, ROWS>{math::ZERO}, Matrix<T, ROWS, ROWS>{math::ZERO}};
+
+  for (std::uint16_t col = 0U; col < COLS; ++col)
+  {
+    Matrix<T, ROWS, 1> v = matrix.column(col);
+
+    // Orthogonalisation step
+    {
+      for (std::uint16_t c = 0U; c < col; ++c)
+      {
+        T dot{0};
+        for (std::uint16_t row = 0U; row < ROWS; ++row)
+        {
+          dot += result.q(row, c) * v[row];
+        }
+        result.r(c, col) = dot;
+        for (std::uint16_t row = 0U; row < ROWS; ++row)
+        {
+          v[row] -= dot * result.q(row, c);
+        }
+      }
+    }
+
+    // Normalisation step
+    {
+      result.r(col, col) = norm(v);
+
+      assert(result.r(col, col) != T{0});
+
+      for (std::uint16_t row = 0U; row < ROWS; ++row)
+      {
+        result.q(row, col) = v[row] / result.r(col, col);
+      }
+    }
+  }
+
+  result.q = transpose(result.q);
+  return result;
+}
+
+/// Compute the inverse of a matrix using the Modified Gram-Schmidt QR decomposition.
+/// @param[in] matrix The matrix.
+/// @return The inverse of the matrix.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
+{
+  const auto [q, r] = decompose(matrix);
+  const auto r_inv = inverse_upper_triangular(r);
+  return r_inv * q;
+}
+
+/// Solve a system of linear equations (Ax = b) using the Givens QR decomposition.
+/// @param[in] a The matrix.
+/// @param[in] b The vector.
+/// @return The solution to the system of linear equations.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
+{
+  const auto [q, r] = decompose(a);
+  return back_substitution(r, q * b);
+}
+
+} // namespace modified_gram_schmidt
+
+} // namespace qr
+} // namespace matrix_decomposition
 
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS) && (ROWS > 3)>>
 constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
-  return householder::qr::inverse(matrix);
+  return matrix_decomposition::qr::householder::inverse(matrix);
 }
 
 } // namespace rtw::math
