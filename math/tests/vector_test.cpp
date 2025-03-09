@@ -284,9 +284,14 @@ TEST(Vector, operator_unary_minus)
 
 TEST(Vector, normalize)
 {
-  constexpr rtw::math::Vector3f V1{1.0F, 2.0F, 3.0F};
-  const auto v2 = rtw::math::normalize(V1);
-  EXPECT_THAT(v2, ::testing::ElementsAre(1.0F / std::sqrt(14.0F), 2.0F / std::sqrt(14.0F), 3.0F / std::sqrt(14.0F)));
+  {
+    constexpr rtw::math::Vector3f V1{1.0F, 2.0F, 3.0F};
+    const auto v2 = rtw::math::normalize(V1);
+    EXPECT_THAT(v2, ::testing::ElementsAre(1.0F / std::sqrt(14.0F), 2.0F / std::sqrt(14.0F), 3.0F / std::sqrt(14.0F)));
+  }
+  {
+    EXPECT_DEATH(rtw::math::normalize(rtw::math::Vector3f{0.0F, 0.0F, 0.0F}), "");
+  }
 }
 
 TEST(Vector, swizzle)
