@@ -42,6 +42,15 @@ TYPED_TEST(Matrix2x2Test, identity_ctor)
   EXPECT_THAT(M, ::testing::ElementsAre(1, 0, 0, 1));
 }
 
+TYPED_TEST(Matrix2x2Test, initialize_with_value_ctor)
+{
+  constexpr TypeParam M{rtw::math::INITIALIZE_WITH_VALUE, 42.0F};
+  EXPECT_EQ(M.rows(), 2);
+  EXPECT_EQ(M.cols(), 2);
+
+  EXPECT_THAT(M, ::testing::ElementsAre(42.0F, 42.0F, 42.0F, 42.0F));
+}
+
 TYPED_TEST(Matrix2x2Test, init_list_ctor)
 {
   constexpr TypeParam M{1.0F, 2.0F, 3.0F, 4.0F};
@@ -390,6 +399,15 @@ TYPED_TEST(Matrix3x3Test, identity_ctor)
   EXPECT_EQ(M.cols(), 3);
 
   EXPECT_THAT(M, ::testing::ElementsAre(1, 0, 0, 0, 1, 0, 0, 0, 1));
+}
+
+TYPED_TEST(Matrix3x3Test, initialize_with_value_ctor)
+{
+  constexpr TypeParam M{rtw::math::INITIALIZE_WITH_VALUE, 42.0F};
+  EXPECT_EQ(M.rows(), 3);
+  EXPECT_EQ(M.cols(), 3);
+
+  EXPECT_THAT(M, ::testing::ElementsAre(42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F));
 }
 
 TYPED_TEST(Matrix3x3Test, init_list_ctor)
@@ -791,6 +809,16 @@ TYPED_TEST(Matrix4x4Test, identity_ctor)
   EXPECT_EQ(M.cols(), 4);
 
   EXPECT_THAT(M, ::testing::ElementsAre(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1));
+}
+
+TYPED_TEST(Matrix4x4Test, initialize_with_value_ctor)
+{
+  constexpr TypeParam M{rtw::math::INITIALIZE_WITH_VALUE, 42.0F};
+  EXPECT_EQ(M.rows(), 4);
+  EXPECT_EQ(M.cols(), 4);
+
+  EXPECT_THAT(M, ::testing::ElementsAre(42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F, 42.0F,
+                                        42.0F, 42.0F, 42.0F, 42.0F, 42.0F));
 }
 
 TYPED_TEST(Matrix4x4Test, init_list_ctor)

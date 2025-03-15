@@ -12,7 +12,6 @@ public:
   using Matrix = Matrix<T, N, 1>;
   using Vector = Vector<T, N>;
 
-  using Matrix::Matrix;
   using typename Matrix::reference;
   using typename Matrix::value_type;
   using Matrix::operator[];
@@ -31,13 +30,18 @@ public:
   using Matrix::y;
   using Matrix::z;
 
-  template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 2)>>
-  constexpr explicit Point(const T x, const T y) noexcept : Matrix(x, y)
+  constexpr Point() noexcept = default;
+
+  constexpr explicit Point(UninitializedTag tag) noexcept : Matrix(tag) {}
+  constexpr explicit Point(InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
+
+  template <typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T> && (N == 2)>>
+  constexpr Point(const T x, const T y) noexcept : Matrix(x, y)
   {
   }
 
-  template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 3)>>
-  constexpr explicit Point(const T x, const T y, const T z) noexcept : Matrix(x, y, z)
+  template <typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T> && (N == 3)>>
+  constexpr Point(const T x, const T y, const T z) noexcept : Matrix(x, y, z)
   {
   }
 
@@ -46,12 +50,12 @@ public:
   /// @param y The y coordinate.
   /// @param z The z coordinate.
   /// @param w The w coordinate. 1 by default to represent a position.
-  template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 4)>>
-  constexpr explicit Point(const T x, const T y, const T z, const T w = T{1}) noexcept : Matrix(x, y, z, w)
+  template <typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T> && (N == 4)>>
+  constexpr Point(const T x, const T y, const T z, const T w = T{1}) noexcept : Matrix(x, y, z, w)
   {
   }
 
-  template <typename U = T, std::uint16_t M, typename = std::enable_if_t<std::is_same_v<U, T> && (M <= N)>>
+  template <typename U = T, std::uint16_t M, typename = std::enable_if_t<std::is_convertible_v<U, T> && (M <= N)>>
   constexpr explicit Point(const Point<U, M>& point) noexcept : Matrix(point.as_matrix())
   {
     operator[](M) = U{1}; // Set the last element to 1 to represent a position.
@@ -66,7 +70,7 @@ public:
   constexpr explicit operator Vector() const noexcept { return Vector(as_matrix()); }
   constexpr explicit operator Matrix() const noexcept { return as_matrix(); }
 
-  template <typename U = value_type, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
+  template <typename U = value_type, typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<U>>>
   constexpr Point<U, N> cast() const noexcept
   {
     return Point<U, N>{as_matrix().template cast<U>()};
@@ -154,6 +158,8 @@ using Point2 = Point<T, 2>;
 using Point2f = Point2<float>;
 using Point2d = Point2<double>;
 using Point2i = Point2<std::int32_t>;
+using Point2q16 = Point2<fixed_point::FixedPoint16>;
+using Point2q32 = Point2<fixed_point::FixedPoint32>;
 
 /// 3D space aliases.
 template <typename T>
@@ -161,6 +167,8 @@ using Point3 = Point<T, 3>;
 using Point3f = Point3<float>;
 using Point3d = Point3<double>;
 using Point3i = Point3<std::int32_t>;
+using Point3q16 = Point3<fixed_point::FixedPoint16>;
+using Point3q32 = Point3<fixed_point::FixedPoint32>;
 
 /// Homogeneous 3D space aliases.
 template <typename T>
@@ -168,5 +176,7 @@ using Point4 = Point<T, 4>;
 using Point4f = Point4<float>;
 using Point4d = Point4<double>;
 using Point4i = Point4<std::int32_t>;
+using Point4q16 = Point4<fixed_point::FixedPoint16>;
+using Point4q32 = Point4<fixed_point::FixedPoint32>;
 
 } // namespace rtw::math

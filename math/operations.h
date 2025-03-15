@@ -25,16 +25,17 @@ enum class CalculationCheckPolicy : std::uint8_t
 /// The plane is defined by a point and a normal.
 /// The line is defined by two points.
 /// @tparam POLICY The policy to check the calculation.
-/// If the policy is CalculationCheckPolicy::CHECK, the function returns infinity if the line is parallel to the plane.
-/// If the policy is CalculationCheckPolicy::DONT_CHECK, the function does not check the calculation producing a faster
-/// result, but the result is undefined if the line is parallel to the plane.
+/// If the policy is CalculationCheckPolicy::CHECK, the function returns std::numeric_limits<T>::max if the line is
+/// parallel to the plane. If the policy is CalculationCheckPolicy::DONT_CHECK, the function does not check the
+/// calculation producing a faster result, but the result is undefined if the line is parallel to the plane.
 /// @tparam T The type of the point's coordinates.
 /// @tparam N The number of dimensions.
 /// @param p A point on the plane.
 /// @param n The normal of the plane.
 /// @param q0 A point on the line.
 /// @param q1 A point on the line.
-/// @return The intersection of the line and the plane or infinity if the line is parallel to the plane.
+/// @return The intersection of the line and the plane or std::numeric_limits<T>::max if the line is parallel to the
+/// plane.
 template <CalculationCheckPolicy POLICY, typename T, std::uint16_t N>
 constexpr T intersection_factor(const Point<T, N>& p, const Vector<T, N>& n, const Point<T, N>& q0,
                                 const Point<T, N>& q1) noexcept
@@ -47,7 +48,7 @@ constexpr T intersection_factor(const Point<T, N>& p, const Vector<T, N>& n, con
   {
     if (q0q1_dot_n == T{0})
     {
-      return std::numeric_limits<T>::infinity();
+      return std::numeric_limits<T>::max();
     }
   }
   return q0p_dot_n / diff;
@@ -57,16 +58,17 @@ constexpr T intersection_factor(const Point<T, N>& p, const Vector<T, N>& n, con
 /// The plane is defined by a point and a normal.
 /// The line is defined by two points.
 /// @tparam POLICY The policy to check the calculation.
-/// If the policy is CalculationCheckPolicy::CHECK, the function returns infinity if the line is parallel to the plane.
-/// If the policy is CalculationCheckPolicy::DONT_CHECK, the function does not check the calculation producing a faster
-/// result, but the result is undefined if the line is parallel to the plane.
+/// If the policy is CalculationCheckPolicy::CHECK, the function returns std::numeric_limits<T>::max if the line is
+/// parallel to the plane. If the policy is CalculationCheckPolicy::DONT_CHECK, the function does not check the
+/// calculation producing a faster result, but the result is undefined if the line is parallel to the plane.
 /// @tparam T The type of the point's coordinates.
 /// @tparam N The number of dimensions.
 /// @param p A point on the plane.
 /// @param n The normal of the plane.
 /// @param q0 A point on the line.
 /// @param q1 A point on the line.
-/// @return The intersection point of the line and the plane or infinity if the line is parallel to the plane.
+/// @return The intersection point of the line and the plane or std::numeric_limits<T>::max if the line is parallel to
+/// the plane.
 template <CalculationCheckPolicy POLICY, typename T, std::uint16_t N>
 constexpr Point<T, N> intersection(const Point<T, N>& p, const Vector<T, N>& n, const Point<T, N>& q0,
                                    const Point<T, N>& q1) noexcept
@@ -75,14 +77,9 @@ constexpr Point<T, N> intersection(const Point<T, N>& p, const Vector<T, N>& n, 
 
   if constexpr (POLICY == CalculationCheckPolicy::CHECK)
   {
-    if (t == std::numeric_limits<T>::infinity())
+    if (t == std::numeric_limits<T>::max())
     {
-      Point<T, N> result{UNINITIALIZED};
-      for (std::uint16_t i = 0U; i < result.size(); ++i)
-      {
-        result[i] = std::numeric_limits<T>::infinity();
-      }
-      return result;
+      return Point<T, N>{math::INITIALIZE_WITH_VALUE, std::numeric_limits<T>::max()};
     }
   }
 
@@ -97,15 +94,15 @@ constexpr Point<T, N> intersection(const Point<T, N>& p, const Vector<T, N>& n, 
 /// `t = (p0 - q0) x (q0 - q1) / (p0 - p1) x (q0 - q1)`, where `x` is the cross product.
 /// The intersesion point can then be calculated by using the linear interpolation function: `i = lerp(p0, p1, t)`.
 /// @tparam POLICY The policy to check the calculation.
-/// If the policy is CalculationCheckPolicy::CHECK, the function returns infinity if the lines are parallel.
-/// If the policy is CalculationCheckPolicy::DONT_CHECK, the function does not check the calculation producing a faster
-/// result, but the result is undefined if the lines are parallel.
+/// If the policy is CalculationCheckPolicy::CHECK, the function returns std::numeric_limits<T>::max if the lines are
+/// parallel. If the policy is CalculationCheckPolicy::DONT_CHECK, the function does not check the calculation producing
+/// a faster result, but the result is undefined if the lines are parallel.
 /// @tparam T The type of the point's coordinates.
 /// @param p0 A point on the first line.
 /// @param p1 A point on the first line.
 /// @param q0 A point on the second line.
 /// @param q1 A point on the second line.
-/// @return The intersection factor of the two lines or infinity if the lines are parallel.
+/// @return The intersection factor of the two lines or std::numeric_limits<T>::max if the lines are parallel.
 template <CalculationCheckPolicy POLICY, typename T>
 constexpr T intersection_factor(const Point2<T>& p0, const Point2<T>& p1, const Point2<T>& q0,
                                 const Point2<T>& q1) noexcept
@@ -117,7 +114,7 @@ constexpr T intersection_factor(const Point2<T>& p0, const Point2<T>& p1, const 
   {
     if (determinant == T{0})
     {
-      return std::numeric_limits<T>::infinity();
+      return std::numeric_limits<T>::max();
     }
   }
 
@@ -128,15 +125,15 @@ constexpr T intersection_factor(const Point2<T>& p0, const Point2<T>& p1, const 
 /// Returns the intersection point of the two 2D lines.
 /// The lines are defined by two points.
 /// @tparam POLICY The policy to check the calculation.
-/// If the policy is CalculationCheckPolicy::CHECK, the function returns infinity if the lines are parallel.
-/// If the policy is CalculationCheckPolicy::DONT_CHECK, the function does not check the calculation producing a faster
-/// result, but the result is undefined if the lines are parallel.
+/// If the policy is CalculationCheckPolicy::CHECK, the function returns std::numeric_limits<T>::max if the lines are
+/// parallel. If the policy is CalculationCheckPolicy::DONT_CHECK, the function does not check the calculation producing
+/// a faster result, but the result is undefined if the lines are parallel.
 /// @tparam T The type of the point's coordinates.
 /// @param p0 A point on the first line.
 /// @param p1 A point on the first line.
 /// @param q0 A point on the second line.
 /// @param q1 A point on the second line.
-/// @return The intersection point of the two lines or infinity if the lines are parallel.
+/// @return The intersection point of the two lines or std::numeric_limits<T>::max if the lines are parallel.
 template <CalculationCheckPolicy POLICY, typename T>
 constexpr Point2<T> intersection(const Point2<T>& p0, const Point2<T>& p1, const Point2<T>& q0,
                                  const Point2<T>& q1) noexcept
@@ -145,14 +142,9 @@ constexpr Point2<T> intersection(const Point2<T>& p0, const Point2<T>& p1, const
 
   if constexpr (POLICY == CalculationCheckPolicy::CHECK)
   {
-    if (t == std::numeric_limits<T>::infinity())
+    if (t == std::numeric_limits<T>::max())
     {
-      Point2<T> result{UNINITIALIZED};
-      for (std::uint16_t i = 0U; i < result.size(); ++i)
-      {
-        result[i] = std::numeric_limits<T>::infinity();
-      }
-      return result;
+      return Point2<T>{math::INITIALIZE_WITH_VALUE, std::numeric_limits<T>::max()};
     }
   }
 

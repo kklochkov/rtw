@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fixed_point/math.h"
 #include "math/angle.h"
 #include "math/matrix.h"
 #include "math/vector.h"
@@ -59,8 +60,13 @@ constexpr Matrix3x3<T> make_scale(const Vector3<T>& scale) noexcept
 template <typename T>
 constexpr Matrix3x3<T> make_rotation_x(const Angle<T> roll) noexcept
 {
-  const auto c = std::cos(roll);
-  const auto s = std::sin(roll);
+  using rtw::fixed_point::math::cos;
+  using rtw::fixed_point::math::sin;
+  using std::cos;
+  using std::sin;
+
+  const auto c = cos(static_cast<T>(roll));
+  const auto s = sin(static_cast<T>(roll));
   // clang-format off
   return Matrix3x3<T>{
     T{1}, T{0}, T{0},
@@ -87,8 +93,13 @@ constexpr Matrix3x3<T> make_so3_x(const Angle<T> roll) noexcept
 template <typename T>
 constexpr Matrix3x3<T> make_rotation_y(const Angle<T> pitch) noexcept
 {
-  const auto c = std::cos(pitch);
-  const auto s = std::sin(pitch);
+  using rtw::fixed_point::math::cos;
+  using rtw::fixed_point::math::sin;
+  using std::cos;
+  using std::sin;
+
+  const auto c = cos(static_cast<T>(pitch));
+  const auto s = sin(static_cast<T>(pitch));
   // clang-format off
   return Matrix3x3<T>{
      c, T{0},    s,
@@ -115,8 +126,13 @@ constexpr Matrix3x3<T> make_so3_y(const Angle<T> pitch) noexcept
 template <typename T>
 constexpr Matrix3x3<T> make_rotation_z(const Angle<T> yaw) noexcept
 {
-  const auto c = std::cos(yaw);
-  const auto s = std::sin(yaw);
+  using rtw::fixed_point::math::cos;
+  using rtw::fixed_point::math::sin;
+  using std::cos;
+  using std::sin;
+
+  const auto c = cos(static_cast<T>(yaw));
+  const auto s = sin(static_cast<T>(yaw));
   // clang-format off
   return Matrix3x3<T>{
          c,   -s, T{0},

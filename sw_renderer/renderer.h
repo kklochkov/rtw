@@ -47,19 +47,19 @@ public:
   RenderModeFlags render_mode() const { return render_mode_; }
 
   void set_face_culling_enabled(const bool enabled) { render_mode_.set(RenderMode::FACE_CULLING, enabled); }
-  bool face_culling_enabled() const { return render_mode_.test( RenderMode::FACE_CULLING); }
+  bool face_culling_enabled() const { return render_mode_.test(RenderMode::FACE_CULLING); }
   void set_wireframe_enabled(const bool enabled) { render_mode_.set(RenderMode::WIREFRAME, enabled); }
-  bool wireframe_enabled() const { return render_mode_.test( RenderMode::WIREFRAME); }
+  bool wireframe_enabled() const { return render_mode_.test(RenderMode::WIREFRAME); }
   void set_shading_enabled(const bool enabled) { render_mode_.set(RenderMode::SHADING, enabled); }
-  bool shading_enabled() const { return render_mode_.test(  RenderMode::SHADING); }
+  bool shading_enabled() const { return render_mode_.test(RenderMode::SHADING); }
   void set_vertex_drawing_enabled(const bool enabled) { render_mode_.set(RenderMode::VERTEX_DRAWING, enabled); }
-  bool vertex_drawing_enabled() const { return render_mode_.test(  RenderMode::VERTEX_DRAWING); }
+  bool vertex_drawing_enabled() const { return render_mode_.test(RenderMode::VERTEX_DRAWING); }
   void set_light_enabled(const bool enabled) { render_mode_.set(RenderMode::LIGHT, enabled); }
-  bool light_enabled() const { return render_mode_.test(  RenderMode::LIGHT); }
+  bool light_enabled() const { return render_mode_.test(RenderMode::LIGHT); }
   void set_normal_draw_enabled(const bool enabled) { render_mode_.set(RenderMode::NORMAL_DRAW, enabled); }
-  bool normal_draw_enabled() const { return render_mode_.test(  RenderMode::NORMAL_DRAW); }
+  bool normal_draw_enabled() const { return render_mode_.test(RenderMode::NORMAL_DRAW); }
   void set_texture_enabled(const bool enabled) { render_mode_.set(RenderMode::TEXTURE, enabled); }
-  bool texture_enabled() const { return render_mode_.test(  RenderMode::TEXTURE); }
+  bool texture_enabled() const { return render_mode_.test(RenderMode::TEXTURE); }
 
   void set_depth(const std::size_t x, const std::size_t y, const float depth) { depth_buffer_.set_depth(x, y, depth); }
   float depth(const std::size_t x, const std::size_t y) const { return depth_buffer_.depth(x, y); }
