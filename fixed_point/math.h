@@ -13,6 +13,15 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BIT
 }
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> clamp(const FixedPoint<T, FRAC_BITS, SaturationT> value,
+                                                      const FixedPoint<T, FRAC_BITS, SaturationT> min,
+                                                      const FixedPoint<T, FRAC_BITS, SaturationT> max) noexcept
+{
+  using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
+  return FixedPoint(FixedPoint::PRIVATE_CTOR, std::clamp(value.value_, min.value_, max.value_));
+}
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> floor(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
@@ -147,16 +156,17 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> normalize_angle(FixedPoint<T, FR
 } // namespace details
 
 /// Calculate the sine/cosine of a fixed-point number using the Taylor series expansion.
-/// We take first five terms of the Taylor series expansion and reduce the input angle to the range [-PI/2, PI/2].
-/// sin(x) = x - x^3/3! + x^5/5! - x^7/7! + x^9/9!
-/// cos(x) = 1 - x^2/2! + x^4/4! - x^6/6! + x^8/8!
+/// The input angle is normalized to the range [-PI/2, PI/2].
+/// First five terms of the Taylor series expansion are used:
+/// * sin(x) = x - x^3/3! + x^5/5! - x^7/7! + x^9/9!
+/// * cos(x) = 1 - x^2/2! + x^4/4! - x^6/6! + x^8/8!
 /// where x is in the range [-PI/2, PI/2].
 /// The absolute error is less than 0.0003.
 /// Side note: an alternative approach is to use Chebyshev polynomials or Bhaskara I's sine approximation formula.
 /// Robin Green's "Even Faster Math Functions" provides a good overview of the different approaches.
 /// https://basesandframes.wordpress.com/2020/04/04/even-faster-math-functions/
 /// See also fixed_point/analysis/chebyshev_trig.py for comparing the Taylor series and Chebyshev polynomials.
-/// @param value The angle in radians. The angle must be in the range [-PI/2, PI/2].
+/// @param value The angle in radians.
 /// @return The sine of the angle.
 /// @{
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
@@ -204,5 +214,28 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> cos(const FixedPoint<T, FRAC_BIT
   return result * details::cos_sign(quadrant);
 }
 /// @}
+
+/// Calculate the tangent of a fixed-point number using the Taylor series expansion.
+/// For better accuracy, the function calculates results using the following trigonometric identity:
+/// * tan(x) = 2 * tan(x/2) / (1 - tan(x/2)^2), where x is in the range (-PI/2, PI/2).
+/// The absolute error is less than 0.0003 for fixed-point numbers with more or equal 32 fractional bits.
+/// For fixed-point number with less than 32 fractional bits, the error increases rapidly for angles close
+/// to PI/2. For example, the absolute error for angles close to 80 degrees is 0.06.
+/// @param value The angle in radians in the range (-PI/2, PI/2).
+/// @return The tangent of the angle.
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> tan(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
+{
+  using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
+
+  assert(abs(value) < FixedPoint::pi_2() && "The angle must be in the range (-PI/2, PI/2)");
+
+  const auto two = FixedPoint{2};
+  const auto angle = value / two;
+  const auto half_tan = sin(angle) / cos(angle);
+  const auto half_tan_pow_2 = half_tan * half_tan;
+
+  return two * half_tan / (FixedPoint{1} - half_tan_pow_2);
+}
 
 } // namespace rtw::fixed_point::math
