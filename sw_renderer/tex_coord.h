@@ -102,6 +102,8 @@ template <typename T>
 using TexCoord2 = TexCoord<T, 2U>;
 using TexCoord2F = TexCoord<float>;
 using TexCoord2D = TexCoord<double>;
+using TexCoord2Q16 = TexCoord2<fixed_point::FixedPoint16>;
+using TexCoord2Q32 = TexCoord2<fixed_point::FixedPoint32>;
 
 template <typename T>
 constexpr TexCoord2<T> lerp(const TexCoord2<T>& lhs, const TexCoord2<T>& rhs, const T t) noexcept

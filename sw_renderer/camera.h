@@ -31,12 +31,17 @@ constexpr math::Matrix4x4<T> make_look_at(const math::Point3<T>& eye, const math
   // clang-format on
 }
 
-struct Camera
+template <typename T>
+struct GenericCamera
 {
-  math::Point3F position;
-  math::Vector3F direction;
-  math::Vector3F velocity;
-  math::EulerAnglesF rotation{};
+  math::Point3<T> position{};
+  math::Vector3<T> direction{};
+  math::Vector3<T> velocity{};
+  math::EulerAngles<T> rotation{};
 };
+
+using Camera = GenericCamera<float>;
+using CameraQ16 = GenericCamera<fixed_point::FixedPoint16>;
+using CameraQ32 = GenericCamera<fixed_point::FixedPoint32>;
 
 } // namespace rtw::sw_renderer

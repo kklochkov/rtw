@@ -27,5 +27,7 @@ template <typename T>
 using Vertex4 = Vertex<T>;
 using Vertex4F = Vertex4<float>;
 using Vertex4D = Vertex4<double>;
+using Vertex4Q16 = Vertex4<fixed_point::FixedPoint16>;
+using Vertex4Q32 = Vertex4<fixed_point::FixedPoint32>;
 
 } // namespace rtw::sw_renderer

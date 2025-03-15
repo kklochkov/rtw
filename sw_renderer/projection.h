@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fixed_point/math.h"
 #include "math/angle.h"
 #include "math/matrix.h"
 #include "math/point.h"
@@ -21,6 +22,8 @@ struct Plane3
 
 using Plane3F = Plane3<float>;
 using Plane3D = Plane3<double>;
+using Plane3Q16 = Plane3<fixed_point::FixedPoint16>;
+using Plane3Q32 = Plane3<fixed_point::FixedPoint32>;
 
 /// A frustum in 3D space.
 /// The normals of the planes are pointing towards the positive half-space, i.e. the inside of the frustum.
@@ -38,6 +41,8 @@ struct Frustum3
 
 using Frustum3F = Frustum3<float>;
 using Frustum3D = Frustum3<double>;
+using Frustum3Q16 = Frustum3<fixed_point::FixedPoint16>;
+using Frustum3Q32 = Frustum3<fixed_point::FixedPoint32>;
 
 /// The parameters of a perspective projection.
 /// @tparam T The type of the projection parameters.
@@ -66,7 +71,10 @@ constexpr FrustumParameters<T> make_perspective_parameters(const math::Angle<T> 
   assert(near > T{0});
   assert(far > near);
 
-  const auto top = near * std::tan(fov_y / T{2});
+  using rtw::fixed_point::math::tan;
+  using std::tan;
+
+  const auto top = near * tan(static_cast<T>(fov_y) / T{2});
   const auto left = top * aspect_ratio;
   const auto bottom = -top;
   const auto right = -left;
@@ -81,12 +89,11 @@ constexpr FrustumParameters<T> make_perspective_parameters(const math::Angle<T> 
 template <typename T>
 constexpr math::Matrix4x4<T> make_perspective_projection_matrix(const FrustumParameters<T> params) noexcept
 {
-  const auto width = std::abs(params.right - params.left);  // assuming that left and right are not symmetric
-  const auto height = std::abs(params.top - params.bottom); // assuming that top and bottom are not symmetric
+  using rtw::fixed_point::math::abs;
+  using std::abs;
 
-  assert(width > T{0});
-  assert(height > T{0});
-
+  const auto width = abs(params.right - params.left);  // assuming that left and right are not symmetric
+  const auto height = abs(params.top - params.bottom); // assuming that top and bottom are not symmetric
   const auto depth = params.far - params.near;
 
   assert(width > T{0});

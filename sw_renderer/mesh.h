@@ -45,7 +45,8 @@ struct Material
   Color specular{0xFF'FF'FF'FF};
 };
 
-struct Mesh
+template <typename T>
+struct GenericMesh
 {
   Material material(const std::string& name) const
   {
@@ -59,12 +60,16 @@ struct Mesh
     return it != textures.end() ? it->second : Texture{};
   }
 
-  std::vector<math::Point3F> vertices;
-  std::vector<TexCoord2F> tex_coords;
-  std::vector<math::Vector3F> normals;
+  std::vector<math::Point3<T>> vertices;
+  std::vector<TexCoord2<T>> tex_coords;
+  std::vector<math::Vector3<T>> normals;
   std::vector<Face> faces;
   std::map<std::string, Material> materials;
   std::map<std::string, Texture> textures;
 };
+
+using Mesh = GenericMesh<float>;
+using MeshQ16 = GenericMesh<fixed_point::FixedPoint16>;
+using MeshQ32 = GenericMesh<fixed_point::FixedPoint32>;
 
 } // namespace rtw::sw_renderer

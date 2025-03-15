@@ -24,3 +24,17 @@ cc_binary_with_llvm_symbolizer(
         "@sysroot//:SDL2_image",
     ],
 )
+
+cc_binary_with_llvm_symbolizer(
+    name = "fp_sw_renderer",
+    srcs = ["fixed_point_main.cpp"],
+    data = ["//sw_renderer/resources:textured_cube"],
+    deps = [
+        ":imgui_sdl2_backend",
+        "//sw_renderer",
+        "@cli11",
+        "@fmt",
+        "@sysroot//:SDL2",
+        "@sysroot//:SDL2_image",
+    ],
+)

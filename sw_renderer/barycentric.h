@@ -87,5 +87,7 @@ template <typename T>
 using Barycentric3 = Barycentric<T, 3U>;
 using Barycentric3F = Barycentric3<float>;
 using Barycentric3D = Barycentric3<double>;
+using Barycentric3Q16 = Barycentric3<fixed_point::FixedPoint16>;
+using Barycentric3Q32 = Barycentric3<fixed_point::FixedPoint32>;
 
 } // namespace rtw::sw_renderer

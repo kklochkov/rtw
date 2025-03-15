@@ -4,7 +4,6 @@ cc_library(
     name = "sw_renderer",
     srcs = [
         "obj_loader.cpp",
-        "renderer.cpp",
     ],
     hdrs = [
         "barycentric.h",
@@ -20,7 +19,8 @@ cc_library(
         "operations.h",
         "projection.h",
         "rasterisation_routines.h",
-        "renderer.h",
+        "renderer2d.h",
+        "renderer3d.h",
         "tex_coord.h",
         "texture.h",
         "vertex.h",

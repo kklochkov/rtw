@@ -11,34 +11,45 @@ namespace rtw::sw_renderer
 namespace
 {
 
-math::Point3F parse_vertex(const std::string& line)
+template <typename T>
+math::Point3<T> parse_vertex(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(1); // Ignore "v"
 
-  math::Point3F vertex{};
-  iss >> vertex.x() >> vertex.y() >> vertex.z();
-  return vertex;
+  float x = 0.0F;
+  float y = 0.0F;
+  float z = 0.0F;
+  iss >> x >> y >> z;
+
+  return math::Point3<T>{x, y, z};
 }
 
-TexCoord2F parse_tex_coord(const std::string& line)
+template <typename T>
+TexCoord2<T> parse_tex_coord(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vt"
 
-  TexCoord2F tex_coord{};
-  iss >> tex_coord.u() >> tex_coord.v();
-  return tex_coord;
+  float u = 0.0F;
+  float v = 0.0F;
+  iss >> u >> v;
+
+  return TexCoord2<T>{u, v};
 }
 
-math::Vector3F parse_normal(const std::string& line)
+template <typename T>
+math::Vector3<T> parse_normal(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vn"
 
-  math::Vector3F normal{};
-  iss >> normal.x() >> normal.y() >> normal.z();
-  return normal;
+  float x = 0.0F;
+  float y = 0.0F;
+  float z = 0.0F;
+  iss >> x >> y >> z;
+
+  return math::Vector3<T>{x, y, z};
 }
 
 bool try_parse_index(std::istringstream& iss, std::uint32_t& index)
@@ -109,12 +120,11 @@ Color parse_color(const std::string& line)
   return Color{r, g, b};
 }
 
-} // namespace
-
-ObjParseResult load_obj(std::istream& stream)
+template <typename T>
+GenericObjParseResult<T> load_obj(std::istream& stream)
 {
-  ObjParseResult result;
-  Mesh& mesh = result.mesh;
+  GenericObjParseResult<T> result;
+  GenericMesh<T>& mesh = result.mesh;
   std::string material;
 
   for (std::string line; std::getline(stream, line);)
@@ -135,17 +145,17 @@ ObjParseResult load_obj(std::istream& stream)
       {
       case ' ': // Vertex
       {
-        mesh.vertices.emplace_back(parse_vertex(line));
+        mesh.vertices.emplace_back(parse_vertex<T>(line));
       }
       break;
       case 't': // Texture coordinate
       {
-        mesh.tex_coords.emplace_back(parse_tex_coord(line));
+        mesh.tex_coords.emplace_back(parse_tex_coord<T>(line));
       }
       break;
       case 'n': // Normal
       {
-        mesh.normals.emplace_back(parse_normal(line));
+        mesh.normals.emplace_back(parse_normal<T>(line));
       }
       break;
       default:
@@ -169,11 +179,12 @@ ObjParseResult load_obj(std::istream& stream)
   return result;
 }
 
-void load_mtl(std::istream& stream, Mesh& mesh)
+template <typename T>
+void load_mtl(std::istream& stream, GenericMesh<T>& mesh)
 {
   Material material;
 
-  const auto try_add_material = [](Mesh& mesh, Material& material)
+  const auto try_add_material = [](GenericMesh<T>& mesh, Material& material)
   {
     if (!material.name.empty())
     {
@@ -244,7 +255,8 @@ void load_mtl(std::istream& stream, Mesh& mesh)
   try_add_material(mesh, material);
 }
 
-std::optional<Mesh> load_obj(const std::filesystem::path& path)
+template <typename T>
+std::optional<GenericMesh<T>> load_obj(const std::filesystem::path& path)
 {
   std::ifstream file(path);
   if (!file.is_open())
@@ -253,7 +265,7 @@ std::optional<Mesh> load_obj(const std::filesystem::path& path)
     return std::nullopt;
   }
 
-  auto result = load_obj(file);
+  auto result = load_obj<T>(file);
   for (const auto& material : result.materials)
   {
     const auto material_path = path.parent_path() / material;
@@ -270,6 +282,32 @@ std::optional<Mesh> load_obj(const std::filesystem::path& path)
              result.mesh.vertices.size(), result.mesh.tex_coords.size(), result.mesh.normals.size(),
              result.mesh.faces.size(), result.mesh.materials.size(), result.mesh.textures.size());
   return result.mesh;
+}
+
+} // namespace
+
+ObjParseResult load_obj(std::istream& stream) { return load_obj<float>(stream); }
+
+void load_mtl(std::istream& stream, Mesh& mesh) { load_mtl<float>(stream, mesh); }
+
+std::optional<Mesh> load_obj(const std::filesystem::path& path) { return load_obj<float>(path); }
+
+ObjParseResultQ16 load_obj_q16(std::istream& stream) { return load_obj<fixed_point::FixedPoint16>(stream); }
+
+void load_mtl(std::istream& stream, MeshQ16& mesh) { load_mtl<fixed_point::FixedPoint16>(stream, mesh); }
+
+std::optional<MeshQ16> load_obj_q16(const std::filesystem::path& path)
+{
+  return load_obj<fixed_point::FixedPoint16>(path);
+}
+
+ObjParseResultQ32 load_obj_q32(std::istream& stream) { return load_obj<fixed_point::FixedPoint32>(stream); }
+
+void load_mtl(std::istream& stream, MeshQ32& mesh) { load_mtl<fixed_point::FixedPoint32>(stream, mesh); }
+
+std::optional<MeshQ32> load_obj_q32(const std::filesystem::path& path)
+{
+  return load_obj<fixed_point::FixedPoint32>(path);
 }
 
 } // namespace rtw::sw_renderer

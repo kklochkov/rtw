@@ -44,7 +44,7 @@ public:
 
 private:
   void init_imgui();
-  static bool load_textures(const std::filesystem::path& resources_folder, rtw::sw_renderer::Mesh& mesh);
+  static bool load_textures(const std::filesystem::path& resources_folder, rtw::sw_renderer::MeshQ16& mesh);
   void process_events(bool& is_running, const rtw::sw_renderer::Seconds& delta_time);
   void update(const rtw::sw_renderer::Seconds& delta_time);
   void render_imgui();
@@ -54,17 +54,19 @@ private:
   SDL_Window* sdl_window_{nullptr};
   SDL_Renderer* sdl_renderer_{nullptr};
   SDL_Texture* sdl_texture_{nullptr};
-  rtw::sw_renderer::Renderer3d sw_renderer_;
-  rtw::sw_renderer::Mesh mesh_;
-  rtw::math::Matrix4x4F model_matrix_;
-  rtw::math::Matrix4x4F view_matrix_;
-  rtw::math::EulerAnglesF rotation_{0.0_degF, 45.0_degF, 0.0_degF};
-  rtw::math::Vector3F translation_{0.0F, 0.0F, -5.0F};
-  rtw::math::Vector3F scale_{1.0F, 1.0F, 1.0F};
-  rtw::sw_renderer::Camera camera_{
-      rtw::math::Point3F{0.0F, 0.0F, 0.0F},
-      rtw::math::Vector3F{0.0F, 0.0F, -1.0F},
-      rtw::math::Vector3F{0.0F, 0.0F, 0.0F},
+  rtw::sw_renderer::Renderer3dQ16 sw_renderer_;
+  rtw::sw_renderer::MeshQ16 mesh_;
+  rtw::math::Matrix4x4Q16 model_matrix_;
+  rtw::math::Matrix4x4Q16 view_matrix_;
+  rtw::math::EulerAnglesQ16 rotation_{rtw::math::AngleQ16{rtw::math::DEG, 0.0F},
+                                      rtw::math::AngleQ16{rtw::math::DEG, 45.0F},
+                                      rtw::math::AngleQ16{rtw::math::DEG, 0.0F}};
+  rtw::math::Vector3Q16 translation_{0.0F, 0.0F, -5.0F};
+  rtw::math::Vector3Q16 scale_{1.0F, 1.0F, 1.0F};
+  rtw::sw_renderer::CameraQ16 camera_{
+      rtw::math::Point3Q16{0.0F, 0.0F, 0.0F},
+      rtw::math::Vector3Q16{0.0F, 0.0F, -1.0F},
+      rtw::math::Vector3Q16{0.0F, 0.0F, 0.0F},
   };
   bool show_demo_window_{false};
 };
@@ -143,7 +145,7 @@ bool Application::init()
 bool Application::load_mesh(const std::filesystem::path& mesh_path)
 {
   const std::filesystem::path resources_folder = mesh_path.parent_path();
-  auto maybe_mesh = rtw::sw_renderer::load_obj(mesh_path);
+  auto maybe_mesh = rtw::sw_renderer::load_obj_q16(mesh_path);
   if (!maybe_mesh.has_value())
   {
     // TODO: error handling
@@ -175,7 +177,7 @@ void Application::init_imgui()
   ImGui_ImplSDLRenderer2_Init(sdl_renderer_);
 }
 
-bool Application::load_textures(const std::filesystem::path& resources_folder, rtw::sw_renderer::Mesh& mesh)
+bool Application::load_textures(const std::filesystem::path& resources_folder, rtw::sw_renderer::MeshQ16& mesh)
 {
   for (auto& [name, texture] : mesh.textures)
   {
@@ -210,8 +212,8 @@ bool Application::load_textures(const std::filesystem::path& resources_folder, r
 
 void Application::process_events(bool& is_running, const rtw::sw_renderer::Seconds& delta_time)
 {
-  const auto speed = 0.2F * delta_time.count();             // m/s
-  const auto angular_speed = 0.6_degF * delta_time.count(); // deg/s -> rad/s
+  const auto speed = 0.2F * delta_time.count();                                              // m/s
+  const auto angular_speed = rtw::math::AngleQ16{rtw::math::DEG, 0.6F} * delta_time.count(); // deg/s -> rad/s
 
   SDL_Event event;
   while (SDL_PollEvent(&event))
@@ -286,13 +288,14 @@ void Application::update(const rtw::sw_renderer::Seconds& delta_time)
 {
   std::ignore = delta_time;
 
-  rtw::math::Point3F target{0.0F, 0.0F, -1.0F};
+  rtw::math::Point3Q16 target{0.0F, 0.0F, -1.0F};
 
-  camera_.direction = rtw::math::transform3::make_rotation(camera_.rotation) * static_cast<rtw::math::Vector3F>(target);
+  camera_.direction =
+      rtw::math::transform3::make_rotation(camera_.rotation) * static_cast<rtw::math::Vector3Q16>(target);
 
   target = camera_.position + camera_.direction;
 
-  rotation_.z() += 0.5_degF;
+  rotation_.z() += rtw::math::AngleQ16{rtw::math::DEG, 0.5F};
 
   model_matrix_ = rtw::math::transform3::make_transform(scale_, rotation_, translation_);
   view_matrix_ = rtw::sw_renderer::make_look_at(camera_.position, target);
