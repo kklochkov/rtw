@@ -296,6 +296,11 @@ TYPED_TEST(SignedFixedPointTest, arithmetic)
   }
   EXPECT_EQ(TypeParam(20) / TypeParam(2.5), 8);
   EXPECT_EQ(TypeParam(20.0) / TypeParam(2.5), 8);
+  {
+    const TypeParam a(1.0);
+    const TypeParam b(0.0);
+    EXPECT_DEATH(a / b, "");
+  }
 }
 
 TYPED_TEST(SignedFixedPointTest, unary_minus)
@@ -337,6 +342,11 @@ TYPED_TEST(SignedFixedPointTest, assignment)
     const TypeParam b(2.34);
     a /= b;
     EXPECT_NEAR(static_cast<double>(a), 1.23 / 2.34, TypeParam::RESOLUTION);
+  }
+  {
+    TypeParam a(1.0);
+    const TypeParam b(0.0);
+    EXPECT_DEATH(a /= b, "");
   }
 }
 
@@ -389,6 +399,11 @@ TYPED_TEST(SignedFixedPointTest, arithmetic_saturate)
     const TypeParam b(TypeParam::RESOLUTION);
     const TypeParam c = a / b;
     EXPECT_EQ(c, TypeParam::min());
+  }
+  {
+    const TypeParam a(1.0);
+    const TypeParam b(0.0);
+    EXPECT_DEATH(a / b, "");
   }
 }
 // -----------------------------------------------------------------------------------------------
@@ -460,6 +475,11 @@ TYPED_TEST(UnsignedFixedPointTest, arithmetic)
   }
   EXPECT_EQ(TypeParam(20) / TypeParam(2.5), 8);
   EXPECT_EQ(TypeParam(20.0) / TypeParam(2.5), 8);
+  {
+    const TypeParam a(1.0);
+    const TypeParam b(0.0);
+    EXPECT_DEATH(a / b, "");
+  }
 }
 
 TYPED_TEST(UnsignedFixedPointTest, assignment)
@@ -487,6 +507,11 @@ TYPED_TEST(UnsignedFixedPointTest, assignment)
     const TypeParam b(2.34);
     a /= b;
     EXPECT_NEAR(static_cast<double>(a), 1.23 / 2.34, TypeParam::RESOLUTION);
+  }
+  {
+    TypeParam a(1.0);
+    const TypeParam b(0.0);
+    EXPECT_DEATH(a /= b, "");
   }
 }
 
@@ -535,6 +560,11 @@ TYPED_TEST(UnsignedFixedPointTest, arithmetic_saturate)
     const TypeParam b(TypeParam::RESOLUTION);
     const TypeParam c = a / b;
     EXPECT_EQ(c, 0.0);
+  }
+  {
+    const TypeParam a(1.0);
+    const TypeParam b(0.0);
+    EXPECT_DEATH(a / b, "");
   }
 }
 // -----------------------------------------------------------------------------------------------

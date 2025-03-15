@@ -21,6 +21,11 @@ template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> clamp(const FixedPoint<T, FRAC_BITS, SaturationT> value,
+                                                      const FixedPoint<T, FRAC_BITS, SaturationT> min,
+                                                      const FixedPoint<T, FRAC_BITS, SaturationT> max) noexcept;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> floor(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
@@ -37,6 +42,9 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> sin(const FixedPoint<T, FRAC_BIT
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> cos(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> tan(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
 
 } // namespace math
 
@@ -182,6 +190,8 @@ public:
     auto result = static_cast<SaturationT>(value_) << FRACTIONAL_BITS;
     const auto rhs_value = static_cast<SaturationT>(rhs.value_);
 
+    assert(rhs_value != 0);
+
     // Rounding to the nearest.
     // If signs are same, add rhs_value/2 to the result, otherwise subtract rhs_value/2.
     // This is to ensure that the result is rounded up for positive numbers and rounded down for negative numbers.
@@ -285,12 +295,14 @@ public:
   /// Math functions
   /// @{
   friend constexpr FixedPoint math::abs(const FixedPoint value) noexcept;
+  friend constexpr FixedPoint math::clamp(const FixedPoint value, const FixedPoint min, const FixedPoint max) noexcept;
   friend constexpr FixedPoint math::floor(const FixedPoint value) noexcept;
   friend constexpr FixedPoint math::ceil(const FixedPoint value) noexcept;
   friend constexpr FixedPoint math::round(const FixedPoint value) noexcept;
   friend constexpr FixedPoint math::sqrt(const FixedPoint value) noexcept;
   friend constexpr FixedPoint math::sin(const FixedPoint value) noexcept;
   friend constexpr FixedPoint math::cos(const FixedPoint value) noexcept;
+  friend constexpr FixedPoint math::tan(const FixedPoint value) noexcept;
   /// @}
 
 private:
