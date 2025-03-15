@@ -147,18 +147,26 @@ template <std::size_t CAPACITY>
 using ConvexPolygon2d = ConvexPolygon2<double, CAPACITY>;
 template <std::size_t CAPACITY>
 using ConvexPolygon2i = ConvexPolygon2<int, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygon2q16 = ConvexPolygon2<fixed_point::FixedPoint16, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygon2q32 = ConvexPolygon2<fixed_point::FixedPoint32, CAPACITY>;
 
 template <typename T>
 using Triangle2 = ConvexPolygon2<T, 3>;
 using Triangle2f = Triangle2<float>;
 using Triangle2d = Triangle2<double>;
 using Triangle2i = Triangle2<int>;
+using Triangle2q16 = Triangle2<fixed_point::FixedPoint16>;
+using Triangle2q32 = Triangle2<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Quadrilateral2 = ConvexPolygon2<T, 4>;
 using Quadrilateral2f = Quadrilateral2<float>;
 using Quadrilateral2d = Quadrilateral2<double>;
 using Quadrilateral2i = Quadrilateral2<int>;
+using Quadrilateral2q16 = Quadrilateral2<fixed_point::FixedPoint16>;
+using Quadrilateral2q32 = Quadrilateral2<fixed_point::FixedPoint32>;
 
 /// 3D space aliases.
 template <typename T, std::size_t CAPACITY>
@@ -169,18 +177,26 @@ template <std::size_t CAPACITY>
 using ConvexPolygon3d = ConvexPolygon3<double, CAPACITY>;
 template <std::size_t CAPACITY>
 using ConvexPolygon3i = ConvexPolygon3<int, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygon3q16 = ConvexPolygon3<fixed_point::FixedPoint16, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygon3q32 = ConvexPolygon3<fixed_point::FixedPoint32, CAPACITY>;
 
 template <typename T>
 using Triangle3 = ConvexPolygon3<T, 3>;
 using Triangle3f = Triangle3<float>;
 using Triangle3d = Triangle3<double>;
 using Triangle3i = Triangle3<int>;
+using Triangle3q16 = Triangle3<fixed_point::FixedPoint16>;
+using Triangle3q32 = Triangle3<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Quadrilateral3 = ConvexPolygon3<T, 4>;
 using Quadrilateral3f = Quadrilateral3<float>;
 using Quadrilateral3d = Quadrilateral3<double>;
 using Quadrilateral3i = Quadrilateral3<int>;
+using Quadrilateral3q16 = Quadrilateral3<fixed_point::FixedPoint16>;
+using Quadrilateral3q32 = Quadrilateral3<fixed_point::FixedPoint32>;
 
 /// Homogeneous 3D space aliases.
 template <typename T, std::size_t CAPACITY>
@@ -191,17 +207,25 @@ template <std::size_t CAPACITY>
 using ConvexPolygon4d = ConvexPolygon4<double, CAPACITY>;
 template <std::size_t CAPACITY>
 using ConvexPolygon4i = ConvexPolygon4<int, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygon4q16 = ConvexPolygon4<fixed_point::FixedPoint16, CAPACITY>;
+template <std::size_t CAPACITY>
+using ConvexPolygon4q32 = ConvexPolygon4<fixed_point::FixedPoint32, CAPACITY>;
 
 template <typename T>
 using Triangle4 = ConvexPolygon4<T, 3>;
 using Triangle4f = Triangle4<float>;
 using Triangle4d = Triangle4<double>;
 using Triangle4i = Triangle4<int>;
+using Triangle4q16 = Triangle4<fixed_point::FixedPoint16>;
+using Triangle4q32 = Triangle4<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Quadrilateral4 = ConvexPolygon<T, Point4, 4>;
 using Quadrilateral4f = Quadrilateral4<float>;
 using Quadrilateral4d = Quadrilateral4<double>;
 using Quadrilateral4i = Quadrilateral4<int>;
+using Quadrilateral4q16 = Quadrilateral4<fixed_point::FixedPoint16>;
+using Quadrilateral4q32 = Quadrilateral4<fixed_point::FixedPoint32>;
 
 } // namespace rtw::math

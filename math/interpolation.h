@@ -1,5 +1,6 @@
 #pragma once
 
+#include "fixed_point/fixed_point.h"
 #include "math/point.h"
 
 namespace rtw::math
@@ -10,7 +11,7 @@ namespace rtw::math
 /// @param b The second value.
 /// @param t The interpolation factor.
 /// @return The interpolated value.
-template <typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
+template <typename T, typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<T>>>
 constexpr T lerp(const T a, const T b, const T t) noexcept
 {
   return a + (b - a) * t;
@@ -24,7 +25,7 @@ constexpr T lerp(const T a, const T b, const T t) noexcept
 template <typename T, std::uint16_t N, std::uint16_t M>
 constexpr Matrix<T, N, M> lerp(const Matrix<T, N, M>& a, const Matrix<T, N, M>& b, const T t) noexcept
 {
-  Matrix<T, N, M> result{UNINITIALIZED};
+  Matrix<T, N, M> result{math::UNINITIALIZED};
   for (std::uint32_t i = 0U; i < a.size(); ++i)
   {
     result[i] = lerp(a[i], b[i], t);

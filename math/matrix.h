@@ -25,6 +25,17 @@ struct UninitializedTag
 };
 constexpr UninitializedTag UNINITIALIZED{UninitializedTag::Tag::TAG};
 
+struct InitializeWithValueTag
+{
+  enum class Tag : std::uint8_t
+  {
+    TAG
+  };
+  constexpr explicit InitializeWithValueTag(Tag /*tag*/) noexcept {}
+};
+// NOLINTNEXTLINE(clang-diagnostic-unused-const-variable,-warnings-as-errors)
+constexpr InitializeWithValueTag INITIALIZE_WITH_VALUE{InitializeWithValueTag::Tag::TAG};
+
 struct ZeroTag
 {
   enum class Tag : std::uint8_t
@@ -76,9 +87,22 @@ class Matrix
   }
 
   template <std::uint16_t... INDEX>
-  constexpr static std::array<T, SIZE> make_identity(std::integer_sequence<std::uint16_t, INDEX...> /*index*/) noexcept
+  constexpr static std::array<T, SIZE> make_with_diagonal(std::integer_sequence<std::uint16_t, INDEX...> /*index*/,
+                                                          const T value) noexcept
   {
-    return std::array<T, SIZE>{(INDEX % (ROWS + 1) == 0 ? T{1} : T{0})...};
+    return std::array<T, SIZE>{(INDEX % (ROWS + 1) == 0 ? value : T{0})...};
+  }
+
+  template <std::uint16_t... INDEX>
+  constexpr static std::array<T, SIZE> make_with_value(std::integer_sequence<std::uint16_t, INDEX...> /*index*/,
+                                                       const T value) noexcept
+  {
+    return std::array<T, SIZE>{(
+        [&value]()
+        {
+          (void)INDEX;
+          return value;
+        }())...};
   }
 
 public:
@@ -96,7 +120,11 @@ public:
   constexpr explicit Matrix(UninitializedTag /*tag*/) noexcept {}
   constexpr explicit Matrix(ZeroTag /*tag*/) noexcept : data_{value_type{0}} {}
   constexpr explicit Matrix(IdentityTag /*tag*/) noexcept
-      : data_{make_identity(std::make_integer_sequence<std::uint16_t, SIZE>{})}
+      : data_{make_with_diagonal(std::make_integer_sequence<std::uint16_t, SIZE>{}, T{1})}
+  {
+  }
+  constexpr explicit Matrix(InitializeWithValueTag /*tag*/, const T value) noexcept
+      : data_{make_with_value(std::make_integer_sequence<std::uint16_t, SIZE>{}, value)}
   {
   }
   constexpr Matrix() noexcept : Matrix{math::ZERO} {}
@@ -109,8 +137,9 @@ public:
   {
   }
 
-  template <typename U = value_type, std::uint16_t OTHER_ROWS, std::uint16_t OTHER_COLS,
-            typename = std::enable_if_t<std::is_same_v<U, value_type> && (OTHER_ROWS <= ROWS) && (OTHER_COLS <= COLS)>>
+  template <
+      typename U = value_type, std::uint16_t OTHER_ROWS, std::uint16_t OTHER_COLS,
+      typename = std::enable_if_t<std::is_convertible_v<U, value_type> && (OTHER_ROWS <= ROWS) && (OTHER_COLS <= COLS)>>
   constexpr explicit Matrix(const Matrix<U, OTHER_ROWS, OTHER_COLS>& matrix) noexcept
       : data_{from_matrix(matrix, std::make_integer_sequence<std::uint16_t, OTHER_ROWS * OTHER_COLS>{})}
   {

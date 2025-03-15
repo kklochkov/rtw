@@ -1,6 +1,7 @@
 #pragma once
 
 #include "constants/math_constants.h"
+#include "fixed_point/fixed_point.h"
 
 #include <cmath>
 #include <type_traits>
@@ -48,7 +49,7 @@ class Angle
 public:
   using value_type = T;
 
-  static_assert(std::is_arithmetic_v<value_type>, "T must be arithmetic");
+  static_assert(fixed_point::IS_ARITHMETIC_V<value_type>, "T must be arithmetic");
 
   constexpr Angle() noexcept = default;
   constexpr explicit Angle(const value_type value) noexcept : rad_(value) {}
@@ -116,6 +117,8 @@ private:
 
 using Anglef = Angle<float>;
 using Angled = Angle<double>;
+using Angleq16 = Angle<fixed_point::FixedPoint16>;
+using Angleq32 = Angle<fixed_point::FixedPoint32>;
 
 template <typename T>
 Angle<T> normalize(const Angle<T>& angle) noexcept
@@ -195,5 +198,7 @@ struct EulerAngles
 
 using EulerAnglesf = EulerAngles<float>;
 using EulerAnglesd = EulerAngles<double>;
+using EulerAnglesq16 = EulerAngles<fixed_point::FixedPoint16>;
+using EulerAnglesq32 = EulerAngles<fixed_point::FixedPoint32>;
 
 } // namespace rtw::math

@@ -11,7 +11,6 @@ class Vector : Matrix<T, N, 1>
 public:
   using Matrix = Matrix<T, N, 1>;
 
-  using Matrix::Matrix;
   using typename Matrix::reference;
   using typename Matrix::value_type;
   using Matrix::operator[];
@@ -30,13 +29,18 @@ public:
   using Matrix::y;
   using Matrix::z;
 
-  template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 2)>>
-  constexpr explicit Vector(const U x, const U y) noexcept : Matrix(x, y)
+  constexpr Vector() noexcept = default;
+
+  constexpr explicit Vector(UninitializedTag tag) noexcept : Matrix(tag) {}
+  constexpr explicit Vector(InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
+
+  template <typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T> && (N == 2)>>
+  constexpr Vector(const U x, const U y) noexcept : Matrix(x, y)
   {
   }
 
-  template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 3)>>
-  constexpr explicit Vector(const U x, const U y, const U z) noexcept : Matrix(x, y, z)
+  template <typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T> && (N == 3)>>
+  constexpr Vector(const U x, const U y, const U z) noexcept : Matrix(x, y, z)
   {
   }
 
@@ -45,12 +49,12 @@ public:
   /// @param y The y coordinate.
   /// @param z The z coordinate.
   /// @param w The w coordinate. 0 by default to represent a direction.
-  template <typename U = T, typename = std::enable_if_t<std::is_same_v<U, T> && (N == 4)>>
-  constexpr explicit Vector(const U x, const U y, const U z, const U w = U{0}) noexcept : Matrix(x, y, z, w)
+  template <typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T> && (N == 4)>>
+  constexpr Vector(const U x, const U y, const U z, const U w = U{0}) noexcept : Matrix(x, y, z, w)
   {
   }
 
-  template <typename U = T, std::uint16_t M, typename = std::enable_if_t<std::is_same_v<U, T> && (M <= N)>>
+  template <typename U = T, std::uint16_t M, typename = std::enable_if_t<std::is_convertible_v<U, T> && (M <= N)>>
   constexpr explicit Vector(const Vector<U, M>& vector) noexcept : Matrix(vector.as_matrix())
   {
     operator[](M) = U{0}; // Set the last element to 0 to represent a direction.
@@ -61,7 +65,7 @@ public:
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
   constexpr const Matrix& as_matrix() const noexcept { return static_cast<const Matrix&>(*this); }
 
-  template <typename U = value_type, typename = std::enable_if_t<std::is_arithmetic_v<U>>>
+  template <typename U = value_type, typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<U>>>
   constexpr Vector<U, N> cast() const noexcept
   {
     return Vector<U, N>{as_matrix().template cast<U>()};
@@ -145,6 +149,8 @@ using Vector2 = Vector<T, 2>;
 using Vector2f = Vector2<float>;
 using Vector2d = Vector2<double>;
 using Vector2i = Vector2<std::int32_t>;
+using Vector2q16 = Vector2<fixed_point::FixedPoint16>;
+using Vector2q32 = Vector2<fixed_point::FixedPoint32>;
 
 /// 3D space aliases.
 template <typename T>
@@ -152,6 +158,8 @@ using Vector3 = Vector<T, 3>;
 using Vector3f = Vector3<float>;
 using Vector3d = Vector3<double>;
 using Vector3i = Vector3<std::int32_t>;
+using Vector3q16 = Vector3<fixed_point::FixedPoint16>;
+using Vector3q32 = Vector3<fixed_point::FixedPoint32>;
 
 /// Homogeneous 3D space aliases.
 template <typename T>
@@ -159,6 +167,8 @@ using Vector4 = Vector<T, 4>;
 using Vector4f = Vector4<float>;
 using Vector4d = Vector4<double>;
 using Vector4i = Vector4<std::int32_t>;
+using Vector4q16 = Vector4<fixed_point::FixedPoint16>;
+using Vector4q32 = Vector4<fixed_point::FixedPoint32>;
 
 template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, typename = std::enable_if_t<(P <= M)>>
 constexpr Vector<T, N> operator*(const Matrix<T, N, M>& lhs, const Vector<T, P>& rhs) noexcept
