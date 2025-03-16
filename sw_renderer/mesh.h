@@ -20,7 +20,7 @@ struct Face
 {
   /// Indices of vertices in the mesh.
   /// The winding order is counter-clockwise.
-  Index vertex_indices{};
+  Index vertex_indices;
 
   /// Indices of texture coordinates in the mesh.
   /// The winding order is counter-clockwise.
