@@ -3,7 +3,6 @@
 #include "math/interpolation.h"
 
 #include <cstdint>
-#include <ostream>
 #include <type_traits>
 
 namespace rtw::sw_renderer
@@ -78,24 +77,7 @@ struct Color
                  static_cast<std::uint8_t>(b() + other.b()), a()};
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const Color color) noexcept
-  {
-    os << "Color(";
-    os << std::hex << std::uppercase;
-    os << "rgba: 0x" << color.rgba;
-    os << std::dec;
-    os << ", r: " << static_cast<int>(color.r());
-    os << ", g: " << static_cast<int>(color.g());
-    os << ", b: " << static_cast<int>(color.b());
-    os << ", a: " << static_cast<int>(color.a());
-    os << std::fixed << std::setprecision(4);
-    os << ", rf: " << color.rf();
-    os << ", gf: " << color.gf();
-    os << ", bf: " << color.bf();
-    os << ", af: " << color.af();
-    os << ")\n";
-    return os;
-  }
+  friend std::ostream& operator<<(std::ostream& os, const Color color) noexcept;
 
   std::uint32_t rgba{0x00'00'00'FF};
 };

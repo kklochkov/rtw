@@ -12,6 +12,7 @@ cc_test_with_llvm_symbolizer(
     tags = ["no-clang-tidy"],
     deps = [
         "//fixed_point",
+        "//fixed_point:format",
         "@googletest//:gtest_main",
     ],
 )

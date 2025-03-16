@@ -2,6 +2,8 @@
 
 #include "fixed_point/fixed_point.h"
 
+#include <array>
+
 namespace rtw::fixed_point::math
 {
 

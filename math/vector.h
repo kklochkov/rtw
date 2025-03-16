@@ -6,6 +6,12 @@ namespace rtw::math
 {
 
 template <typename T, std::uint16_t N>
+class Vector;
+
+template <typename T, std::uint16_t N>
+std::ostream& operator<<(std::ostream& os, const Vector<T, N>& vector) noexcept;
+
+template <typename T, std::uint16_t N>
 class Vector : Matrix<T, N, 1>
 {
 public:
@@ -134,13 +140,9 @@ public:
   friend constexpr bool operator!=(const Vector& lhs, const Vector& rhs) noexcept { return !(lhs == rhs); }
 
   friend constexpr Vector operator-(const Vector& vector) noexcept { return Vector{-vector.as_matrix()}; }
-
-  friend std::ostream& operator<<(std::ostream& os, const Vector& vector) noexcept
-  {
-    os << "Vector" << N;
-    return vector.as_matrix().operator<<(os);
-  }
   /// @}
+
+  friend std::ostream& operator<< <T, N>(std::ostream& os, const Vector& vector) noexcept;
 };
 
 /// 2D space aliases.

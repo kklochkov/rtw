@@ -6,6 +6,12 @@ namespace rtw::math
 {
 
 template <typename T, std::uint16_t N>
+class Point;
+
+template <typename T, std::uint16_t N>
+std::ostream& operator<<(std::ostream& os, const Point<T, N>& point) noexcept;
+
+template <typename T, std::uint16_t N>
 class Point : Matrix<T, N, 1>
 {
 public:
@@ -130,13 +136,9 @@ public:
   }
 
   friend constexpr bool operator!=(const Point& lhs, const Point& rhs) noexcept { return !(lhs == rhs); }
-
-  friend std::ostream& operator<<(std::ostream& os, const Point& point) noexcept
-  {
-    os << "Point" << N;
-    return point.as_matrix().operator<<(os);
-  }
   /// @}
+
+  friend std::ostream& operator<< <T, N>(std::ostream& os, const Point& point) noexcept;
 };
 
 template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, typename = std::enable_if_t<(P <= M)>>

@@ -6,13 +6,16 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <iostream>
+#include <iosfwd>
 
 namespace rtw::fixed_point
 {
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 class FixedPoint;
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+std::ostream& operator<<(std::ostream& os, const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
 
 namespace math
 {
@@ -276,21 +279,7 @@ public:
   }
   /// @}
 
-  friend std::ostream& operator<<(std::ostream& os, const FixedPoint value) noexcept
-  {
-    if constexpr (std::is_signed_v<T>)
-    {
-      os << "fp" << static_cast<std::int32_t>(INTEGER_BITS + 1U);
-    }
-    else
-    {
-      os << "ufp" << static_cast<std::int32_t>(INTEGER_BITS);
-    }
-
-    os << '.' << static_cast<std::int32_t>(FRACTIONAL_BITS);
-
-    return os << "(" << static_cast<double>(value) << ")";
-  }
+  friend std::ostream& operator<< <T, FRACTIONAL_BITS, SaturationT>(std::ostream& os, const FixedPoint value) noexcept;
 
   /// Math functions
   /// @{

@@ -26,6 +26,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":math",
+        "//fixed_point:format",
         "@fmt",
     ],
 )

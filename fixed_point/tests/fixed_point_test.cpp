@@ -1,4 +1,5 @@
 #include "fixed_point/fixed_point.h"
+#include "fixed_point/format.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

@@ -17,6 +17,7 @@ cc_test_with_llvm_symbolizer(
     tags = ["no-clang-tidy"],
     deps = [
         "//math",
+        "//math:format",
         "@googletest//:gtest_main",
     ],
 )

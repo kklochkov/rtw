@@ -6,6 +6,12 @@
 namespace rtw::sw_renderer
 {
 
+template <typename T, std::uint16_t N>
+class TexCoord;
+
+template <typename T, std::uint16_t N>
+std::ostream& operator<<(std::ostream& os, const TexCoord<T, N>& coord) noexcept;
+
 template <typename T, std::uint16_t N = 2U>
 class TexCoord : math::Matrix<T, N, 1>
 {
@@ -87,13 +93,9 @@ public:
   }
 
   friend constexpr bool operator!=(const TexCoord& lhs, const TexCoord& rhs) noexcept { return !(lhs == rhs); }
-
-  friend std::ostream& operator<<(std::ostream& os, const TexCoord& coord) noexcept
-  {
-    os << "TexCoord" << N;
-    return coord.as_matrix().operator<<(os);
-  }
   /// @}
+
+  friend std::ostream& operator<< <T, N>(std::ostream& os, const TexCoord& coord) noexcept;
 };
 
 template <typename T>

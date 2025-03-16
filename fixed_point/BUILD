@@ -9,8 +9,15 @@ cc_library(
         "operations.h",
     ],
     visibility = ["//visibility:public"],
+    deps = ["//constants:math_constants"],
+)
+
+cc_library(
+    name = "format",
+    hdrs = ["format.h"],
+    visibility = ["//visibility:public"],
     deps = [
-        "//constants:math_constants",
+        ":fixed_point",
         "@fmt",
     ],
 )

@@ -1,3 +1,4 @@
+#include "sw_renderer/format.h" // IWYU pragma: keep
 #include "sw_renderer/obj_loader.h"
 
 #include <gmock/gmock.h>

@@ -5,12 +5,17 @@
 
 #include <cassert>
 #include <cstdint>
-#include <iomanip>
-#include <iostream>
+#include <iosfwd>
 #include <limits>
 
 namespace rtw::fixed_point
 {
+
+template <typename T>
+class Int;
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Int<T> value) noexcept;
 
 enum class ArithmeticType : std::uint8_t
 {
@@ -276,12 +281,7 @@ public:
   }
   /// @}
 
-  friend std::ostream& operator<<(std::ostream& os, const Int value) noexcept
-  {
-    os << "0x" << std::hex << std::setw(16) << std::setfill('0') << value.hi_ << std::hex << std::setw(16)
-       << std::setfill('0') << value.lo_;
-    return os;
-  }
+  friend std::ostream& operator<< <T>(std::ostream& os, const Int value) noexcept;
 
 private:
   /// Multiplication algorithm. Adjusted version of the algorithm from: Hacker's Delight, 2nd Edition
