@@ -1,4 +1,5 @@
 #include "sw_renderer/tex_coord.h"
+#include "sw_renderer/format.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

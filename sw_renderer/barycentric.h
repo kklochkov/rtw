@@ -5,6 +5,12 @@
 namespace rtw::sw_renderer
 {
 
+template <typename T, std::uint16_t N>
+class Barycentric;
+
+template <typename T, std::uint16_t N>
+std::ostream& operator<<(std::ostream& os, const Barycentric<T, N>& coord) noexcept;
+
 template <typename T, std::uint16_t N = 3U>
 class Barycentric : math::Matrix<T, N, 1>
 {
@@ -72,13 +78,9 @@ public:
   }
 
   friend constexpr bool operator!=(const Barycentric& lhs, const Barycentric& rhs) noexcept { return !(lhs == rhs); }
-
-  friend std::ostream& operator<<(std::ostream& os, const Barycentric& coord) noexcept
-  {
-    os << "Barycentric" << N;
-    return coord.as_matrix().operator<<(os);
-  }
   /// @}
+
+  friend std::ostream& operator<< <T, N>(std::ostream& os, const Barycentric& coord) noexcept;
 };
 
 template <typename T>

@@ -8,12 +8,17 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iomanip>
-#include <ostream>
 #include <type_traits>
+#include <iosfwd>
 
 namespace rtw::math
 {
+
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
+class Matrix;
+
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
+std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) noexcept;
 
 struct UninitializedTag
 {
@@ -343,40 +348,6 @@ public:
   constexpr static Matrix identity() noexcept { return Matrix{math::IDENTITY}; }
   constexpr static Matrix zero() noexcept { return Matrix{math::ZERO}; }
 
-  std::ostream& operator<<(std::ostream& os) const noexcept
-  {
-    os << std::fixed << std::setprecision(4) << '[';
-    if constexpr (COLS == 1)
-    {
-      for (std::uint16_t row = 0U; row < ROWS; ++row)
-      {
-        os << (*this)(row, 0);
-        if (row < ROWS - 1U)
-        {
-          os << ' ';
-        }
-      }
-    }
-    else
-    {
-      os << '\n';
-      for (std::uint16_t row = 0U; row < ROWS; ++row)
-      {
-        for (std::uint16_t col = 0U; col < COLS; ++col)
-        {
-          os << std::setw(10) << (*this)(row, col);
-          if (col < COLS - 1U)
-          {
-            os << ' ';
-          }
-        }
-        os << '\n';
-      }
-    }
-    os << ']';
-    return os;
-  }
-
   /// Barton-Nackman trick to generate operators.
   /// @{
   friend constexpr Matrix operator+(const Matrix& lhs, const Matrix& rhs) noexcept
@@ -471,13 +442,9 @@ public:
   }
 
   friend constexpr bool operator!=(const Matrix& lhs, const Matrix& rhs) noexcept { return !(lhs == rhs); }
-
-  friend std::ostream& operator<<(std::ostream& os, const Matrix& matrix) noexcept
-  {
-    os << "Matrix" << ROWS << "x" << COLS;
-    return matrix.operator<<(os);
-  }
   /// @}
+
+  friend std::ostream& operator<< <T, ROWS, COLS>(std::ostream& os, const Matrix& matrix) noexcept;
 
 private:
   std::array<value_type, SIZE> data_;

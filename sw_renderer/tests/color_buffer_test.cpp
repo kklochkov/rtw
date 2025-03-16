@@ -1,4 +1,5 @@
 #include "sw_renderer/color_buffer.h"
+#include "sw_renderer/format.h"
 
 #include <gtest/gtest.h>
 
