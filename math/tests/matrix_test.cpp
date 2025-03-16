@@ -5,7 +5,7 @@
 
 // FixedPoint16 has lower precision and requires a larger epsilon
 template <typename T>
-constexpr auto EPSILON = std::is_same_v<typename T::value_type, rtw::fixed_point::FixedPoint16> ? 1.0e-2F : 1.0e-4F;
+constexpr auto EPSILON = std::is_same_v<typename T::value_type, rtw::fixed_point::FixedPoint16> ? 7.0e-3F : 1.0e-4F;
 
 template <typename T>
 class Matrix2x2Test : public ::testing::Test
@@ -323,12 +323,12 @@ template <typename T>
 class Matrix3x3Test : public ::testing::Test
 {
 public:
-  void evaluate_decomposition(const T& expected_a, const T& expected_q, const T& expected_r, const T& q,
-                              const T& r) const
+  void evaluate_decomposition(const T& expected_a, const T& expected_q, const T& expected_r, const T& q, const T& r,
+                              const float epsilon = EPSILON<T>) const
   {
     for (std::uint32_t i = 0U; i < expected_q.size(); ++i)
     {
-      EXPECT_NEAR(static_cast<double>(expected_q[i]), static_cast<double>(q[i]), EPSILON<T>);
+      EXPECT_NEAR(static_cast<double>(expected_q[i]), static_cast<double>(q[i]), epsilon);
     }
 
     for (std::uint32_t row = 0U; row < expected_q.rows(); ++row)
@@ -336,35 +336,36 @@ public:
       const auto norm = rtw::math::norm(q.row(row));
       const auto expected_norm = rtw::math::norm(expected_q.row(row));
 
-      EXPECT_NEAR(static_cast<double>(expected_norm), static_cast<double>(norm), EPSILON<T>);
+      EXPECT_NEAR(static_cast<double>(expected_norm), static_cast<double>(norm), epsilon);
     }
 
     for (std::uint32_t i = 0U; i < expected_r.size(); ++i)
     {
-      EXPECT_NEAR(static_cast<double>(expected_r[i]), static_cast<double>(r[i]), EPSILON<T>);
+      EXPECT_NEAR(static_cast<double>(expected_r[i]), static_cast<double>(r[i]), epsilon);
     }
 
     const auto qr = rtw::math::transpose(q) * r;
     for (std::uint32_t i = 0U; i < expected_a.size(); ++i)
     {
-      EXPECT_NEAR(static_cast<double>(expected_a[i]), static_cast<double>(qr[i]), EPSILON<T>);
+      EXPECT_NEAR(static_cast<double>(expected_a[i]), static_cast<double>(qr[i]), epsilon);
     }
   }
 
   using Vector = rtw::math::Matrix<typename T::value_type, 3, 1>;
 
-  void evaluate_solve(const T& expected_a, const Vector& expected_b, const Vector& expected_x, const Vector& x)
+  void evaluate_solve(const T& expected_a, const Vector& expected_b, const Vector& expected_x, const Vector& x,
+                      const float epsilon = EPSILON<T>)
   {
     {
       for (std::uint32_t i = 0U; i < x.size(); ++i)
       {
-        EXPECT_NEAR(static_cast<double>(x[i]), static_cast<double>(expected_x[i]), EPSILON<T>);
+        EXPECT_NEAR(static_cast<double>(x[i]), static_cast<double>(expected_x[i]), epsilon);
       }
 
       const auto b = expected_a * x;
       for (std::uint32_t i = 0U; i < b.size(); ++i)
       {
-        EXPECT_NEAR(static_cast<double>(b[i]), static_cast<double>(expected_b[i]), EPSILON<T>);
+        EXPECT_NEAR(static_cast<double>(b[i]), static_cast<double>(expected_b[i]), epsilon);
       }
     }
   }
@@ -765,14 +766,21 @@ TYPED_TEST(Matrix3x3Test, modified_gram_schmidt_qr_solve)
   constexpr Vector B{5.0F, 7.0F, 8.0F};
   constexpr Vector EXPECTED_X{-15.0F, 8.0F, 2.0F};
 
+  float epsilon = EPSILON<TypeParam>;
+  if constexpr (std::is_same_v<typename TypeParam::value_type, float>)
+  {
+    // On x86-64, the precision of float for the MGS algorithm is not enough to get the exact result.
+    epsilon = 0.0035F;
+  }
+
   {
     const auto x = rtw::math::matrix_decomposition::qr::modified_gram_schmidt::solve(A, B);
-    this->evaluate_solve(A, B, EXPECTED_X, x);
+    this->evaluate_solve(A, B, EXPECTED_X, x, epsilon);
   }
   {
     const auto a_inv = rtw::math::matrix_decomposition::qr::modified_gram_schmidt::inverse(A);
     const auto x = a_inv * B;
-    this->evaluate_solve(A, B, EXPECTED_X, x);
+    this->evaluate_solve(A, B, EXPECTED_X, x, epsilon);
   }
 }
 //-----------------------------------------------------------------------------------------
