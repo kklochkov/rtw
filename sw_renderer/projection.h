@@ -83,6 +83,10 @@ constexpr math::Matrix4x4<T> make_perspective_projection_matrix(const FrustumPar
 {
   const auto width = std::abs(params.right - params.left);  // assuming that left and right are not symmetric
   const auto height = std::abs(params.top - params.bottom); // assuming that top and bottom are not symmetric
+
+  assert(width > T{0});
+  assert(height > T{0});
+
   const auto depth = params.far - params.near;
 
   assert(width > T{0});
