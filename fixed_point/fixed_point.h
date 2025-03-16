@@ -313,9 +313,9 @@ using FixedPoint8 = FixedPoint<std::int16_t, 8, std::int32_t>;
 using FixedPoint16 = FixedPoint<std::int32_t, 16, std::int64_t>;
 using FixedPoint32 = FixedPoint<std::int64_t, 32, Int128>;
 
-using FixedPoint8u = FixedPoint<std::uint16_t, 8, std::uint32_t>;
-using FixedPoint16u = FixedPoint<std::uint32_t, 16, std::uint64_t>;
-using FixedPoint32u = FixedPoint<std::uint64_t, 32, Int128u>;
+using FixedPoint8U = FixedPoint<std::uint16_t, 8, std::uint32_t>;
+using FixedPoint16U = FixedPoint<std::uint32_t, 16, std::uint64_t>;
+using FixedPoint32U = FixedPoint<std::uint64_t, 32, Int128U>;
 
 template <typename T>
 struct IsFixedPoint : std::false_type

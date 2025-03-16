@@ -32,7 +32,7 @@ public:
   constexpr Vector() noexcept = default;
 
   constexpr explicit Vector(UninitializedTag tag) noexcept : Matrix(tag) {}
-  constexpr explicit Vector(InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
+  constexpr Vector(InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
 
   template <typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T> && (N == 2)>>
   constexpr Vector(const U x, const U y) noexcept : Matrix(x, y)
@@ -146,29 +146,29 @@ public:
 /// 2D space aliases.
 template <typename T>
 using Vector2 = Vector<T, 2>;
-using Vector2f = Vector2<float>;
-using Vector2d = Vector2<double>;
-using Vector2i = Vector2<std::int32_t>;
-using Vector2q16 = Vector2<fixed_point::FixedPoint16>;
-using Vector2q32 = Vector2<fixed_point::FixedPoint32>;
+using Vector2F = Vector2<float>;
+using Vector2D = Vector2<double>;
+using Vector2I = Vector2<std::int32_t>;
+using Vector2Q16 = Vector2<fixed_point::FixedPoint16>;
+using Vector2Q32 = Vector2<fixed_point::FixedPoint32>;
 
 /// 3D space aliases.
 template <typename T>
 using Vector3 = Vector<T, 3>;
-using Vector3f = Vector3<float>;
-using Vector3d = Vector3<double>;
-using Vector3i = Vector3<std::int32_t>;
-using Vector3q16 = Vector3<fixed_point::FixedPoint16>;
-using Vector3q32 = Vector3<fixed_point::FixedPoint32>;
+using Vector3F = Vector3<float>;
+using Vector3D = Vector3<double>;
+using Vector3I = Vector3<std::int32_t>;
+using Vector3Q16 = Vector3<fixed_point::FixedPoint16>;
+using Vector3Q32 = Vector3<fixed_point::FixedPoint32>;
 
 /// Homogeneous 3D space aliases.
 template <typename T>
 using Vector4 = Vector<T, 4>;
-using Vector4f = Vector4<float>;
-using Vector4d = Vector4<double>;
-using Vector4i = Vector4<std::int32_t>;
-using Vector4q16 = Vector4<fixed_point::FixedPoint16>;
-using Vector4q32 = Vector4<fixed_point::FixedPoint32>;
+using Vector4F = Vector4<float>;
+using Vector4D = Vector4<double>;
+using Vector4I = Vector4<std::int32_t>;
+using Vector4Q16 = Vector4<fixed_point::FixedPoint16>;
+using Vector4Q32 = Vector4<fixed_point::FixedPoint32>;
 
 template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, typename = std::enable_if_t<(P <= M)>>
 constexpr Vector<T, N> operator*(const Matrix<T, N, M>& lhs, const Vector<T, P>& rhs) noexcept

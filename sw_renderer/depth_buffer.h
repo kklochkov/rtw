@@ -10,7 +10,7 @@ class DepthBuffer
 {
 public:
   DepthBuffer(const std::size_t width, const std::size_t height)
-      : buffer_(width * height, std::numeric_limits<float>::infinity()), width_(width), height_(height)
+      : buffer_(width * height, std::numeric_limits<float>::max()), width_(width), height_(height)
   {
   }
 
@@ -18,7 +18,7 @@ public:
   std::size_t height() const { return height_; }
   std::size_t size() const { return buffer_.size(); }
 
-  void clear() { std::fill(buffer_.begin(), buffer_.end(), std::numeric_limits<float>::infinity()); }
+  void clear() { std::fill(buffer_.begin(), buffer_.end(), std::numeric_limits<float>::max()); }
 
   void set_depth(const std::size_t x, const std::size_t y, const float depth) { buffer_[y * width_ + x] = depth; }
   float depth(const std::size_t x, const std::size_t y) const { return buffer_[y * width_ + x]; }

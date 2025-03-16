@@ -4,22 +4,46 @@
 #include "sw_renderer/vertex.h"
 
 #include <algorithm>
+#include <type_traits>
 
 namespace rtw::sw_renderer
 {
 
+namespace details
+{
+
+template <typename RasteriseCallbackT>
+constexpr bool IS_PIXEL_RASTERISE_CALLBACK_V = std::is_invocable_r_v<void, RasteriseCallbackT, const math::Point2I&>;
+
+template <typename RasteriseCallbackT>
+constexpr bool IS_BARYCENTRIC_TRIANGLE_RASTERISE_CALLBACK_V =
+    std::is_invocable_r_v<void, RasteriseCallbackT, const Vertex4F&, const Vertex4F&, const Vertex4F&,
+                          const math::Point2I&, const Barycentric3F&>;
+
+template <typename RasteriseCallbackT>
+constexpr bool IS_TRIANGLE_RASTERISE_CALLBACK_V =
+    std::is_invocable_r_v<void, RasteriseCallbackT, const Vertex4F&, const Vertex4F&, const Vertex4F&,
+                          const math::Point2I&>;
+
+} // namespace details
+
 /// Draw a line using the DDA (Digital Differential Analyzer) algorithm.
 /// See https://en.wikipedia.org/wiki/Digital_differential_analyzer_(graphics_algorithm) for more details.
 /// @tparam RasteriseCallbackT The type of the callback function which is called for each pixel.
-/// The function must have the following signature: void(const math::Point2i&).
+/// The function must have the following signature:
+/// void(const math::Point2I&).
 /// @param[in] p0 The first point of the line.
 /// @param[in] p1 The second point of the line.
 /// @param[in] rasterise The callback function.
-template <typename RasteriseCallbackT>
-void draw_line_dda(const math::Point2i& p0, const math::Point2i& p1, RasteriseCallbackT rasterise)
+template <typename RasteriseCallbackT,
+          typename = std::enable_if_t<details::IS_PIXEL_RASTERISE_CALLBACK_V<RasteriseCallbackT>>>
+void draw_line_dda(const math::Point2I& p0, const math::Point2I& p1, RasteriseCallbackT rasterise)
 {
-  math::Vector2f delta = (p1 - p0).cast<float>();
+  math::Vector2F delta = (p1 - p0).cast<float>();
   const std::int32_t steps = static_cast<std::int32_t>(std::max(std::abs(delta.x()), std::abs(delta.y())));
+
+  assert(steps > 0);
+
   delta /= static_cast<float>(steps);
 
   auto p = p0.cast<float>();
@@ -33,12 +57,14 @@ void draw_line_dda(const math::Point2i& p0, const math::Point2i& p1, RasteriseCa
 /// Draw a line using the Bresenham's algorithm.
 /// See https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm for more details.
 /// @tparam RasteriseCallbackT The type of the callback function which is called for each pixel.
-/// The function must have the following signature: void(const math::Point2i&).
+/// The function must have the following signature:
+/// void(const math::Point2I&).
 /// @param[in] p0 The first point of the line.
 /// @param[in] p1 The second point of the line.
 /// @param[in] rasterise The callback function.
-template <typename RasteriseCallbackT>
-void draw_line_bresenham(const math::Point2i& p0, const math::Point2i& p1, RasteriseCallbackT rasterise)
+template <typename RasteriseCallbackT,
+          typename = std::enable_if_t<details::IS_PIXEL_RASTERISE_CALLBACK_V<RasteriseCallbackT>>>
+void draw_line_bresenham(const math::Point2I& p0, const math::Point2I& p1, RasteriseCallbackT rasterise)
 {
   const std::int32_t dx = std::abs(p1.x() - p0.x());
   const std::int32_t dy = std::abs(p1.y() - p0.y());
@@ -48,7 +74,7 @@ void draw_line_bresenham(const math::Point2i& p0, const math::Point2i& p1, Raste
 
   std::int32_t err = dx - dy;
 
-  math::Point2i p{p0.x(), p0.y()};
+  math::Point2I p{p0.x(), p0.y()};
 
   while (true)
   {
@@ -82,13 +108,14 @@ void draw_line_bresenham(const math::Point2i& p0, const math::Point2i& p1, Raste
 /// Calls the callback function for each pixel inside the triangle.
 /// @tparam RasteriseCallbackT The type of the callback function which is called for each pixel.
 /// The function must have the following signature:
-/// void(const Vertex4f&, const Vertex4f&, const Vertex4f&, const math::Point2i&).
+/// void(const Vertex4F&, const Vertex4F&, const Vertex4F&, const math::Point2I&, const Barycentric3F&).
 /// @param[in] v0 The first vertex of the triangle.
 /// @param[in] v1 The second vertex of the triangle.
 /// @param[in] v2 The third vertex of the triangle.
 /// @param[in] rasterise_inside The callback function which is called for each pixel inside the triangle.
-template <typename RasteriseCallbackT>
-void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, RasteriseCallbackT rasterise)
+template <typename RasteriseCallbackT,
+          typename = std::enable_if_t<details::IS_BARYCENTRIC_TRIANGLE_RASTERISE_CALLBACK_V<RasteriseCallbackT>>>
+void fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, RasteriseCallbackT rasterise)
 {
   const auto min_x = static_cast<std::int32_t>(std::floor(std::min({v0.point.x(), v1.point.x(), v2.point.x()})));
   const auto min_y = static_cast<std::int32_t>(std::floor(std::min({v0.point.y(), v1.point.y(), v2.point.y()})));
@@ -104,7 +131,7 @@ void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& 
   const auto area = math::cross(edge_a, edge_b);
 
   // Calculate the initial barycentric coordinates of the top-left corner of the bounding box with subpixel precision.
-  const math::Point2f p0{static_cast<float>(min_x) + 0.5F, static_cast<float>(min_y) + 0.5F};
+  const math::Point2F p0{static_cast<float>(min_x) + 0.5F, static_cast<float>(min_y) + 0.5F};
   auto w0_init = math::cross(edge_a, p0 - vc);
   auto w1_init = math::cross(edge_b, p0 - va);
   auto w2_init = math::cross(edge_c, p0 - vb);
@@ -135,8 +162,8 @@ void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& 
     {
       if ((w0 >= 0) & (w1 >= 0) & (w2 >= 0)) // NOLINT(hicpp-signed-bitwise)
       {
-        const math::Point2i p{x, y};
-        const Barycentric3f b{w0, w1, w2};
+        const math::Point2I p{x, y};
+        const Barycentric3F b{w0, w1, w2};
         rasterise(v0, v1, v2, p, b);
       }
 
@@ -156,7 +183,7 @@ namespace details
 /// Visit pixels in a triangle.
 /// @tparam RasteriseCallbackT The type of the callback function which is called for each pixel.
 /// The function must have the following signature:
-/// void(const Vertex4f&, const Vertex4f&, const Vertex4f&, const math::Point2i&).
+/// void(const Vertex4F&, const Vertex4F&, const Vertex4F&, const math::Point2I&).
 /// The vertex order is counter-clockwise. The vectrices are sorted by y-coordinate.
 /// @param[in] v0_raster The first vertex of the triangle.
 /// @param[in] v1_raster The second vertex of the triangle.
@@ -166,10 +193,11 @@ namespace details
 /// @param[in] v0 The first vertex with additional data.
 /// @param[in] v1 The second vertex with additional data.
 /// @param[in] v2 The third vertex with additional data.
-template <typename RasteriseCallbackT>
-void visit_pixels(const math::Point2i& v0_raster, const math::Point2i& v1_raster, const float inv_slope0,
-                  const float inv_slope1, RasteriseCallbackT rasterise, const Vertex4f& v0, const Vertex4f& v1,
-                  const Vertex4f& v2)
+template <typename RasteriseCallbackT,
+          typename = std::enable_if_t<details::IS_TRIANGLE_RASTERISE_CALLBACK_V<RasteriseCallbackT>>>
+void visit_pixels(const math::Point2I& v0_raster, const math::Point2I& v1_raster, const float inv_slope0,
+                  const float inv_slope1, RasteriseCallbackT rasterise, const Vertex4F& v0, const Vertex4F& v1,
+                  const Vertex4F& v2)
 {
   for (auto y = v0_raster.y(); y <= v1_raster.y(); ++y)
   {
@@ -185,7 +213,7 @@ void visit_pixels(const math::Point2i& v0_raster, const math::Point2i& v1_raster
 
     for (auto x = x_start; x <= x_end; ++x)
     {
-      rasterise(v0, v1, v2, math::Point2i{x, y});
+      rasterise(v0, v1, v2, math::Point2I{x, y});
     }
   }
 }
@@ -193,8 +221,9 @@ void visit_pixels(const math::Point2i& v0_raster, const math::Point2i& v1_raster
 
 /// Fill a triangle using the scanline algorithm.
 /// @tparam RasteriseCallbackT The type of the callback function which is called for each pixel.
-/// The function must have the following signature: void(const Vertex4f&, const Vertex4f&, const Vertex4f&, const
-/// math::Point2i&). The vertex order is counter-clockwise. It is assumed that the vectrices are sorted by
+/// The function must have the following signature:
+/// void(const Vertex4F&, const Vertex4F&, const Vertex4F&, const math::Point2I&).
+/// The vertex order is counter-clockwise. It is assumed that the vectrices are sorted by
 /// y-coordinate. The algorithm works in the following way:
 /// 1. Sort vertices by y-coordinate.
 /// 2. Calculate edges.
@@ -206,8 +235,9 @@ void visit_pixels(const math::Point2i& v0_raster, const math::Point2i& v1_raster
 /// @param[in] v1 The second vertex of the triangle.
 /// @param[in] v2 The third vertex of the triangle.
 /// @param[in] rasterise The callback function.
-template <typename RasteriseCallbackT>
-void fill_triangle_scanline(Vertex4f v0, Vertex4f v1, Vertex4f v2, RasteriseCallbackT rasterise)
+template <typename RasteriseCallbackT,
+          typename = std::enable_if_t<details::IS_TRIANGLE_RASTERISE_CALLBACK_V<RasteriseCallbackT>>>
+void fill_triangle_scanline(Vertex4F v0, Vertex4F v1, Vertex4F v2, RasteriseCallbackT rasterise)
 {
   // Sort vertices by y-coordinate.
   if (v0.point.y() > v1.point.y())

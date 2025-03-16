@@ -20,7 +20,7 @@ TEST(Transform3, make_scale)
 TEST(Transform3, make_rotation_x)
 {
   using namespace rtw::math::angle_literals;
-  constexpr auto ANGLE = 90.0_deg;
+  constexpr auto ANGLE = 90.0_degD;
   const auto matrix = rtw::math::transform3::make_rotation_x(ANGLE);
   ASSERT_DOUBLE_EQ(matrix(0, 0), 1.0);
   ASSERT_DOUBLE_EQ(matrix(0, 1), 0.0);
@@ -36,7 +36,7 @@ TEST(Transform3, make_rotation_x)
 TEST(Transform3, make_rotation_y)
 {
   using namespace rtw::math::angle_literals;
-  constexpr auto ANGLE = 90.0_deg;
+  constexpr auto ANGLE = 90.0_degD;
   const auto matrix = rtw::math::transform3::make_rotation_y(ANGLE);
   ASSERT_DOUBLE_EQ(matrix(0, 0), std::cos(ANGLE.rad()));
   ASSERT_DOUBLE_EQ(matrix(0, 1), 0.0);
@@ -52,7 +52,7 @@ TEST(Transform3, make_rotation_y)
 TEST(Transform3, make_rotation_z)
 {
   using namespace rtw::math::angle_literals;
-  constexpr auto ANGLE = 90.0_deg;
+  constexpr auto ANGLE = 90.0_degD;
   const auto matrix = rtw::math::transform3::make_rotation_z(ANGLE);
   ASSERT_DOUBLE_EQ(matrix(0, 0), std::cos(ANGLE.rad()));
   ASSERT_DOUBLE_EQ(matrix(0, 1), -std::sin(ANGLE.rad()));
@@ -67,7 +67,7 @@ TEST(Transform3, make_rotation_z)
 
 TEST(Transform3, make_translation)
 {
-  constexpr auto TRANSLATION = rtw::math::Vector3d{1.0, 2.0, 3.0};
+  constexpr auto TRANSLATION = rtw::math::Vector3D{1.0, 2.0, 3.0};
   constexpr auto MATRIX = rtw::math::transform3::make_translation(TRANSLATION);
 
   ASSERT_DOUBLE_EQ(MATRIX(0, 0), 1.0);
@@ -91,10 +91,10 @@ TEST(Transform3, make_translation)
 TEST(Transform3, make_transform)
 {
   using namespace rtw::math::angle_literals;
-  constexpr auto ROLL = 90.0_deg;
-  constexpr auto PITCH = 90.0_deg;
-  constexpr auto YAW = 90.0_deg;
-  constexpr auto TRANSLATION = rtw::math::Vector3d{1.0, 2.0, 3.0};
+  constexpr auto ROLL = 90.0_degD;
+  constexpr auto PITCH = 90.0_degD;
+  constexpr auto YAW = 90.0_degD;
+  constexpr auto TRANSLATION = rtw::math::Vector3D{1.0, 2.0, 3.0};
   const auto se3 = rtw::math::transform3::make_transform(ROLL, PITCH, YAW, TRANSLATION);
   const auto expected_rotation = rtw::math::transform3::make_rotation_z(YAW)
                                * rtw::math::transform3::make_rotation_y(PITCH)
@@ -106,7 +106,7 @@ TEST(Transform3, make_transform)
 TEST(Transform3, inverse_rotation)
 {
   using namespace rtw::math::angle_literals;
-  constexpr auto ANGLE = 90.0_deg;
+  constexpr auto ANGLE = 90.0_degD;
   const auto matrix = rtw::math::transform3::make_rotation_z(ANGLE);
   const auto inverse = rtw::math::transform3::inverse_rotation(matrix);
 
@@ -131,10 +131,10 @@ TEST(Transform3, inverse_rotation)
 TEST(Transform3, inverse_transform)
 {
   using namespace rtw::math::angle_literals;
-  constexpr auto ROLL = 90.0_deg;
-  constexpr auto PITCH = 90.0_deg;
-  constexpr auto YAW = 90.0_deg;
-  constexpr auto TRANSLATION = rtw::math::Vector3d{1.0, 2.0, 3.0};
+  constexpr auto ROLL = 90.0_degD;
+  constexpr auto PITCH = 90.0_degD;
+  constexpr auto YAW = 90.0_degD;
+  constexpr auto TRANSLATION = rtw::math::Vector3D{1.0, 2.0, 3.0};
   const auto se3 = rtw::math::transform3::make_transform(ROLL, PITCH, YAW, TRANSLATION);
   const auto inverse = rtw::math::transform3::inverse_transform(se3);
 

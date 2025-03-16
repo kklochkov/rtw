@@ -255,6 +255,7 @@ public:
 
   constexpr Matrix& operator/=(const value_type rhs) noexcept
   {
+    assert(rhs != 0);
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       data_[i] /= rhs;
@@ -412,6 +413,7 @@ public:
 
   friend constexpr Matrix operator/(const Matrix& lhs, const value_type rhs) noexcept
   {
+    assert(rhs != 0);
     Matrix result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
@@ -500,24 +502,24 @@ constexpr Matrix<T, COLS, ROWS> transpose(const Matrix<T, ROWS, COLS>& matrix) n
 
 template <typename T>
 using Matrix2x2 = Matrix<T, 2, 2>;
-using Matrix2x2f = Matrix2x2<float>;
-using Matrix2x2d = Matrix2x2<double>;
-using Matrix2x2q16 = Matrix2x2<fixed_point::FixedPoint16>;
-using Matrix2x2q32 = Matrix2x2<fixed_point::FixedPoint32>;
+using Matrix2x2F = Matrix2x2<float>;
+using Matrix2x2D = Matrix2x2<double>;
+using Matrix2x2Q16 = Matrix2x2<fixed_point::FixedPoint16>;
+using Matrix2x2Q32 = Matrix2x2<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Matrix3x3 = Matrix<T, 3, 3>;
-using Matrix3x3f = Matrix3x3<float>;
-using Matrix3x3d = Matrix3x3<double>;
-using Matrix3x3q16 = Matrix3x3<fixed_point::FixedPoint16>;
-using Matrix3x3q32 = Matrix3x3<fixed_point::FixedPoint32>;
+using Matrix3x3F = Matrix3x3<float>;
+using Matrix3x3D = Matrix3x3<double>;
+using Matrix3x3Q16 = Matrix3x3<fixed_point::FixedPoint16>;
+using Matrix3x3Q32 = Matrix3x3<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Matrix4x4 = Matrix<T, 4, 4>;
-using Matrix4x4f = Matrix4x4<float>;
-using Matrix4x4d = Matrix4x4<double>;
-using Matrix4x4q16 = Matrix4x4<fixed_point::FixedPoint16>;
-using Matrix4x4q32 = Matrix4x4<fixed_point::FixedPoint32>;
+using Matrix4x4F = Matrix4x4<float>;
+using Matrix4x4D = Matrix4x4<double>;
+using Matrix4x4Q16 = Matrix4x4<fixed_point::FixedPoint16>;
+using Matrix4x4Q32 = Matrix4x4<fixed_point::FixedPoint32>;
 
 /// Compute the determinant of a square, 2 by 2 matrix.
 /// https://en.m.wikipedia.org/wiki/Determinant
@@ -556,10 +558,9 @@ template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::en
 constexpr T determinant(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
   T det{0};
-  constexpr std::int8_t SIGNS[] = {1, -1};
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {
-    const auto sign = SIGNS[col % 2]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+    const auto sign = fixed_point::sign(col % 2);
     det += sign * matrix(0, col) * determinant(matrix.minor(0, col));
   }
   return det;
@@ -665,6 +666,7 @@ constexpr Matrix<T, ROWS, COLS> inverse_upper_triangular(const Matrix<T, ROWS, C
       {
         result(col, row) -= matrix(i, row) * result(col, i);
       }
+      assert(matrix(row, row) != T{0});
       result(col, row) /= matrix(row, row);
     }
   }
@@ -688,6 +690,7 @@ constexpr Matrix<T, ROWS, 1> back_substitution(const Matrix<T, ROWS, COLS>& matr
     {
       result[row] -= matrix(row, col) * result[col];
     }
+    assert(matrix(row, row) != T{0});
     result[row] /= matrix(row, row);
   }
   return result;
@@ -723,8 +726,7 @@ constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>&
     v[row] = matrix(row, col);
   }
 
-  constexpr std::int8_t SIGNS[] = {1, -1};
-  const auto sign = SIGNS[v[col] < 0];
+  const auto sign = fixed_point::sign(v[col] < 0);
   const auto alpha = sign * norm(v); // Adjust the sign of norm to prevent numerical instability.
   v[col] += alpha;                   // v[col] = v[col] + sign(v[col]) * ||v||
 
@@ -783,7 +785,8 @@ constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noe
   return r_inv * q;
 }
 
-/// Solve a system of linear equations (Ax = b) using the Householder QR decomposition.
+/// Solve a system of linear equations (Ax = b) using the Householder QR
+/// decomposition.
 /// @param[in] a The matrix.
 /// @param[in] b The vector.
 /// @return The solution to the system of linear equations.
@@ -860,7 +863,8 @@ constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noe
   return r_inv * q;
 }
 
-/// Solve a system of linear equations (Ax = b) using the Givens QR decomposition.
+/// Solve a system of linear equations (Ax = b) using the Givens QR
+/// decomposition.
 /// @param[in] a The matrix.
 /// @param[in] b The vector.
 /// @return The solution to the system of linear equations.
@@ -876,7 +880,8 @@ constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<
 namespace modified_gram_schmidt
 {
 
-/// Compute the QR decomposition of a matrix using the Modified Gram-Schmidt algorithm.
+/// Compute the QR decomposition of a matrix using the Modified Gram-Schmidt
+/// algorithm.
 /// https://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process#Numerical_stability
 /// @param[in] matrix The matrix.
 /// @return The QR decomposition of the matrix.
@@ -923,7 +928,8 @@ constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& ma
   return result;
 }
 
-/// Compute the inverse of a matrix using the Modified Gram-Schmidt QR decomposition.
+/// Compute the inverse of a matrix using the Modified Gram-Schmidt QR
+/// decomposition.
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
@@ -934,7 +940,8 @@ constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noe
   return r_inv * q;
 }
 
-/// Solve a system of linear equations (Ax = b) using the Givens QR decomposition.
+/// Solve a system of linear equations (Ax = b) using the Givens QR
+/// decomposition.
 /// @param[in] a The matrix.
 /// @param[in] b The vector.
 /// @return The solution to the system of linear equations.

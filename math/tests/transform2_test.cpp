@@ -6,7 +6,7 @@
 TEST(Transform2, make_scale)
 {
   using namespace rtw::math::transform2;
-  constexpr auto SCALE = rtw::math::Vector2d{1.0, 2.0};
+  constexpr auto SCALE = rtw::math::Vector2D{1.0, 2.0};
   constexpr auto MATRIX = make_scale(SCALE);
 
   ASSERT_DOUBLE_EQ(MATRIX(0, 0), SCALE.x());
@@ -19,7 +19,7 @@ TEST(Transform2, make_rotation)
 {
   using namespace rtw::math::transform2;
   using namespace rtw::math::angle_literals;
-  constexpr auto ANGLE = 90.0_deg;
+  constexpr auto ANGLE = 90.0_degD;
   const auto matrix = make_rotation(ANGLE);
 
   ASSERT_DOUBLE_EQ(matrix(0, 0), std::cos(ANGLE.rad()));
@@ -31,7 +31,7 @@ TEST(Transform2, make_rotation)
 TEST(Transform2, make_translation)
 {
   using namespace rtw::math::transform2;
-  constexpr auto TRANSLATION = rtw::math::Vector2d{1.0, 2.0};
+  constexpr auto TRANSLATION = rtw::math::Vector2D{1.0, 2.0};
   constexpr auto MATRIX = make_translation(TRANSLATION);
 
   ASSERT_DOUBLE_EQ(MATRIX(0, 0), 1.0);
@@ -49,8 +49,8 @@ TEST(Transform2, make_transform)
 {
   using namespace rtw::math::transform2;
   using namespace rtw::math::angle_literals;
-  constexpr auto ANGLE = 90.0_deg;
-  constexpr auto TRANSLATION = rtw::math::Vector2d{1.0, 2.0};
+  constexpr auto ANGLE = 90.0_degD;
+  constexpr auto TRANSLATION = rtw::math::Vector2D{1.0, 2.0};
   const auto se2 = make_transform(ANGLE, TRANSLATION);
   ASSERT_EQ(rotation(se2), make_rotation(ANGLE));
   ASSERT_EQ(rtw::math::transform2::translation(se2), TRANSLATION);
@@ -60,7 +60,7 @@ TEST(Transform2, inverse_rotation)
 {
   using namespace rtw::math::transform2;
   using namespace rtw::math::angle_literals;
-  constexpr auto ANGLE = 90.0_deg;
+  constexpr auto ANGLE = 90.0_degD;
   const auto matrix = make_rotation(ANGLE);
   const auto inverse = inverse_rotation(matrix);
 
@@ -81,8 +81,8 @@ TEST(Transform2, inverse_transform)
 {
   using namespace rtw::math::transform2;
   using namespace rtw::math::angle_literals;
-  constexpr auto ANGLE = 90.0_deg;
-  constexpr auto TRANSLATION = rtw::math::Vector2d{1.0, 2.0};
+  constexpr auto ANGLE = 90.0_degD;
+  constexpr auto TRANSLATION = rtw::math::Vector2D{1.0, 2.0};
   const auto se2 = make_transform(ANGLE, TRANSLATION);
   const auto inverse = inverse_transform(se2);
 

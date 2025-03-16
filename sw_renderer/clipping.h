@@ -11,17 +11,17 @@ namespace rtw::sw_renderer
 template <typename T, std::size_t CAPACITY>
 using ConvexPolygonVertex4 = math::ConvexPolygon<T, Vertex4, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygonVertex4f = ConvexPolygonVertex4<float, CAPACITY>;
+using ConvexPolygonVertex4F = ConvexPolygonVertex4<float, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygonVertex4d = ConvexPolygonVertex4<double, CAPACITY>;
+using ConvexPolygonVertex4D = ConvexPolygonVertex4<double, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygonVertex4i = ConvexPolygonVertex4<int, CAPACITY>;
+using ConvexPolygonVertex4I = ConvexPolygonVertex4<int, CAPACITY>;
 
 template <typename T>
 using TriangleVertex4 = ConvexPolygonVertex4<T, 3>;
-using TriangleVertex4f = TriangleVertex4<float>;
-using TriangleVertex4d = TriangleVertex4<double>;
-using TriangleVertex4i = TriangleVertex4<int>;
+using TriangleVertex4F = TriangleVertex4<float>;
+using TriangleVertex4D = TriangleVertex4<double>;
+using TriangleVertex4I = TriangleVertex4<int>;
 
 /// Clips a triangle against the frustum using the Sutherland-Hodgman algorithm.
 /// @tparam CAPACITY The maximum number of vertices the polygon can hold.
@@ -96,7 +96,7 @@ struct TriangulationResult
 };
 
 /// Triangulates a convex polygon.
-/// Resulting triangles are counter-clockwise.
+/// Resulting triangles have counter-clockwise winding order.
 /// @tparam CAPACITY The maximum number of vertices the polygon can hold.
 /// @param polygon The polygon to triangulate.
 /// @return The triangulation result.

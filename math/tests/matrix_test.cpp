@@ -12,7 +12,7 @@ class Matrix2x2Test : public ::testing::Test
 {};
 
 using Matrix2x2Types =
-    ::testing::Types<rtw::math::Matrix2x2f, rtw::math::Matrix2x2d, rtw::math::Matrix2x2q16, rtw::math::Matrix2x2q32>;
+    ::testing::Types<rtw::math::Matrix2x2F, rtw::math::Matrix2x2D, rtw::math::Matrix2x2Q16, rtw::math::Matrix2x2Q32>;
 TYPED_TEST_SUITE(Matrix2x2Test, Matrix2x2Types, );
 
 TYPED_TEST(Matrix2x2Test, default_ctor)
@@ -372,7 +372,7 @@ public:
 };
 
 using Matrix3x3Types =
-    ::testing::Types<rtw::math::Matrix3x3f, rtw::math::Matrix3x3d, rtw::math::Matrix3x3q16, rtw::math::Matrix3x3q32>;
+    ::testing::Types<rtw::math::Matrix3x3F, rtw::math::Matrix3x3D, rtw::math::Matrix3x3Q16, rtw::math::Matrix3x3Q32>;
 TYPED_TEST_SUITE(Matrix3x3Test, Matrix3x3Types, );
 
 TYPED_TEST(Matrix3x3Test, default_ctor)
@@ -789,7 +789,7 @@ class Matrix4x4Test : public ::testing::Test
 {};
 
 using Matrix4x4Types =
-    ::testing::Types<rtw::math::Matrix4x4f, rtw::math::Matrix4x4d, rtw::math::Matrix4x4q16, rtw::math::Matrix4x4q32>;
+    ::testing::Types<rtw::math::Matrix4x4F, rtw::math::Matrix4x4D, rtw::math::Matrix4x4Q16, rtw::math::Matrix4x4Q32>;
 TYPED_TEST_SUITE(Matrix4x4Test, Matrix4x4Types, );
 
 TYPED_TEST(Matrix4x4Test, default_ctor)
@@ -1131,16 +1131,16 @@ TYPED_TEST(Matrix4x4Test, minor)
   EXPECT_THAT(m, ::testing::ElementsAre(1, 2, 4, 5, 6, 8, 13, 14, 16));
 }
 //-----------------------------------------------------------------------------------------
-using Matrix5x5f = rtw::math::Matrix<float, 5, 5>;
-using Matrix5x5d = rtw::math::Matrix<double, 5, 5>;
-using Matrix5x5q16 = rtw::math::Matrix<rtw::fixed_point::FixedPoint16, 5, 5>;
-using Matrix5x5q32 = rtw::math::Matrix<rtw::fixed_point::FixedPoint32, 5, 5>;
+using Matrix5x5F = rtw::math::Matrix<float, 5, 5>;
+using Matrix5x5D = rtw::math::Matrix<double, 5, 5>;
+using Matrix5x5Q16 = rtw::math::Matrix<rtw::fixed_point::FixedPoint16, 5, 5>;
+using Matrix5x5Q32 = rtw::math::Matrix<rtw::fixed_point::FixedPoint32, 5, 5>;
 
 template <typename T>
 class Matrix5x5Test : public ::testing::Test
 {};
 
-using Matrix5x5Types = ::testing::Types<Matrix5x5f, Matrix5x5d, Matrix5x5q16, Matrix5x5q32>;
+using Matrix5x5Types = ::testing::Types<Matrix5x5F, Matrix5x5D, Matrix5x5Q16, Matrix5x5Q32>;
 TYPED_TEST_SUITE(Matrix5x5Test, Matrix5x5Types, );
 
 TYPED_TEST(Matrix5x5Test, inverse)

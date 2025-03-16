@@ -59,9 +59,9 @@ struct Mesh
     return it != textures.end() ? it->second : Texture{};
   }
 
-  std::vector<math::Point3f> vertices;
-  std::vector<TexCoord2f> tex_coords;
-  std::vector<math::Vector3f> normals;
+  std::vector<math::Point3F> vertices;
+  std::vector<TexCoord2F> tex_coords;
+  std::vector<math::Vector3F> normals;
   std::vector<Face> faces;
   std::map<std::string, Material> materials;
   std::map<std::string, Texture> textures;

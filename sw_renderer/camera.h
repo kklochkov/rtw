@@ -33,10 +33,10 @@ constexpr math::Matrix4x4<T> make_look_at(const math::Point3<T>& eye, const math
 
 struct Camera
 {
-  math::Point3f position;
-  math::Vector3f direction;
-  math::Vector3f velocity;
-  math::EulerAnglesf rotation{};
+  math::Point3F position;
+  math::Vector3F direction;
+  math::Vector3F velocity;
+  math::EulerAnglesF rotation{};
 };
 
 } // namespace rtw::sw_renderer

@@ -11,28 +11,34 @@ namespace rtw::sw_renderer
 namespace
 {
 
-void parse_vertex(const std::string& line, math::Point3f& vertex)
+math::Point3F parse_vertex(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(1); // Ignore "v"
 
+  math::Point3F vertex{};
   iss >> vertex.x() >> vertex.y() >> vertex.z();
+  return vertex;
 }
 
-void parse_tex_coord(const std::string& line, TexCoord2f& tex_coord)
+TexCoord2F parse_tex_coord(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vt"
 
+  TexCoord2F tex_coord{};
   iss >> tex_coord.u() >> tex_coord.v();
+  return tex_coord;
 }
 
-void parse_normal(const std::string& line, math::Vector3f& normal)
+math::Vector3F parse_normal(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vn"
 
+  math::Vector3F normal{};
   iss >> normal.x() >> normal.y() >> normal.z();
+  return normal;
 }
 
 bool try_parse_index(std::istringstream& iss, std::uint32_t& index)
@@ -129,20 +135,17 @@ ObjParseResult load_obj(std::istream& stream)
       {
       case ' ': // Vertex
       {
-        math::Point3f& vertex = mesh.vertices.emplace_back();
-        parse_vertex(line, vertex);
+        mesh.vertices.emplace_back(parse_vertex(line));
       }
       break;
       case 't': // Texture coordinate
       {
-        TexCoord2f& tex_coord = mesh.tex_coords.emplace_back();
-        parse_tex_coord(line, tex_coord);
+        mesh.tex_coords.emplace_back(parse_tex_coord(line));
       }
       break;
       case 'n': // Normal
       {
-        math::Vector3f& normal = mesh.normals.emplace_back();
-        parse_normal(line, normal);
+        mesh.normals.emplace_back(parse_normal(line));
       }
       break;
       default:

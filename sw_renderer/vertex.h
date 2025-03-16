@@ -25,7 +25,7 @@ struct Vertex
 
 template <typename T>
 using Vertex4 = Vertex<T>;
-using Vertex4f = Vertex4<float>;
-using Vertex4d = Vertex4<double>;
+using Vertex4F = Vertex4<float>;
+using Vertex4D = Vertex4<double>;
 
 } // namespace rtw::sw_renderer

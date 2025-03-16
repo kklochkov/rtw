@@ -33,7 +33,7 @@ public:
   constexpr Point() noexcept = default;
 
   constexpr explicit Point(UninitializedTag tag) noexcept : Matrix(tag) {}
-  constexpr explicit Point(InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
+  constexpr Point(InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
 
   template <typename U = T, typename = std::enable_if_t<std::is_convertible_v<U, T> && (N == 2)>>
   constexpr Point(const T x, const T y) noexcept : Matrix(x, y)
@@ -155,28 +155,28 @@ constexpr Point<T, N> operator*(const Matrix<T, N, M>& lhs, const Point<T, P>& r
 /// 2D space aliases.
 template <typename T>
 using Point2 = Point<T, 2>;
-using Point2f = Point2<float>;
-using Point2d = Point2<double>;
-using Point2i = Point2<std::int32_t>;
-using Point2q16 = Point2<fixed_point::FixedPoint16>;
-using Point2q32 = Point2<fixed_point::FixedPoint32>;
+using Point2F = Point2<float>;
+using Point2D = Point2<double>;
+using Point2I = Point2<std::int32_t>;
+using Point2Q16 = Point2<fixed_point::FixedPoint16>;
+using Point2Q32 = Point2<fixed_point::FixedPoint32>;
 
 /// 3D space aliases.
 template <typename T>
 using Point3 = Point<T, 3>;
-using Point3f = Point3<float>;
-using Point3d = Point3<double>;
-using Point3i = Point3<std::int32_t>;
-using Point3q16 = Point3<fixed_point::FixedPoint16>;
-using Point3q32 = Point3<fixed_point::FixedPoint32>;
+using Point3F = Point3<float>;
+using Point3D = Point3<double>;
+using Point3I = Point3<std::int32_t>;
+using Point3Q16 = Point3<fixed_point::FixedPoint16>;
+using Point3Q32 = Point3<fixed_point::FixedPoint32>;
 
 /// Homogeneous 3D space aliases.
 template <typename T>
 using Point4 = Point<T, 4>;
-using Point4f = Point4<float>;
-using Point4d = Point4<double>;
-using Point4i = Point4<std::int32_t>;
-using Point4q16 = Point4<fixed_point::FixedPoint16>;
-using Point4q32 = Point4<fixed_point::FixedPoint32>;
+using Point4F = Point4<float>;
+using Point4D = Point4<double>;
+using Point4I = Point4<std::int32_t>;
+using Point4Q16 = Point4<fixed_point::FixedPoint16>;
+using Point4Q32 = Point4<fixed_point::FixedPoint32>;
 
 } // namespace rtw::math

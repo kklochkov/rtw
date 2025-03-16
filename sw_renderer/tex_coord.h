@@ -13,7 +13,6 @@ public:
   using Matrix = math::Matrix<T, N, 1>;
   using Vector = math::Vector<T, N>;
 
-  using Matrix::Matrix;
   using typename Matrix::reference;
   using typename Matrix::value_type;
   using Matrix::operator[];
@@ -22,6 +21,13 @@ public:
   using Matrix::cend;
   using Matrix::data;
   using Matrix::end;
+
+  constexpr TexCoord() noexcept = default;
+
+  constexpr explicit TexCoord(math::UninitializedTag tag) noexcept : Matrix(tag) {}
+  constexpr TexCoord(math::InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
+
+  constexpr TexCoord(const T u, const T v) noexcept : Matrix(u, v) {}
 
   constexpr explicit TexCoord(const Matrix& matrix) noexcept : Matrix(matrix) {}
   constexpr explicit TexCoord(const Vector& vector) noexcept : Matrix(vector.as_matrix()) {}
@@ -92,8 +98,8 @@ public:
 
 template <typename T>
 using TexCoord2 = TexCoord<T, 2U>;
-using TexCoord2f = TexCoord<float>;
-using TexCoord2d = TexCoord<double>;
+using TexCoord2F = TexCoord<float>;
+using TexCoord2D = TexCoord<double>;
 
 template <typename T>
 constexpr TexCoord2<T> lerp(const TexCoord2<T>& lhs, const TexCoord2<T>& rhs, const T t) noexcept

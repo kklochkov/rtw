@@ -142,90 +142,90 @@ private:
 template <typename T, std::size_t CAPACITY>
 using ConvexPolygon2 = ConvexPolygon<T, Point2, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon2f = ConvexPolygon2<float, CAPACITY>;
+using ConvexPolygon2F = ConvexPolygon2<float, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon2d = ConvexPolygon2<double, CAPACITY>;
+using ConvexPolygon2D = ConvexPolygon2<double, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon2i = ConvexPolygon2<int, CAPACITY>;
+using ConvexPolygon2I = ConvexPolygon2<int, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon2q16 = ConvexPolygon2<fixed_point::FixedPoint16, CAPACITY>;
+using ConvexPolygon2Q16 = ConvexPolygon2<fixed_point::FixedPoint16, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon2q32 = ConvexPolygon2<fixed_point::FixedPoint32, CAPACITY>;
+using ConvexPolygon2Q32 = ConvexPolygon2<fixed_point::FixedPoint32, CAPACITY>;
 
 template <typename T>
 using Triangle2 = ConvexPolygon2<T, 3>;
-using Triangle2f = Triangle2<float>;
-using Triangle2d = Triangle2<double>;
-using Triangle2i = Triangle2<int>;
-using Triangle2q16 = Triangle2<fixed_point::FixedPoint16>;
-using Triangle2q32 = Triangle2<fixed_point::FixedPoint32>;
+using Triangle2F = Triangle2<float>;
+using Triangle2D = Triangle2<double>;
+using Triangle2I = Triangle2<int>;
+using Triangle2Q16 = Triangle2<fixed_point::FixedPoint16>;
+using Triangle2Q32 = Triangle2<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Quadrilateral2 = ConvexPolygon2<T, 4>;
-using Quadrilateral2f = Quadrilateral2<float>;
-using Quadrilateral2d = Quadrilateral2<double>;
-using Quadrilateral2i = Quadrilateral2<int>;
-using Quadrilateral2q16 = Quadrilateral2<fixed_point::FixedPoint16>;
-using Quadrilateral2q32 = Quadrilateral2<fixed_point::FixedPoint32>;
+using Quadrilateral2F = Quadrilateral2<float>;
+using Quadrilateral2D = Quadrilateral2<double>;
+using Quadrilateral2I = Quadrilateral2<int>;
+using Quadrilateral2Q16 = Quadrilateral2<fixed_point::FixedPoint16>;
+using Quadrilateral2Q32 = Quadrilateral2<fixed_point::FixedPoint32>;
 
 /// 3D space aliases.
 template <typename T, std::size_t CAPACITY>
 using ConvexPolygon3 = ConvexPolygon<T, Point3, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon3f = ConvexPolygon3<float, CAPACITY>;
+using ConvexPolygon3F = ConvexPolygon3<float, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon3d = ConvexPolygon3<double, CAPACITY>;
+using ConvexPolygon3D = ConvexPolygon3<double, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon3i = ConvexPolygon3<int, CAPACITY>;
+using ConvexPolygon3I = ConvexPolygon3<int, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon3q16 = ConvexPolygon3<fixed_point::FixedPoint16, CAPACITY>;
+using ConvexPolygon3Q16 = ConvexPolygon3<fixed_point::FixedPoint16, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon3q32 = ConvexPolygon3<fixed_point::FixedPoint32, CAPACITY>;
+using ConvexPolygon3Q32 = ConvexPolygon3<fixed_point::FixedPoint32, CAPACITY>;
 
 template <typename T>
 using Triangle3 = ConvexPolygon3<T, 3>;
-using Triangle3f = Triangle3<float>;
-using Triangle3d = Triangle3<double>;
-using Triangle3i = Triangle3<int>;
-using Triangle3q16 = Triangle3<fixed_point::FixedPoint16>;
-using Triangle3q32 = Triangle3<fixed_point::FixedPoint32>;
+using Triangle3F = Triangle3<float>;
+using Triangle3D = Triangle3<double>;
+using Triangle3I = Triangle3<int>;
+using Triangle3Q16 = Triangle3<fixed_point::FixedPoint16>;
+using Triangle3Q32 = Triangle3<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Quadrilateral3 = ConvexPolygon3<T, 4>;
-using Quadrilateral3f = Quadrilateral3<float>;
-using Quadrilateral3d = Quadrilateral3<double>;
-using Quadrilateral3i = Quadrilateral3<int>;
-using Quadrilateral3q16 = Quadrilateral3<fixed_point::FixedPoint16>;
-using Quadrilateral3q32 = Quadrilateral3<fixed_point::FixedPoint32>;
+using Quadrilateral3F = Quadrilateral3<float>;
+using Quadrilateral3D = Quadrilateral3<double>;
+using Quadrilateral3I = Quadrilateral3<int>;
+using Quadrilateral3Q16 = Quadrilateral3<fixed_point::FixedPoint16>;
+using Quadrilateral3Q32 = Quadrilateral3<fixed_point::FixedPoint32>;
 
 /// Homogeneous 3D space aliases.
 template <typename T, std::size_t CAPACITY>
 using ConvexPolygon4 = ConvexPolygon<T, Point4, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon4f = ConvexPolygon4<float, CAPACITY>;
+using ConvexPolygon4F = ConvexPolygon4<float, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon4d = ConvexPolygon4<double, CAPACITY>;
+using ConvexPolygon4D = ConvexPolygon4<double, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon4i = ConvexPolygon4<int, CAPACITY>;
+using ConvexPolygon4I = ConvexPolygon4<int, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon4q16 = ConvexPolygon4<fixed_point::FixedPoint16, CAPACITY>;
+using ConvexPolygon4Q16 = ConvexPolygon4<fixed_point::FixedPoint16, CAPACITY>;
 template <std::size_t CAPACITY>
-using ConvexPolygon4q32 = ConvexPolygon4<fixed_point::FixedPoint32, CAPACITY>;
+using ConvexPolygon4Q32 = ConvexPolygon4<fixed_point::FixedPoint32, CAPACITY>;
 
 template <typename T>
 using Triangle4 = ConvexPolygon4<T, 3>;
-using Triangle4f = Triangle4<float>;
-using Triangle4d = Triangle4<double>;
-using Triangle4i = Triangle4<int>;
-using Triangle4q16 = Triangle4<fixed_point::FixedPoint16>;
-using Triangle4q32 = Triangle4<fixed_point::FixedPoint32>;
+using Triangle4F = Triangle4<float>;
+using Triangle4D = Triangle4<double>;
+using Triangle4I = Triangle4<int>;
+using Triangle4Q16 = Triangle4<fixed_point::FixedPoint16>;
+using Triangle4Q32 = Triangle4<fixed_point::FixedPoint32>;
 
 template <typename T>
 using Quadrilateral4 = ConvexPolygon<T, Point4, 4>;
-using Quadrilateral4f = Quadrilateral4<float>;
-using Quadrilateral4d = Quadrilateral4<double>;
-using Quadrilateral4i = Quadrilateral4<int>;
-using Quadrilateral4q16 = Quadrilateral4<fixed_point::FixedPoint16>;
-using Quadrilateral4q32 = Quadrilateral4<fixed_point::FixedPoint32>;
+using Quadrilateral4F = Quadrilateral4<float>;
+using Quadrilateral4D = Quadrilateral4<double>;
+using Quadrilateral4I = Quadrilateral4<int>;
+using Quadrilateral4Q16 = Quadrilateral4<fixed_point::FixedPoint16>;
+using Quadrilateral4Q32 = Quadrilateral4<fixed_point::FixedPoint32>;
 
 } // namespace rtw::math
