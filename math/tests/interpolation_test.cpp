@@ -20,26 +20,26 @@ TEST(Interpolation, vectors)
 {
   using namespace rtw::math;
 
-  Vector2f expected{0.0F, 0.0F};
-  EXPECT_EQ(lerp(Vector2f{0.0F, 0.0F}, Vector2f{1.0F, 1.0F}, 0.0F), expected);
+  Vector2F expected{0.0F, 0.0F};
+  EXPECT_EQ(lerp(Vector2F{0.0F, 0.0F}, Vector2F{1.0F, 1.0F}, 0.0F), expected);
 
-  expected = Vector2f{0.5F, 0.5F};
-  EXPECT_EQ(lerp(Vector2f{0.0F, 0.0F}, Vector2f{1.0F, 1.0F}, 0.5F), expected);
+  expected = Vector2F{0.5F, 0.5F};
+  EXPECT_EQ(lerp(Vector2F{0.0F, 0.0F}, Vector2F{1.0F, 1.0F}, 0.5F), expected);
 
-  expected = Vector2f{1.0F, 1.0F};
-  EXPECT_EQ(lerp(Vector2f{0.0F, 0.0F}, Vector2f{1.0F, 1.0F}, 1.0F), expected);
+  expected = Vector2F{1.0F, 1.0F};
+  EXPECT_EQ(lerp(Vector2F{0.0F, 0.0F}, Vector2F{1.0F, 1.0F}, 1.0F), expected);
 }
 
 TEST(Interpolation, points)
 {
   using namespace rtw::math;
 
-  Point2f expected{0.0F, 0.0F};
-  EXPECT_EQ(lerp(Point2f{0.0F, 0.0F}, Point2f{1.0F, 1.0F}, 0.0F), expected);
+  Point2F expected{0.0F, 0.0F};
+  EXPECT_EQ(lerp(Point2F{0.0F, 0.0F}, Point2F{1.0F, 1.0F}, 0.0F), expected);
 
-  expected = Point2f{0.5F, 0.5F};
-  EXPECT_EQ(lerp(Point2f{0.0F, 0.0F}, Point2f{1.0F, 1.0F}, 0.5F), expected);
+  expected = Point2F{0.5F, 0.5F};
+  EXPECT_EQ(lerp(Point2F{0.0F, 0.0F}, Point2F{1.0F, 1.0F}, 0.5F), expected);
 
-  expected = Point2f{1.0F, 1.0F};
-  EXPECT_EQ(lerp(Point2f{0.0F, 0.0F}, Point2f{1.0F, 1.0F}, 1.0F), expected);
+  expected = Point2F{1.0F, 1.0F};
+  EXPECT_EQ(lerp(Point2F{0.0F, 0.0F}, Point2F{1.0F, 1.0F}, 1.0F), expected);
 }

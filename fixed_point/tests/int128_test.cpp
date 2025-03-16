@@ -9,11 +9,11 @@
 namespace rtw::fixed_point
 {
 using Int16 = Int<std::int8_t>;
-using Int16u = Int<std::uint8_t>;
+using Int16U = Int<std::uint8_t>;
 using Int32 = Int<std::int16_t>;
-using Int32u = Int<std::uint16_t>;
+using Int32U = Int<std::uint16_t>;
 using Int64 = Int<std::int32_t>;
-using Int64u = Int<std::uint32_t>;
+using Int64U = Int<std::uint32_t>;
 } // namespace rtw::fixed_point
 
 // -----------------------------------------------------------------------------
@@ -207,9 +207,9 @@ TEST(Int16, conversion_ctor)
   check_conversion_ctor<std::int8_t, std::int16_t>(TEST_CASE);
 }
 
-TEST(Int16u, conversion_ctor)
+TEST(Int16U, conversion_ctor)
 {
-  using rtw::fixed_point::Int16u;
+  using rtw::fixed_point::Int16U;
 
   constexpr std::array TEST_CASE = {
       std::uint8_t{0},
@@ -232,9 +232,9 @@ TEST(Int32, conversion_ctor)
   check_conversion_ctor<std::int16_t, std::int32_t>(TEST_CASE);
 }
 
-TEST(Int32u, conversion_ctor)
+TEST(Int32U, conversion_ctor)
 {
-  using rtw::fixed_point::Int32u;
+  using rtw::fixed_point::Int32U;
 
   constexpr std::array TEST_CASE = {
       std::uint16_t{0},
@@ -257,9 +257,9 @@ TEST(Int64, conversion_ctor)
   check_conversion_ctor<std::int32_t, std::int64_t>(TEST_CASE);
 }
 
-TEST(Int64u, conversion_ctor)
+TEST(Int64U, conversion_ctor)
 {
-  using rtw::fixed_point::Int64u;
+  using rtw::fixed_point::Int64U;
 
   constexpr std::array TEST_CASE = {
       std::uint32_t{0},
@@ -290,9 +290,9 @@ TEST(Int16, arithmetic_operations)
   check<std::int8_t, std::int16_t, OperationType::MOD>(TEST_CASE);
 }
 
-TEST(Int16u, arithmetic_operations)
+TEST(Int16U, arithmetic_operations)
 {
-  using rtw::fixed_point::Int16u;
+  using rtw::fixed_point::Int16U;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::uint8_t, std::uint8_t>{0, 0},   std::pair<std::uint8_t, std::uint8_t>{0, 255},
@@ -330,9 +330,9 @@ TEST(Int32, arithmetic_operations)
   check<std::int16_t, std::int32_t, OperationType::MOD>(TEST_CASE);
 }
 
-TEST(Int32u, arithmetic_operations)
+TEST(Int32U, arithmetic_operations)
 {
-  using rtw::fixed_point::Int32u;
+  using rtw::fixed_point::Int32U;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::uint16_t, std::uint16_t>{0, 0},      std::pair<std::uint16_t, std::uint16_t>{0, 65'535},
@@ -370,9 +370,9 @@ TEST(Int64, arithmetic_operations)
   check<std::int32_t, std::int64_t, OperationType::MOD>(TEST_CASE);
 }
 
-TEST(Int64u, arithmetic_operations)
+TEST(Int64U, arithmetic_operations)
 {
-  using rtw::fixed_point::Int64u;
+  using rtw::fixed_point::Int64U;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::uint32_t, std::uint32_t>{0, 0},
@@ -393,9 +393,9 @@ template <typename T>
 class IntTest : public ::testing::Test
 {};
 
-using IntTypes = ::testing::Types<rtw::fixed_point::Int16, rtw::fixed_point::Int16u, rtw::fixed_point::Int32,
-                                  rtw::fixed_point::Int32u, rtw::fixed_point::Int64, rtw::fixed_point::Int64u,
-                                  rtw::fixed_point::Int128, rtw::fixed_point::Int128u>;
+using IntTypes = ::testing::Types<rtw::fixed_point::Int16, rtw::fixed_point::Int16U, rtw::fixed_point::Int32,
+                                  rtw::fixed_point::Int32U, rtw::fixed_point::Int64, rtw::fixed_point::Int64U,
+                                  rtw::fixed_point::Int128, rtw::fixed_point::Int128U>;
 TYPED_TEST_SUITE(IntTest, IntTypes, );
 
 TYPED_TEST(IntTest, traits)
@@ -471,99 +471,99 @@ TEST(Int128, arithmetic_operations)
   }
 }
 
-TEST(Int128u, arithmetic_operations)
+TEST(Int128U, arithmetic_operations)
 {
-  using rtw::fixed_point::Int128u;
+  using rtw::fixed_point::Int128U;
 
   {
     // Addition
-    EXPECT_EQ(Int128u{0} + Int128u{0}, 0);
-    EXPECT_EQ(Int128u{0} + Int128u{1}, 1);
-    EXPECT_EQ(Int128u{1} + Int128u{0}, 1);
-    EXPECT_EQ(Int128u{42} + Int128u{42}, 84);
+    EXPECT_EQ(Int128U{0} + Int128U{0}, 0);
+    EXPECT_EQ(Int128U{0} + Int128U{1}, 1);
+    EXPECT_EQ(Int128U{1} + Int128U{0}, 1);
+    EXPECT_EQ(Int128U{42} + Int128U{42}, 84);
 
     auto result =
-        Int128u{std::numeric_limits<std::uint64_t>::max()} + Int128u{std::numeric_limits<std::uint64_t>::max()};
+        Int128U{std::numeric_limits<std::uint64_t>::max()} + Int128U{std::numeric_limits<std::uint64_t>::max()};
     EXPECT_EQ(result.hi(), 1);
     EXPECT_EQ(result.lo(), std::numeric_limits<std::uint64_t>::max() - 1);
 
-    result = Int128u::max() + Int128u::max();
+    result = Int128U::max() + Int128U::max();
     EXPECT_EQ(result.hi(), std::numeric_limits<std::uint64_t>::max());
     EXPECT_EQ(result.lo(), std::numeric_limits<std::uint64_t>::max() - 1);
 
-    EXPECT_EQ(Int128u::max() + Int128u{1}, 0);
-    EXPECT_EQ(Int128u{1} + Int128u::max(), 0);
+    EXPECT_EQ(Int128U::max() + Int128U{1}, 0);
+    EXPECT_EQ(Int128U{1} + Int128U::max(), 0);
   }
 
   {
     // Subtraction
-    EXPECT_EQ(Int128u{0} - Int128u{0}, 0);
-    EXPECT_EQ(Int128u{1} - Int128u{0}, 1);
-    EXPECT_EQ(Int128u{1} - Int128u{1}, 0);
-    EXPECT_EQ(Int128u{42} - Int128u{42}, 0);
+    EXPECT_EQ(Int128U{0} - Int128U{0}, 0);
+    EXPECT_EQ(Int128U{1} - Int128U{0}, 1);
+    EXPECT_EQ(Int128U{1} - Int128U{1}, 0);
+    EXPECT_EQ(Int128U{42} - Int128U{42}, 0);
 
-    auto result = Int128u{std::numeric_limits<std::uint64_t>::max()} - Int128u{0};
+    auto result = Int128U{std::numeric_limits<std::uint64_t>::max()} - Int128U{0};
     EXPECT_EQ(result, std::numeric_limits<std::uint64_t>::max());
 
-    result = Int128u{0} - Int128u{std::numeric_limits<std::uint64_t>::max()};
+    result = Int128U{0} - Int128U{std::numeric_limits<std::uint64_t>::max()};
     EXPECT_EQ(result.hi(), std::numeric_limits<std::uint64_t>::max());
     EXPECT_EQ(result.lo(), 1);
 
-    result = Int128u{0} - Int128u{1};
+    result = Int128U{0} - Int128U{1};
     EXPECT_EQ(result.hi(), std::numeric_limits<std::uint64_t>::max());
     EXPECT_EQ(result.lo(), std::numeric_limits<std::uint64_t>::max());
   }
 
   {
     // Multiplication
-    EXPECT_EQ(Int128u{0} * Int128u{0}, 0);
-    EXPECT_EQ(Int128u{1} * Int128u{0}, 0);
-    EXPECT_EQ(Int128u{42} * 2, 84);
+    EXPECT_EQ(Int128U{0} * Int128U{0}, 0);
+    EXPECT_EQ(Int128U{1} * Int128U{0}, 0);
+    EXPECT_EQ(Int128U{42} * 2, 84);
 
-    auto result = Int128u{std::numeric_limits<std::uint64_t>::max()} * Int128u{0};
+    auto result = Int128U{std::numeric_limits<std::uint64_t>::max()} * Int128U{0};
     EXPECT_EQ(result, 0);
 
-    result = Int128u{0} * Int128u{std::numeric_limits<std::uint64_t>::max()};
+    result = Int128U{0} * Int128U{std::numeric_limits<std::uint64_t>::max()};
     EXPECT_EQ(result, 0);
 
-    result = Int128u{std::numeric_limits<std::uint64_t>::max()} * Int128u{1};
+    result = Int128U{std::numeric_limits<std::uint64_t>::max()} * Int128U{1};
     EXPECT_EQ(result, std::numeric_limits<std::uint64_t>::max());
 
-    EXPECT_EQ(Int128u::max() * Int128u::max(), 1);
-    EXPECT_EQ(Int128u::max() * 2, Int128u::max() - 1);
-    EXPECT_EQ(Int128u::max() * 2, Int128u::max() << 1);
+    EXPECT_EQ(Int128U::max() * Int128U::max(), 1);
+    EXPECT_EQ(Int128U::max() * 2, Int128U::max() - 1);
+    EXPECT_EQ(Int128U::max() * 2, Int128U::max() << 1);
   }
 
   {
     // Division
-    EXPECT_EQ(Int128u{0} / Int128u{1}, 0);
-    EXPECT_EQ(Int128u{1} / Int128u{1}, 1);
-    EXPECT_EQ(Int128u{42} / 2, 21);
-    EXPECT_DEATH(Int128u{1} / Int128u{0}, "");
+    EXPECT_EQ(Int128U{0} / Int128U{1}, 0);
+    EXPECT_EQ(Int128U{1} / Int128U{1}, 1);
+    EXPECT_EQ(Int128U{42} / 2, 21);
+    EXPECT_DEATH(Int128U{1} / Int128U{0}, "");
 
-    auto result = Int128u{std::numeric_limits<std::uint64_t>::max()} / Int128u{1};
+    auto result = Int128U{std::numeric_limits<std::uint64_t>::max()} / Int128U{1};
     EXPECT_EQ(result, std::numeric_limits<std::uint64_t>::max());
 
-    result = Int128u::max() / 2;
-    EXPECT_EQ(result, Int128u::max() >> 1);
+    result = Int128U::max() / 2;
+    EXPECT_EQ(result, Int128U::max() >> 1);
 
-    EXPECT_EQ(Int128u::max() / Int128u::max(), 1);
+    EXPECT_EQ(Int128U::max() / Int128U::max(), 1);
   }
 
   {
     // Modulo
-    EXPECT_EQ(Int128u{0} % Int128u{1}, 0);
-    EXPECT_EQ(Int128u{1} % Int128u{1}, 0);
-    EXPECT_EQ(Int128u{42} % 2, 0);
-    EXPECT_DEATH(Int128u{1} % Int128u{0}, "");
+    EXPECT_EQ(Int128U{0} % Int128U{1}, 0);
+    EXPECT_EQ(Int128U{1} % Int128U{1}, 0);
+    EXPECT_EQ(Int128U{42} % 2, 0);
+    EXPECT_DEATH(Int128U{1} % Int128U{0}, "");
 
-    auto result = Int128u{std::numeric_limits<std::uint64_t>::max()} % Int128u{1};
+    auto result = Int128U{std::numeric_limits<std::uint64_t>::max()} % Int128U{1};
     EXPECT_EQ(result, 0);
 
-    result = Int128u::max() % 2;
+    result = Int128U::max() % 2;
     EXPECT_EQ(result, 1);
 
-    EXPECT_EQ(Int128u::max() % Int128u::max(), 0);
+    EXPECT_EQ(Int128U::max() % Int128U::max(), 0);
   }
 }
 
@@ -591,34 +591,34 @@ TEST(Int, negate)
     EXPECT_EQ(-Int128(-369), Int128(369));
   }
 
-  using rtw::fixed_point::Int128u;
-  using rtw::fixed_point::Int16u;
-  using rtw::fixed_point::Int32u;
-  using rtw::fixed_point::Int64u;
+  using rtw::fixed_point::Int128U;
+  using rtw::fixed_point::Int16U;
+  using rtw::fixed_point::Int32U;
+  using rtw::fixed_point::Int64U;
 
   {
-    EXPECT_EQ(-Int16u(36), Int16u(-36));
-    EXPECT_EQ(-Int16u(-36), Int16u(36));
+    EXPECT_EQ(-Int16U(36), Int16U(-36));
+    EXPECT_EQ(-Int16U(-36), Int16U(36));
   }
   {
-    EXPECT_EQ(-Int32u(369), Int32u(-369));
-    EXPECT_EQ(-Int32u(-369), Int32u(369));
+    EXPECT_EQ(-Int32U(369), Int32U(-369));
+    EXPECT_EQ(-Int32U(-369), Int32U(369));
   }
   {
-    EXPECT_EQ(-Int64u(369), Int64u(-369));
-    EXPECT_EQ(-Int64u(-369), Int64u(369));
+    EXPECT_EQ(-Int64U(369), Int64U(-369));
+    EXPECT_EQ(-Int64U(-369), Int64U(369));
   }
   {
-    EXPECT_EQ(-Int128u(369), Int128u(-369));
-    EXPECT_EQ(-Int128u(-369), Int128u(369));
+    EXPECT_EQ(-Int128U(369), Int128U(-369));
+    EXPECT_EQ(-Int128U(-369), Int128U(369));
   }
 }
 
 TEST(Int16u, bitwise_shifts)
 {
-  using rtw::fixed_point::Int16u;
+  using rtw::fixed_point::Int16U;
 
-  Int16u a = 1;
+  Int16U a = 1;
   a <<= 0;
   EXPECT_EQ(a.hi(), 0);
   EXPECT_EQ(a.lo(), 1);
@@ -636,11 +636,11 @@ TEST(Int16u, bitwise_shifts)
   EXPECT_EQ(a.lo(), 1);
 }
 
-TEST(Int32u, bitwise_shifts)
+TEST(Int32U, bitwise_shifts)
 {
-  using rtw::fixed_point::Int32u;
+  using rtw::fixed_point::Int32U;
 
-  Int32u a = 1;
+  Int32U a = 1;
   a <<= 0;
   EXPECT_EQ(a.hi(), 0);
   EXPECT_EQ(a.lo(), 1);
@@ -658,11 +658,11 @@ TEST(Int32u, bitwise_shifts)
   EXPECT_EQ(a.lo(), 1);
 }
 
-TEST(Int64u, bitwise_shifts)
+TEST(Int64U, bitwise_shifts)
 {
-  using rtw::fixed_point::Int64u;
+  using rtw::fixed_point::Int64U;
 
-  Int64u a = 1;
+  Int64U a = 1;
   a <<= 0;
   EXPECT_EQ(a.hi(), 0);
   EXPECT_EQ(a.lo(), 1);
@@ -680,11 +680,11 @@ TEST(Int64u, bitwise_shifts)
   EXPECT_EQ(a.lo(), 1);
 }
 
-TEST(Int128u, bitwise_shifts)
+TEST(Int128U, bitwise_shifts)
 {
-  using rtw::fixed_point::Int128u;
+  using rtw::fixed_point::Int128U;
 
-  Int128u a = 1;
+  Int128U a = 1;
   a <<= 127;
   EXPECT_EQ(a.hi(), 0x80'00'00'00'00'00'00'00);
   EXPECT_EQ(a.lo(), 0);
@@ -698,28 +698,28 @@ TEST(operators, count_leading_zero_16)
 {
   // Shift left
   {
-    rtw::fixed_point::Int16u a = {0xFF, 0xFF};
+    rtw::fixed_point::Int16U a = {0xFF, 0xFF};
     std::uint16_t expected = 0xFFFF;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int16u::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int16U::BITS; ++i)
     {
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int16u::BITS);
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int16U::BITS);
     EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
   }
   // Shift right
   {
-    rtw::fixed_point::Int16u a = 1;
+    rtw::fixed_point::Int16U a = 1;
     std::uint16_t expected = 1;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int16u::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int16U::BITS; ++i)
     {
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int16u::BITS); // a == 0
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int16U::BITS); // a == 0
     EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
   }
 }
@@ -728,29 +728,29 @@ TEST(operators, count_leading_zero_32)
 {
   // Shift left
   {
-    rtw::fixed_point::Int32u a = {0xFFFF, 0xFFFF};
+    rtw::fixed_point::Int32U a = {0xFFFF, 0xFFFF};
     std::uint32_t expected = 0xFF'FF'FF'FF;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int32u::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int32U::BITS; ++i)
     {
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), i);
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int32u::BITS);
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int32U::BITS);
     EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
   }
   // Shift right
   {
-    rtw::fixed_point::Int32u a = 1;
+    rtw::fixed_point::Int32U a = 1;
     std::uint32_t expected = 1;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int32u::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int32U::BITS; ++i)
     {
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int32u::BITS); // a == 0
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int32U::BITS); // a == 0
     EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
   }
 }
@@ -759,29 +759,29 @@ TEST(operators, count_leading_zero_64)
 {
   // Shift left
   {
-    rtw::fixed_point::Int64u a = {0xFF'FF'FF'FF, 0xFF'FF'FF'FF};
+    rtw::fixed_point::Int64U a = {0xFF'FF'FF'FF, 0xFF'FF'FF'FF};
     std::uint64_t expected = 0xFF'FF'FF'FF'FF'FF'FF'FF;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int64u::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int64U::BITS; ++i)
     {
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), i);
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int64u::BITS);
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int64U::BITS);
     EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
   }
   // Shift right
   {
-    rtw::fixed_point::Int64u a = 1;
+    rtw::fixed_point::Int64U a = 1;
     std::uint64_t expected = 1;
-    for (std::uint64_t i = 0; i <= rtw::fixed_point::Int64u::BITS; ++i)
+    for (std::uint64_t i = 0; i <= rtw::fixed_point::Int64U::BITS; ++i)
     {
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int64u::BITS); // a == 0
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int64U::BITS); // a == 0
     EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
   }
 }
@@ -790,24 +790,24 @@ TEST(operators, count_leading_zero_128)
 {
   // Shift left
   {
-    rtw::fixed_point::Int128u a = {0xFF'FF'FF'FF'FF'FF'FF'FF, 0xFF'FF'FF'FF'FF'FF'FF'FF};
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int128u::BITS; ++i)
+    rtw::fixed_point::Int128U a = {0xFF'FF'FF'FF'FF'FF'FF'FF, 0xFF'FF'FF'FF'FF'FF'FF'FF};
+    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int128U::BITS; ++i)
     {
       EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), i);
       a >>= 1;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128u::BITS);
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128U::BITS);
   }
   // Shift right
   {
-    rtw::fixed_point::Int128u a = 1;
-    for (std::uint64_t i = 0; i < rtw::fixed_point::Int128u::BITS; ++i)
+    rtw::fixed_point::Int128U a = 1;
+    for (std::uint64_t i = 0; i < rtw::fixed_point::Int128U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128u::BITS - i - 1);
+      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128U::BITS - i - 1);
       a <<= 1;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128u::BITS); // a == 0
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128U::BITS); // a == 0
     a <<= 1;
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128u::BITS); // a == 0
+    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128U::BITS); // a == 0
   }
 }

@@ -12,7 +12,6 @@ public:
   using Matrix = math::Matrix<T, N, 1>;
   using Vector = math::Vector<T, N>;
 
-  using Matrix::Matrix;
   using typename Matrix::reference;
   using typename Matrix::value_type;
   using Matrix::operator[];
@@ -22,8 +21,15 @@ public:
   using Matrix::data;
   using Matrix::end;
 
+  constexpr Barycentric() noexcept = default;
+
+  constexpr explicit Barycentric(math::UninitializedTag tag) noexcept : Matrix(tag) {}
+  constexpr Barycentric(math::InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
+
+  constexpr Barycentric(const T w0, const T w1, const T w2) noexcept : Matrix(w0, w1, w2) {}
+
   constexpr explicit Barycentric(const Matrix& matrix) noexcept : Matrix(matrix) {}
-  constexpr explicit Barycentric(const Vector& vector) noexcept  : Matrix(vector.as_matrix()) {}
+  constexpr explicit Barycentric(const Vector& vector) noexcept : Matrix(vector.as_matrix()) {}
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
   constexpr const Matrix& as_matrix() const noexcept { return static_cast<const Matrix&>(*this); }
@@ -65,7 +71,7 @@ public:
     return lhs.as_matrix() == rhs.as_matrix();
   }
 
-  friend constexpr bool operator!=(const Barycentric& lhs, const Barycentric& rhs) noexcept  { return !(lhs == rhs); }
+  friend constexpr bool operator!=(const Barycentric& lhs, const Barycentric& rhs) noexcept { return !(lhs == rhs); }
 
   friend std::ostream& operator<<(std::ostream& os, const Barycentric& coord) noexcept
   {
@@ -77,7 +83,7 @@ public:
 
 template <typename T>
 using Barycentric3 = Barycentric<T, 3U>;
-using Barycentric3f = Barycentric3<float>;
-using Barycentric3d = Barycentric3<double>;
+using Barycentric3F = Barycentric3<float>;
+using Barycentric3D = Barycentric3<double>;
 
 } // namespace rtw::sw_renderer

@@ -19,8 +19,8 @@ struct Plane3
   T distance{};
 };
 
-using Plane3f = Plane3<float>;
-using Plane3d = Plane3<double>;
+using Plane3F = Plane3<float>;
+using Plane3D = Plane3<double>;
 
 /// A frustum in 3D space.
 /// The normals of the planes are pointing towards the positive half-space, i.e. the inside of the frustum.
@@ -36,8 +36,8 @@ struct Frustum3
   Plane3<T> far{};
 };
 
-using Frustum3f = Frustum3<float>;
-using Frustum3d = Frustum3<double>;
+using Frustum3F = Frustum3<float>;
+using Frustum3D = Frustum3<double>;
 
 /// The parameters of a perspective projection.
 /// @tparam T The type of the projection parameters.
@@ -60,8 +60,8 @@ struct FrustumParameters
 /// @param far The distance to the far plane.
 /// @return The parameters for a perspective projection.
 template <typename T>
-constexpr FrustumParameters<T> make_perspective_parameters(const math::Angle<T> fov_y, const T aspect_ratio, const T near,
-                                                        const T far) noexcept
+constexpr FrustumParameters<T> make_perspective_parameters(const math::Angle<T> fov_y, const T aspect_ratio,
+                                                           const T near, const T far) noexcept
 {
   assert(near > T{0});
   assert(far > near);
@@ -84,6 +84,11 @@ constexpr math::Matrix4x4<T> make_perspective_projection_matrix(const FrustumPar
   const auto width = std::abs(params.right - params.left);  // assuming that left and right are not symmetric
   const auto height = std::abs(params.top - params.bottom); // assuming that top and bottom are not symmetric
   const auto depth = params.far - params.near;
+
+  assert(width > T{0});
+  assert(height > T{0});
+  assert(depth > T{0});
+
   const auto sx = T{2} * params.near / width;
   const auto sy = T{2} * params.near / height;
   const auto sz = -(params.far + params.near) / depth;
@@ -109,6 +114,8 @@ constexpr math::Matrix4x4<T> make_perspective_projection_matrix(const FrustumPar
 template <typename T>
 inline Frustum3<T> make_frustum(const FrustumParameters<T> params) noexcept
 {
+  assert(params.near > T{0});
+
   const auto far_near_aspect_ratio = params.far / params.near;
   const auto far_left = params.left * far_near_aspect_ratio;
   const auto far_right = params.right * far_near_aspect_ratio;

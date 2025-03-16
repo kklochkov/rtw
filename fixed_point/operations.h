@@ -23,6 +23,12 @@ constexpr bool sign_bit(const T value) noexcept
   }
 }
 
+constexpr std::int8_t sign(const bool is_negative) noexcept
+{
+  constexpr std::int8_t SIGNS[] = {1, -1};
+  return SIGNS[is_negative]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+}
+
 template <typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
 constexpr std::int32_t count_leading_zero(const T value) noexcept
 {

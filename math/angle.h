@@ -4,7 +4,6 @@
 #include "fixed_point/fixed_point.h"
 
 #include <cmath>
-#include <type_traits>
 
 namespace rtw::math
 {
@@ -115,10 +114,10 @@ private:
   value_type rad_{0};
 };
 
-using Anglef = Angle<float>;
-using Angled = Angle<double>;
-using Angleq16 = Angle<fixed_point::FixedPoint16>;
-using Angleq32 = Angle<fixed_point::FixedPoint32>;
+using AngleF = Angle<float>;
+using AngleD = Angle<double>;
+using AngleQ16 = Angle<fixed_point::FixedPoint16>;
+using AngleQ32 = Angle<fixed_point::FixedPoint32>;
 
 template <typename T>
 Angle<T> normalize(const Angle<T>& angle) noexcept
@@ -147,13 +146,17 @@ Angle<T> interpolate(const Angle<T>& lhs, const Angle<T>& rhs, const T t) noexce
 namespace angle_literals
 {
 
-constexpr Angled operator""_deg(const long double value) noexcept { return Angled{DEG, static_cast<double>(value)}; }
+constexpr AngleD operator""_degD(const long double value) noexcept { return AngleD{DEG, static_cast<double>(value)}; }
 
-constexpr Angled operator""_rad(const long double value) noexcept { return Angled{RAD, static_cast<double>(value)}; }
+constexpr AngleD operator""_radD(const long double value) noexcept { return AngleD{RAD, static_cast<double>(value)}; }
 
-constexpr Anglef operator""_degf(const long double value) noexcept { return Anglef{DEG, static_cast<float>(value)}; }
+constexpr AngleF operator""_degF(const long double value) noexcept { return AngleF{DEG, static_cast<float>(value)}; }
 
-constexpr Anglef operator""_radf(const long double value) noexcept { return Anglef{RAD, static_cast<float>(value)}; }
+constexpr AngleF operator""_radF(const long double value) noexcept { return AngleF{RAD, static_cast<float>(value)}; }
+
+constexpr AngleQ16 operator""_degQ16(const long double value) noexcept { return AngleQ16{DEG, static_cast<float>(value)}; }
+
+constexpr AngleQ32 operator""_radQ32(const long double value) noexcept { return AngleQ32{RAD, static_cast<float>(value)}; }
 
 } // namespace angle_literals
 
@@ -196,9 +199,9 @@ struct EulerAngles
   Angle<T> roll;
 };
 
-using EulerAnglesf = EulerAngles<float>;
-using EulerAnglesd = EulerAngles<double>;
-using EulerAnglesq16 = EulerAngles<fixed_point::FixedPoint16>;
-using EulerAnglesq32 = EulerAngles<fixed_point::FixedPoint32>;
+using EulerAnglesF = EulerAngles<float>;
+using EulerAnglesD = EulerAngles<double>;
+using EulerAnglesQ16 = EulerAngles<fixed_point::FixedPoint16>;
+using EulerAnglesQ32 = EulerAngles<fixed_point::FixedPoint32>;
 
 } // namespace rtw::math

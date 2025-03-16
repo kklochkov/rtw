@@ -19,14 +19,14 @@ TEST(FixedPoint8, constants)
 
 TEST(FixedPoint8u, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint8u::BITS == 16);
-  static_assert(rtw::fixed_point::FixedPoint8u::FRACTIONAL_BITS == 8);
-  static_assert(rtw::fixed_point::FixedPoint8u::INTEGER_BITS == 8);
-  static_assert(rtw::fixed_point::FixedPoint8u::ONE == 256);
-  static_assert(rtw::fixed_point::FixedPoint8u::RESOLUTION == 0.00390625);
-  static_assert(rtw::fixed_point::FixedPoint8u::min() == 0.0);
-  static_assert(rtw::fixed_point::FixedPoint8u::max() == 255.99609375);
-  static_assert(rtw::fixed_point::FixedPoint8u::PI_INTEGER == 804);
+  static_assert(rtw::fixed_point::FixedPoint8U::BITS == 16);
+  static_assert(rtw::fixed_point::FixedPoint8U::FRACTIONAL_BITS == 8);
+  static_assert(rtw::fixed_point::FixedPoint8U::INTEGER_BITS == 8);
+  static_assert(rtw::fixed_point::FixedPoint8U::ONE == 256);
+  static_assert(rtw::fixed_point::FixedPoint8U::RESOLUTION == 0.00390625);
+  static_assert(rtw::fixed_point::FixedPoint8U::min() == 0.0);
+  static_assert(rtw::fixed_point::FixedPoint8U::max() == 255.99609375);
+  static_assert(rtw::fixed_point::FixedPoint8U::PI_INTEGER == 804);
 }
 
 TEST(FixedPoint16, constants)
@@ -41,16 +41,16 @@ TEST(FixedPoint16, constants)
   static_assert(rtw::fixed_point::FixedPoint16::PI_INTEGER == 205'887);
 }
 
-TEST(FixedPoint16u, constants)
+TEST(FixedPoint16U, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint16u::BITS == 32);
-  static_assert(rtw::fixed_point::FixedPoint16u::FRACTIONAL_BITS == 16);
-  static_assert(rtw::fixed_point::FixedPoint16u::INTEGER_BITS == 16);
-  static_assert(rtw::fixed_point::FixedPoint16u::ONE == 65'536);
-  static_assert(rtw::fixed_point::FixedPoint16u::RESOLUTION == 0.0000152587890625);
-  static_assert(rtw::fixed_point::FixedPoint16u::min() == 0.0);
-  static_assert(rtw::fixed_point::FixedPoint16u::max() == 65535.999984741211);
-  static_assert(rtw::fixed_point::FixedPoint16u::PI_INTEGER == 205'887);
+  static_assert(rtw::fixed_point::FixedPoint16U::BITS == 32);
+  static_assert(rtw::fixed_point::FixedPoint16U::FRACTIONAL_BITS == 16);
+  static_assert(rtw::fixed_point::FixedPoint16U::INTEGER_BITS == 16);
+  static_assert(rtw::fixed_point::FixedPoint16U::ONE == 65'536);
+  static_assert(rtw::fixed_point::FixedPoint16U::RESOLUTION == 0.0000152587890625);
+  static_assert(rtw::fixed_point::FixedPoint16U::min() == 0.0);
+  static_assert(rtw::fixed_point::FixedPoint16U::max() == 65535.999984741211);
+  static_assert(rtw::fixed_point::FixedPoint16U::PI_INTEGER == 205'887);
 }
 
 TEST(FixedPoint32, constants)
@@ -65,16 +65,16 @@ TEST(FixedPoint32, constants)
   static_assert(rtw::fixed_point::FixedPoint32::PI_INTEGER == 13'493'037'705);
 }
 
-TEST(FixedPoint32u, constants)
+TEST(FixedPoint32U, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint32u::BITS == 64);
-  static_assert(rtw::fixed_point::FixedPoint32u::FRACTIONAL_BITS == 32);
-  static_assert(rtw::fixed_point::FixedPoint32u::INTEGER_BITS == 32);
-  static_assert(rtw::fixed_point::FixedPoint32u::ONE == 4'294'967'296);
-  static_assert(rtw::fixed_point::FixedPoint32u::RESOLUTION == 0.00000000023283064365386962890625);
-  static_assert(rtw::fixed_point::FixedPoint32u::min() == 0.0);
-  static_assert(rtw::fixed_point::FixedPoint32u::max() == 4294967296.0);
-  static_assert(rtw::fixed_point::FixedPoint32u::PI_INTEGER == 13'493'037'705);
+  static_assert(rtw::fixed_point::FixedPoint32U::BITS == 64);
+  static_assert(rtw::fixed_point::FixedPoint32U::FRACTIONAL_BITS == 32);
+  static_assert(rtw::fixed_point::FixedPoint32U::INTEGER_BITS == 32);
+  static_assert(rtw::fixed_point::FixedPoint32U::ONE == 4'294'967'296);
+  static_assert(rtw::fixed_point::FixedPoint32U::RESOLUTION == 0.00000000023283064365386962890625);
+  static_assert(rtw::fixed_point::FixedPoint32U::min() == 0.0);
+  static_assert(rtw::fixed_point::FixedPoint32U::max() == 4294967296.0);
+  static_assert(rtw::fixed_point::FixedPoint32U::PI_INTEGER == 13'493'037'705);
 }
 // -----------------------------------------------------------------------------------------------
 template <typename T>
@@ -82,8 +82,8 @@ class FixedPointTest : public ::testing::Test
 {};
 
 using FixedPointTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16,
-                     rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32, rtw::fixed_point::FixedPoint32u>;
+    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint8U, rtw::fixed_point::FixedPoint16,
+                     rtw::fixed_point::FixedPoint16U, rtw::fixed_point::FixedPoint32, rtw::fixed_point::FixedPoint32U>;
 TYPED_TEST_SUITE(FixedPointTest, FixedPointTypes, );
 
 TYPED_TEST(FixedPointTest, traits)
@@ -419,7 +419,7 @@ public:
 };
 
 using UnsignedFixedPointTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32u>;
+    ::testing::Types<rtw::fixed_point::FixedPoint8U, rtw::fixed_point::FixedPoint16U, rtw::fixed_point::FixedPoint32U>;
 TYPED_TEST_SUITE(UnsignedFixedPointTest, UnsignedFixedPointTypes, );
 
 TYPED_TEST(UnsignedFixedPointTest, ctor)
@@ -589,19 +589,19 @@ TEST(fixed_point, operator_stream)
     EXPECT_EQ(ss.str(), "fp32.32(1.23)");
   }
   {
-    const rtw::fixed_point::FixedPoint8u a(1.23);
+    const rtw::fixed_point::FixedPoint8U a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp8.8(1.23047)");
   }
   {
-    const rtw::fixed_point::FixedPoint16u a(1.23);
+    const rtw::fixed_point::FixedPoint16U a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp16.16(1.23)");
   }
   {
-    const rtw::fixed_point::FixedPoint32u a(1.23);
+    const rtw::fixed_point::FixedPoint32U a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp32.32(1.23)");
@@ -625,19 +625,19 @@ TEST(fixed_point, operator_stream)
     EXPECT_EQ(ss.str(), "fp32.32(-123)");
   }
   {
-    const rtw::fixed_point::FixedPoint8u a(123);
+    const rtw::fixed_point::FixedPoint8U a(123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp8.8(123)");
   }
   {
-    const rtw::fixed_point::FixedPoint16u a(123);
+    const rtw::fixed_point::FixedPoint16U a(123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp16.16(123)");
   }
   {
-    const rtw::fixed_point::FixedPoint32u a(123);
+    const rtw::fixed_point::FixedPoint32U a(123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp32.32(123)");

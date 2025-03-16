@@ -56,15 +56,15 @@ private:
   SDL_Texture* sdl_texture_{nullptr};
   rtw::sw_renderer::Renderer sw_renderer_;
   rtw::sw_renderer::Mesh mesh_;
-  rtw::math::Matrix4x4f model_matrix_;
-  rtw::math::Matrix4x4f view_matrix_;
-  rtw::math::EulerAnglesf rotation_{0.0_degf, 45.0_degf, 0.0_degf};
-  rtw::math::Vector3f translation_{0.0F, 0.0F, -5.0F};
-  rtw::math::Vector3f scale_{1.0F, 1.0F, 1.0F};
+  rtw::math::Matrix4x4F model_matrix_;
+  rtw::math::Matrix4x4F view_matrix_;
+  rtw::math::EulerAnglesF rotation_{0.0_degF, 45.0_degF, 0.0_degF};
+  rtw::math::Vector3F translation_{0.0F, 0.0F, -5.0F};
+  rtw::math::Vector3F scale_{1.0F, 1.0F, 1.0F};
   rtw::sw_renderer::Camera camera_{
-      rtw::math::Point3f{0.0F, 0.0F, 0.0F},
-      rtw::math::Vector3f{0.0F, 0.0F, -1.0F},
-      rtw::math::Vector3f{0.0F, 0.0F, 0.0F},
+      rtw::math::Point3F{0.0F, 0.0F, 0.0F},
+      rtw::math::Vector3F{0.0F, 0.0F, -1.0F},
+      rtw::math::Vector3F{0.0F, 0.0F, 0.0F},
   };
   bool show_demo_window_{false};
 };
@@ -211,7 +211,7 @@ bool Application::load_textures(const std::filesystem::path& resources_folder, r
 void Application::process_events(bool& is_running, const rtw::sw_renderer::Seconds& delta_time)
 {
   const auto speed = 0.2F * delta_time.count();             // m/s
-  const auto angular_speed = 0.6_degf * delta_time.count(); // deg/s -> rad/s
+  const auto angular_speed = 0.6_degF * delta_time.count(); // deg/s -> rad/s
 
   SDL_Event event;
   while (SDL_PollEvent(&event))
@@ -286,13 +286,13 @@ void Application::update(const rtw::sw_renderer::Seconds& delta_time)
 {
   std::ignore = delta_time;
 
-  rtw::math::Point3f target{0.0F, 0.0F, -1.0F};
+  rtw::math::Point3F target{0.0F, 0.0F, -1.0F};
 
-  camera_.direction = rtw::math::transform3::make_rotation(camera_.rotation) * static_cast<rtw::math::Vector3f>(target);
+  camera_.direction = rtw::math::transform3::make_rotation(camera_.rotation) * static_cast<rtw::math::Vector3F>(target);
 
   target = camera_.position + camera_.direction;
 
-  rotation_.z() += 0.5_degf;
+  rotation_.z() += 0.5_degF;
 
   model_matrix_ = rtw::math::transform3::make_transform(scale_, rotation_, translation_);
   view_matrix_ = rtw::sw_renderer::make_look_at(camera_.position, target);

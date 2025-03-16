@@ -427,7 +427,7 @@ private:
 };
 
 using Int128 = Int<std::int64_t>;
-using Int128u = Int<std::uint64_t>;
+using Int128U = Int<std::uint64_t>;
 
 // ----------------------------------------------------------------------------
 

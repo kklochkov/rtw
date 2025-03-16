@@ -172,7 +172,7 @@ class UnsignedFixedPointMathTest : public ::testing::Test
 {};
 
 using UnsignedFixedPointTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8u, rtw::fixed_point::FixedPoint16u, rtw::fixed_point::FixedPoint32u>;
+    ::testing::Types<rtw::fixed_point::FixedPoint8U, rtw::fixed_point::FixedPoint16U, rtw::fixed_point::FixedPoint32U>;
 TYPED_TEST_SUITE(UnsignedFixedPointMathTest, UnsignedFixedPointTypes, );
 
 TYPED_TEST(UnsignedFixedPointMathTest, floor)
@@ -202,9 +202,9 @@ TYPED_TEST(UnsignedFixedPointMathTest, round)
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TYPED_TEST(UnsignedFixedPointMathTest, sqrt)
 {
-  const auto max = static_cast<double>(rtw::fixed_point::FixedPoint8u::max());
+  const auto max = static_cast<double>(rtw::fixed_point::FixedPoint8U::max());
   // NOLINTNEXTLINE(clang-analyzer-security.FloatLoopCounter)
-  for (double i = 0.0; i < max; i += rtw::fixed_point::FixedPoint8u::RESOLUTION)
+  for (double i = 0.0; i < max; i += rtw::fixed_point::FixedPoint8U::RESOLUTION)
   {
     const auto result = static_cast<double>(rtw::fixed_point::math::sqrt(TypeParam(i)));
     const auto expected = std::sqrt(i);

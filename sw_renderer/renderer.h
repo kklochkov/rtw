@@ -64,36 +64,36 @@ public:
   void set_depth(const std::size_t x, const std::size_t y, const float depth) { depth_buffer_.set_depth(x, y, depth); }
   float depth(const std::size_t x, const std::size_t y) const { return depth_buffer_.depth(x, y); }
 
-  void draw_pixel(const math::Point2i& point, const Color color);
-  void draw_pixel(const math::Point2i& point, const Color color, const std::uint16_t size);
-  void draw_line(const math::Point2i& p0, const math::Point2i& p1, const Color color);
-  void draw_triangle(const math::Point2i& v0, const math::Point2i& v1, const math::Point2i& v2, const Color color)
+  void draw_pixel(const math::Point2I& point, const Color color);
+  void draw_pixel(const math::Point2I& point, const Color color, const std::uint16_t size);
+  void draw_line(const math::Point2I& p0, const math::Point2I& p1, const Color color);
+  void draw_triangle(const math::Point2I& v0, const math::Point2I& v1, const math::Point2I& v2, const Color color)
   {
     draw_line(v0, v1, color);
     draw_line(v1, v2, color);
     draw_line(v2, v0, color);
   }
-  void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const Color color,
+  void fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Color color,
                           const float light_intensity);
-  void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const float light_intensity);
-  void fill_triangle_bbox(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const Texture& texture,
+  void fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const float light_intensity);
+  void fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Texture& texture,
                           const float light_intensity);
 
-  void fill_triangle(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const Color color,
+  void fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Color color,
                      const float light_intensity);
-  void fill_triangle(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const float light_intensity);
-  void fill_triangle(const Vertex4f& v0, const Vertex4f& v1, const Vertex4f& v2, const Texture& texture,
+  void fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const float light_intensity);
+  void fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Texture& texture,
                      const float light_intensity);
 
-  void draw_mesh(const Mesh& mesh, const math::Matrix4x4f& model_view_matrix);
+  void draw_mesh(const Mesh& mesh, const math::Matrix4x4F& model_view_matrix);
 
 private:
   ColorBuffer color_buffer_;
   DepthBuffer depth_buffer_;
-  Frustum3f frustum_;
-  math::Matrix4x4f projection_matrix_;
-  math::Matrix4x4f screen_space_matrix_;
-  math::Vector3f light_direction_;
+  Frustum3F frustum_;
+  math::Matrix4x4F projection_matrix_;
+  math::Matrix4x4F screen_space_matrix_;
+  math::Vector3F light_direction_;
   RenderModeFlags render_mode_{RenderMode::FACE_CULLING | RenderMode::WIREFRAME | RenderMode::SHADING
                                | RenderMode::LIGHT};
 };
