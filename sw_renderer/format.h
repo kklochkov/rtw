@@ -1,7 +1,6 @@
 #pragma once
 
 #include "math/format.h"
-#include "sw_renderer/barycentric.h"
 #include "sw_renderer/color.h"
 #include "sw_renderer/tex_coord.h"
 
@@ -11,13 +10,6 @@
 
 namespace rtw::sw_renderer
 {
-
-template <typename T, std::uint16_t N>
-std::ostream& operator<<(std::ostream& os, const Barycentric<T, N>& coord) noexcept
-{
-  os << "Barycentric" << N;
-  return math::details::operator<<(os, coord);
-}
 
 template <typename T, std::uint16_t N>
 std::ostream& operator<<(std::ostream& os, const TexCoord<T, N>& coord) noexcept
@@ -51,10 +43,6 @@ inline std::ostream& operator<<(std::ostream& os, const Color color) noexcept
 
 namespace fmt
 {
-
-template <typename T, std::uint16_t N>
-struct formatter<rtw::sw_renderer::Barycentric<T, N>> : ostream_formatter
-{};
 
 template <typename T, std::uint16_t N>
 struct formatter<rtw::sw_renderer::TexCoord<T, N>> : ostream_formatter

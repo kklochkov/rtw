@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sw_renderer/operations.h"
+#include "math/barycentric.h"
 #include "sw_renderer/vertex.h"
 
 #include <algorithm>
@@ -18,7 +18,7 @@ constexpr bool IS_PIXEL_RASTERISE_CALLBACK_V = std::is_invocable_r_v<void, Raste
 template <typename RasteriseCallbackT>
 constexpr bool IS_BARYCENTRIC_TRIANGLE_RASTERISE_CALLBACK_V =
     std::is_invocable_r_v<void, RasteriseCallbackT, const Vertex4F&, const Vertex4F&, const Vertex4F&,
-                          const math::Point2I&, const Barycentric3F&>;
+                          const math::Point2I&, const math::Barycentric3F&>;
 
 template <typename RasteriseCallbackT>
 constexpr bool IS_TRIANGLE_RASTERISE_CALLBACK_V =
@@ -101,6 +101,19 @@ void draw_line_bresenham(const math::Point2I& p0, const math::Point2I& p1, Raste
   }
 }
 
+/// Check if the edge of a triangle is top-left.
+/// It is used to apply the top-left fill convention.
+/// @tparam T The type of the elements.
+/// @param[in] edge The edge of the triangle.
+/// @return True if the edge is top-left, false otherwise.
+template <typename T>
+constexpr bool is_top_left(const math::Vector2<T>& edge) noexcept
+{
+  const bool is_top = edge.y() == T{0} && edge.x() < T{0};
+  const bool is_left = edge.y() > T{0};
+  return is_top || is_left;
+}
+
 /// Rasterise a triangle by visiting pixels in a bounding box using top-left fill convention.
 /// The vertex order is counter-clockwise.
 /// The algorithm is based on the Juan Pineda's paper "A Parallel Algorithm for Polygon Rasterization".
@@ -108,7 +121,7 @@ void draw_line_bresenham(const math::Point2I& p0, const math::Point2I& p1, Raste
 /// Calls the callback function for each pixel inside the triangle.
 /// @tparam RasteriseCallbackT The type of the callback function which is called for each pixel.
 /// The function must have the following signature:
-/// void(const Vertex4F&, const Vertex4F&, const Vertex4F&, const math::Point2I&, const Barycentric3F&).
+/// void(const Vertex4F&, const Vertex4F&, const Vertex4F&, const math::Point2I&, const math::Barycentric3F&).
 /// @param[in] v0 The first vertex of the triangle.
 /// @param[in] v1 The second vertex of the triangle.
 /// @param[in] v2 The third vertex of the triangle.
@@ -163,7 +176,7 @@ void fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& 
       if ((w0 >= 0) & (w1 >= 0) & (w2 >= 0)) // NOLINT(hicpp-signed-bitwise)
       {
         const math::Point2I p{x, y};
-        const Barycentric3F b{w0, w1, w2};
+        const math::Barycentric3F b{w0, w1, w2};
         rasterise(v0, v1, v2, p, b);
       }
 

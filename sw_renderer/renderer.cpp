@@ -1,11 +1,13 @@
 #include "sw_renderer/renderer.h"
 #include "sw_renderer/clipping.h"
-#include "sw_renderer/format.h"
+#include "sw_renderer/format.h" // IWYU pragma: keep
 #include "sw_renderer/projection.h"
 #include "sw_renderer/rasterisation_routines.h"
 
 #include "math/angle.h"
-#include "math/format.h"
+#include "math/barycentric.h"
+#include "math/convex_polygon.h"
+#include "math/format.h" // IWYU pragma: keep
 
 #include <fmt/core.h>
 
@@ -96,7 +98,7 @@ void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const 
   sw_renderer::fill_triangle_bbox(
       v0, v1, v2,
       [this, color, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const math::Point2I& p,
-                                     const Barycentric3F& b)
+                                     const math::Barycentric3F& b)
       {
         // Perspective correct interpolation of depth.
         const auto inv_z = 1.0F / (v0.point.w() * b.w0() + v1.point.w() * b.w1() + v2.point.w() * b.w2());
@@ -113,7 +115,7 @@ void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const 
 {
   sw_renderer::fill_triangle_bbox(v0, v1, v2,
                                   [this, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2,
-                                                          const math::Point2I& p, const Barycentric3F& b)
+                                                          const math::Point2I& p, const math::Barycentric3F& b)
                                   {
                                     // Perspective correct interpolation of depth.
                                     const auto inv_z =
@@ -135,7 +137,7 @@ void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const 
   sw_renderer::fill_triangle_bbox(
       v0, v1, v2,
       [this, &texture, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2,
-                                        const math::Point2I& p, const Barycentric3F& b)
+                                        const math::Point2I& p, const math::Barycentric3F& b)
       {
         // Perspective correct interpolation of depth.
         const auto inv_z = 1.0F / (v0.point.w() * b.w0() + v1.point.w() * b.w1() + v2.point.w() * b.w2());
@@ -307,7 +309,7 @@ void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4F& model_view_ma
 
       if (face_culling_enabled())
       {
-        if (winding_order(v0.point.xy(), v1.point.xy(), v2.point.xy()) == WindingOrder::CLOCKWISE)
+        if (math::winding_order(v0.point.xy(), v1.point.xy(), v2.point.xy()) == math::WindingOrder::CLOCKWISE)
         {
           continue;
         }

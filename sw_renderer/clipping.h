@@ -1,8 +1,9 @@
 #pragma once
 
 #include "math/convex_polygon.h"
+#include "math/plane.h"
+#include "math/frustum.h"
 
-#include "sw_renderer/projection.h"
 #include "sw_renderer/vertex.h"
 
 namespace rtw::sw_renderer
@@ -10,18 +11,9 @@ namespace rtw::sw_renderer
 
 template <typename T, std::size_t CAPACITY>
 using ConvexPolygonVertex4 = math::ConvexPolygon<T, Vertex4, CAPACITY>;
-template <std::size_t CAPACITY>
-using ConvexPolygonVertex4F = ConvexPolygonVertex4<float, CAPACITY>;
-template <std::size_t CAPACITY>
-using ConvexPolygonVertex4D = ConvexPolygonVertex4<double, CAPACITY>;
-template <std::size_t CAPACITY>
-using ConvexPolygonVertex4I = ConvexPolygonVertex4<int, CAPACITY>;
 
 template <typename T>
 using TriangleVertex4 = ConvexPolygonVertex4<T, 3>;
-using TriangleVertex4F = TriangleVertex4<float>;
-using TriangleVertex4D = TriangleVertex4<double>;
-using TriangleVertex4I = TriangleVertex4<int>;
 
 /// Clips a triangle against the frustum using the Sutherland-Hodgman algorithm.
 /// @tparam CAPACITY The maximum number of vertices the polygon can hold.
@@ -30,7 +22,7 @@ using TriangleVertex4I = TriangleVertex4<int>;
 /// @return The clipped polygon.
 template <typename T, std::size_t CAPACITY = 8U>
 constexpr ConvexPolygonVertex4<T, CAPACITY> clip_against_plane(const ConvexPolygonVertex4<T, CAPACITY>& polygon,
-                                                               const Plane3<T>& plane) noexcept
+                                                               const math::Plane3<T>& plane) noexcept
 {
   ConvexPolygonVertex4<T, CAPACITY> clipped_result;
   for (std::size_t i = 0U; i < polygon.size(); ++i)
@@ -69,7 +61,7 @@ constexpr ConvexPolygonVertex4<T, CAPACITY> clip_against_plane(const ConvexPolyg
 /// @return The clipped triangle.
 template <typename T, std::size_t CAPACITY = 8U>
 constexpr ConvexPolygonVertex4<T, CAPACITY> clip(const Vertex4<T>& v0, const Vertex4<T>& v1, const Vertex4<T>& v2,
-                                                 const Frustum3<T>& frustum) noexcept
+                                                 const math::Frustum3<T>& frustum) noexcept
 {
   ConvexPolygonVertex4<T, CAPACITY> result;
   result.push_back(v0);

@@ -1,3 +1,4 @@
+#include "math/barycentric.h"
 #include "sw_renderer/rasterisation_routines.h"
 
 #include <benchmark/benchmark.h>
@@ -58,7 +59,7 @@ void bm_fill_triangle_scanline(benchmark::State& state)
           auto vv1 = v1;
           auto vv2 = v2;
           auto pp = p;
-          auto b = rtw::sw_renderer::make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
+          auto b = rtw::math::make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
           benchmark::DoNotOptimize(vv0);
           benchmark::DoNotOptimize(vv1);
           benchmark::DoNotOptimize(vv2);
@@ -83,7 +84,7 @@ void bm_fill_triangle_bbox(benchmark::State& state)
     rtw::sw_renderer::fill_triangle_bbox(v0, v1, v2,
                                          [](const rtw::sw_renderer::Vertex4F& v0, const rtw::sw_renderer::Vertex4F& v1,
                                             const rtw::sw_renderer::Vertex4F& v2, const rtw::math::Point2I& p,
-                                            const rtw::sw_renderer::Barycentric3F& b)
+                                            const rtw::math::Barycentric3F& b)
                                          {
                                            auto vv0 = v0;
                                            auto vv1 = v1;

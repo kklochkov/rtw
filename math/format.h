@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fixed_point/format.h" // IWYU pragma: export
+#include "math/barycentric.h"
 #include "math/matrix.h"
 #include "math/point.h"
 #include "math/vector.h"
@@ -78,6 +79,13 @@ std::ostream& operator<<(std::ostream& os, const Point<T, N>& point) noexcept
   return details::operator<<(os, point);
 }
 
+template <typename T, std::uint16_t N>
+std::ostream& operator<<(std::ostream& os, const Barycentric<T, N>& coord) noexcept
+{
+  os << "Barycentric" << N;
+  return math::details::operator<<(os, coord);
+}
+
 } // namespace rtw::math
 
 namespace fmt
@@ -93,6 +101,10 @@ struct formatter<rtw::math::Vector<T, N>> : ostream_formatter
 
 template <typename T, std::uint16_t N>
 struct formatter<rtw::math::Point<T, N>> : ostream_formatter
+{};
+
+template <typename T, std::uint16_t N>
+struct formatter<rtw::math::Barycentric<T, N>> : ostream_formatter
 {};
 
 } // namespace fmt
