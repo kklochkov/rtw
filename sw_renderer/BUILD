@@ -7,7 +7,6 @@ cc_library(
         "renderer.cpp",
     ],
     hdrs = [
-        "barycentric.h",
         "camera.h",
         "clipping.h",
         "color.h",
@@ -17,7 +16,6 @@ cc_library(
         "format.h",
         "mesh.h",
         "obj_loader.h",
-        "operations.h",
         "projection.h",
         "rasterisation_routines.h",
         "renderer.h",

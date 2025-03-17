@@ -1,10 +1,10 @@
 #pragma once
 
+#include "math/frustum.h"
 #include "sw_renderer/color_buffer.h"
 #include "sw_renderer/depth_buffer.h"
 #include "sw_renderer/flags.h"
 #include "sw_renderer/mesh.h"
-#include "sw_renderer/projection.h"
 #include "sw_renderer/vertex.h"
 
 #include "math/point.h"
@@ -90,7 +90,7 @@ public:
 private:
   ColorBuffer color_buffer_;
   DepthBuffer depth_buffer_;
-  Frustum3F frustum_;
+  math::Frustum3F frustum_;
   math::Matrix4x4F projection_matrix_;
   math::Matrix4x4F screen_space_matrix_;
   math::Vector3F light_direction_;

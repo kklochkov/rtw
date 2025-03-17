@@ -82,3 +82,24 @@ TEST(ConvexPolygonTest, index_operator_out_of_bounds)
                                                       rtw::math::Point2I{5, 6}};
   EXPECT_DEATH(POLYGON[3], "");
 }
+
+TEST(ConvexPolygonTest, winding_order)
+{
+  const rtw::math::Point2F v0{0.0F, 0.0F};
+  const rtw::math::Point2F v1{1.0F, 0.0F};
+  const rtw::math::Point2F v2{0.0F, 1.0F};
+
+  ASSERT_EQ(rtw::math::winding_order(v0, v1, v2), rtw::math::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(v0, v2, v1), rtw::math::WindingOrder::CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(v1, v0, v2), rtw::math::WindingOrder::CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(v1, v2, v0), rtw::math::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(v2, v0, v1), rtw::math::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(v2, v1, v0), rtw::math::WindingOrder::CLOCKWISE);
+
+  ASSERT_EQ(rtw::math::winding_order(rtw::math::Triangle2F{v0, v1, v2}), rtw::math::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(rtw::math::Triangle2F{v0, v2, v1}), rtw::math::WindingOrder::CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(rtw::math::Triangle2F{v1, v0, v2}), rtw::math::WindingOrder::CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(rtw::math::Triangle2F{v1, v2, v0}), rtw::math::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(rtw::math::Triangle2F{v2, v0, v1}), rtw::math::WindingOrder::COUNTER_CLOCKWISE);
+  ASSERT_EQ(rtw::math::winding_order(rtw::math::Triangle2F{v2, v1, v0}), rtw::math::WindingOrder::CLOCKWISE);
+}

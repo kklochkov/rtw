@@ -1,8 +1,8 @@
-#include "math/operations.h"
+#include "math/intersection.h"
 
 #include <gtest/gtest.h>
 
-TEST(Operations, intersection_plane_line_factor)
+TEST(Intersection, intersection_plane_line_factor)
 {
   using namespace rtw::math;
 
@@ -20,7 +20,7 @@ TEST(Operations, intersection_plane_line_factor)
             1.0F);
 }
 
-TEST(Operations, intersection_plane_line_point)
+TEST(Intersection, intersection_plane_line_point)
 {
   using namespace rtw::math;
 
@@ -40,7 +40,7 @@ TEST(Operations, intersection_plane_line_point)
             Point2F(1.0F, 0.0F));
 }
 
-TEST(Operations, intersection_lines_factor)
+TEST(Intersection, intersection_lines_factor)
 {
   using namespace rtw::math;
 
@@ -58,7 +58,7 @@ TEST(Operations, intersection_lines_factor)
             1.0F);
 }
 
-TEST(Operations, intersection_lines_point)
+TEST(Intersection, intersection_lines_point)
 {
   using namespace rtw::math;
 

@@ -5,10 +5,12 @@ cc_test_with_llvm_symbolizer(
     size = "small",
     srcs = [
         "angle_test.cpp",
+        "barycentric_test.cpp",
         "convex_polygon_test.cpp",
+        "frustum_test.cpp",
         "interpolation_test.cpp",
+        "intersection_test.cpp",
         "matrix_test.cpp",
-        "operations_test.cpp",
         "point_test.cpp",
         "transform2_test.cpp",
         "transform3_test.cpp",
