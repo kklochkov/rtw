@@ -1,8 +1,8 @@
 #pragma once
 
 #include "math/convex_polygon.h"
-#include "math/plane.h"
 #include "math/frustum.h"
+#include "math/plane.h"
 
 #include "sw_renderer/vertex.h"
 
@@ -10,10 +10,10 @@ namespace rtw::sw_renderer
 {
 
 template <typename T, std::size_t CAPACITY>
-using ConvexPolygonVertex4 = math::ConvexPolygon<T, Vertex4, CAPACITY>;
+using ConvexPolygonVertex = math::ConvexPolygon<T, Vertex, CAPACITY>;
 
 template <typename T>
-using TriangleVertex4 = ConvexPolygonVertex4<T, 3>;
+using TriangleVertex = ConvexPolygonVertex<T, 3>;
 
 /// Clips a triangle against the frustum using the Sutherland-Hodgman algorithm.
 /// @tparam CAPACITY The maximum number of vertices the polygon can hold.
@@ -21,10 +21,10 @@ using TriangleVertex4 = ConvexPolygonVertex4<T, 3>;
 /// @param plane The plane to clip against.
 /// @return The clipped polygon.
 template <typename T, std::size_t CAPACITY = 8U>
-constexpr ConvexPolygonVertex4<T, CAPACITY> clip_against_plane(const ConvexPolygonVertex4<T, CAPACITY>& polygon,
-                                                               const math::Plane3<T>& plane) noexcept
+constexpr ConvexPolygonVertex<T, CAPACITY> clip_against_plane(const ConvexPolygonVertex<T, CAPACITY>& polygon,
+                                                              const math::Plane3<T>& plane) noexcept
 {
-  ConvexPolygonVertex4<T, CAPACITY> clipped_result;
+  ConvexPolygonVertex<T, CAPACITY> clipped_result;
   for (std::size_t i = 0U; i < polygon.size(); ++i)
   {
     const auto& current = polygon.at(i);
@@ -42,7 +42,7 @@ constexpr ConvexPolygonVertex4<T, CAPACITY> clip_against_plane(const ConvexPolyg
     if (current_n_dot * next_n_dot < 0.0F)
     {
       const auto t = current_n_dot / (current_n_dot - next_n_dot);
-      Vertex4<T> intersection;
+      Vertex<T> intersection;
       intersection.point = math::lerp(current.point, next.point, t);
       intersection.color = lerp(current.color, next.color, t);
       intersection.tex_coord = lerp(current.tex_coord, next.tex_coord, t);
@@ -60,10 +60,10 @@ constexpr ConvexPolygonVertex4<T, CAPACITY> clip_against_plane(const ConvexPolyg
 /// @param frustum The frustum to clip against.
 /// @return The clipped triangle.
 template <typename T, std::size_t CAPACITY = 8U>
-constexpr ConvexPolygonVertex4<T, CAPACITY> clip(const Vertex4<T>& v0, const Vertex4<T>& v1, const Vertex4<T>& v2,
-                                                 const math::Frustum3<T>& frustum) noexcept
+constexpr ConvexPolygonVertex<T, CAPACITY> clip(const Vertex<T>& v0, const Vertex<T>& v1, const Vertex<T>& v2,
+                                                const math::Frustum3<T>& frustum) noexcept
 {
-  ConvexPolygonVertex4<T, CAPACITY> result;
+  ConvexPolygonVertex<T, CAPACITY> result;
   result.push_back(v0);
   result.push_back(v1);
   result.push_back(v2);
@@ -83,7 +83,7 @@ constexpr ConvexPolygonVertex4<T, CAPACITY> clip(const Vertex4<T>& v0, const Ver
 template <typename T, std::size_t CAPACITY = 8U>
 struct TriangulationResult
 {
-  std::array<TriangleVertex4<T>, CAPACITY> triangles;
+  std::array<TriangleVertex<T>, CAPACITY> triangles;
   std::size_t triangle_count{};
 };
 
@@ -93,7 +93,7 @@ struct TriangulationResult
 /// @param polygon The polygon to triangulate.
 /// @return The triangulation result.
 template <typename T, std::size_t CAPACITY = 8U>
-constexpr TriangulationResult<T, CAPACITY> triangulate(const ConvexPolygonVertex4<T, CAPACITY>& polygon) noexcept
+constexpr TriangulationResult<T, CAPACITY> triangulate(const ConvexPolygonVertex<T, CAPACITY>& polygon) noexcept
 {
   TriangulationResult<T, CAPACITY> result;
 

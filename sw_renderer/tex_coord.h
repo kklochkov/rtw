@@ -6,18 +6,18 @@
 namespace rtw::sw_renderer
 {
 
-template <typename T, std::uint16_t N>
+template <typename T>
 class TexCoord;
 
-template <typename T, std::uint16_t N>
-std::ostream& operator<<(std::ostream& os, const TexCoord<T, N>& coord) noexcept;
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const TexCoord<T>& coord) noexcept;
 
-template <typename T, std::uint16_t N = 2U>
-class TexCoord : math::Matrix<T, N, 1>
+template <typename T>
+class TexCoord : math::Matrix<T, 2, 1>
 {
 public:
-  using Matrix = math::Matrix<T, N, 1>;
-  using Vector = math::Vector<T, N>;
+  using Matrix = math::Matrix<T, 2, 1>;
+  using Vector = math::Vector<T, 2>;
 
   using typename Matrix::reference;
   using typename Matrix::value_type;
@@ -95,18 +95,16 @@ public:
   friend constexpr bool operator!=(const TexCoord& lhs, const TexCoord& rhs) noexcept { return !(lhs == rhs); }
   /// @}
 
-  friend std::ostream& operator<< <T, N>(std::ostream& os, const TexCoord& coord) noexcept;
+  friend std::ostream& operator<< <T>(std::ostream& os, const TexCoord& coord) noexcept;
 };
 
-template <typename T>
-using TexCoord2 = TexCoord<T, 2U>;
-using TexCoord2F = TexCoord<float>;
-using TexCoord2D = TexCoord<double>;
+using TexCoordF = TexCoord<float>;
+using TexCoordD = TexCoord<double>;
 
 template <typename T>
-constexpr TexCoord2<T> lerp(const TexCoord2<T>& lhs, const TexCoord2<T>& rhs, const T t) noexcept
+constexpr TexCoord<T> lerp(const TexCoord<T>& lhs, const TexCoord<T>& rhs, const T t) noexcept
 {
-  return TexCoord2<T>{math::lerp(lhs.as_matrix(), rhs.as_matrix(), t)};
+  return TexCoord<T>{math::lerp(lhs.as_matrix(), rhs.as_matrix(), t)};
 }
 
 } // namespace rtw::sw_renderer

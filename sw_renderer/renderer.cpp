@@ -25,8 +25,8 @@ Renderer::Renderer(const std::size_t width, const std::size_t height)
   const auto frustum_params = make_perspective_parameters(fov_y, aspect_ratio, 0.1F, 100.0F);
   projection_matrix_ = make_perspective_projection_matrix(frustum_params);
   frustum_ = make_frustum(frustum_params);
-  screen_space_matrix_ = make_screen_space_matrix<float>(width, height);
-  light_direction_ = math::normalize(math::Vector3F{0.0F, 0.0F, -1.0F});
+  screen_space_matrix_ = make_screen_space_matrix<single_precision>(width, height);
+  light_direction_ = math::normalize(Vector3F{0.0F, 0.0F, -1.0F});
 
   fmt::print("projection_matrix_: {}\n", projection_matrix_);
   fmt::print("screen_space_matrix_: {}\n", screen_space_matrix_);
@@ -92,13 +92,13 @@ void Renderer::draw_line(const math::Point2I& p0, const math::Point2I& p1, const
   sw_renderer::draw_line_bresenham(p0, p1, [this, color](const math::Point2I& p) { draw_pixel(p, color); });
 }
 
-void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Color color,
+void Renderer::fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2, const Color color,
                                   const float light_intensity)
 {
   sw_renderer::fill_triangle_bbox(
       v0, v1, v2,
-      [this, color, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const math::Point2I& p,
-                                     const math::Barycentric3F& b)
+      [this, color, light_intensity](const VertexF& v0, const VertexF& v1, const VertexF& v2, const math::Point2I& p,
+                                     const math::BarycentricF& b)
       {
         // Perspective correct interpolation of depth.
         const auto inv_z = 1.0F / (v0.point.w() * b.w0() + v1.point.w() * b.w1() + v2.point.w() * b.w2());
@@ -110,12 +110,11 @@ void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const 
       });
 }
 
-void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2,
-                                  const float light_intensity)
+void Renderer::fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2, const float light_intensity)
 {
   sw_renderer::fill_triangle_bbox(v0, v1, v2,
-                                  [this, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2,
-                                                          const math::Point2I& p, const math::Barycentric3F& b)
+                                  [this, light_intensity](const VertexF& v0, const VertexF& v1, const VertexF& v2,
+                                                          const math::Point2I& p, const math::BarycentricF& b)
                                   {
                                     // Perspective correct interpolation of depth.
                                     const auto inv_z =
@@ -131,13 +130,13 @@ void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const 
                                   });
 }
 
-void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Texture& texture,
+void Renderer::fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2, const Texture& texture,
                                   const float light_intensity)
 {
   sw_renderer::fill_triangle_bbox(
       v0, v1, v2,
-      [this, &texture, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2,
-                                        const math::Point2I& p, const math::Barycentric3F& b)
+      [this, &texture, light_intensity](const VertexF& v0, const VertexF& v1, const VertexF& v2, const math::Point2I& p,
+                                        const math::BarycentricF& b)
       {
         // Perspective correct interpolation of depth.
         const auto inv_z = 1.0F / (v0.point.w() * b.w0() + v1.point.w() * b.w1() + v2.point.w() * b.w2());
@@ -154,12 +153,12 @@ void Renderer::fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const 
       });
 }
 
-void Renderer::fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Color color,
+void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF& v2, const Color color,
                              const float light_intensity)
 {
   sw_renderer::fill_triangle_scanline(
       v0, v1, v2,
-      [this, color, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const math::Point2I& p)
+      [this, color, light_intensity](const VertexF& v0, const VertexF& v1, const VertexF& v2, const math::Point2I& p)
       {
         const auto b = make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
         if (contains(b))
@@ -175,11 +174,11 @@ void Renderer::fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Verte
       });
 }
 
-void Renderer::fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const float light_intensity)
+void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF& v2, const float light_intensity)
 {
   sw_renderer::fill_triangle_scanline(
       v0, v1, v2,
-      [this, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const math::Point2I& p)
+      [this, light_intensity](const VertexF& v0, const VertexF& v1, const VertexF& v2, const math::Point2I& p)
       {
         const auto b = make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
         if (contains(b))
@@ -203,13 +202,12 @@ void Renderer::fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Verte
       });
 }
 
-void Renderer::fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Texture& texture,
+void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF& v2, const Texture& texture,
                              const float light_intensity)
 {
   sw_renderer::fill_triangle_scanline(
       v0, v1, v2,
-      [this, &texture, light_intensity](const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2,
-                                        const math::Point2I& p)
+      [this, &texture, light_intensity](const VertexF& v0, const VertexF& v1, const VertexF& v2, const math::Point2I& p)
       {
         const auto b = make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
         if (contains(b))
@@ -230,14 +228,14 @@ void Renderer::fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Verte
       });
 }
 
-void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4F& model_view_matrix)
+void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
 {
   for (const auto& face : mesh.faces)
   {
     // Transform vertices to world space.
-    Vertex4F v0{model_view_matrix * mesh.vertices[face.vertex_indices[0]]};
-    Vertex4F v1{model_view_matrix * mesh.vertices[face.vertex_indices[1]]};
-    Vertex4F v2{model_view_matrix * mesh.vertices[face.vertex_indices[2]]};
+    VertexF v0{model_view_matrix * mesh.vertices[face.vertex_indices[0]]};
+    VertexF v1{model_view_matrix * mesh.vertices[face.vertex_indices[1]]};
+    VertexF v2{model_view_matrix * mesh.vertices[face.vertex_indices[2]]};
 
     if (face.texture_indices.has_value() && !mesh.textures.empty())
     {
@@ -354,12 +352,12 @@ void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4F& model_view_ma
 
 #ifdef DEBUG_DRAWING
   {
-    Vertex4F v0{math::Point4f(80.0F, 40.0F, 0.0F)};
-    Vertex4F v1{math::Point4f(140.0F, 40.0F, 0.0F)};
-    Vertex4F v2{math::Point4f(140.0F, 100.0F, 0.0F)};
+    VertexF v0{Point4F(80.0F, 40.0F, 0.0F)};
+    VertexF v1{Point4F(140.0F, 40.0F, 0.0F)};
+    VertexF v2{Point4F(140.0F, 100.0F, 0.0F)};
     fill_triangle(v0, v1, v2, Color{0x00'00'FF'FF}, 1.0F);
 
-    const auto vertex_translation = 2 * math::Vector4i{0, 50, 0, 0};
+    const auto vertex_translation = 2 * math::Vector4I{0, 50, 0, 0};
     v0.point += vertex_translation.cast<float>();
     v0.color = Color{0xFF'00'00'FF};
     v1.point += vertex_translation.cast<float>();
@@ -370,17 +368,17 @@ void Renderer::draw_mesh(const Mesh& mesh, const math::Matrix4x4F& model_view_ma
   }
 
   {
-    math::Vector4i translation{100, 0, 0, 0};
+    math::Vector4I translation{100, 0, 0, 0};
 
-    Vertex4F v0{math::Point4f(80.0F, 40.0F, 0.0F)};
-    Vertex4F v1{math::Point4f(140.0F, 40.0F, 0.0F)};
-    Vertex4F v2{math::Point4f(140.0F, 100.0F, 0.0F)};
+    VertexF v0{Point4F(80.0F, 40.0F, 0.0F)};
+    VertexF v1{Point4F(140.0F, 40.0F, 0.0F)};
+    VertexF v2{Point4F(140.0F, 100.0F, 0.0F)};
     v0.point += translation.cast<float>();
     v1.point += translation.cast<float>();
     v2.point += translation.cast<float>();
     fill_triangle_bbox(v0, v1, v2, Color{0x00'00'FF'FF}, 1.0F);
 
-    translation = 2 * math::Vector4i{0, 50, 0, 0};
+    translation = 2 * Vector4I{0, 50, 0, 0};
     v0.point += translation.cast<float>();
     v0.color = Color{0xFF'00'00'FF};
     v1.point += translation.cast<float>();

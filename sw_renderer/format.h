@@ -11,10 +11,10 @@
 namespace rtw::sw_renderer
 {
 
-template <typename T, std::uint16_t N>
-std::ostream& operator<<(std::ostream& os, const TexCoord<T, N>& coord) noexcept
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const TexCoord<T>& coord) noexcept
 {
-  os << "TexCoord" << N;
+  os << "TexCoord";
   return math::details::operator<<(os, coord);
 }
 
@@ -44,8 +44,8 @@ inline std::ostream& operator<<(std::ostream& os, const Color color) noexcept
 namespace fmt
 {
 
-template <typename T, std::uint16_t N>
-struct formatter<rtw::sw_renderer::TexCoord<T, N>> : ostream_formatter
+template <typename T>
+struct formatter<rtw::sw_renderer::TexCoord<T>> : ostream_formatter
 {};
 
 template <>

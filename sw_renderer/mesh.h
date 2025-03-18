@@ -60,7 +60,7 @@ struct Mesh
   }
 
   std::vector<math::Point3F> vertices;
-  std::vector<TexCoord2F> tex_coords;
+  std::vector<TexCoordF> tex_coords;
   std::vector<math::Vector3F> normals;
   std::vector<Face> faces;
   std::map<std::string, Material> materials;

@@ -6,18 +6,18 @@
 namespace rtw::math
 {
 
-template <typename T, std::uint16_t N>
+template <typename T>
 class Barycentric;
 
-template <typename T, std::uint16_t N>
-std::ostream& operator<<(std::ostream& os, const Barycentric<T, N>& coord) noexcept;
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Barycentric<T>& coord) noexcept;
 
-template <typename T, std::uint16_t N = 3U>
-class Barycentric : Matrix<T, N, 1>
+template <typename T>
+class Barycentric : Matrix<T, 3, 1>
 {
 public:
-  using Matrix = Matrix<T, N, 1>;
-  using Vector = Vector<T, N>;
+  using Matrix = Matrix<T, 3, 1>;
+  using Vector = Vector<T, 3>;
 
   using typename Matrix::reference;
   using typename Matrix::value_type;
@@ -81,13 +81,13 @@ public:
   friend constexpr bool operator!=(const Barycentric& lhs, const Barycentric& rhs) noexcept { return !(lhs == rhs); }
   /// @}
 
-  friend std::ostream& operator<< <T, N>(std::ostream& os, const Barycentric& coord) noexcept;
+  friend std::ostream& operator<< <T>(std::ostream& os, const Barycentric& coord) noexcept;
 };
 
-template <typename T>
-using Barycentric3 = Barycentric<T, 3U>;
-using Barycentric3F = Barycentric3<float>;
-using Barycentric3D = Barycentric3<double>;
+using BarycentricF = Barycentric<float>;
+using BarycentricD = Barycentric<double>;
+using BarycentricQ16 = Barycentric<fixed_point::FixedPoint16>;
+using BarycentricQ32 = Barycentric<fixed_point::FixedPoint32>;
 
 /// Make a barycentric coordinate from a point and a triangle.
 /// The winding order is counter-clockwise.
