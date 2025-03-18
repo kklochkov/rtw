@@ -1,5 +1,6 @@
 #include "math/barycentric.h"
 #include "sw_renderer/rasterisation_routines.h"
+#include "sw_renderer/vertex.h"
 
 #include <benchmark/benchmark.h>
 
@@ -44,16 +45,16 @@ void bm_fill_triangle_scanline(benchmark::State& state)
   const rtw::math::Point4F p1{140.0F, 40.0F, 0.0F};
   const rtw::math::Point4F p2{140.0F, 100.0F, 0.0F};
 
-  const rtw::sw_renderer::Vertex4F v0{p0};
-  const rtw::sw_renderer::Vertex4F v1{p1};
-  const rtw::sw_renderer::Vertex4F v2{p2};
+  const rtw::sw_renderer::VertexF v0{p0};
+  const rtw::sw_renderer::VertexF v1{p1};
+  const rtw::sw_renderer::VertexF v2{p2};
 
   for (auto _ : state)
   {
     rtw::sw_renderer::fill_triangle_scanline(
         v0, v1, v2,
-        [](const rtw::sw_renderer::Vertex4F& v0, const rtw::sw_renderer::Vertex4F& v1,
-           const rtw::sw_renderer::Vertex4F& v2, const rtw::math::Point2I& p)
+        [](const rtw::sw_renderer::VertexF& v0, const rtw::sw_renderer::VertexF& v1,
+           const rtw::sw_renderer::VertexF& v2, const rtw::math::Point2I& p)
         {
           auto vv0 = v0;
           auto vv1 = v1;
@@ -75,16 +76,16 @@ void bm_fill_triangle_bbox(benchmark::State& state)
   const rtw::math::Point4F p1{140.0F, 40.0F, 0.0F};
   const rtw::math::Point4F p2{140.0F, 100.0F, 0.0F};
 
-  const rtw::sw_renderer::Vertex4F v0{p0};
-  const rtw::sw_renderer::Vertex4F v1{p1};
-  const rtw::sw_renderer::Vertex4F v2{p2};
+  const rtw::sw_renderer::VertexF v0{p0};
+  const rtw::sw_renderer::VertexF v1{p1};
+  const rtw::sw_renderer::VertexF v2{p2};
 
   for (auto _ : state)
   {
     rtw::sw_renderer::fill_triangle_bbox(v0, v1, v2,
-                                         [](const rtw::sw_renderer::Vertex4F& v0, const rtw::sw_renderer::Vertex4F& v1,
-                                            const rtw::sw_renderer::Vertex4F& v2, const rtw::math::Point2I& p,
-                                            const rtw::math::Barycentric3F& b)
+                                         [](const rtw::sw_renderer::VertexF& v0, const rtw::sw_renderer::VertexF& v1,
+                                            const rtw::sw_renderer::VertexF& v2, const rtw::math::Point2I& p,
+                                            const rtw::math::BarycentricF& b)
                                          {
                                            auto vv0 = v0;
                                            auto vv1 = v1;

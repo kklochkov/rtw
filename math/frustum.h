@@ -24,6 +24,8 @@ struct Frustum3
 
 using Frustum3F = Frustum3<float>;
 using Frustum3D = Frustum3<double>;
+using Frustum3Q16 = Frustum3<fixed_point::FixedPoint16>;
+using Frustum3Q32 = Frustum3<fixed_point::FixedPoint32>;
 
 /// The parameters of a perspective projection.
 /// @tparam T The type of the projection parameters.

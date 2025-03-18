@@ -21,12 +21,12 @@ math::Point3F parse_vertex(const std::string& line)
   return vertex;
 }
 
-TexCoord2F parse_tex_coord(const std::string& line)
+TexCoordF parse_tex_coord(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vt"
 
-  TexCoord2F tex_coord{};
+  TexCoordF tex_coord{};
   iss >> tex_coord.u() >> tex_coord.v();
   return tex_coord;
 }

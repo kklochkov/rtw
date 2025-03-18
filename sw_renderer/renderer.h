@@ -1,13 +1,11 @@
 #pragma once
 
-#include "math/frustum.h"
 #include "sw_renderer/color_buffer.h"
 #include "sw_renderer/depth_buffer.h"
 #include "sw_renderer/flags.h"
 #include "sw_renderer/mesh.h"
+#include "sw_renderer/types.h"
 #include "sw_renderer/vertex.h"
-
-#include "math/point.h"
 
 namespace rtw::sw_renderer
 {
@@ -73,27 +71,27 @@ public:
     draw_line(v1, v2, color);
     draw_line(v2, v0, color);
   }
-  void fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Color color,
+  void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2, const Color color,
                           const float light_intensity);
-  void fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const float light_intensity);
-  void fill_triangle_bbox(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Texture& texture,
+  void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2, const float light_intensity);
+  void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2, const Texture& texture,
                           const float light_intensity);
 
-  void fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Color color,
+  void fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF& v2, const Color color,
                      const float light_intensity);
-  void fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const float light_intensity);
-  void fill_triangle(const Vertex4F& v0, const Vertex4F& v1, const Vertex4F& v2, const Texture& texture,
+  void fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF& v2, const float light_intensity);
+  void fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF& v2, const Texture& texture,
                      const float light_intensity);
 
-  void draw_mesh(const Mesh& mesh, const math::Matrix4x4F& model_view_matrix);
+  void draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix);
 
 private:
   ColorBuffer color_buffer_;
   DepthBuffer depth_buffer_;
-  math::Frustum3F frustum_;
-  math::Matrix4x4F projection_matrix_;
-  math::Matrix4x4F screen_space_matrix_;
-  math::Vector3F light_direction_;
+  Frustum3F frustum_;
+  Matrix4x4F projection_matrix_;
+  Matrix4x4F screen_space_matrix_;
+  Vector3F light_direction_;
   RenderModeFlags render_mode_{RenderMode::FACE_CULLING | RenderMode::WIREFRAME | RenderMode::SHADING
                                | RenderMode::LIGHT};
 };

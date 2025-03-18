@@ -79,10 +79,10 @@ std::ostream& operator<<(std::ostream& os, const Point<T, N>& point) noexcept
   return details::operator<<(os, point);
 }
 
-template <typename T, std::uint16_t N>
-std::ostream& operator<<(std::ostream& os, const Barycentric<T, N>& coord) noexcept
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Barycentric<T>& coord) noexcept
 {
-  os << "Barycentric" << N;
+  os << "Barycentric";
   return math::details::operator<<(os, coord);
 }
 
@@ -103,8 +103,8 @@ template <typename T, std::uint16_t N>
 struct formatter<rtw::math::Point<T, N>> : ostream_formatter
 {};
 
-template <typename T, std::uint16_t N>
-struct formatter<rtw::math::Barycentric<T, N>> : ostream_formatter
+template <typename T>
+struct formatter<rtw::math::Barycentric<T>> : ostream_formatter
 {};
 
 } // namespace fmt

@@ -8,57 +8,57 @@
 
 TEST(Barycentric, default_ctor)
 {
-  constexpr rtw::math::Barycentric3F B;
+  constexpr rtw::math::BarycentricF B;
   EXPECT_THAT(B, ::testing::ElementsAre(0, 0, 0));
 }
 
 TEST(Barycentric, init_list_ctor)
 {
-  constexpr rtw::math::Barycentric3F B{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B{1.0F, 2.0F, 3.0F};
   EXPECT_THAT(B, ::testing::ElementsAre(1, 2, 3));
 }
 
 TEST(Barycentric, conversion_ctor_from_matrix)
 {
   constexpr rtw::math::Matrix<float, 3, 1> M{1.0F, 2.0F, 3.0F};
-  constexpr rtw::math::Barycentric3F B{M};
+  constexpr rtw::math::BarycentricF B{M};
   EXPECT_THAT(B, ::testing::ElementsAre(1, 2, 3));
 }
 
 TEST(Barycentric, conversion_ctor_from_vector)
 {
   constexpr rtw::math::Vector3F V{1.0F, 2.0F, 3.0F};
-  constexpr rtw::math::Barycentric3F B{V};
+  constexpr rtw::math::BarycentricF B{V};
   EXPECT_THAT(B, ::testing::ElementsAre(1, 2, 3));
 }
 
 TEST(Barycentric, copy_ctor)
 {
-  constexpr rtw::math::Barycentric3F B1{1.0F, 2.0F, 3.0F};
-  constexpr rtw::math::Barycentric3F B2{B1};
+  constexpr rtw::math::BarycentricF B1{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B2{B1};
   EXPECT_THAT(B2, ::testing::ElementsAre(1, 2, 3));
 }
 
 TEST(Barycentric, move_ctor)
 {
-  rtw::math::Barycentric3F b1{1.0F, 2.0F, 3.0F};
+  rtw::math::BarycentricF b1{1.0F, 2.0F, 3.0F};
   // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
-  const rtw::math::Barycentric3F b2{std::move(b1)};
+  const rtw::math::BarycentricF b2{std::move(b1)};
   EXPECT_THAT(b2, ::testing::ElementsAre(1, 2, 3));
 }
 
 TEST(Barycentric, copy_assign)
 {
-  constexpr rtw::math::Barycentric3F B1{1.0F, 2.0F, 3.0F};
-  rtw::math::Barycentric3F b2;
+  constexpr rtw::math::BarycentricF B1{1.0F, 2.0F, 3.0F};
+  rtw::math::BarycentricF b2;
   b2 = B1;
   EXPECT_THAT(b2, ::testing::ElementsAre(1, 2, 3));
 }
 
 TEST(Barycentric, move_assign)
 {
-  rtw::math::Barycentric3F b1{1.0F, 2.0F, 3.0F};
-  rtw::math::Barycentric3F b2;
+  rtw::math::BarycentricF b1{1.0F, 2.0F, 3.0F};
+  rtw::math::BarycentricF b2;
   // NOLINTNEXTLINE(performance-move-const-arg, hicpp-move-const-arg) -- this is a test
   b2 = std::move(b1);
   EXPECT_THAT(b2, ::testing::ElementsAre(1, 2, 3));
@@ -66,7 +66,7 @@ TEST(Barycentric, move_assign)
 
 TEST(Barycentric, operator_brackets)
 {
-  rtw::math::Barycentric3F b{1.0F, 2.0F, 3.0F};
+  rtw::math::BarycentricF b{1.0F, 2.0F, 3.0F};
   b[0] = 4.0F;
   b[1] = 5.0F;
   b[2] = 6.0F;
@@ -77,7 +77,7 @@ TEST(Barycentric, operator_brackets)
 
 TEST(Barycentric, operator_brackets_const)
 {
-  constexpr rtw::math::Barycentric3F B{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B{1.0F, 2.0F, 3.0F};
   EXPECT_EQ(B[0], 1);
   EXPECT_EQ(B[1], 2);
   EXPECT_EQ(B[2], 3);
@@ -85,20 +85,20 @@ TEST(Barycentric, operator_brackets_const)
 
 TEST(Barycentric, operator_brackets_out_of_range)
 {
-  rtw::math::Barycentric3F b{1.0F, 2.0F, 3.0F};
+  rtw::math::BarycentricF b{1.0F, 2.0F, 3.0F};
   b[0] = 4;
   EXPECT_DEATH(b[3], "");
 }
 
 TEST(Barycentric, operator_brackets_const_out_of_range)
 {
-  constexpr rtw::math::Barycentric3F B{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B{1.0F, 2.0F, 3.0F};
   EXPECT_DEATH(B[3], "");
 }
 
 TEST(Barycentric, accessors)
 {
-  rtw::math::Barycentric3F b{1.0F, 2.0F, 3.0F};
+  rtw::math::BarycentricF b{1.0F, 2.0F, 3.0F};
   EXPECT_EQ(b.alpha(), 1);
   EXPECT_EQ(b.beta(), 2);
   EXPECT_EQ(b.gamma(), 3);
@@ -113,7 +113,7 @@ TEST(Barycentric, accessors)
 
 TEST(Barycentric, accessors_const)
 {
-  constexpr rtw::math::Barycentric3F B{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B{1.0F, 2.0F, 3.0F};
   EXPECT_EQ(B.alpha(), 1);
   EXPECT_EQ(B.beta(), 2);
   EXPECT_EQ(B.gamma(), 3);
@@ -121,14 +121,14 @@ TEST(Barycentric, accessors_const)
 
 TEST(Barycentric, operator_cast_to_vector)
 {
-  constexpr rtw::math::Barycentric3F B{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B{1.0F, 2.0F, 3.0F};
   constexpr auto V = static_cast<rtw::math::Vector3F>(B);
   EXPECT_THAT(V, ::testing::ElementsAre(1, 2, 3));
 }
 
 TEST(Barycentric, as_matrix)
 {
-  constexpr rtw::math::Barycentric3F B{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B{1.0F, 2.0F, 3.0F};
   constexpr auto M = B.as_matrix();
   EXPECT_EQ(M.rows(), 3);
   EXPECT_EQ(M.cols(), 1);
@@ -137,18 +137,18 @@ TEST(Barycentric, as_matrix)
 
 TEST(Barycentric, operator_equal)
 {
-  constexpr rtw::math::Barycentric3F B1{1.0F, 2.0F, 3.0F};
-  constexpr rtw::math::Barycentric3F B2{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B1{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B2{1.0F, 2.0F, 3.0F};
   EXPECT_TRUE(B1 == B2);
   EXPECT_FALSE(B1 != B2);
 }
 
 TEST(Barycentric, operator_stream)
 {
-  constexpr rtw::math::Barycentric3F B{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::BarycentricF B{1.0F, 2.0F, 3.0F};
   std::stringstream ss;
   ss << B;
-  constexpr auto EXPECTED = R"(Barycentric3[1.0000 2.0000 3.0000])";
+  constexpr auto EXPECTED = R"(Barycentric[1.0000 2.0000 3.0000])";
   EXPECT_EQ(ss.str(), EXPECTED);
 }
 
@@ -158,16 +158,16 @@ TEST(Barycentric, make_baricentric)
   const rtw::math::Point2F v1{1.0F, 0.0F};
   const rtw::math::Point2F v2{0.0F, 1.0F};
 
-  const std::array<std::pair<rtw::math::Point2F, rtw::math::Barycentric3F>, 9> data = {
-      std::pair{rtw::math::Point2F{0.0F, 0.0F}, rtw::math::Barycentric3F{1.0F, 0.0F, 0.0F}},
-      std::pair{rtw::math::Point2F{0.5F, 0.0F}, rtw::math::Barycentric3F{0.5F, 0.5F, 0.0F}},
-      std::pair{rtw::math::Point2F{0.0F, 0.5F}, rtw::math::Barycentric3F{0.5F, 0.0F, 0.5F}},
-      std::pair{rtw::math::Point2F{0.5F, 0.5F}, rtw::math::Barycentric3F{0.0F, 0.5F, 0.5F}},
-      std::pair{rtw::math::Point2F{0.4F, 0.4F}, rtw::math::Barycentric3F{0.2F, 0.4F, 0.4F}},
-      std::pair{rtw::math::Point2F{-0.5F, 0.5F}, rtw::math::Barycentric3F{1.0F, -0.5F, 0.5F}},
-      std::pair{rtw::math::Point2F{-0.5F, -0.5F}, rtw::math::Barycentric3F{2.0F, -0.5F, -0.5F}},
-      std::pair{rtw::math::Point2F{0.5F, -0.5F}, rtw::math::Barycentric3F{1.0F, 0.5F, -0.5F}},
-      std::pair{rtw::math::Point2F{1.0F, 1.0F}, rtw::math::Barycentric3F{-1.0F, 1.0F, 1.0F}},
+  const std::array<std::pair<rtw::math::Point2F, rtw::math::BarycentricF>, 9> data = {
+      std::pair{rtw::math::Point2F{0.0F, 0.0F}, rtw::math::BarycentricF{1.0F, 0.0F, 0.0F}},
+      std::pair{rtw::math::Point2F{0.5F, 0.0F}, rtw::math::BarycentricF{0.5F, 0.5F, 0.0F}},
+      std::pair{rtw::math::Point2F{0.0F, 0.5F}, rtw::math::BarycentricF{0.5F, 0.0F, 0.5F}},
+      std::pair{rtw::math::Point2F{0.5F, 0.5F}, rtw::math::BarycentricF{0.0F, 0.5F, 0.5F}},
+      std::pair{rtw::math::Point2F{0.4F, 0.4F}, rtw::math::BarycentricF{0.2F, 0.4F, 0.4F}},
+      std::pair{rtw::math::Point2F{-0.5F, 0.5F}, rtw::math::BarycentricF{1.0F, -0.5F, 0.5F}},
+      std::pair{rtw::math::Point2F{-0.5F, -0.5F}, rtw::math::BarycentricF{2.0F, -0.5F, -0.5F}},
+      std::pair{rtw::math::Point2F{0.5F, -0.5F}, rtw::math::BarycentricF{1.0F, 0.5F, -0.5F}},
+      std::pair{rtw::math::Point2F{1.0F, 1.0F}, rtw::math::BarycentricF{-1.0F, 1.0F, 1.0F}},
   };
 
   for (const auto& [p, b] : data)

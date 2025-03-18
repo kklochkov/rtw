@@ -56,15 +56,15 @@ private:
   SDL_Texture* sdl_texture_{nullptr};
   rtw::sw_renderer::Renderer sw_renderer_;
   rtw::sw_renderer::Mesh mesh_;
-  rtw::math::Matrix4x4F model_matrix_;
-  rtw::math::Matrix4x4F view_matrix_;
-  rtw::math::EulerAnglesF rotation_{0.0_degF, 45.0_degF, 0.0_degF};
-  rtw::math::Vector3F translation_{0.0F, 0.0F, -5.0F};
-  rtw::math::Vector3F scale_{1.0F, 1.0F, 1.0F};
+  rtw::sw_renderer::Matrix4x4F model_matrix_;
+  rtw::sw_renderer::Matrix4x4F view_matrix_;
+  rtw::sw_renderer::EulerAnglesF rotation_{0.0_degF, 45.0_degF, 0.0_degF};
+  rtw::sw_renderer::Vector3F translation_{0.0F, 0.0F, -5.0F};
+  rtw::sw_renderer::Vector3F scale_{1.0F, 1.0F, 1.0F};
   rtw::sw_renderer::Camera camera_{
-      rtw::math::Point3F{0.0F, 0.0F, 0.0F},
-      rtw::math::Vector3F{0.0F, 0.0F, -1.0F},
-      rtw::math::Vector3F{0.0F, 0.0F, 0.0F},
+      rtw::sw_renderer::Point3F{0.0F, 0.0F, 0.0F},
+      rtw::sw_renderer::Vector3F{0.0F, 0.0F, -1.0F},
+      rtw::sw_renderer::Vector3F{0.0F, 0.0F, 0.0F},
   };
   bool show_demo_window_{false};
 };
@@ -286,9 +286,10 @@ void Application::update(const rtw::sw_renderer::Seconds& delta_time)
 {
   std::ignore = delta_time;
 
-  rtw::math::Point3F target{0.0F, 0.0F, -1.0F};
+  rtw::sw_renderer::Point3F target{0.0F, 0.0F, -1.0F};
 
-  camera_.direction = rtw::math::transform3::make_rotation(camera_.rotation) * static_cast<rtw::math::Vector3F>(target);
+  camera_.direction =
+      rtw::math::transform3::make_rotation(camera_.rotation) * static_cast<rtw::sw_renderer::Vector3F>(target);
 
   target = camera_.position + camera_.direction;
 
