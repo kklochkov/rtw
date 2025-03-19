@@ -20,3 +20,4 @@ bazel run //sandbox/sw_renderer -c opt -- --mesh path/to/my/mesh.obj
 ```
 
 Note the `-c opt` flag, which is used to run the application in release mode to get better performance.
+It's possible to run the demo application that uses fixed-point arithmetic by adding the `--define=use_fixed_point`.

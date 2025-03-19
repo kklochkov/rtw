@@ -24,11 +24,15 @@ bazel test //math/...
 ```
 
 ## Currently implemented:
-- [x] [software renderer](sw_renderer) and [math](math) libraries. To run the software renderer demo application use the following command:
+- [x] [fixed_point](fixed_point) - a fixed-point arithmetic library and a set of math functions including trigonometric functions.
+- [x] [math](math) - a math library, that is compatible with fixed-point arithmetic library.
+- [x] [software renderer](sw_renderer) - a simple software renderer that can optionally built to use fixed-point arithmetic library.
+To run the software renderer demo application use the following command:
 ```bash
 bazel run //sandbox/sw_renderer -c opt
 ```
 Note the `-c opt` flag, which is used to run the application in release mode to get better performance.
+It's possible to run the demo application that uses fixed-point arithmetic by adding the `--define=use_fixed_point`.
 
 ## Third party libraries
 - [SDL2](https://www.libsdl.org/) - Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D

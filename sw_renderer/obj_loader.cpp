@@ -11,14 +11,18 @@ namespace rtw::sw_renderer
 namespace
 {
 
-math::Point3F parse_vertex(const std::string& line)
+Point3F parse_vertex(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(1); // Ignore "v"
 
-  math::Point3F vertex{};
-  iss >> vertex.x() >> vertex.y() >> vertex.z();
-  return vertex;
+  float x = 0.0F;
+  float y = 0.0F;
+  float z = 0.0F;
+
+  iss >> x >> y >> z;
+
+  return Point3F{x, y, z};
 }
 
 TexCoordF parse_tex_coord(const std::string& line)
@@ -26,19 +30,26 @@ TexCoordF parse_tex_coord(const std::string& line)
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vt"
 
-  TexCoordF tex_coord{};
-  iss >> tex_coord.u() >> tex_coord.v();
-  return tex_coord;
+  float u = 0.0F;
+  float v = 0.0F;
+
+  iss >> u >> v;
+
+  return TexCoordF{u, v};
 }
 
-math::Vector3F parse_normal(const std::string& line)
+Vector3F parse_normal(const std::string& line)
 {
   std::istringstream iss(line);
   iss.ignore(2); // Ignore "vn"
 
-  math::Vector3F normal{};
-  iss >> normal.x() >> normal.y() >> normal.z();
-  return normal;
+  float x = 0.0F;
+  float y = 0.0F;
+  float z = 0.0F;
+
+  iss >> x >> y >> z;
+
+  return Vector3F{x, y, z};
 }
 
 bool try_parse_index(std::istringstream& iss, std::uint32_t& index)

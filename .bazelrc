@@ -65,3 +65,7 @@ build:ubsan --linkopt=-fsanitize-link-c++-runtime
 build:sssan --config=sanitizers
 build:sssan --copt=-fsanitize=safe-stack
 build:sssan --linkopt=-fsanitize=safe-stack
+
+# different custom configs
+build:debug-drawing --copt="-DRTW_DEBUG_DRAWING"
+build:use-fixed-point --copt="-DRTW_USE_FIXED_POINT"

@@ -1,6 +1,7 @@
 #include "sw_renderer/camera.h"
 #include "sw_renderer/obj_loader.h"
 #include "sw_renderer/renderer.h"
+#include "sw_renderer/types.h"
 
 #include "math/transform3.h"
 
@@ -18,7 +19,7 @@
 #include <chrono>
 #include <thread>
 
-using namespace rtw::math::angle_literals;
+using namespace rtw::sw_renderer::angle_literals;
 
 namespace rtw::sw_renderer
 {
