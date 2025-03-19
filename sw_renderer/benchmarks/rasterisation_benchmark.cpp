@@ -9,13 +9,13 @@ namespace
 
 void bm_draw_line_dda(benchmark::State& state)
 {
-  const rtw::math::Point2I p0{80, 40};
-  const rtw::math::Point2I p1{140, 100};
+  const rtw::sw_renderer::Point2I p0{80, 40};
+  const rtw::sw_renderer::Point2I p1{140, 100};
 
   for (auto _ : state)
   {
     rtw::sw_renderer::draw_line_dda(p0, p1,
-                                    [](const rtw::math::Point2I& p)
+                                    [](const rtw::sw_renderer::Point2I& p)
                                     {
                                       auto pp = p;
                                       benchmark::DoNotOptimize(pp);
@@ -25,13 +25,13 @@ void bm_draw_line_dda(benchmark::State& state)
 
 void bm_draw_line_bresenham(benchmark::State& state)
 {
-  const rtw::math::Point2I p0{80, 40};
-  const rtw::math::Point2I p1{140, 100};
+  const rtw::sw_renderer::Point2I p0{80, 40};
+  const rtw::sw_renderer::Point2I p1{140, 100};
 
   for (auto _ : state)
   {
     rtw::sw_renderer::draw_line_bresenham(p0, p1,
-                                          [](const rtw::math::Point2I& p)
+                                          [](const rtw::sw_renderer::Point2I& p)
                                           {
                                             auto pp = p;
                                             benchmark::DoNotOptimize(pp);
@@ -41,9 +41,9 @@ void bm_draw_line_bresenham(benchmark::State& state)
 
 void bm_fill_triangle_scanline(benchmark::State& state)
 {
-  const rtw::math::Point4F p0{80.0F, 40.0F, 0.0F};
-  const rtw::math::Point4F p1{140.0F, 40.0F, 0.0F};
-  const rtw::math::Point4F p2{140.0F, 100.0F, 0.0F};
+  const rtw::sw_renderer::Point4F p0{80.0F, 40.0F, 0.0F};
+  const rtw::sw_renderer::Point4F p1{140.0F, 40.0F, 0.0F};
+  const rtw::sw_renderer::Point4F p2{140.0F, 100.0F, 0.0F};
 
   const rtw::sw_renderer::VertexF v0{p0};
   const rtw::sw_renderer::VertexF v1{p1};
@@ -54,13 +54,14 @@ void bm_fill_triangle_scanline(benchmark::State& state)
     rtw::sw_renderer::fill_triangle_scanline(
         v0, v1, v2,
         [](const rtw::sw_renderer::VertexF& v0, const rtw::sw_renderer::VertexF& v1,
-           const rtw::sw_renderer::VertexF& v2, const rtw::math::Point2I& p)
+           const rtw::sw_renderer::VertexF& v2, const rtw::sw_renderer::Point2I& p)
         {
           auto vv0 = v0;
           auto vv1 = v1;
           auto vv2 = v2;
           auto pp = p;
-          auto b = rtw::math::make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(), p.cast<float>());
+          auto b = rtw::math::make_barycentric(v0.point.xy(), v1.point.xy(), v2.point.xy(),
+                                               p.cast<rtw::sw_renderer::single_precision>());
           benchmark::DoNotOptimize(vv0);
           benchmark::DoNotOptimize(vv1);
           benchmark::DoNotOptimize(vv2);
@@ -72,9 +73,9 @@ void bm_fill_triangle_scanline(benchmark::State& state)
 
 void bm_fill_triangle_bbox(benchmark::State& state)
 {
-  const rtw::math::Point4F p0{80.0F, 40.0F, 0.0F};
-  const rtw::math::Point4F p1{140.0F, 40.0F, 0.0F};
-  const rtw::math::Point4F p2{140.0F, 100.0F, 0.0F};
+  const rtw::sw_renderer::Point4F p0{80.0F, 40.0F, 0.0F};
+  const rtw::sw_renderer::Point4F p1{140.0F, 40.0F, 0.0F};
+  const rtw::sw_renderer::Point4F p2{140.0F, 100.0F, 0.0F};
 
   const rtw::sw_renderer::VertexF v0{p0};
   const rtw::sw_renderer::VertexF v1{p1};
@@ -84,8 +85,8 @@ void bm_fill_triangle_bbox(benchmark::State& state)
   {
     rtw::sw_renderer::fill_triangle_bbox(v0, v1, v2,
                                          [](const rtw::sw_renderer::VertexF& v0, const rtw::sw_renderer::VertexF& v1,
-                                            const rtw::sw_renderer::VertexF& v2, const rtw::math::Point2I& p,
-                                            const rtw::math::BarycentricF& b)
+                                            const rtw::sw_renderer::VertexF& v2, const rtw::sw_renderer::Point2I& p,
+                                            const rtw::sw_renderer::BarycentricF& b)
                                          {
                                            auto vv0 = v0;
                                            auto vv1 = v1;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sw_renderer/types.h"
+
 #include "math/angle.h"
 #include "math/point.h"
 
@@ -33,10 +35,10 @@ constexpr math::Matrix4x4<T> make_look_at(const math::Point3<T>& eye, const math
 
 struct Camera
 {
-  math::Point3F position;
-  math::Vector3F direction;
-  math::Vector3F velocity;
-  math::EulerAnglesF rotation{};
+  Point3F position;
+  Vector3F direction;
+  Vector3F velocity;
+  EulerAnglesF rotation{};
 };
 
 } // namespace rtw::sw_renderer

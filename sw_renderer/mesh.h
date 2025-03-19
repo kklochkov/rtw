@@ -1,10 +1,9 @@
 #pragma once
 
-#include "math/point.h"
-
 #include "sw_renderer/color.h"
 #include "sw_renderer/tex_coord.h"
 #include "sw_renderer/texture.h"
+#include "sw_renderer/types.h"
 
 #include <map>
 #include <optional>
@@ -59,9 +58,9 @@ struct Mesh
     return it != textures.end() ? it->second : Texture{};
   }
 
-  std::vector<math::Point3F> vertices;
+  std::vector<Point3F> vertices;
   std::vector<TexCoordF> tex_coords;
-  std::vector<math::Vector3F> normals;
+  std::vector<Vector3F> normals;
   std::vector<Face> faces;
   std::map<std::string, Material> materials;
   std::map<std::string, Texture> textures;

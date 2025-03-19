@@ -62,10 +62,10 @@ public:
   void set_depth(const std::size_t x, const std::size_t y, const float depth) { depth_buffer_.set_depth(x, y, depth); }
   float depth(const std::size_t x, const std::size_t y) const { return depth_buffer_.depth(x, y); }
 
-  void draw_pixel(const math::Point2I& point, const Color color);
-  void draw_pixel(const math::Point2I& point, const Color color, const std::uint16_t size);
-  void draw_line(const math::Point2I& p0, const math::Point2I& p1, const Color color);
-  void draw_triangle(const math::Point2I& v0, const math::Point2I& v1, const math::Point2I& v2, const Color color)
+  void draw_pixel(const Point2I& point, const Color color);
+  void draw_pixel(const Point2I& point, const Color color, const std::uint16_t size);
+  void draw_line(const Point2I& p0, const Point2I& p1, const Color color);
+  void draw_triangle(const Point2I& v0, const Point2I& v1, const Point2I& v2, const Color color)
   {
     draw_line(v0, v1, color);
     draw_line(v1, v2, color);

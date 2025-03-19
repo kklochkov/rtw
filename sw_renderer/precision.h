@@ -10,8 +10,8 @@ namespace rtw::sw_renderer
 {
 
 #ifdef RTW_USE_FIXED_POINT
-using single_precision = math::fixed_point::FixedPoint16;
-using double_precision = math::fixed_point::FixedPoint32;
+using single_precision = fixed_point::FixedPoint16;
+using double_precision = fixed_point::FixedPoint32;
 
 // unit of least precision
 constexpr single_precision ULP{1};// NOLINT(clang-diagnostic-unused-const-variable)

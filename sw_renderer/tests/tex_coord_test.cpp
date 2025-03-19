@@ -1,5 +1,5 @@
-#include "sw_renderer/tex_coord.h"
 #include "sw_renderer/format.h"
+#include "sw_renderer/types.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -18,14 +18,14 @@ TEST(TexCoord, init_list_ctor)
 
 TEST(TexCoord, conversion_ctor_from_matrix)
 {
-  constexpr rtw::math::Matrix<float, 2, 1> M{1.0F, 2.0F};
+  constexpr rtw::math::Matrix<rtw::sw_renderer::single_precision, 2, 1> M{1.0F, 2.0F};
   constexpr rtw::sw_renderer::TexCoordF T{M};
   EXPECT_THAT(T, ::testing::ElementsAre(1, 2));
 }
 
 TEST(TexCoord, conversion_ctor_from_vector)
 {
-  constexpr rtw::math::Vector2F V{1.0F, 2.0F};
+  constexpr rtw::sw_renderer::Vector2F V{1.0F, 2.0F};
   constexpr rtw::sw_renderer::TexCoordF T{V};
   EXPECT_THAT(T, ::testing::ElementsAre(1, 2));
 }
@@ -113,7 +113,7 @@ TEST(TexCoord, accessors_const)
 TEST(TexCoord, operator_cast_to_vector)
 {
   constexpr rtw::sw_renderer::TexCoordF T{1.0F, 2.0F};
-  constexpr auto V = static_cast<rtw::math::Vector2F>(T);
+  constexpr auto V = static_cast<rtw::sw_renderer::Vector2F>(T);
   EXPECT_THAT(V, ::testing::ElementsAre(1, 2));
 }
 
@@ -138,7 +138,7 @@ TEST(TextCoord, interpolation)
 {
   constexpr rtw::sw_renderer::TexCoordF T1{1.0F, 2.0F};
   constexpr rtw::sw_renderer::TexCoordF T2{3.0F, 4.0F};
-  const auto t = rtw::sw_renderer::lerp(T1, T2, 0.5F);
+  const auto t = rtw::sw_renderer::lerp(T1, T2, rtw::sw_renderer::single_precision{0.5F});
   EXPECT_THAT(t, ::testing::ElementsAre(2, 3));
 }
 
@@ -158,7 +158,7 @@ TEST(TexCoord, operator_divide_equal)
 
 TEST(TextCoord, operator_stream)
 {
-  constexpr rtw::sw_renderer::TexCoordF T{1.0F, 2.0F};
+  constexpr rtw::sw_renderer::TexCoord<float> T{1.0F, 2.0F};
   std::stringstream ss;
   ss << T;
   constexpr auto EXPECTED = R"(TexCoord[1.0000 2.0000])";

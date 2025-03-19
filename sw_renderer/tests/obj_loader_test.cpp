@@ -69,8 +69,8 @@ f 7//1 8//2 9//3
   ASSERT_EQ(mesh.faces.size(), 4U);
   ASSERT_EQ(mesh.materials.size(), 0U);
 
-  const rtw::math::Point3F expected_vertices[] = {
-      rtw::math::Point3F{0.123F, 0.234F, 0.345F},
+  const rtw::sw_renderer::Point3F expected_vertices[] = {
+      rtw::sw_renderer::Point3F{0.123F, 0.234F, 0.345F},
   };
   EXPECT_THAT(mesh.vertices, testing::ElementsAreArray(expected_vertices));
 
@@ -151,11 +151,11 @@ TEST(ObjLoader, load_obj_from_file)
   const auto& vertices = mesh->vertices;
   ASSERT_EQ(vertices.size(), 8U);
 
-  const rtw::math::Point3F expected_vertices[] = {
-      rtw::math::Point3F{1.0F, 1.0F, -1.0F},  rtw::math::Point3F{1.0F, -1.0F, -1.0F},
-      rtw::math::Point3F{1.0F, 1.0F, 1.0F},   rtw::math::Point3F{1.0F, -1.0F, 1.0F},
-      rtw::math::Point3F{-1.0F, 1.0F, -1.0F}, rtw::math::Point3F{-1.0F, -1.0F, -1.0F},
-      rtw::math::Point3F{-1.0F, 1.0F, 1.0F},  rtw::math::Point3F{-1.0F, -1.0F, 1.0F},
+  const rtw::sw_renderer::Point3F expected_vertices[] = {
+      rtw::sw_renderer::Point3F{1.0F, 1.0F, -1.0F},  rtw::sw_renderer::Point3F{1.0F, -1.0F, -1.0F},
+      rtw::sw_renderer::Point3F{1.0F, 1.0F, 1.0F},   rtw::sw_renderer::Point3F{1.0F, -1.0F, 1.0F},
+      rtw::sw_renderer::Point3F{-1.0F, 1.0F, -1.0F}, rtw::sw_renderer::Point3F{-1.0F, -1.0F, -1.0F},
+      rtw::sw_renderer::Point3F{-1.0F, 1.0F, 1.0F},  rtw::sw_renderer::Point3F{-1.0F, -1.0F, 1.0F},
   };
   EXPECT_THAT(vertices, testing::ElementsAreArray(expected_vertices));
 

@@ -44,7 +44,7 @@ constexpr ConvexPolygonVertex<T, CAPACITY> clip_against_plane(const ConvexPolygo
       const auto t = current_n_dot / (current_n_dot - next_n_dot);
       Vertex<T> intersection;
       intersection.point = math::lerp(current.point, next.point, t);
-      intersection.color = lerp(current.color, next.color, t);
+      intersection.color = lerp(current.color, next.color, static_cast<float>(t));
       intersection.tex_coord = lerp(current.tex_coord, next.tex_coord, t);
       clipped_result.push_back(intersection);
     }

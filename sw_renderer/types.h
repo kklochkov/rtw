@@ -1,7 +1,10 @@
 #pragma once
 
 #include "sw_renderer/precision.h"
+#include "sw_renderer/tex_coord.h"
+
 #include "math/angle.h"
+#include "math/barycentric.h"
 #include "math/frustum.h"
 #include "math/matrix.h"
 #include "math/point.h"
@@ -21,6 +24,7 @@ using Vector4D = math::Vector4<double_precision>;
 
 using Point2F = math::Point2<single_precision>;
 using Point2D = math::Point2<double_precision>;
+using Point2I = math::Point2<std::int32_t>;
 
 using Point3F = math::Point3<single_precision>;
 using Point3D = math::Point3<double_precision>;
@@ -42,5 +46,36 @@ using AngleD = math::Angle<double_precision>;
 
 using EulerAnglesF = math::EulerAngles<single_precision>;
 using EulerAnglesD = math::EulerAngles<double_precision>;
+
+using BarycentricF = math::Barycentric<single_precision>;
+using BarycentricD = math::Barycentric<double_precision>;
+
+using TexCoordF = TexCoord<single_precision>;
+using TexCoordD = TexCoord<double_precision>;
+
+namespace angle_literals
+{
+
+constexpr AngleF operator"" _degF(long double value) noexcept
+{
+  return AngleF{math::DEG, static_cast<single_precision>(value)};
+}
+
+constexpr AngleD operator"" _degD(unsigned long long value) noexcept
+{
+  return AngleD{math::DEG, static_cast<double_precision>(value)};
+}
+
+constexpr AngleF operator"" _radF(long double value) noexcept
+{
+  return AngleF{math::RAD, static_cast<single_precision>(value)};
+}
+
+constexpr AngleD operator"" _radD(unsigned long long value) noexcept
+{
+  return AngleD{math::RAD, static_cast<double_precision>(value)};
+}
+
+} // namespace angle_literals
 
 } // namespace rtw::sw_renderer

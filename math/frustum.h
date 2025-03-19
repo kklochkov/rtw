@@ -54,7 +54,10 @@ constexpr FrustumParameters<T> make_perspective_parameters(const Angle<T> fov_y,
   assert(near > T{0});
   assert(far > near);
 
-  const auto top = near * std::tan(fov_y / T{2});
+  using fixed_point::math::tan;
+  using std::tan;
+
+  const auto top = near * tan(fov_y.rad() / T{2});
   const auto left = top * aspect_ratio;
   const auto bottom = -top;
   const auto right = -left;
@@ -69,8 +72,11 @@ constexpr FrustumParameters<T> make_perspective_parameters(const Angle<T> fov_y,
 template <typename T>
 constexpr Matrix4x4<T> make_perspective_projection_matrix(const FrustumParameters<T> params) noexcept
 {
-  const auto width = std::abs(params.right - params.left);  // assuming that left and right are not symmetric
-  const auto height = std::abs(params.top - params.bottom); // assuming that top and bottom are not symmetric
+  using fixed_point::math::abs;
+  using std::abs;
+
+  const auto width = abs(params.right - params.left);  // assuming that left and right are not symmetric
+  const auto height = abs(params.top - params.bottom); // assuming that top and bottom are not symmetric
   const auto depth = params.far - params.near;
 
   assert(width > T{0});

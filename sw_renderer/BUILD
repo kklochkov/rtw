@@ -25,7 +25,6 @@ cc_library(
         "types.h",
         "vertex.h",
     ],
-    #    defines = ["DEBUG_DRAWING"],
     visibility = ["//visibility:public"],
     deps = [
         "//math",

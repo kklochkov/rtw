@@ -98,9 +98,6 @@ public:
   friend std::ostream& operator<< <T>(std::ostream& os, const TexCoord& coord) noexcept;
 };
 
-using TexCoordF = TexCoord<float>;
-using TexCoordD = TexCoord<double>;
-
 template <typename T>
 constexpr TexCoord<T> lerp(const TexCoord<T>& lhs, const TexCoord<T>& rhs, const T t) noexcept
 {
