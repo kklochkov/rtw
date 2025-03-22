@@ -1,9 +1,16 @@
 #pragma once
 
+#include <iosfwd>
 #include <type_traits>
 
 namespace rtw::sw_renderer
 {
+
+template <typename T>
+class Flags;
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Flags<T>& flags) noexcept;
 
 template <typename T>
 class Flags
@@ -108,6 +115,9 @@ public:
   friend constexpr bool operator!=(const underlying_type lhs, const Flags& rhs) noexcept { return lhs != rhs.flags_; }
   friend constexpr bool operator!=(const T lhs, const Flags& rhs) noexcept { return Flags{lhs} != rhs.flags_; }
   /// @}
+
+  friend std::ostream& operator<< <T>(std::ostream& os, const Flags& flags) noexcept;
+
 private:
   constexpr explicit Flags(const underlying_type flags) noexcept : flags_{flags} {}
 

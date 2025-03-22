@@ -1,4 +1,5 @@
 #include "sw_renderer/flags.h"
+#include "sw_renderer/format.h"
 
 #include <gtest/gtest.h>
 
@@ -7,6 +8,11 @@ enum class TestEnum : std::uint8_t
   A = 1U << 0U,
   B = 1U << 1U,
   C = 1U << 2U,
+  D = 1U << 3U,
+  E = 1U << 4U,
+  F = 1U << 5U,
+  G = 1U << 6U,
+  H = 1U << 7U
 };
 
 using TestFlags = rtw::sw_renderer::Flags<TestEnum>;
@@ -170,4 +176,35 @@ TEST(Flags, operator_bool)
   EXPECT_FALSE(static_cast<bool>(TestFlags{}));
   EXPECT_TRUE(!TestFlags{});
   EXPECT_TRUE(static_cast<bool>(!TestFlags{}));
+}
+
+TEST(Flags, operator_stream)
+{
+  using namespace rtw::sw_renderer;
+
+  {
+    const TestFlags flags{};
+    std::ostringstream oss;
+    oss << flags;
+    EXPECT_EQ("Flags(00000000)\n", oss.str());
+  }
+  {
+    const TestFlags flags{TestEnum::A | TestEnum::B | TestEnum::C | TestEnum::D | TestEnum::E | TestEnum::F
+                          | TestEnum::G | TestEnum::H};
+    std::ostringstream oss;
+    oss << flags;
+    EXPECT_EQ("Flags(11111111)\n", oss.str());
+  }
+  {
+    const TestFlags flags{TestEnum::A | TestEnum::C | TestEnum::E | TestEnum::G};
+    std::ostringstream oss;
+    oss << flags;
+    EXPECT_EQ("Flags(10101010)\n", oss.str());
+  }
+  {
+    const TestFlags flags{TestEnum::B | TestEnum::D | TestEnum::F | TestEnum::H};
+    std::ostringstream oss;
+    oss << flags;
+    EXPECT_EQ("Flags(01010101)\n", oss.str());
+  }
 }
