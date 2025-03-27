@@ -40,6 +40,8 @@ public:
     }
   }
 
+  constexpr void reset() noexcept { flags_ = static_cast<underlying_type>(0); }
+
   constexpr bool test(const T flag) const noexcept
   {
     return (flags_ & static_cast<underlying_type>(flag)) == static_cast<underlying_type>(flag);

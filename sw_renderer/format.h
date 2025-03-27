@@ -7,6 +7,7 @@
 
 #include <fmt/ostream.h>
 
+#include <iostream>
 #include <ostream>
 
 namespace rtw::sw_renderer
@@ -35,7 +36,7 @@ inline std::ostream& operator<<(std::ostream& os, const Color color) noexcept
   os << ", gf: " << color.gf();
   os << ", bf: " << color.bf();
   os << ", af: " << color.af();
-  os << ")\n";
+  os << ')';
   os.flags(temp_format);
   return os;
 }
@@ -47,12 +48,12 @@ std::ostream& operator<<(std::ostream& os, const Flags<T>& flags) noexcept
 
   const auto bits_count = sizeof(T) * 8U;
   const char values[] = {'0', '1'};
-  for (std::size_t i = 0U; i < bits_count; ++i)
+  for (std::size_t i = bits_count; i--;)
   {
     os << values[(flags.flags_ >> i) & 1U];
   }
 
-  os << ")\n";
+  os << ')';
   return os;
 }
 
@@ -67,6 +68,10 @@ struct formatter<rtw::sw_renderer::TexCoord<T>> : ostream_formatter
 
 template <>
 struct formatter<rtw::sw_renderer::Color> : ostream_formatter
+{};
+
+template <typename T>
+struct formatter<rtw::sw_renderer::Flags<T>> : ostream_formatter
 {};
 
 } // namespace fmt
