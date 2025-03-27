@@ -186,25 +186,48 @@ TEST(Flags, operator_stream)
     const TestFlags flags{};
     std::ostringstream oss;
     oss << flags;
-    EXPECT_EQ("Flags(00000000)\n", oss.str());
+    EXPECT_EQ("Flags(00000000)", oss.str());
   }
   {
     const TestFlags flags{TestEnum::A | TestEnum::B | TestEnum::C | TestEnum::D | TestEnum::E | TestEnum::F
                           | TestEnum::G | TestEnum::H};
     std::ostringstream oss;
     oss << flags;
-    EXPECT_EQ("Flags(11111111)\n", oss.str());
+    EXPECT_EQ("Flags(11111111)", oss.str());
   }
   {
     const TestFlags flags{TestEnum::A | TestEnum::C | TestEnum::E | TestEnum::G};
     std::ostringstream oss;
     oss << flags;
-    EXPECT_EQ("Flags(10101010)\n", oss.str());
+    EXPECT_EQ("Flags(01010101)", oss.str());
   }
   {
     const TestFlags flags{TestEnum::B | TestEnum::D | TestEnum::F | TestEnum::H};
     std::ostringstream oss;
     oss << flags;
-    EXPECT_EQ("Flags(01010101)\n", oss.str());
+    EXPECT_EQ("Flags(10101010)", oss.str());
   }
+  {
+    const auto bits_count = sizeof(TestEnum) * 8U;
+    for (std::size_t i = 0U; i < bits_count; ++i)
+    {
+      const TestFlags flags{static_cast<TestEnum>(1U << i)};
+      std::ostringstream oss;
+      oss << flags;
+      std::string bits_str{"00000000"};
+      bits_str[bits_count - 1U - i] = '1';
+      const std::string expected = "Flags(" + bits_str + ")";
+      EXPECT_EQ(expected, oss.str());
+    }
+  }
+}
+
+TEST(Flags, reset)
+{
+  using namespace rtw::sw_renderer;
+
+  TestFlags flags{TestEnum::A | TestEnum::B | TestEnum::C};
+  EXPECT_EQ(TestEnum::A | TestEnum::B | TestEnum::C, flags);
+  flags.reset();
+  EXPECT_TRUE(flags.none());
 }

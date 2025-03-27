@@ -37,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const FixedPoint<T, FRAC_BITS, Satura
   }
 
   os << '.' << static_cast<std::int32_t>(FixedPoint::FRACTIONAL_BITS);
-  os << "(" << static_cast<double>(value) << ")";
+  os << '(' << static_cast<double>(value) << ')';
   os.flags(temp_format);
   return os;
 }

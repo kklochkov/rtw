@@ -93,7 +93,7 @@ TEST(Color, operator_stream)
   std::ostringstream oss;
   oss << COLOR;
   constexpr auto EXPECTED =
-      "Color(rgba: 0x123456FF, r: 18, g: 52, b: 86, a: 255, rf: 0.0706, gf: 0.2039, bf: 0.3373, af: 1.0000)\n";
+      "Color(rgba: 0x123456FF, r: 18, g: 52, b: 86, a: 255, rf: 0.0706, gf: 0.2039, bf: 0.3373, af: 1.0000)";
   EXPECT_EQ(oss.str(), EXPECTED);
 }
 
