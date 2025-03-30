@@ -1,6 +1,15 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
+    name = "stl",
+    hdrs = [
+        "contiguous_storage.h",
+        "packed_buffer.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "sw_renderer",
     srcs = [
         "obj_loader.cpp",

@@ -18,6 +18,7 @@ cc_binary_with_llvm_symbolizer(
     deps = [
         ":imgui_sdl2_backend",
         "//sw_renderer",
+        "//sw_renderer:stl",
         "@cli11",
         "@fmt",
         "@sysroot//:SDL2",
