@@ -48,6 +48,8 @@ public:
   using const_reference = typename StorageType::const_reference;
   using pointer = typename StorageType::pointer;
   using const_pointer = typename StorageType::const_pointer;
+  using iterator = typename StorageType::iterator;
+  using const_iterator = typename StorageType::const_iterator;
 
   explicit PackedBuffer(const size_type capacity) : storage_{capacity} {}
 
@@ -82,8 +84,13 @@ public:
   reference operator[](const size_type index) { return storage_[index]; }
   const_reference operator[](const size_type index) const { return storage_[index]; }
 
-  pointer data() { return storage_.data(); }
-  const_pointer data() const { return data(); }
+  iterator begin() { return storage_.begin(); }
+  const_iterator begin() const { return storage_.begin(); }
+  const_iterator cbegin() const { return storage_.cbegin(); }
+
+  iterator end() { return storage_.end(); }
+  const_iterator end() const { return storage_.end(); }
+  const_iterator cend() const { return storage_.cend(); }
 
 private:
   StorageType storage_;

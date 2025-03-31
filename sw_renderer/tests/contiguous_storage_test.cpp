@@ -164,3 +164,33 @@ TEST(ContiguousStorageTest, destruct)
     EXPECT_FALSE(storage.is_constructed(i));
   }
 }
+
+TEST(ContiguousStorageTest, iterators)
+{
+  ContiguousStorage storage{10U};
+  EXPECT_EQ(storage.used_slots(), 0U);
+  EXPECT_EQ(storage.capacity(), 10U);
+  EXPECT_TRUE(storage.empty());
+
+  for (std::size_t i = 0U; i < storage.capacity(); ++i)
+  {
+    storage.construct_at(i, static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                         static_cast<std::uint8_t>(i + 1U));
+  }
+
+  std::size_t index = 0U;
+  for (const auto& value : storage)
+  {
+    EXPECT_EQ(&value, &storage[index]);
+    EXPECT_EQ(&value, storage.get_pointer(index));
+    EXPECT_EQ(value, storage[index]);
+    ++index;
+  }
+
+  for (std::size_t i = 0U; i < storage.used_slots() - 1U; ++i)
+  {
+    const auto* curr = storage.get_pointer(i);
+    const auto* next = storage.get_pointer(i + 1U);
+    EXPECT_EQ(next - curr, 1U);
+  }
+}
