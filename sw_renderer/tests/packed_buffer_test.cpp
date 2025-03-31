@@ -47,12 +47,10 @@ TEST(PackedBufferTest, push_back)
 
   EXPECT_EQ(buffer.size(), buffer.capacity());
 
+  for (std::size_t i = 0U; i < buffer.size(); ++i)
   {
-    for (std::size_t i = 0U; i < buffer.size(); ++i)
-    {
-      EXPECT_EQ(buffer[i], (Struct{static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
-                                   static_cast<std::uint8_t>(i + 1U)}));
-    }
+    EXPECT_EQ(buffer[i], (Struct{static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                                 static_cast<std::uint8_t>(i + 1U)}));
   }
 
   EXPECT_DEATH(buffer.push_back(Struct{}), ".*");
@@ -81,12 +79,10 @@ TEST(PackedBufferTest, emplace_back)
 
   EXPECT_EQ(buffer.size(), buffer.capacity());
 
+  for (std::size_t i = 0U; i < buffer.size(); ++i)
   {
-    for (std::size_t i = 0U; i < buffer.size(); ++i)
-    {
-      EXPECT_EQ(buffer[i], (Struct{static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
-                                   static_cast<std::uint8_t>(i + 1U)}));
-    }
+    EXPECT_EQ(buffer[i], (Struct{static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                                 static_cast<std::uint8_t>(i + 1U)}));
   }
 
   EXPECT_DEATH(buffer.emplace_back(), ".*");
@@ -171,5 +167,45 @@ TEST(PackedBufferTest, remove)
     EXPECT_EQ(buffer.size(), 0U);
     EXPECT_TRUE(buffer.empty());
     EXPECT_DEATH(buffer.remove(0U), ".*");
+  }
+}
+
+TEST(PackedBufferTest, iterators)
+{
+  PackedBuffer buffer{10U};
+  EXPECT_EQ(buffer.size(), 0U);
+  EXPECT_EQ(buffer.capacity(), 10U);
+  EXPECT_TRUE(buffer.empty());
+
+  for (std::size_t i = 0U; i < buffer.capacity(); ++i)
+  {
+    buffer.emplace_back(static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                        static_cast<std::uint8_t>(i + 1U));
+  }
+
+  std::size_t index = 0U;
+  for (const auto& value : buffer)
+  {
+    EXPECT_EQ(&value, &buffer[index]);
+    EXPECT_EQ(value, buffer[index]);
+    ++index;
+  }
+
+  for (std::size_t i = 0U; i < buffer.size() - 1U; ++i)
+  {
+    const auto* curr = &buffer[i];
+    const auto* next = &buffer[i + 1U];
+    EXPECT_EQ(next - curr, 1U);
+  }
+
+  buffer.remove(3U);
+  buffer.remove(4U);
+  buffer.remove(5U);
+
+  for (std::size_t i = 0U; i < buffer.size() - 1U; ++i)
+  {
+    const auto* curr = &buffer[i];
+    const auto* next = &buffer[i + 1U];
+    EXPECT_EQ(next - curr, 1U);
   }
 }

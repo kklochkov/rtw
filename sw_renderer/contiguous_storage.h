@@ -10,10 +10,9 @@ template <typename T>
 class AlignedObjectStorage
 {
 public:
-  static_assert(std::is_standard_layout_v<T>, " AlignedObjectStorage<T> requires T to be standard layout.");
-  static_assert(std::is_trivially_copyable_v<T>, " AlignedObjectStorage<T> requires T to be trivially copyable.");
-  static_assert(std::is_trivially_destructible_v<T>,
-                " AlignedObjectStorage<T> requires T to be trivially destructible.");
+  static_assert(std::is_standard_layout_v<T>, "AlignedObjectStorage requires T to be standard layout.");
+  static_assert(std::is_trivially_copyable_v<T>, "AlignedObjectStorage requires T to be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<T>, "AlignedObjectStorage requires T to be trivially destructible.");
 
   using value_type = T;
   using reference = value_type&;
@@ -62,12 +61,57 @@ public:
     assert(is_constructed());
     return std::launder(reinterpret_cast<T*>(&data_[0U])); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
   }
+  constexpr const_pointer get_pointer() const
+  {
+    assert(is_constructed());
+    return std::launder(reinterpret_cast<const T*>(&data_[0U])); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+  }
 
   constexpr reference get_reference() { return *get_pointer(); }
+  constexpr const_reference get_reference() const { return get_reference(); }
+
+  constexpr std::byte* get_raw_pointer() { return &data_[0U]; }
+
+  constexpr std::size_t get_raw_size() const { return sizeof(T); }
 
 private:
   alignas(alignof(T)) std::byte data_[sizeof(T)]{};
   bool constructed_ : 1;
+};
+
+template <typename T>
+class AlignedObjectStorageIterator
+{
+public:
+  using iterator_category = std::random_access_iterator_tag;
+  using value_type = T;
+  using difference_type = std::ptrdiff_t;
+  using pointer = T*;
+  using reference = T&;
+
+  constexpr explicit AlignedObjectStorageIterator(AlignedObjectStorage<T>* ptr) : ptr_{ptr} {}
+
+  constexpr reference operator*() { return ptr_->get_reference(); }
+  constexpr pointer operator->() { return ptr_->get_pointer(); }
+
+  constexpr AlignedObjectStorageIterator& operator++()
+  {
+    ++ptr_;
+    return *this;
+  }
+
+  constexpr AlignedObjectStorageIterator operator++(int)
+  {
+    auto temp = *this;
+    ++(*this);
+    return temp;
+  }
+
+  constexpr bool operator==(const AlignedObjectStorageIterator& other) const { return ptr_ == other.ptr_; }
+  constexpr bool operator!=(const AlignedObjectStorageIterator& other) const { return !(*this == other); }
+
+private:
+  AlignedObjectStorage<T>* ptr_{nullptr};
 };
 
 template <typename T>
@@ -76,9 +120,9 @@ class ContiguousStorage
   using AlignedStorage = AlignedObjectStorage<T>;
 
 public:
-  static_assert(std::is_standard_layout_v<T>, " ContiguousStorage<T> requires T to be standard layout.");
-  static_assert(std::is_trivially_copyable_v<T>, " ContiguousStorage<T> requires T to be trivially copyable.");
-  static_assert(std::is_trivially_destructible_v<T>, " ContiguousStorage<T> requires T to be trivially destructible.");
+  static_assert(std::is_standard_layout_v<T>, " ContiguousStorage requires T to be standard layout.");
+  static_assert(std::is_trivially_copyable_v<T>, " ContiguousStorage requires T to be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<T>, " ContiguousStorage requires T to be trivially destructible.");
 
   using value_type = typename AlignedStorage::value_type;
   using size_type = std::size_t;
@@ -86,6 +130,8 @@ public:
   using const_reference = typename AlignedStorage::const_reference;
   using pointer = typename AlignedStorage::pointer;
   using const_pointer = typename AlignedStorage::const_pointer;
+  using iterator = AlignedObjectStorageIterator<T>;
+  using const_iterator = AlignedObjectStorageIterator<const T>;
 
   explicit ContiguousStorage(const size_type capacity)
       : data_{std::make_unique<AlignedStorage[]>(capacity)}, capacity_{capacity}
@@ -149,8 +195,13 @@ public:
     used_slots_ = 0U;
   }
 
-  pointer data() { return get_pointer(0U); }
-  const_pointer data() const { return data(); }
+  iterator begin() { return iterator{&data_[0U]}; }
+  const_iterator begin() const { return const_iterator{&data_[0U]}; }
+  const_iterator cbegin() const { return begin(); }
+
+  iterator end() { return iterator{&data_[0U] + used_slots_}; }
+  const_iterator end() const { return const_iterator{&data_[0U] + used_slots_}; }
+  const_iterator cend() const { return end(); }
 
 private:
   std::unique_ptr<AlignedStorage[]> data_;
