@@ -1,3 +1,4 @@
+#include "math/format.h" // IWYU pragma: keep
 #include "math/interpolation.h"
 
 #include <gmock/gmock.h>
