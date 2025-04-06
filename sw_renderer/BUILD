@@ -3,6 +3,7 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 cc_library(
     name = "stl",
     hdrs = [
+        "circular_buffer.h",
         "contiguous_storage.h",
         "packed_buffer.h",
     ],

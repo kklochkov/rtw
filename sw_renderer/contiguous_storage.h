@@ -31,15 +31,16 @@ public:
   constexpr bool is_constructed() const { return constructed_; }
 
   template <typename... ArgsT>
-  constexpr void construct(ArgsT&&... args)
+  constexpr reference construct(ArgsT&&... args)
   {
     assert(!is_constructed());
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    ::new (reinterpret_cast<void*>(data_.data())) T{std::forward<ArgsT>(args)...};
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-owning-memory)
+    auto* value = ::new (reinterpret_cast<void*>(data_.data())) T{std::forward<ArgsT>(args)...};
     constructed_ = true;
+    return *value;
   }
 
-  constexpr T& construct_for_overwrite_at()
+  constexpr reference construct_for_overwrite_at()
   {
     assert(!is_constructed());
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-owning-memory)
@@ -120,11 +121,12 @@ public:
   size_type capacity() const { return capacity_; }
 
   template <typename... ArgsT>
-  void construct_at(const size_type index, ArgsT&&... args)
+  reference construct_at(const size_type index, ArgsT&&... args)
   {
     assert(index < capacity_);
-    data_.get()[index].construct(std::forward<ArgsT>(args)...);
+    auto& value = data_.get()[index].construct(std::forward<ArgsT>(args)...);
     ++used_slots_;
+    return value;
   }
 
   reference construct_for_overwrite_at(const size_type index)
