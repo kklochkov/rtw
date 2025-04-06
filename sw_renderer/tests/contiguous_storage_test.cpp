@@ -25,6 +25,7 @@ using ContiguousStorage = rtw::stl::ContiguousStorage<Struct>;
 TEST(AlignedObjectStorageTest, basic)
 {
   AlignedObjectStorage storage{};
+
   EXPECT_FALSE(storage.is_constructed());
   EXPECT_DEATH(storage.get_pointer(), ".*");
   EXPECT_DEATH(storage.get_reference(), ".*");
@@ -172,25 +173,27 @@ TEST(ContiguousStorageTest, iterators)
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
 
+  std::vector<AlignedObjectStorage> expected{10U};
   for (std::size_t i = 0U; i < storage.capacity(); ++i)
   {
     storage.construct_at(i, static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
                          static_cast<std::uint8_t>(i + 1U));
+    expected[i].construct(static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                          static_cast<std::uint8_t>(i + 1U));
   }
 
   std::size_t index = 0U;
   for (const auto& value : storage)
   {
-    EXPECT_EQ(&value, &storage[index]);
-    EXPECT_EQ(&value, storage.get_pointer(index));
-    EXPECT_EQ(value, storage[index]);
+    EXPECT_EQ(&*value, &storage[index]);
+    EXPECT_EQ(value.get_pointer(), &storage[index]);
+    EXPECT_EQ(*value, storage[index]);
     ++index;
   }
 
-  for (std::size_t i = 0U; i < storage.used_slots() - 1U; ++i)
-  {
-    const auto* curr = storage.get_pointer(i);
-    const auto* next = storage.get_pointer(i + 1U);
-    EXPECT_EQ(next - curr, 1U);
-  }
+  EXPECT_EQ(&(**(storage.begin() + 1U)), &storage[1U]);
+  EXPECT_EQ(**(storage.begin() + 1U), *expected[1U]);
+
+  EXPECT_TRUE(rtw::stl::is_memory_contiguous(expected.begin(), expected.end()));
+  EXPECT_TRUE(rtw::stl::is_memory_contiguous(storage.begin(), storage.end()));
 }
