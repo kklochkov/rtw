@@ -51,31 +51,31 @@ public:
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
 
-  explicit PackedBuffer(const size_type capacity) : storage_{capacity} {}
+  explicit PackedBuffer(const size_type capacity)  noexcept : storage_{capacity} {}
 
-  size_type size() const { return storage_.used_slots(); }
-  bool empty() const { return storage_.empty(); }
-  size_type capacity() const { return storage_.capacity(); }
+  size_type size() const  noexcept { return storage_.used_slots(); }
+  bool empty() const  noexcept { return storage_.empty(); }
+  size_type capacity() const  noexcept { return storage_.capacity(); }
 
   template <typename... ArgsT>
-  reference emplace_back(ArgsT&&... args)
+  reference emplace_back(ArgsT&&... args) noexcept
   {
     return storage_.construct_at(size(), std::forward<ArgsT>(args)...);
   }
 
   template <typename U = T>
-  void push_back(U&& value)
+  void push_back(U&& value) noexcept
   {
     emplace_back(std::forward<U>(value));
   }
 
-  void pop_back()
+  void pop_back() noexcept
   {
     assert(!empty());
     storage_.destruct_at(size() - 1U);
   }
 
-  void remove(const typename ContiguousStorage<T>::size_type index)
+  void remove(const typename ContiguousStorage<T>::size_type index) noexcept
   {
     assert(index < size());
     const auto last_index = size() - 1U;
@@ -83,18 +83,18 @@ public:
     storage_.destruct_at(last_index);
   }
 
-  void clear() { storage_.clear(); }
+  void clear()  noexcept { storage_.clear(); }
 
-  reference operator[](const size_type index) { return storage_[index]; }
-  const_reference operator[](const size_type index) const { return storage_[index]; }
+  reference operator[](const size_type index)  noexcept { return storage_[index]; }
+  const_reference operator[](const size_type index) const  noexcept { return storage_[index]; }
 
-  iterator begin() { return storage_.begin(); }
-  const_iterator begin() const { return storage_.begin(); }
-  const_iterator cbegin() const { return storage_.cbegin(); }
+  iterator begin()  noexcept { return storage_.begin(); }
+  const_iterator begin() const  noexcept { return storage_.begin(); }
+  const_iterator cbegin() const  noexcept { return storage_.cbegin(); }
 
-  iterator end() { return storage_.end(); }
-  const_iterator end() const { return storage_.end(); }
-  const_iterator cend() const { return storage_.cend(); }
+  iterator end()  noexcept { return storage_.end(); }
+  const_iterator end() const  noexcept { return storage_.end(); }
+  const_iterator cend() const  noexcept { return storage_.cend(); }
 
 private:
   StorageType storage_;

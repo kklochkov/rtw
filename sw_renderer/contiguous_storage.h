@@ -21,17 +21,17 @@ public:
   using pointer = value_type*;
   using const_pointer = const value_type*;
 
-  constexpr AlignedObjectStorage() : constructed_{false} {}
-  constexpr AlignedObjectStorage(const AlignedObjectStorage&) = default;
-  constexpr AlignedObjectStorage(AlignedObjectStorage&&) = default;
-  constexpr AlignedObjectStorage& operator=(const AlignedObjectStorage&) = default;
-  constexpr AlignedObjectStorage& operator=(AlignedObjectStorage&&) = default;
-  ~AlignedObjectStorage() { destruct(); }
+  constexpr AlignedObjectStorage() noexcept : constructed_{false} {}
+  constexpr AlignedObjectStorage(const AlignedObjectStorage&) noexcept = default;
+  constexpr AlignedObjectStorage(AlignedObjectStorage&&) noexcept = default;
+  constexpr AlignedObjectStorage& operator=(const AlignedObjectStorage&) noexcept = default;
+  constexpr AlignedObjectStorage& operator=(AlignedObjectStorage&&) noexcept = default;
+  ~AlignedObjectStorage() noexcept { destruct(); }
 
-  constexpr bool is_constructed() const { return constructed_; }
+  constexpr bool is_constructed() const noexcept { return constructed_; }
 
   template <typename... ArgsT>
-  constexpr reference construct(ArgsT&&... args)
+  constexpr reference construct(ArgsT&&... args) noexcept
   {
     assert(!is_constructed());
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-owning-memory)
@@ -40,7 +40,7 @@ public:
     return *value;
   }
 
-  constexpr reference construct_for_overwrite_at()
+  constexpr reference construct_for_overwrite_at() noexcept
   {
     assert(!is_constructed());
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-owning-memory)
@@ -49,7 +49,7 @@ public:
     return *value;
   }
 
-  constexpr void destruct()
+  constexpr void destruct() noexcept
   {
     if (is_constructed())
     {
@@ -58,27 +58,27 @@ public:
     }
   }
 
-  constexpr pointer get_pointer()
+  constexpr pointer get_pointer() noexcept
   {
     assert(is_constructed());
     return std::launder(reinterpret_cast<T*>(data_.data())); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
   }
-  constexpr const_pointer get_pointer() const
+  constexpr const_pointer get_pointer() const noexcept
   {
     assert(is_constructed());
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     return std::launder(reinterpret_cast<const T*>(data_.data()));
   }
-  constexpr pointer operator->() { return get_pointer(); }
-  constexpr const_pointer operator->() const { return get_pointer(); }
+  constexpr pointer operator->() noexcept { return get_pointer(); }
+  constexpr const_pointer operator->() const noexcept { return get_pointer(); }
 
-  constexpr reference get_reference() { return *get_pointer(); }
-  constexpr const_reference get_reference() const { return *get_pointer(); }
-  constexpr reference operator*() { return get_reference(); }
-  constexpr const_reference operator*() const { return get_reference(); }
+  constexpr reference get_reference() noexcept { return *get_pointer(); }
+  constexpr const_reference get_reference() const noexcept { return *get_pointer(); }
+  constexpr reference operator*() noexcept { return get_reference(); }
+  constexpr const_reference operator*() const noexcept { return get_reference(); }
 
-  constexpr const std::byte* get_raw_pointer() const { return data_.data(); }
-  constexpr std::size_t get_raw_size() const { return data_.size(); }
+  constexpr const std::byte* get_raw_pointer() const noexcept { return data_.data(); }
+  constexpr std::size_t get_raw_size() const noexcept { return data_.size(); }
 
 private:
   alignas(alignof(T)) std::array<std::byte, sizeof(T)> data_{};
@@ -104,24 +104,24 @@ public:
   using iterator = AlignedStorage*;
   using const_iterator = const AlignedStorage*;
 
-  explicit ContiguousStorage(const size_type capacity)
+  explicit ContiguousStorage(const size_type capacity) noexcept
       : data_{std::make_unique<AlignedStorage[]>(capacity)}, capacity_{capacity}
   {
     assert(capacity > 0U);
   }
 
-  ContiguousStorage(const ContiguousStorage&) = delete;
-  ContiguousStorage(ContiguousStorage&&) = default;
-  ContiguousStorage& operator=(const ContiguousStorage&) = delete;
-  ContiguousStorage& operator=(ContiguousStorage&&) = default;
+  ContiguousStorage(const ContiguousStorage&) noexcept = delete;
+  ContiguousStorage(ContiguousStorage&&) noexcept = default;
+  ContiguousStorage& operator=(const ContiguousStorage&) noexcept = delete;
+  ContiguousStorage& operator=(ContiguousStorage&&) noexcept = default;
   ~ContiguousStorage() { clear(); }
 
-  size_type used_slots() const { return used_slots_; }
-  bool empty() const { return used_slots_ == 0U; }
-  size_type capacity() const { return capacity_; }
+  size_type used_slots() const noexcept { return used_slots_; }
+  bool empty() const noexcept { return used_slots_ == 0U; }
+  size_type capacity() const noexcept { return capacity_; }
 
   template <typename... ArgsT>
-  reference construct_at(const size_type index, ArgsT&&... args)
+  reference construct_at(const size_type index, ArgsT&&... args) noexcept
   {
     assert(index < capacity_);
     auto& value = data_.get()[index].construct(std::forward<ArgsT>(args)...);
@@ -129,7 +129,7 @@ public:
     return value;
   }
 
-  reference construct_for_overwrite_at(const size_type index)
+  reference construct_for_overwrite_at(const size_type index) noexcept
   {
     assert(index < capacity_);
     auto& value = data_.get()[index].construct_for_overwrite_at();
@@ -137,7 +137,7 @@ public:
     return value;
   }
 
-  void destruct_at(const size_type index)
+  void destruct_at(const size_type index) noexcept
   {
     assert(index < capacity_);
     assert(!empty());
@@ -145,16 +145,25 @@ public:
     --used_slots_;
   }
 
-  bool is_constructed(const size_type index) const { return data_.get()[index].is_constructed(); }
-
-  reference operator[](const size_type index)
+  bool is_constructed(const size_type index) const noexcept
   {
-    assert(index < used_slots_);
+    assert(index < capacity_);
+    return data_.get()[index].is_constructed();
+  }
+
+  reference operator[](const size_type index) noexcept
+  {
+    assert(index < capacity_);
     return data_.get()[index].get_reference();
   }
-  const_reference operator[](const size_type index) const { return operator[](index); }
 
-  void clear()
+  const_reference operator[](const size_type index) const noexcept
+  {
+    assert(index < capacity_);
+    return data_.get()[index].get_reference();
+  }
+
+  void clear() noexcept
   {
     for (size_type index = 0U; index < capacity_; ++index)
     {
@@ -163,13 +172,13 @@ public:
     used_slots_ = 0U;
   }
 
-  iterator begin() { return data_.get(); }
-  const_iterator begin() const { return begin(); }
-  const_iterator cbegin() const { return begin(); }
+  iterator begin() noexcept { return data_.get(); }
+  const_iterator begin() const noexcept { return begin(); }
+  const_iterator cbegin() const noexcept { return begin(); }
 
-  iterator end() { return begin() + used_slots_; }
-  const_iterator end() const { return end(); }
-  const_iterator cend() const { return end(); }
+  iterator end() noexcept { return begin() + used_slots_; }
+  const_iterator end() const noexcept { return end(); }
+  const_iterator cend() const noexcept { return end(); }
 
 private:
   std::unique_ptr<AlignedStorage[]> data_;
@@ -178,7 +187,7 @@ private:
 };
 
 template <typename IteratorT>
-constexpr bool is_memory_contiguous(IteratorT begin, IteratorT end)
+constexpr bool is_memory_contiguous(IteratorT begin, IteratorT end) noexcept
 {
   bool contiguous = true;
 
