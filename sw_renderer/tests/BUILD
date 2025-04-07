@@ -7,6 +7,7 @@ cc_test_with_llvm_symbolizer(
         "circular_buffer_test.cpp",
         "contiguous_storage_test.cpp",
         "packed_buffer_test.cpp",
+        "queue_test.cpp",
     ],
     tags = ["no-clang-tidy"],
     deps = [

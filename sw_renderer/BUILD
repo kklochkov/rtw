@@ -6,6 +6,7 @@ cc_library(
         "circular_buffer.h",
         "contiguous_storage.h",
         "packed_buffer.h",
+        "queue.h",
     ],
     visibility = ["//visibility:public"],
 )
