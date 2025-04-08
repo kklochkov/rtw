@@ -25,6 +25,7 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":stl",
         "//math",
         "//stl",
     ],
