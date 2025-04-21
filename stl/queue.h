@@ -40,13 +40,13 @@ public:
   {
     assert(!empty());
     value = storage_[head_];
-     pop_front();
+    pop_front();
   }
 
   void pop() noexcept
   {
     assert(!empty());
-     pop_front();
+    pop_front();
   }
 
   reference front() noexcept
