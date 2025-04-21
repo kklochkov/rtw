@@ -81,36 +81,60 @@ struct ComponentManager
   {
     const auto component_id = T::COMPONENT_ID;
     auto& component_storage = component_storages.at(component_id);
+    assert(component_storage != nullptr);
     return static_cast<ComponentStorage<T>*>(component_storage.get());
   }
 
   template <typename T, typename... ArgsT>
   void add_component(const Entity entity, ArgsT&&... args)
   {
-    const auto component_id = T::COMPONENT_ID;
-    auto& component_storage = component_storages.at(component_id);
-
-    assert(component_storage != nullptr);
-
-    auto* storage = static_cast<ComponentStorage<T>*>(component_storage.get());
-    entity_id_to_index[entity.id] = storage->components.size();
-    index_to_entity_id[storage->components.size()] = entity.id;
-    std::ignore = entity;
+    auto* storage = get_component_storage<T>();
+    const auto index_in_storage = storage->components.size();
+    entity_id_to_index[entity.id] = index_in_storage;
+    index_to_entity_id[index_in_storage] = entity.id;
     storage->components.emplace_back(std::forward<ArgsT>(args)...);
+  }
+
+  template <typename T>
+  bool has_component(const Entity entity)
+  {
+    return entity_id_to_index.find(entity.id) != entity_id_to_index.end();
   }
 
   template <typename T>
   T& get_component(const Entity entity)
   {
-    const auto component_id = T::COMPONENT_ID;
-    auto& component_storage = component_storages.at(component_id);
+    auto* storage = get_component_storage<T>();
 
-    assert(component_storage != nullptr);
+    assert(!storage->components.empty());
     assert(entity_id_to_index.find(entity.id) != entity_id_to_index.end());
 
-    const auto index = entity_id_to_index[entity.id];
-    auto* storage = static_cast<ComponentStorage<T>*>(component_storage.get());
-    return storage->components[index];
+    const auto index_in_storage = entity_id_to_index[entity.id];
+    return storage->components[index_in_storage];
+  }
+
+  template <typename T>
+  void remove_component(const Entity entity)
+  {
+    auto* storage = get_component_storage<T>();
+
+    const auto index_to_remove = entity_id_to_index[entity.id];
+    auto entity_to_remove_it = entity_id_to_index.find(entity.id);
+    assert(entity_to_remove_it != entity_id_to_index.end());
+
+    assert(!storage->components.empty());
+    const auto index_to_replace = storage->components.size() - 1U;
+    auto entity_to_replace_it = index_to_entity_id.find(index_to_replace);
+    assert(entity_to_replace_it != index_to_entity_id.end());
+
+    storage->components->remove(index_to_remove);
+
+    entity_id_to_index[entity_to_replace_it->second] = index_to_remove;
+    index_to_entity_id[index_to_remove] = entity_to_replace_it->second;
+
+    // TODO: think of fixed size hashmap
+    entity_id_to_index.erase(entity_to_remove_it);
+    index_to_entity_id.erase(entity_to_replace_it);
   }
 };
 
