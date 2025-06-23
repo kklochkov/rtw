@@ -65,7 +65,8 @@ struct Damage : rtw::ecs::Component<ComponentType, ComponentType::DAMAGE>
   std::uint32_t data;
 };
 
-using ComponentManager = rtw::ecs::ComponentManager<ComponentType>;
+constexpr std::size_t MAX_NUMBER_OF_ENTITIES = 1'000;
+using ComponentManager = rtw::ecs::ComponentManager<ComponentType, MAX_NUMBER_OF_ENTITIES>;
 
 } // namespace
 
@@ -153,54 +154,53 @@ TEST(EcsTest, component_manager_add_component)
   component_manager.allocate_component_storage<Health>();
   component_manager.allocate_component_storage<Damage>();
 
-  rtw::ecs::EntityManger<ComponentType> entity_manager;
+  rtw::ecs::EntityManger<ComponentType, MAX_NUMBER_OF_ENTITIES> entity_manager;
 
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
     auto entity0 = entity_manager.create_entity();
     component_manager.add_component<Transform>(entity0, 42U + i);
-    entity_manager.entity_signatures[entity0.id].set(ComponentType::TRANSFORM);
+    entity_manager.set_entity_signature(entity0, ComponentType::TRANSFORM);
     EXPECT_EQ(component_manager.get_component<Transform>(entity0).data, 42U + i);
-    EXPECT_TRUE(entity_manager.entity_signatures[entity0.id].test(ComponentType::TRANSFORM));
+    EXPECT_TRUE(entity_manager.test_entity_signature(entity0, ComponentType::TRANSFORM));
 
     component_manager.add_component<Rigidbody>(entity0, 43U + i);
-    entity_manager.entity_signatures[entity0.id].set(ComponentType::RIGID_BODY);
+    entity_manager.set_entity_signature(entity0, ComponentType::RIGID_BODY);
     EXPECT_EQ(component_manager.get_component<Rigidbody>(entity0).data, 43U + i);
-    EXPECT_TRUE(entity_manager.entity_signatures[entity0.id].test(ComponentType::RIGID_BODY));
+    EXPECT_TRUE(entity_manager.test_entity_signature(entity0, ComponentType::RIGID_BODY));
 
     component_manager.add_component<Collider>(entity0, 44U + i);
-    entity_manager.entity_signatures[entity0.id].set(ComponentType::COLLIDER);
+    entity_manager.set_entity_signature(entity0, ComponentType::COLLIDER);
     EXPECT_EQ(component_manager.get_component<Collider>(entity0).data, 44U + i);
-    EXPECT_TRUE(entity_manager.entity_signatures[entity0.id].test(ComponentType::COLLIDER));
+    EXPECT_TRUE(entity_manager.test_entity_signature(entity0, ComponentType::COLLIDER));
 
     component_manager.add_component<Sprite>(entity0, 45U + i);
-    entity_manager.entity_signatures[entity0.id].set(ComponentType::SPRITE);
+    entity_manager.set_entity_signature(entity0, ComponentType::SPRITE);
     EXPECT_EQ(component_manager.get_component<Sprite>(entity0).data, 45U + i);
-    EXPECT_TRUE(entity_manager.entity_signatures[entity0.id].test(ComponentType::SPRITE));
+    EXPECT_TRUE(entity_manager.test_entity_signature(entity0, ComponentType::SPRITE));
 
     component_manager.add_component<Mesh>(entity0, 46U + i);
-    entity_manager.entity_signatures[entity0.id].set(ComponentType::MESH);
+    entity_manager.set_entity_signature(entity0, ComponentType::MESH);
     EXPECT_EQ(component_manager.get_component<Mesh>(entity0).data, 46U + i);
-    EXPECT_TRUE(entity_manager.entity_signatures[entity0.id].test(ComponentType::MESH));
+    EXPECT_TRUE(entity_manager.test_entity_signature(entity0, ComponentType::MESH));
 
     component_manager.add_component<Debug>(entity0, 47U + i);
-    entity_manager.entity_signatures[entity0.id].set(ComponentType::DEBUG);
+    entity_manager.set_entity_signature(entity0, ComponentType::DEBUG);
     EXPECT_EQ(component_manager.get_component<Debug>(entity0).data, 47U + i);
-    EXPECT_TRUE(entity_manager.entity_signatures[entity0.id].test(ComponentType::DEBUG));
+    EXPECT_TRUE(entity_manager.test_entity_signature(entity0, ComponentType::DEBUG));
 
     component_manager.add_component<Health>(entity0, 48U + i);
-    entity_manager.entity_signatures[entity0.id].set(ComponentType::HEALTH);
+    entity_manager.set_entity_signature(entity0, ComponentType::HEALTH);
     EXPECT_EQ(component_manager.get_component<Health>(entity0).data, 48U + i);
-    EXPECT_TRUE(entity_manager.entity_signatures[entity0.id].test(ComponentType::HEALTH));
+    EXPECT_TRUE(entity_manager.test_entity_signature(entity0, ComponentType::HEALTH));
 
     component_manager.add_component<Damage>(entity0, 49U + i);
-    entity_manager.entity_signatures[entity0.id].set(ComponentType::DAMAGE);
+    entity_manager.set_entity_signature(entity0, ComponentType::DAMAGE);
     EXPECT_EQ(component_manager.get_component<Damage>(entity0).data, 49U + i);
-    EXPECT_TRUE(entity_manager.entity_signatures[entity0.id].test(ComponentType::DAMAGE));
+    EXPECT_TRUE(entity_manager.test_entity_signature(entity0, ComponentType::DAMAGE));
   }
 
-  EXPECT_EQ(entity_manager.entity_signatures.size(), 10U);
-  EXPECT_EQ(component_manager.component_storages.size(), 8U);
-  EXPECT_EQ(component_manager.entity_id_to_index.size(), 10U);
-  EXPECT_EQ(component_manager.index_to_entity_id.size(), 10U);
+  EXPECT_EQ(entity_manager.get_number_of_entities(), 10U);
+  EXPECT_EQ(component_manager.get_number_of_components(), 8U);
+  EXPECT_EQ(component_manager.get_number_of_entities(), 10U);
 }
