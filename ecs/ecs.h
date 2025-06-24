@@ -1,8 +1,8 @@
 #pragma once
 
-#include "sw_renderer/flags.h"
-#include "sw_renderer/packed_buffer.h"
-#include "sw_renderer/queue.h"
+#include "stl/flags.h"
+#include "stl/packed_buffer.h"
+#include "stl/queue.h"
 
 #include <array>
 #include <cstdint>
@@ -191,23 +191,23 @@ public:
     assert(!free_entities_.empty());
     Entity entity;
     free_entities_.pop(entity);
-    entity_signatures_[entity.id] = rtw::sw_renderer::Flags<EnumT>();
+    entity_signatures_[entity.id] = rtw::stl::Flags<EnumT>();
     return entity;
   }
 
   void destroy_entity(const Entity entity) noexcept
   {
     assert(entity.id < MAX_NUMBER_OF_ENTITIES);
-    entity_signatures_[entity.id] = rtw::sw_renderer::Flags<EnumT>();
+    entity_signatures_[entity.id] = rtw::stl::Flags<EnumT>();
     free_entities_.push(entity);
   }
 
-  rtw::sw_renderer::Flags<EnumT>& get_entity_signature(const Entity entity) noexcept
+  rtw::stl::Flags<EnumT>& get_entity_signature(const Entity entity) noexcept
   {
     return get_entity_signature_helper(entity);
   }
 
-  const rtw::sw_renderer::Flags<EnumT>& get_entity_signature(const Entity entity) const noexcept
+  const rtw::stl::Flags<EnumT>& get_entity_signature(const Entity entity) const noexcept
   {
     return get_entity_signature_helper(entity);
   }
@@ -227,13 +227,13 @@ public:
   std::size_t get_number_of_entities() const noexcept { return MAX_NUMBER_OF_ENTITIES - free_entities_.size(); }
 
 private:
-  rtw::sw_renderer::Flags<EnumT>& get_entity_signature_helper(const Entity entity) noexcept
+  rtw::stl::Flags<EnumT>& get_entity_signature_helper(const Entity entity) noexcept
   {
     assert(entity.id < MAX_NUMBER_OF_ENTITIES);
     return entity_signatures_[entity.id];
   }
 
-  std::array<rtw::sw_renderer::Flags<EnumT>, MAX_NUMBER_OF_ENTITIES> entity_signatures_{};
+  std::array<rtw::stl::Flags<EnumT>, MAX_NUMBER_OF_ENTITIES> entity_signatures_{};
   rtw::stl::Queue<Entity> free_entities_{MAX_NUMBER_OF_ENTITIES};
 };
 

@@ -7,6 +7,6 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "//sw_renderer:stl",
+        "//stl",
     ],
 )
