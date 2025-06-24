@@ -6,8 +6,10 @@ cc_library(
         "circular_buffer.h",
         "contiguous_storage.h",
         "flags.h",
+        "heap_array.h",
         "packed_buffer.h",
         "queue.h",
+        "static_vector.h",
     ],
     visibility = ["//visibility:public"],
 )
