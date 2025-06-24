@@ -44,6 +44,7 @@ std::ostream& operator<<(std::ostream& os, const FixedPoint<T, FRAC_BITS, Satura
 
 } // namespace rtw::fixed_point
 
+// NOLINTBEGIN(readability-identifier-naming)
 namespace fmt
 {
 
@@ -56,3 +57,4 @@ struct formatter<rtw::fixed_point::FixedPoint<T, FRAC_BITS, SaturationT>> : ostr
 {};
 
 } // namespace fmt
+// NOLINTEND(readability-identifier-naming)

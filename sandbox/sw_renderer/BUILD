@@ -17,8 +17,8 @@ cc_binary_with_llvm_symbolizer(
     data = ["//sw_renderer/resources:textured_cube"],
     deps = [
         ":imgui_sdl2_backend",
+        "//stl",
         "//sw_renderer",
-        "//sw_renderer:stl",
         "@cli11",
         "@fmt",
         "@sysroot//:SDL2",

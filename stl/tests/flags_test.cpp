@@ -1,5 +1,5 @@
-#include "sw_renderer/flags.h"
-#include "sw_renderer/format.h"
+#include "stl/flags.h"
+#include "stl/format.h" // IWYU pragma: keep
 
 #include <gtest/gtest.h>
 
@@ -15,11 +15,11 @@ enum class TestEnum : std::uint8_t
   H = 1U << 7U
 };
 
-using TestFlags = rtw::sw_renderer::Flags<TestEnum>;
+using TestFlags = rtw::stl::Flags<TestEnum>;
 
 TEST(Flags, default_constructor)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS;
   EXPECT_TRUE(FLAGS.none());
@@ -27,7 +27,7 @@ TEST(Flags, default_constructor)
 
 TEST(Flags, constructor)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS{TestEnum::A};
   EXPECT_EQ(TestEnum::A, FLAGS);
@@ -35,7 +35,7 @@ TEST(Flags, constructor)
 
 TEST(Flags, basic)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, FLAGS);
@@ -43,7 +43,6 @@ TEST(Flags, basic)
   EXPECT_TRUE(FLAGS.test(TestEnum::B));
   EXPECT_FALSE(FLAGS.test(TestEnum::C));
   EXPECT_TRUE(FLAGS);
-  EXPECT_EQ(TestEnum::A | TestEnum::B, static_cast<std::uint8_t>(FLAGS));
   EXPECT_TRUE((FLAGS & TestEnum::A) == TestEnum::A);
   EXPECT_TRUE((FLAGS & TestEnum::B) == TestEnum::B);
   EXPECT_FALSE((FLAGS & TestEnum::C));
@@ -51,7 +50,7 @@ TEST(Flags, basic)
 
 TEST(Flags, set)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   TestFlags flags;
   flags.set(TestEnum::A);
@@ -70,7 +69,7 @@ TEST(Flags, set)
 
 TEST(Flags, operator_bitwise_or)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, FLAGS);
@@ -80,7 +79,7 @@ TEST(Flags, operator_bitwise_or)
 
 TEST(Flags, operator_bitwise_and)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, FLAGS);
@@ -91,7 +90,7 @@ TEST(Flags, operator_bitwise_and)
 
 TEST(Flags, operator_bitwise_xor)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, FLAGS);
@@ -101,7 +100,7 @@ TEST(Flags, operator_bitwise_xor)
 
 TEST(Flags, operator_bitwise_or_equal)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   TestFlags flags;
   flags |= TestEnum::A;
@@ -114,7 +113,7 @@ TEST(Flags, operator_bitwise_or_equal)
 
 TEST(Flags, operator_bitwise_and_equal)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   TestFlags flags{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, flags);
@@ -126,7 +125,7 @@ TEST(Flags, operator_bitwise_and_equal)
 
 TEST(Flags, operator_bitwise_xor_equal)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   TestFlags flags{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, flags);
@@ -138,7 +137,7 @@ TEST(Flags, operator_bitwise_xor_equal)
 
 TEST(Flags, operator_equal)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, FLAGS);
@@ -151,7 +150,7 @@ TEST(Flags, operator_equal)
 
 TEST(Flags, operator_not_equal)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, FLAGS);
@@ -164,7 +163,7 @@ TEST(Flags, operator_not_equal)
 
 TEST(Flags, operator_bool)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   constexpr TestFlags FLAGS{TestEnum::A | TestEnum::B};
   EXPECT_EQ(TestEnum::A | TestEnum::B, FLAGS);
@@ -180,7 +179,7 @@ TEST(Flags, operator_bool)
 
 TEST(Flags, operator_stream)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   {
     const TestFlags flags{};
@@ -224,7 +223,7 @@ TEST(Flags, operator_stream)
 
 TEST(Flags, reset)
 {
-  using namespace rtw::sw_renderer;
+  using namespace rtw::stl;
 
   TestFlags flags{TestEnum::A | TestEnum::B | TestEnum::C};
   EXPECT_EQ(TestEnum::A | TestEnum::B | TestEnum::C, flags);

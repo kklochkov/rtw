@@ -88,6 +88,7 @@ std::ostream& operator<<(std::ostream& os, const Barycentric<T>& coord) noexcept
 
 } // namespace rtw::math
 
+// NOLINTBEGIN(readability-identifier-naming)
 namespace fmt
 {
 
@@ -108,3 +109,4 @@ struct formatter<rtw::math::Barycentric<T>> : ostream_formatter
 {};
 
 } // namespace fmt
+  // // NOLINTEND(readability-identifier-naming)

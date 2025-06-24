@@ -1,15 +1,11 @@
 #include "sw_renderer/renderer.h"
 #include "sw_renderer/clipping.h"
-#include "sw_renderer/format.h" // IWYU pragma: keep
 #include "sw_renderer/projection.h"
 #include "sw_renderer/rasterisation_routines.h"
 
 #include "math/angle.h"
 #include "math/barycentric.h"
 #include "math/convex_polygon.h"
-#include "math/format.h" // IWYU pragma: keep
-
-#include <fmt/core.h>
 
 namespace rtw::sw_renderer
 {
@@ -28,40 +24,6 @@ Renderer::Renderer(const std::size_t width, const std::size_t height)
   frustum_ = make_frustum(frustum_params);
   screen_space_matrix_ = make_screen_space_matrix<single_precision>(width, height);
   light_direction_ = math::normalize(Vector3F{0.0F, 0.0F, -1.0F});
-
-  fmt::print("projection_matrix_: {}\n", projection_matrix_);
-  fmt::print("screen_space_matrix_: {}\n", screen_space_matrix_);
-
-  const auto f = extract_frustum(projection_matrix_);
-  fmt::print("frustum_.left.normal: {}\n", frustum_.left.normal);
-  fmt::print("f.left.normal: {}\n", f.left.normal);
-  fmt::print("frustum_.left.distance: {}\n", frustum_.left.distance);
-  fmt::print("f.left.distance: {}\n", f.left.distance);
-
-  fmt::print("frustum_.right.normal: {}\n", frustum_.right.normal);
-  fmt::print("f.right.normal: {}\n", f.right.normal);
-  fmt::print("frustum_.right.distance: {}\n", frustum_.right.distance);
-  fmt::print("f.right.distance: {}\n", f.right.distance);
-
-  fmt::print("frustum_.top.normal: {}\n", frustum_.top.normal);
-  fmt::print("f.top.normal: {}\n", f.top.normal);
-  fmt::print("frustum_.top.distance: {}\n", frustum_.top.distance);
-  fmt::print("f.top.distance: {}\n", f.top.distance);
-
-  fmt::print("frustum_.bottom.normal: {}\n", frustum_.bottom.normal);
-  fmt::print("f.bottom.normal: {}\n", f.bottom.normal);
-  fmt::print("frustum_.bottom.distance: {}\n", frustum_.bottom.distance);
-  fmt::print("f.bottom.distance: {}\n", f.bottom.distance);
-
-  fmt::print("frustum_.near.normal: {}\n", frustum_.near.normal);
-  fmt::print("f.near.normal: {}\n", f.near.normal);
-  fmt::print("frustum_.near.distance: {}\n", frustum_.near.distance);
-  fmt::print("f.near.distance: {}\n", f.near.distance);
-
-  fmt::print("frustum_.far.normal: {}\n", frustum_.far.normal);
-  fmt::print("f.far.normal: {}\n", f.far.normal);
-  fmt::print("frustum_.far.distance: {}\n", frustum_.far.distance);
-  fmt::print("f.far.distance: {}\n", f.far.distance);
 }
 
 void Renderer::draw_pixel(const Point2I& point, const Color color)

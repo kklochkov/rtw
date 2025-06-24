@@ -1,17 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "stl",
-    hdrs = [
-        "circular_buffer.h",
-        "contiguous_storage.h",
-        "packed_buffer.h",
-        "queue.h",
-    ],
-    visibility = ["//visibility:public"],
-)
-
-cc_library(
     name = "sw_renderer",
     srcs = [
         "obj_loader.cpp",
@@ -23,8 +12,6 @@ cc_library(
         "color.h",
         "color_buffer.h",
         "depth_buffer.h",
-        "flags.h",
-        "format.h",
         "mesh.h",
         "obj_loader.h",
         "precision.h",
@@ -39,6 +26,16 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//math",
+        "//stl",
+    ],
+)
+
+cc_library(
+    name = "format",
+    hdrs = ["format.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sw_renderer",
         "//math:format",
         "@fmt",
     ],

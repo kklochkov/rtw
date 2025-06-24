@@ -1,4 +1,4 @@
-#include "sw_renderer/contiguous_storage.h"
+#include "stl/contiguous_storage.h"
 
 #include <gtest/gtest.h>
 
