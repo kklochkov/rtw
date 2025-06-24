@@ -1,7 +1,5 @@
 #include "sw_renderer/obj_loader.h"
 
-#include <fmt/core.h>
-
 #include <fstream>
 #include <sstream>
 
@@ -260,7 +258,6 @@ std::optional<Mesh> load_obj(const std::filesystem::path& path)
   std::ifstream file(path);
   if (!file.is_open())
   {
-    fmt::print("load_obj: could not open file {}.\n", path.c_str());
     return std::nullopt;
   }
 
@@ -271,15 +268,11 @@ std::optional<Mesh> load_obj(const std::filesystem::path& path)
     std::ifstream material_file(material_path);
     if (!material_file.is_open())
     {
-      fmt::print("load_obj: could not open file {}.\n", material_path.c_str());
       return std::nullopt;
     }
 
     load_mtl(material_file, result.mesh);
   }
-  fmt::print("load_obj: loaded {} vertices, {} texture coordinates, {} normals, {} faces, materials {}, textures {}.\n",
-             result.mesh.vertices.size(), result.mesh.tex_coords.size(), result.mesh.normals.size(),
-             result.mesh.faces.size(), result.mesh.materials.size(), result.mesh.textures.size());
   return result.mesh;
 }
 

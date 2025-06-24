@@ -1,8 +1,8 @@
 #pragma once
 
+#include "stl/flags.h"
 #include "sw_renderer/color_buffer.h"
 #include "sw_renderer/depth_buffer.h"
-#include "sw_renderer/flags.h"
 #include "sw_renderer/mesh.h"
 #include "sw_renderer/types.h"
 #include "sw_renderer/vertex.h"
@@ -22,7 +22,7 @@ enum class RenderMode : std::uint8_t
   TEXTURE = 1U << 6U
 };
 
-using RenderModeFlags = Flags<RenderMode>;
+using RenderModeFlags = stl::Flags<RenderMode>;
 
 class Renderer
 {

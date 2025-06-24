@@ -1,4 +1,4 @@
-#include "sw_renderer/circular_buffer.h"
+#include "stl/circular_buffer.h"
 
 #include <gtest/gtest.h>
 
