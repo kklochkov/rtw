@@ -109,4 +109,4 @@ struct formatter<rtw::math::Barycentric<T>> : ostream_formatter
 {};
 
 } // namespace fmt
-  // // NOLINTEND(readability-identifier-naming)
+// NOLINTEND(readability-identifier-naming)
