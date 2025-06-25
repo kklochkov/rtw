@@ -30,6 +30,7 @@ struct Component
 {
   static_assert(std::is_enum_v<EnumT>, "EnumT must be an enum type.");
 
+  using enum_type = EnumT;
   constexpr static EnumT TYPE = VALUE;
 
   constexpr static Id COMPONENT_ID =
@@ -47,10 +48,12 @@ public:
   virtual ~IComponentStorage() = default;
 };
 
-template <typename T, Id MAX_NUMBER_OF_ENTITIES>
+template <typename T>
 class ComponentStorage final : public IComponentStorage
 {
 public:
+  explicit ComponentStorage(const std::size_t max_number_of_entities) noexcept : components_{max_number_of_entities} {}
+
   template <typename... ArgsT>
   void emplace(const Entity entity, ArgsT&&... args) noexcept
   {
@@ -107,36 +110,20 @@ public:
   }
 
 private:
-  stl::PackedBuffer<T> components_{MAX_NUMBER_OF_ENTITIES};
+  stl::PackedBuffer<T> components_;
   std::unordered_map<Id, std::size_t> entity_id_to_index_;
   std::unordered_map<std::size_t, Id> index_to_entity_id_;
 };
 
-template <typename EnumT, Id MAX_NUMBER_OF_ENTITIES>
+template <typename... ComponentsT>
 class ComponentManager
 {
 public:
-  static_assert(std::is_enum_v<EnumT>, "EnumT must be an enum type.");
+  using ComponentType = typename std::tuple_element_t<0, std::tuple<ComponentsT...>>::enum_type;
 
-  constexpr static Id MAX_NUMBER_OF_COMPONENTS = sizeof(EnumT) * 8U;
-
-  template <typename T>
-  using ComponentStorage = ComponentStorage<T, MAX_NUMBER_OF_ENTITIES>;
-
-  template <typename T>
-  void allocate_component_storage() noexcept
+  explicit ComponentManager(const std::size_t max_number_of_entities) noexcept
   {
-    auto& component_storage = components_storage_[get_component_id<T>()];
-    if (!component_storage)
-    {
-      component_storage = std::make_unique<ComponentStorage<T>>();
-    }
-  }
-
-  template <typename T>
-  bool has_component_storage() const noexcept
-  {
-    return components_storage_[get_component_id<T>()] != nullptr;
+    (allocate_component_storage<ComponentsT>(max_number_of_entities), ...);
   }
 
   template <typename T, typename... ArgsT>
@@ -182,16 +169,25 @@ public:
     storage.remove(entity);
   }
 
-  template <typename... ComponentsT>
-  void remove_components(const Entity entity) noexcept
-  {
-    (remove_component<ComponentsT>(entity), ...);
-  }
+  void remove_components(const Entity entity) noexcept { (remove_component<ComponentsT>(entity), ...); }
 
 private:
+  constexpr static Id MAX_NUMBER_OF_COMPONENTS = sizeof...(ComponentsT);
+
+  template <typename T>
+  using ComponentStorage = ComponentStorage<T>;
+
+  template <typename T>
+  void allocate_component_storage(const std::size_t max_number_of_entities) noexcept
+  {
+    components_storage_[get_component_id<T>()] = std::make_unique<ComponentStorage<T>>(max_number_of_entities);
+  }
+
   template <typename T>
   constexpr static Id get_component_id() noexcept
   {
+    static_assert((std::is_same_v<T, ComponentsT> || ...),
+                  "T must be one of the component types defined in ComponentsT.");
     static_assert(T::COMPONENT_ID < MAX_NUMBER_OF_COMPONENTS, "Component ID exceeds maximum number of components.");
     return T::COMPONENT_ID;
   }
@@ -199,16 +195,18 @@ private:
   template <typename T>
   ComponentStorage<T>& get_component_storage() noexcept
   {
+    static_assert((std::is_same_v<T, ComponentsT> || ...),
+                  "T must be one of the component types defined in ComponentsT.");
     auto& component_storage = components_storage_[get_component_id<T>()];
-    assert(component_storage != nullptr);
     return static_cast<ComponentStorage<T>&>(*component_storage.get());
   }
 
   template <typename T>
   const ComponentStorage<T>& get_component_storage() const noexcept
   {
+    static_assert((std::is_same_v<T, ComponentsT> || ...),
+                  "T must be one of the component types defined in ComponentsT.");
     const auto& component_storage = components_storage_[get_component_id<T>()];
-    assert(component_storage != nullptr);
     return static_cast<const ComponentStorage<T>&>(*component_storage.get());
   }
 
@@ -216,7 +214,7 @@ private:
   ComponentsStorage components_storage_{};
 };
 
-template <typename EnumT, Id MAX_NUMBER_OF_ENTITIES>
+template <typename EnumT>
 class EntityManger
 {
 public:
@@ -224,9 +222,10 @@ public:
 
   using ComponentType = EnumT;
 
-  EntityManger() noexcept
+  explicit EntityManger(const std::size_t max_number_of_entities) noexcept
+      : entity_signatures_{max_number_of_entities}, free_entities_{max_number_of_entities}
   {
-    for (Id id = 0U; id < MAX_NUMBER_OF_ENTITIES; ++id)
+    for (Id id = 0U; id < max_number_of_entities; ++id)
     {
       free_entities_.emplace(id);
     }
@@ -243,40 +242,40 @@ public:
 
   void destroy_entity(const Entity entity) noexcept
   {
-    assert(entity.id < MAX_NUMBER_OF_ENTITIES);
+    assert(entity.id < entity_signatures_.size());
     entity_signatures_[entity.id] = stl::Flags<EnumT>();
     free_entities_.push(entity);
   }
 
   stl::Flags<EnumT>& get_entity_signature(const Entity entity) noexcept
   {
-    assert(entity.id < MAX_NUMBER_OF_ENTITIES);
+    assert(entity.id < entity_signatures_.size());
     return entity_signatures_[entity.id];
   }
 
   const stl::Flags<EnumT>& get_entity_signature(const Entity entity) const noexcept
   {
-    assert(entity.id < MAX_NUMBER_OF_ENTITIES);
+    assert(entity.id < entity_signatures_.size());
     return entity_signatures_[entity.id];
   }
 
   void set_entity_signature(const Entity entity, const ComponentType signature) noexcept
   {
-    assert(entity.id < MAX_NUMBER_OF_ENTITIES);
+    assert(entity.id < entity_signatures_.size());
     entity_signatures_[entity.id].set(signature);
   }
 
   bool test_entity_signature(const Entity entity, const ComponentType signature) const noexcept
   {
-    assert(entity.id < MAX_NUMBER_OF_ENTITIES);
+    assert(entity.id < entity_signatures_.size());
     return entity_signatures_[entity.id].test(signature);
   }
 
-  std::size_t get_number_of_entities() const noexcept { return MAX_NUMBER_OF_ENTITIES - free_entities_.size(); }
+  std::size_t get_number_of_entities() const noexcept { return entity_signatures_.size() - free_entities_.size(); }
 
 private:
-  stl::HeapArray<stl::Flags<EnumT>> entity_signatures_{MAX_NUMBER_OF_ENTITIES};
-  stl::Queue<Entity> free_entities_{MAX_NUMBER_OF_ENTITIES};
+  stl::HeapArray<stl::Flags<EnumT>> entity_signatures_;
+  stl::Queue<Entity> free_entities_;
 };
 
 } // namespace rtw::ecs

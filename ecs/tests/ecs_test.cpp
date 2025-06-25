@@ -66,8 +66,16 @@ struct Damage : rtw::ecs::Component<ComponentType, ComponentType::DAMAGE>
 };
 
 constexpr std::size_t MAX_NUMBER_OF_ENTITIES = 1'000;
-using ComponentManager = rtw::ecs::ComponentManager<ComponentType, MAX_NUMBER_OF_ENTITIES>;
-using EntityManger = rtw::ecs::EntityManger<ComponentType, MAX_NUMBER_OF_ENTITIES>;
+using ComponentManager =
+    rtw::ecs::ComponentManager<Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>;
+using EntityManger = rtw::ecs::EntityManger<ComponentType>;
+
+static_assert(std::is_same_v<ComponentManager::ComponentType, ComponentType>,
+              "ComponentManager's ComponentType must match the enum type.");
+static_assert(std::is_same_v<EntityManger::ComponentType, ComponentType>,
+              "EntityManger's ComponentType must match the enum type.");
+static_assert(std::is_same_v<ComponentManager::ComponentType, EntityManger::ComponentType>,
+              "ComponentManager's ComponentType must match EntityManger's ComponentType.");
 
 } // namespace
 
@@ -110,52 +118,10 @@ TEST(EcsTest, component_basic)
   EXPECT_EQ(Damage::COMPONENT_ID, 7U);
 }
 
-TEST(EcsTest, component_manager)
-{
-  ComponentManager component_manager;
-
-  EXPECT_FALSE(component_manager.has_component_storage<Transform>());
-  EXPECT_FALSE(component_manager.has_component_storage<Rigidbody>());
-  EXPECT_FALSE(component_manager.has_component_storage<Collider>());
-  EXPECT_FALSE(component_manager.has_component_storage<Sprite>());
-  EXPECT_FALSE(component_manager.has_component_storage<Mesh>());
-  EXPECT_FALSE(component_manager.has_component_storage<Debug>());
-  EXPECT_FALSE(component_manager.has_component_storage<Health>());
-  EXPECT_FALSE(component_manager.has_component_storage<Damage>());
-
-  component_manager.allocate_component_storage<Transform>();
-  component_manager.allocate_component_storage<Rigidbody>();
-  component_manager.allocate_component_storage<Collider>();
-  component_manager.allocate_component_storage<Sprite>();
-  component_manager.allocate_component_storage<Mesh>();
-  component_manager.allocate_component_storage<Debug>();
-  component_manager.allocate_component_storage<Health>();
-  component_manager.allocate_component_storage<Damage>();
-
-  EXPECT_TRUE(component_manager.has_component_storage<Transform>());
-  EXPECT_TRUE(component_manager.has_component_storage<Rigidbody>());
-  EXPECT_TRUE(component_manager.has_component_storage<Collider>());
-  EXPECT_TRUE(component_manager.has_component_storage<Sprite>());
-  EXPECT_TRUE(component_manager.has_component_storage<Mesh>());
-  EXPECT_TRUE(component_manager.has_component_storage<Debug>());
-  EXPECT_TRUE(component_manager.has_component_storage<Health>());
-  EXPECT_TRUE(component_manager.has_component_storage<Damage>());
-}
-
 TEST(EcsTest, component_manager_add_component)
 {
-  ComponentManager component_manager;
-
-  component_manager.allocate_component_storage<Transform>();
-  component_manager.allocate_component_storage<Rigidbody>();
-  component_manager.allocate_component_storage<Collider>();
-  component_manager.allocate_component_storage<Sprite>();
-  component_manager.allocate_component_storage<Mesh>();
-  component_manager.allocate_component_storage<Debug>();
-  component_manager.allocate_component_storage<Health>();
-  component_manager.allocate_component_storage<Damage>();
-
-  EntityManger entity_manager;
+  ComponentManager component_manager{MAX_NUMBER_OF_ENTITIES};
+  EntityManger entity_manager{MAX_NUMBER_OF_ENTITIES};
 
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
@@ -215,18 +181,8 @@ TEST(EcsTest, component_manager_add_component)
 
 TEST(EcsTest, component_manager_destroy_component)
 {
-  ComponentManager component_manager;
-
-  component_manager.allocate_component_storage<Transform>();
-  component_manager.allocate_component_storage<Rigidbody>();
-  component_manager.allocate_component_storage<Collider>();
-  component_manager.allocate_component_storage<Sprite>();
-  component_manager.allocate_component_storage<Mesh>();
-  component_manager.allocate_component_storage<Debug>();
-  component_manager.allocate_component_storage<Health>();
-  component_manager.allocate_component_storage<Damage>();
-
-  EntityManger entity_manager;
+  ComponentManager component_manager{MAX_NUMBER_OF_ENTITIES};
+  EntityManger entity_manager{MAX_NUMBER_OF_ENTITIES};
 
   std::vector<rtw::ecs::Entity> entities;
   for (std::uint32_t i = 0U; i < 10U; ++i)
@@ -297,7 +253,7 @@ TEST(EcsTest, component_manager_destroy_component)
     component_manager.remove_component<Debug>(entity);
     component_manager.remove_component<Health>(entity);
     component_manager.remove_component<Damage>(entity);
-    component_manager.remove_components<Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>(entity);
+    component_manager.remove_components(entity);
     entity_manager.destroy_entity(entity);
   }
   entities.clear();
