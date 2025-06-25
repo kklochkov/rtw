@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stl/flags.h"
+#include "stl/heap_array.h"
 #include "stl/packed_buffer.h"
 #include "stl/queue.h"
 
@@ -47,26 +48,68 @@ public:
 };
 
 template <typename T, Id MAX_NUMBER_OF_ENTITIES>
-class ComponentStorage : public IComponentStorage
+class ComponentStorage final : public IComponentStorage
 {
 public:
   template <typename... ArgsT>
-  constexpr std::size_t emplace(ArgsT&&... args) noexcept
+  void emplace(const Entity entity, ArgsT&&... args) noexcept
   {
     const auto index = components_.size();
-    components_.emplace_back(std::forward<ArgsT>(args)...);
-    return index;
+    components_.push_back(std::forward<ArgsT>(args)...);
+    entity_id_to_index_[entity.id] = index;
+    index_to_entity_id_[index] = entity.id;
   }
 
-  constexpr bool empty() const noexcept { return components_.empty(); }
+  bool empty() const noexcept { return components_.empty(); }
+  std::size_t size() const noexcept { return components_.size(); }
 
-  constexpr T& operator[](const std::size_t index) noexcept { return components_[index]; }
-  constexpr const T& operator[](const std::size_t index) const noexcept { return components_[index]; }
-  constexpr T& get(const std::size_t index) noexcept { return components_[index]; }
-  constexpr const T& get(const std::size_t index) const noexcept { return components_[index]; }
+  bool contains(const Entity entity) const noexcept
+  {
+    return entity_id_to_index_.find(entity.id) != entity_id_to_index_.end();
+  }
+
+  T& get(const Entity entity) noexcept
+  {
+    assert(contains(entity));
+    const auto index = entity_id_to_index_[entity.id];
+    return components_[index];
+  }
+  const T& get(const Entity entity) const noexcept { return get(entity); }
+  T& operator[](const Entity entity) noexcept { return get(entity); }
+  const T& operator[](const Entity entity) const noexcept { return get(entity); }
+
+  void remove(const Entity entity) noexcept
+  {
+    if (components_.empty())
+    {
+      return;
+    }
+
+    auto entity_to_remove_it = entity_id_to_index_.find(entity.id);
+    if (entity_to_remove_it == entity_id_to_index_.end())
+    {
+      return;
+    }
+
+    const auto index_to_remove = entity_to_remove_it->second;
+
+    const auto index_to_replace = components_.size() - 1U;
+    auto entity_to_replace_it = index_to_entity_id_.find(index_to_replace);
+    assert(entity_to_replace_it != index_to_entity_id_.end());
+
+    components_.remove(index_to_remove);
+
+    entity_id_to_index_[entity_to_replace_it->second] = index_to_remove;
+    index_to_entity_id_[index_to_remove] = entity_to_replace_it->second;
+
+    entity_id_to_index_.erase(entity_to_remove_it);
+    index_to_entity_id_.erase(entity_to_replace_it);
+  }
 
 private:
-  rtw::stl::PackedBuffer<T> components_{MAX_NUMBER_OF_ENTITIES};
+  stl::PackedBuffer<T> components_{MAX_NUMBER_OF_ENTITIES};
+  std::unordered_map<Id, std::size_t> entity_id_to_index_;
+  std::unordered_map<std::size_t, Id> index_to_entity_id_;
 };
 
 template <typename EnumT, Id MAX_NUMBER_OF_ENTITIES>
@@ -83,91 +126,94 @@ public:
   template <typename T>
   void allocate_component_storage() noexcept
   {
-    const auto component_id = T::COMPONENT_ID;
-    auto& component_storage = component_storages_.at(component_id);
-    assert(component_storage == nullptr);
-    component_storage = std::make_unique<ComponentStorage<T>>();
+    auto& component_storage = components_storage_[get_component_id<T>()];
+    if (!component_storage)
+    {
+      component_storage = std::make_unique<ComponentStorage<T>>();
+    }
   }
 
   template <typename T>
-  ComponentStorage<T>* get_component_storage() noexcept
+  bool has_component_storage() const noexcept
   {
-    const auto component_id = T::COMPONENT_ID;
-    auto& component_storage = component_storages_.at(component_id);
-    assert(component_storage != nullptr);
-    return static_cast<ComponentStorage<T>*>(component_storage.get());
+    return components_storage_[get_component_id<T>()] != nullptr;
   }
 
   template <typename T, typename... ArgsT>
   void add_component(const Entity entity, ArgsT&&... args) noexcept
   {
-    auto* storage = get_component_storage<T>();
-    const auto index_in_storage = storage->emplace(std::forward<ArgsT>(args)...);
-    entity_id_to_index_[entity.id] = index_in_storage;
-    index_to_entity_id_[index_in_storage] = entity.id;
+    auto& storage = get_component_storage<T>();
+    storage.emplace(entity, std::forward<ArgsT>(args)...);
   }
 
-  std::size_t get_number_of_components() const noexcept { return component_storages_.size(); }
-  std::size_t get_number_of_entities() const noexcept { return entity_id_to_index_.size(); }
+  std::size_t get_number_of_components() const noexcept { return components_storage_.size(); }
+
+  template <typename T>
+  std::size_t get_number_of_entities() const noexcept
+  {
+    const auto& storage = get_component_storage<T>();
+    return storage.size();
+  }
 
   template <typename T>
   bool has_component(const Entity entity) const noexcept
   {
-    return entity_id_to_index_.find(entity.id) != entity_id_to_index_.end();
+    const auto& storage = get_component_storage<T>();
+    return storage.contains(entity);
   }
 
   template <typename T>
   T& get_component(const Entity entity) noexcept
   {
-    return get_component_helper<T>(entity);
+    auto& storage = get_component_storage<T>();
+    return storage.get(entity);
   }
 
   template <typename T>
   const T& get_component(const Entity entity) const noexcept
   {
-    return get_component_helper<T>(entity);
+    return get_component<T>(entity);
   }
 
   template <typename T>
   void remove_component(const Entity entity) noexcept
   {
-    auto* storage = get_component_storage<T>();
+    auto& storage = get_component_storage<T>();
+    storage.remove(entity);
+  }
 
-    const auto index_to_remove = entity_id_to_index_[entity.id];
-    auto entity_to_remove_it = entity_id_to_index_.find(entity.id);
-    assert(entity_to_remove_it != entity_id_to_index_.end());
-
-    assert(!storage->components.empty());
-    const auto index_to_replace = storage->components.size() - 1U;
-    auto entity_to_replace_it = index_to_entity_id_.find(index_to_replace);
-    assert(entity_to_replace_it != index_to_entity_id_.end());
-
-    storage->components->remove(index_to_remove);
-
-    entity_id_to_index_[entity_to_replace_it->second] = index_to_remove;
-    index_to_entity_id_[index_to_remove] = entity_to_replace_it->second;
-
-    entity_id_to_index_.erase(entity_to_remove_it);
-    index_to_entity_id_.erase(entity_to_replace_it);
+  template <typename... ComponentsT>
+  void remove_components(const Entity entity) noexcept
+  {
+    (remove_component<ComponentsT>(entity), ...);
   }
 
 private:
   template <typename T>
-  T& get_component_helper(const Entity entity) noexcept
+  constexpr static Id get_component_id() noexcept
   {
-    auto* storage = get_component_storage<T>();
-
-    assert(!storage->empty());
-    assert(entity_id_to_index_.find(entity.id) != entity_id_to_index_.end());
-
-    const auto index_in_storage = entity_id_to_index_[entity.id];
-    return storage->get(index_in_storage);
+    static_assert(T::COMPONENT_ID < MAX_NUMBER_OF_COMPONENTS, "Component ID exceeds maximum number of components.");
+    return T::COMPONENT_ID;
   }
 
-  std::array<std::unique_ptr<IComponentStorage>, MAX_NUMBER_OF_COMPONENTS> component_storages_{};
+  template <typename T>
+  ComponentStorage<T>& get_component_storage() noexcept
+  {
+    auto& component_storage = components_storage_[get_component_id<T>()];
+    assert(component_storage != nullptr);
+    return static_cast<ComponentStorage<T>&>(*component_storage.get());
+  }
 
-  std::unordered_map<Id, std::size_t> entity_id_to_index_;
-  std::unordered_map<std::size_t, Id> index_to_entity_id_;
+  template <typename T>
+  const ComponentStorage<T>& get_component_storage() const noexcept
+  {
+    const auto& component_storage = components_storage_[get_component_id<T>()];
+    assert(component_storage != nullptr);
+    return static_cast<const ComponentStorage<T>&>(*component_storage.get());
+  }
+
+  using ComponentsStorage = std::array<std::unique_ptr<IComponentStorage>, MAX_NUMBER_OF_COMPONENTS>;
+  ComponentsStorage components_storage_{};
 };
 
 template <typename EnumT, Id MAX_NUMBER_OF_ENTITIES>
@@ -191,25 +237,27 @@ public:
     assert(!free_entities_.empty());
     Entity entity;
     free_entities_.pop(entity);
-    entity_signatures_[entity.id] = rtw::stl::Flags<EnumT>();
+    entity_signatures_[entity.id] = stl::Flags<EnumT>();
     return entity;
   }
 
   void destroy_entity(const Entity entity) noexcept
   {
     assert(entity.id < MAX_NUMBER_OF_ENTITIES);
-    entity_signatures_[entity.id] = rtw::stl::Flags<EnumT>();
+    entity_signatures_[entity.id] = stl::Flags<EnumT>();
     free_entities_.push(entity);
   }
 
-  rtw::stl::Flags<EnumT>& get_entity_signature(const Entity entity) noexcept
+  stl::Flags<EnumT>& get_entity_signature(const Entity entity) noexcept
   {
-    return get_entity_signature_helper(entity);
+    assert(entity.id < MAX_NUMBER_OF_ENTITIES);
+    return entity_signatures_[entity.id];
   }
 
-  const rtw::stl::Flags<EnumT>& get_entity_signature(const Entity entity) const noexcept
+  const stl::Flags<EnumT>& get_entity_signature(const Entity entity) const noexcept
   {
-    return get_entity_signature_helper(entity);
+    assert(entity.id < MAX_NUMBER_OF_ENTITIES);
+    return entity_signatures_[entity.id];
   }
 
   void set_entity_signature(const Entity entity, const ComponentType signature) noexcept
@@ -227,14 +275,8 @@ public:
   std::size_t get_number_of_entities() const noexcept { return MAX_NUMBER_OF_ENTITIES - free_entities_.size(); }
 
 private:
-  rtw::stl::Flags<EnumT>& get_entity_signature_helper(const Entity entity) noexcept
-  {
-    assert(entity.id < MAX_NUMBER_OF_ENTITIES);
-    return entity_signatures_[entity.id];
-  }
-
-  std::array<rtw::stl::Flags<EnumT>, MAX_NUMBER_OF_ENTITIES> entity_signatures_{};
-  rtw::stl::Queue<Entity> free_entities_{MAX_NUMBER_OF_ENTITIES};
+  stl::HeapArray<stl::Flags<EnumT>> entity_signatures_{MAX_NUMBER_OF_ENTITIES};
+  stl::Queue<Entity> free_entities_{MAX_NUMBER_OF_ENTITIES};
 };
 
 } // namespace rtw::ecs
