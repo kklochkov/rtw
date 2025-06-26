@@ -67,11 +67,18 @@ struct Damage : rtw::ecs::Component<ComponentType, ComponentType::DAMAGE>
 };
 
 constexpr std::size_t MAX_NUMBER_OF_ENTITIES = 1'000;
+
 using ComponentManager =
     rtw::ecs::ComponentManager<ComponentType, Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>;
 using EntityManger = rtw::ecs::EntityManger<ComponentType>;
+using SystemManger = rtw::ecs::SystemManger<ComponentType>;
+using System = rtw::ecs::System<ComponentType>;
 using Entity = rtw::ecs::Entity<ComponentType>;
-constexpr inline EntityManger::EntitySignature DEFAULT_SIGNATURE{
+
+constexpr inline rtw::ecs::EntitySignature<ComponentType> DEFAULT_ENTITY_SIGNATURE{
+    ComponentType::TRANSFORM | ComponentType::RIGID_BODY | ComponentType::COLLIDER | ComponentType::SPRITE
+    | ComponentType::MESH | ComponentType::DEBUG | ComponentType::HEALTH | ComponentType::DAMAGE};
+constexpr inline rtw::ecs::SystemSignature<ComponentType> DEFAULT_SYSTEM_SIGNATURE{
     ComponentType::TRANSFORM | ComponentType::RIGID_BODY | ComponentType::COLLIDER | ComponentType::SPRITE
     | ComponentType::MESH | ComponentType::DEBUG | ComponentType::HEALTH | ComponentType::DAMAGE};
 
@@ -83,6 +90,13 @@ static_assert(std::is_same_v<EntityManger::ComponentType, ComponentType>,
               "EntityManger's ComponentType must match the enum type.");
 static_assert(std::is_same_v<ComponentManager::ComponentType, EntityManger::ComponentType>,
               "ComponentManager's ComponentType must match EntityManger's ComponentType.");
+static_assert(std::is_same_v<SystemManger ::ComponentType, EntityManger::ComponentType>,
+              "SystemManger's ComponentType must match EntityManger's ComponentType.");
+
+struct DefaultSystem : public System
+{
+  explicit DefaultSystem() noexcept : System{DEFAULT_SYSTEM_SIGNATURE} {}
+};
 
 } // namespace
 
@@ -132,8 +146,8 @@ TEST(EcsTest, component_manager_add_component)
 
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
-    const auto entity = entity_manager.create(DEFAULT_SIGNATURE);
-    EXPECT_EQ(entity.signature, DEFAULT_SIGNATURE);
+    const auto entity = entity_manager.create(DEFAULT_ENTITY_SIGNATURE);
+    EXPECT_EQ(entity.signature, DEFAULT_ENTITY_SIGNATURE);
 
     EXPECT_FALSE(component_manager.has<Transform>(entity));
     EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
@@ -197,8 +211,8 @@ TEST(EcsTest, component_manager_destroy_component)
   std::vector<Entity> entities;
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
-    const auto entity = entity_manager.create(DEFAULT_SIGNATURE);
-    EXPECT_EQ(entity.signature, DEFAULT_SIGNATURE);
+    const auto entity = entity_manager.create(DEFAULT_ENTITY_SIGNATURE);
+    EXPECT_EQ(entity.signature, DEFAULT_ENTITY_SIGNATURE);
 
     EXPECT_FALSE(component_manager.has<Transform>(entity));
     EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
@@ -296,8 +310,8 @@ TEST(EcsTest, component_manager_destroy_component)
 
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
-    const auto entity = entity_manager.create(DEFAULT_SIGNATURE);
-    EXPECT_EQ(entity.signature, DEFAULT_SIGNATURE);
+    const auto entity = entity_manager.create(DEFAULT_ENTITY_SIGNATURE);
+    EXPECT_EQ(entity.signature, DEFAULT_ENTITY_SIGNATURE);
 
     EXPECT_FALSE(component_manager.has<Transform>(entity));
     EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
@@ -355,4 +369,28 @@ TEST(EcsTest, component_manager_destroy_component)
   EXPECT_EQ(component_manager.size<Damage>(), 10U);
   EXPECT_EQ(component_manager.total_size(), 80U);
   EXPECT_EQ(entities.size(), 10U);
+}
+
+TEST(EcsTest, system_basic)
+{
+  ComponentManager component_manager{MAX_NUMBER_OF_ENTITIES};
+  EntityManger entity_manager{MAX_NUMBER_OF_ENTITIES};
+  SystemManger system_manager{};
+
+  const auto entity = entity_manager.create(DEFAULT_ENTITY_SIGNATURE);
+
+  component_manager.emplace<Transform>(entity, 42U);
+  component_manager.emplace<Rigidbody>(entity, 43U);
+  component_manager.emplace<Collider>(entity, 44U);
+  component_manager.emplace<Sprite>(entity, 45U);
+  component_manager.emplace<Mesh>(entity, 46U);
+  component_manager.emplace<Debug>(entity, 47U);
+  component_manager.emplace<Health>(entity, 48U);
+  component_manager.emplace<Damage>(entity, 49U);
+
+  auto& system = system_manager.create<DefaultSystem>();
+  EXPECT_EQ(system.get_signature(), DEFAULT_SYSTEM_SIGNATURE);
+
+  system.add_entity(entity);
+  EXPECT_EQ(system.size(), 1U);
 }
