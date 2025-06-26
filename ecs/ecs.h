@@ -16,6 +16,16 @@ namespace rtw::ecs
 namespace details
 {
 constexpr std::uint8_t log2(const std::uint64_t n) noexcept { return n > 1U ? 1U + log2(n / 2U) : 0U; }
+
+template <typename T, typename...>
+struct FirstType
+{
+  using type = T;
+};
+
+template <typename... T>
+using FIRST_TYPE_T = typename FirstType<T...>::type;
+
 } // namespace details
 
 using Id = std::uint32_t;
@@ -28,13 +38,14 @@ struct Entity
 template <typename EnumT, EnumT VALUE>
 struct Component
 {
-  static_assert(std::is_enum_v<EnumT>, "EnumT must be an enum type.");
+  static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
 
   using enum_type = EnumT;
-  constexpr static EnumT TYPE = VALUE;
+
+  constexpr static enum_type TYPE = VALUE;
 
   constexpr static Id COMPONENT_ID =
-      static_cast<Id>((details::log2(static_cast<std::underlying_type_t<EnumT>>(VALUE))));
+      static_cast<Id>(details::log2(static_cast<std::underlying_type_t<enum_type>>(VALUE)));
 };
 
 class IComponentStorage
@@ -119,7 +130,12 @@ template <typename... ComponentsT>
 class ComponentManager
 {
 public:
-  using ComponentType = typename std::tuple_element_t<0, std::tuple<ComponentsT...>>::enum_type;
+  constexpr static std::size_t MAX_NUMBER_OF_COMPONENTS = sizeof...(ComponentsT);
+
+  using ComponentType = typename details::FIRST_TYPE_T<ComponentsT...>::enum_type;
+
+  static_assert((std::is_same_v<ComponentType, typename ComponentsT::enum_type> && ...),
+                "All components must have the same enum type.");
 
   explicit ComponentManager(const std::size_t max_number_of_entities) noexcept
   {
@@ -172,8 +188,6 @@ public:
   void remove_components(const Entity entity) noexcept { (remove_component<ComponentsT>(entity), ...); }
 
 private:
-  constexpr static Id MAX_NUMBER_OF_COMPONENTS = sizeof...(ComponentsT);
-
   template <typename T>
   using ComponentStorage = ComponentStorage<T>;
 
@@ -218,7 +232,7 @@ template <typename EnumT>
 class EntityManger
 {
 public:
-  static_assert(std::is_enum_v<EnumT>, "EnumT must be an enum type.");
+  static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
 
   using ComponentType = EnumT;
 
