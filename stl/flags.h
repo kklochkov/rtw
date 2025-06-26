@@ -84,10 +84,13 @@ public:
 
   /// Barton-Nackman trick to generate operators.
   /// @{
+  friend constexpr Flags operator|(Flags lhs, const Flags rhs) noexcept { return lhs |= rhs; }
   friend constexpr Flags operator|(Flags lhs, const T rhs) noexcept { return lhs |= rhs; }
   friend constexpr Flags operator|(const T lhs, Flags rhs) noexcept { return rhs |= lhs; }
+  friend constexpr Flags operator&(Flags lhs, const Flags rhs) noexcept { return lhs &= rhs; }
   friend constexpr Flags operator&(Flags lhs, const T rhs) noexcept { return lhs &= rhs; }
   friend constexpr Flags operator&(const T lhs, Flags rhs) noexcept { return rhs &= lhs; }
+  friend constexpr Flags operator^(Flags lhs, const Flags rhs) noexcept { return lhs ^= rhs; }
   friend constexpr Flags operator^(Flags lhs, const T rhs) noexcept { return lhs ^= rhs; }
   friend constexpr Flags operator^(const T lhs, Flags rhs) noexcept { return rhs ^= lhs; }
 

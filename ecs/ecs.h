@@ -36,7 +36,7 @@ struct EntityId : Id
 {};
 
 template <typename EnumT>
-class EntitySignature : public stl::Flags<EnumT>
+struct EntitySignature : stl::Flags<EnumT>
 {};
 
 template <typename EnumT>
@@ -70,7 +70,7 @@ struct Component
 };
 
 template <typename EnumT>
-class SystemSignature : public stl::Flags<EnumT>
+struct SystemSignature : stl::Flags<EnumT>
 {};
 
 } // namespace rtw::ecs
@@ -374,6 +374,8 @@ private:
   stl::HeapArray<Entity> entities_;
   stl::Queue<EntityId> free_ids_;
 };
+template <typename EnumT>
+class System;
 
 class ISystem
 {
@@ -385,12 +387,15 @@ public:
   ISystem& operator=(ISystem&&) noexcept = default;
   virtual ~ISystem() = default;
 
+  // Method template with CRTP touch: casting to derived class System<EnumT> to access get_signature().
+  // I haven't seen such usage before, just regular CRTP on classes, but not on methods. Have someone done this already?
   template <typename EnumT>
-  void add_entity(const Entity<EnumT>& entity, const SystemSignature<EnumT>& system_signature) noexcept
+  void add_entity(const Entity<EnumT>& entity) noexcept
   {
+    const auto system_signature = static_cast<const System<EnumT>*>(this)->get_signature();
     if ((entity.signature & system_signature) == system_signature)
     {
-      entities_.insert(entity);
+      entities_.insert(entity.id);
     }
   }
 
@@ -428,10 +433,9 @@ public:
   static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
 
   using ComponentType = EnumT;
-  using SystemSignature = SystemSignature<ComponentType>;
 
   template <typename SystemT, typename... ArgsT>
-  SystemT& create(SystemSignature signature, ArgsT&&... args) noexcept
+  SystemT& create(ArgsT&&... args) noexcept
   {
     static_assert(std::is_base_of_v<System<EnumT>, SystemT>, "System must derive from ISystem.");
 
@@ -439,7 +443,7 @@ public:
 
     assert(systems_.find(type_index) == systems_.end());
 
-    auto system = std::make_unique<SystemT>(std::move(signature), std::forward<ArgsT>(args)...);
+    auto system = std::make_unique<SystemT>(std::forward<ArgsT>(args)...);
     auto& system_ref = *system;
     systems_[type_index] = std::move(system);
     return system_ref;
