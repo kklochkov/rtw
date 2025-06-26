@@ -70,6 +70,7 @@ constexpr std::size_t MAX_NUMBER_OF_ENTITIES = 1'000;
 using ComponentManager =
     rtw::ecs::ComponentManager<ComponentType, Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>;
 using EntityManger = rtw::ecs::EntityManger<ComponentType>;
+using Entity = rtw::ecs::Entity<ComponentType>;
 constexpr inline EntityManger::EntitySignature DEFAULT_SIGNATURE{
     ComponentType::TRANSFORM | ComponentType::RIGID_BODY | ComponentType::COLLIDER | ComponentType::SPRITE
     | ComponentType::MESH | ComponentType::DEBUG | ComponentType::HEALTH | ComponentType::DAMAGE};
@@ -132,7 +133,7 @@ TEST(EcsTest, component_manager_add_component)
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
     const auto entity = entity_manager.create(DEFAULT_SIGNATURE);
-    EXPECT_EQ(entity_manager.get_signature(entity), DEFAULT_SIGNATURE);
+    EXPECT_EQ(entity.signature, DEFAULT_SIGNATURE);
 
     EXPECT_FALSE(component_manager.has<Transform>(entity));
     EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
@@ -193,11 +194,11 @@ TEST(EcsTest, component_manager_destroy_component)
   ComponentManager component_manager{MAX_NUMBER_OF_ENTITIES};
   EntityManger entity_manager{MAX_NUMBER_OF_ENTITIES};
 
-  std::vector<rtw::ecs::Entity> entities;
+  std::vector<Entity> entities;
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
     const auto entity = entity_manager.create(DEFAULT_SIGNATURE);
-    EXPECT_EQ(entity_manager.get_signature(entity), DEFAULT_SIGNATURE);
+    EXPECT_EQ(entity.signature, DEFAULT_SIGNATURE);
 
     EXPECT_FALSE(component_manager.has<Transform>(entity));
     EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
@@ -296,7 +297,7 @@ TEST(EcsTest, component_manager_destroy_component)
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
     const auto entity = entity_manager.create(DEFAULT_SIGNATURE);
-    EXPECT_EQ(entity_manager.get_signature(entity), DEFAULT_SIGNATURE);
+    EXPECT_EQ(entity.signature, DEFAULT_SIGNATURE);
 
     EXPECT_FALSE(component_manager.has<Transform>(entity));
     EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
