@@ -16,16 +16,6 @@ namespace rtw::ecs
 namespace details
 {
 constexpr std::uint8_t log2(const std::uint64_t n) noexcept { return n > 1U ? 1U + log2(n / 2U) : 0U; }
-
-template <typename T, typename...>
-struct FirstType
-{
-  using type = T;
-};
-
-template <typename... T>
-using FIRST_TYPE_T = typename FirstType<T...>::type;
-
 } // namespace details
 
 using Id = std::uint32_t;
@@ -40,12 +30,12 @@ struct Component
 {
   static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
 
-  using enum_type = EnumT;
+  using ComponentType = EnumT;
 
-  constexpr static enum_type TYPE = VALUE;
+  constexpr static ComponentType TYPE = VALUE;
 
   constexpr static Id COMPONENT_ID =
-      static_cast<Id>(details::log2(static_cast<std::underlying_type_t<enum_type>>(VALUE)));
+      static_cast<Id>(details::log2(static_cast<std::underlying_type_t<ComponentType>>(VALUE)));
 };
 
 class IComponentStorage
@@ -126,16 +116,17 @@ private:
   std::unordered_map<std::size_t, Id> index_to_entity_id_;
 };
 
-template <typename... ComponentsT>
+template <typename EnumT, typename... ComponentsT>
 class ComponentManager
 {
 public:
-  constexpr static std::size_t MAX_NUMBER_OF_COMPONENTS = sizeof...(ComponentsT);
+  using ComponentType = EnumT;
 
-  using ComponentType = typename details::FIRST_TYPE_T<ComponentsT...>::enum_type;
-
-  static_assert((std::is_same_v<ComponentType, typename ComponentsT::enum_type> && ...),
+  static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
+  static_assert((std::is_same_v<ComponentType, typename ComponentsT::ComponentType> && ...),
                 "All components must have the same enum type.");
+
+  constexpr static std::size_t MAX_NUMBER_OF_COMPONENTS = sizeof...(ComponentsT);
 
   explicit ComponentManager(const std::size_t max_number_of_entities) noexcept
   {

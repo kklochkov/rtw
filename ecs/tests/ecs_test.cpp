@@ -67,7 +67,7 @@ struct Damage : rtw::ecs::Component<ComponentType, ComponentType::DAMAGE>
 
 constexpr std::size_t MAX_NUMBER_OF_ENTITIES = 1'000;
 using ComponentManager =
-    rtw::ecs::ComponentManager<Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>;
+    rtw::ecs::ComponentManager<ComponentType, Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>;
 using EntityManger = rtw::ecs::EntityManger<ComponentType>;
 
 static_assert(std::is_same_v<ComponentManager::ComponentType, ComponentType>,
