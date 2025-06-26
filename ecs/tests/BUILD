@@ -9,6 +9,7 @@ cc_test_with_llvm_symbolizer(
     tags = ["no-clang-tidy"],
     deps = [
         "//ecs",
+        "//stl:format",
         "@googletest//:gtest_main",
     ],
 )
