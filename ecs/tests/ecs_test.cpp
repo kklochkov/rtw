@@ -127,46 +127,64 @@ TEST(EcsTest, component_manager_add_component)
 
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
-    auto entity0 = entity_manager.create();
-    component_manager.emplace<Transform>(entity0, 42U + i);
-    entity_manager.set_signature(entity0, ComponentType::TRANSFORM);
-    EXPECT_EQ(component_manager.get<Transform>(entity0).data, 42U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::TRANSFORM));
+    auto entity = entity_manager.create();
 
-    component_manager.emplace<Rigidbody>(entity0, 43U + i);
-    entity_manager.set_signature(entity0, ComponentType::RIGID_BODY);
-    EXPECT_EQ(component_manager.get<Rigidbody>(entity0).data, 43U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::RIGID_BODY));
+    EXPECT_FALSE(component_manager.has<Transform>(entity));
+    EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
+    EXPECT_FALSE(component_manager.has<Collider>(entity));
+    EXPECT_FALSE(component_manager.has<Sprite>(entity));
+    EXPECT_FALSE(component_manager.has<Mesh>(entity));
+    EXPECT_FALSE(component_manager.has<Debug>(entity));
+    EXPECT_FALSE(component_manager.has<Health>(entity));
+    EXPECT_FALSE(component_manager.has<Damage>(entity));
 
-    component_manager.emplace<Collider>(entity0, 44U + i);
-    entity_manager.set_signature(entity0, ComponentType::COLLIDER);
-    EXPECT_EQ(component_manager.get<Collider>(entity0).data, 44U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::COLLIDER));
+    component_manager.emplace<Transform>(entity, 42U + i);
+    entity_manager.set_signature(entity, ComponentType::TRANSFORM);
+    EXPECT_EQ(component_manager.get<Transform>(entity).data, 42U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::TRANSFORM));
+    EXPECT_TRUE(component_manager.has<Transform>(entity));
 
-    component_manager.emplace<Sprite>(entity0, 45U + i);
-    entity_manager.set_signature(entity0, ComponentType::SPRITE);
-    EXPECT_EQ(component_manager.get<Sprite>(entity0).data, 45U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::SPRITE));
+    component_manager.emplace<Rigidbody>(entity, 43U + i);
+    entity_manager.set_signature(entity, ComponentType::RIGID_BODY);
+    EXPECT_EQ(component_manager.get<Rigidbody>(entity).data, 43U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::RIGID_BODY));
+    EXPECT_TRUE(component_manager.has<Rigidbody>(entity));
 
-    component_manager.emplace<Mesh>(entity0, 46U + i);
-    entity_manager.set_signature(entity0, ComponentType::MESH);
-    EXPECT_EQ(component_manager.get<Mesh>(entity0).data, 46U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::MESH));
+    component_manager.emplace<Collider>(entity, 44U + i);
+    entity_manager.set_signature(entity, ComponentType::COLLIDER);
+    EXPECT_EQ(component_manager.get<Collider>(entity).data, 44U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::COLLIDER));
+    EXPECT_TRUE(component_manager.has<Collider>(entity));
 
-    component_manager.emplace<Debug>(entity0, 47U + i);
-    entity_manager.set_signature(entity0, ComponentType::DEBUG);
-    EXPECT_EQ(component_manager.get<Debug>(entity0).data, 47U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::DEBUG));
+    component_manager.emplace<Sprite>(entity, 45U + i);
+    entity_manager.set_signature(entity, ComponentType::SPRITE);
+    EXPECT_EQ(component_manager.get<Sprite>(entity).data, 45U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::SPRITE));
+    EXPECT_TRUE(component_manager.has<Sprite>(entity));
 
-    component_manager.emplace<Health>(entity0, 48U + i);
-    entity_manager.set_signature(entity0, ComponentType::HEALTH);
-    EXPECT_EQ(component_manager.get<Health>(entity0).data, 48U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::HEALTH));
+    component_manager.emplace<Mesh>(entity, 46U + i);
+    entity_manager.set_signature(entity, ComponentType::MESH);
+    EXPECT_EQ(component_manager.get<Mesh>(entity).data, 46U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::MESH));
+    EXPECT_TRUE(component_manager.has<Mesh>(entity));
 
-    component_manager.emplace<Damage>(entity0, 49U + i);
-    entity_manager.set_signature(entity0, ComponentType::DAMAGE);
-    EXPECT_EQ(component_manager.get<Damage>(entity0).data, 49U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::DAMAGE));
+    component_manager.emplace<Debug>(entity, 47U + i);
+    entity_manager.set_signature(entity, ComponentType::DEBUG);
+    EXPECT_EQ(component_manager.get<Debug>(entity).data, 47U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::DEBUG));
+    EXPECT_TRUE(component_manager.has<Debug>(entity));
+
+    component_manager.emplace<Health>(entity, 48U + i);
+    entity_manager.set_signature(entity, ComponentType::HEALTH);
+    EXPECT_EQ(component_manager.get<Health>(entity).data, 48U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::HEALTH));
+    EXPECT_TRUE(component_manager.has<Health>(entity));
+
+    component_manager.emplace<Damage>(entity, 49U + i);
+    entity_manager.set_signature(entity, ComponentType::DAMAGE);
+    EXPECT_EQ(component_manager.get<Damage>(entity).data, 49U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::DAMAGE));
+    EXPECT_TRUE(component_manager.has<Damage>(entity));
   }
 
   EXPECT_EQ(entity_manager.size(), 10U);
@@ -188,48 +206,66 @@ TEST(EcsTest, component_manager_destroy_component)
   std::vector<rtw::ecs::Entity> entities;
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
-    auto entity0 = entity_manager.create();
-    component_manager.emplace<Transform>(entity0, 42U + i);
-    entity_manager.set_signature(entity0, ComponentType::TRANSFORM);
-    EXPECT_EQ(component_manager.get<Transform>(entity0).data, 42U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::TRANSFORM));
+    auto entity = entity_manager.create();
 
-    component_manager.emplace<Rigidbody>(entity0, 43U + i);
-    entity_manager.set_signature(entity0, ComponentType::RIGID_BODY);
-    EXPECT_EQ(component_manager.get<Rigidbody>(entity0).data, 43U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::RIGID_BODY));
+    EXPECT_FALSE(component_manager.has<Transform>(entity));
+    EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
+    EXPECT_FALSE(component_manager.has<Collider>(entity));
+    EXPECT_FALSE(component_manager.has<Sprite>(entity));
+    EXPECT_FALSE(component_manager.has<Mesh>(entity));
+    EXPECT_FALSE(component_manager.has<Debug>(entity));
+    EXPECT_FALSE(component_manager.has<Health>(entity));
+    EXPECT_FALSE(component_manager.has<Damage>(entity));
 
-    component_manager.emplace<Collider>(entity0, 44U + i);
-    entity_manager.set_signature(entity0, ComponentType::COLLIDER);
-    EXPECT_EQ(component_manager.get<Collider>(entity0).data, 44U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::COLLIDER));
+    component_manager.emplace<Transform>(entity, 42U + i);
+    entity_manager.set_signature(entity, ComponentType::TRANSFORM);
+    EXPECT_EQ(component_manager.get<Transform>(entity).data, 42U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::TRANSFORM));
+    EXPECT_TRUE(component_manager.has<Transform>(entity));
 
-    component_manager.emplace<Sprite>(entity0, 45U + i);
-    entity_manager.set_signature(entity0, ComponentType::SPRITE);
-    EXPECT_EQ(component_manager.get<Sprite>(entity0).data, 45U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::SPRITE));
+    component_manager.emplace<Rigidbody>(entity, 43U + i);
+    entity_manager.set_signature(entity, ComponentType::RIGID_BODY);
+    EXPECT_EQ(component_manager.get<Rigidbody>(entity).data, 43U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::RIGID_BODY));
+    EXPECT_TRUE(component_manager.has<Rigidbody>(entity));
 
-    component_manager.emplace<Mesh>(entity0, 46U + i);
-    entity_manager.set_signature(entity0, ComponentType::MESH);
-    EXPECT_EQ(component_manager.get<Mesh>(entity0).data, 46U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::MESH));
+    component_manager.emplace<Collider>(entity, 44U + i);
+    entity_manager.set_signature(entity, ComponentType::COLLIDER);
+    EXPECT_EQ(component_manager.get<Collider>(entity).data, 44U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::COLLIDER));
+    EXPECT_TRUE(component_manager.has<Collider>(entity));
 
-    component_manager.emplace<Debug>(entity0, 47U + i);
-    entity_manager.set_signature(entity0, ComponentType::DEBUG);
-    EXPECT_EQ(component_manager.get<Debug>(entity0).data, 47U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::DEBUG));
+    component_manager.emplace<Sprite>(entity, 45U + i);
+    entity_manager.set_signature(entity, ComponentType::SPRITE);
+    EXPECT_EQ(component_manager.get<Sprite>(entity).data, 45U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::SPRITE));
+    EXPECT_TRUE(component_manager.has<Sprite>(entity));
 
-    component_manager.emplace<Health>(entity0, 48U + i);
-    entity_manager.set_signature(entity0, ComponentType::HEALTH);
-    EXPECT_EQ(component_manager.get<Health>(entity0).data, 48U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::HEALTH));
+    component_manager.emplace<Mesh>(entity, 46U + i);
+    entity_manager.set_signature(entity, ComponentType::MESH);
+    EXPECT_EQ(component_manager.get<Mesh>(entity).data, 46U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::MESH));
+    EXPECT_TRUE(component_manager.has<Mesh>(entity));
 
-    component_manager.emplace<Damage>(entity0, 49U + i);
-    entity_manager.set_signature(entity0, ComponentType::DAMAGE);
-    EXPECT_EQ(component_manager.get<Damage>(entity0).data, 49U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::DAMAGE));
+    component_manager.emplace<Debug>(entity, 47U + i);
+    entity_manager.set_signature(entity, ComponentType::DEBUG);
+    EXPECT_EQ(component_manager.get<Debug>(entity).data, 47U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::DEBUG));
+    EXPECT_TRUE(component_manager.has<Debug>(entity));
 
-    entities.push_back(entity0);
+    component_manager.emplace<Health>(entity, 48U + i);
+    entity_manager.set_signature(entity, ComponentType::HEALTH);
+    EXPECT_EQ(component_manager.get<Health>(entity).data, 48U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::HEALTH));
+    EXPECT_TRUE(component_manager.has<Health>(entity));
+
+    component_manager.emplace<Damage>(entity, 49U + i);
+    entity_manager.set_signature(entity, ComponentType::DAMAGE);
+    EXPECT_EQ(component_manager.get<Damage>(entity).data, 49U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::DAMAGE));
+    EXPECT_TRUE(component_manager.has<Damage>(entity));
+
+    entities.push_back(entity);
   }
 
   EXPECT_EQ(entity_manager.size(), 10U);
@@ -255,6 +291,16 @@ TEST(EcsTest, component_manager_destroy_component)
     component_manager.remove<Health>(entity);
     component_manager.remove<Damage>(entity);
     component_manager.remove_all(entity);
+
+    EXPECT_FALSE(component_manager.has<Transform>(entity));
+    EXPECT_FALSE(component_manager.has<Rigidbody>(entity));
+    EXPECT_FALSE(component_manager.has<Collider>(entity));
+    EXPECT_FALSE(component_manager.has<Sprite>(entity));
+    EXPECT_FALSE(component_manager.has<Mesh>(entity));
+    EXPECT_FALSE(component_manager.has<Debug>(entity));
+    EXPECT_FALSE(component_manager.has<Health>(entity));
+    EXPECT_FALSE(component_manager.has<Damage>(entity));
+
     entity_manager.destroy(entity);
   }
   entities.clear();
@@ -273,48 +319,56 @@ TEST(EcsTest, component_manager_destroy_component)
 
   for (std::uint32_t i = 0U; i < 10U; ++i)
   {
-    auto entity0 = entity_manager.create();
-    component_manager.emplace<Transform>(entity0, 442U + i);
-    entity_manager.set_signature(entity0, ComponentType::TRANSFORM);
-    EXPECT_EQ(component_manager.get<Transform>(entity0).data, 442U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::TRANSFORM));
+    auto entity = entity_manager.create();
+    component_manager.emplace<Transform>(entity, 442U + i);
+    entity_manager.set_signature(entity, ComponentType::TRANSFORM);
+    EXPECT_EQ(component_manager.get<Transform>(entity).data, 442U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::TRANSFORM));
+    EXPECT_TRUE(component_manager.has<Transform>(entity));
 
-    component_manager.emplace<Rigidbody>(entity0, 443U + i);
-    entity_manager.set_signature(entity0, ComponentType::RIGID_BODY);
-    EXPECT_EQ(component_manager.get<Rigidbody>(entity0).data, 443U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::RIGID_BODY));
+    component_manager.emplace<Rigidbody>(entity, 443U + i);
+    entity_manager.set_signature(entity, ComponentType::RIGID_BODY);
+    EXPECT_EQ(component_manager.get<Rigidbody>(entity).data, 443U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::RIGID_BODY));
+    EXPECT_TRUE(component_manager.has<Rigidbody>(entity));
 
-    component_manager.emplace<Collider>(entity0, 444U + i);
-    entity_manager.set_signature(entity0, ComponentType::COLLIDER);
-    EXPECT_EQ(component_manager.get<Collider>(entity0).data, 444U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::COLLIDER));
+    component_manager.emplace<Collider>(entity, 444U + i);
+    entity_manager.set_signature(entity, ComponentType::COLLIDER);
+    EXPECT_EQ(component_manager.get<Collider>(entity).data, 444U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::COLLIDER));
+    EXPECT_TRUE(component_manager.has<Collider>(entity));
 
-    component_manager.emplace<Sprite>(entity0, 445U + i);
-    entity_manager.set_signature(entity0, ComponentType::SPRITE);
-    EXPECT_EQ(component_manager.get<Sprite>(entity0).data, 445U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::SPRITE));
+    component_manager.emplace<Sprite>(entity, 445U + i);
+    entity_manager.set_signature(entity, ComponentType::SPRITE);
+    EXPECT_EQ(component_manager.get<Sprite>(entity).data, 445U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::SPRITE));
+    EXPECT_TRUE(component_manager.has<Sprite>(entity));
 
-    component_manager.emplace<Mesh>(entity0, 446U + i);
-    entity_manager.set_signature(entity0, ComponentType::MESH);
-    EXPECT_EQ(component_manager.get<Mesh>(entity0).data, 446U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::MESH));
+    component_manager.emplace<Mesh>(entity, 446U + i);
+    entity_manager.set_signature(entity, ComponentType::MESH);
+    EXPECT_EQ(component_manager.get<Mesh>(entity).data, 446U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::MESH));
+    EXPECT_TRUE(component_manager.has<Mesh>(entity));
 
-    component_manager.emplace<Debug>(entity0, 447U + i);
-    entity_manager.set_signature(entity0, ComponentType::DEBUG);
-    EXPECT_EQ(component_manager.get<Debug>(entity0).data, 447U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::DEBUG));
+    component_manager.emplace<Debug>(entity, 447U + i);
+    entity_manager.set_signature(entity, ComponentType::DEBUG);
+    EXPECT_EQ(component_manager.get<Debug>(entity).data, 447U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::DEBUG));
+    EXPECT_TRUE(component_manager.has<Debug>(entity));
 
-    component_manager.emplace<Health>(entity0, 448U + i);
-    entity_manager.set_signature(entity0, ComponentType::HEALTH);
-    EXPECT_EQ(component_manager.get<Health>(entity0).data, 448U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::HEALTH));
+    component_manager.emplace<Health>(entity, 448U + i);
+    entity_manager.set_signature(entity, ComponentType::HEALTH);
+    EXPECT_EQ(component_manager.get<Health>(entity).data, 448U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::HEALTH));
+    EXPECT_TRUE(component_manager.has<Health>(entity));
 
-    component_manager.emplace<Damage>(entity0, 449U + i);
-    entity_manager.set_signature(entity0, ComponentType::DAMAGE);
-    EXPECT_EQ(component_manager.get<Damage>(entity0).data, 449U + i);
-    EXPECT_TRUE(entity_manager.test_signature(entity0, ComponentType::DAMAGE));
+    component_manager.emplace<Damage>(entity, 449U + i);
+    entity_manager.set_signature(entity, ComponentType::DAMAGE);
+    EXPECT_EQ(component_manager.get<Damage>(entity).data, 449U + i);
+    EXPECT_TRUE(entity_manager.test_signature(entity, ComponentType::DAMAGE));
+    EXPECT_TRUE(component_manager.has<Damage>(entity));
 
-    entities.push_back(entity0);
+    entities.push_back(entity);
   }
 
   EXPECT_EQ(entity_manager.size(), 10U);
