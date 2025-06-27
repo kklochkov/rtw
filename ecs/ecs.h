@@ -263,20 +263,8 @@ public:
     return get<ComponentT>(entity.id);
   }
 
-  template <typename ComponentT>
-  void remove(const EntityId id) noexcept
-  {
-    get_storage<ComponentT>().remove(id);
-  }
-
-  template <typename ComponentT>
-  void remove(const Entity& entity) noexcept
-  {
-    remove<ComponentT>(entity.id);
-  }
-
-  void remove_all(const EntityId id) noexcept { (remove<ComponentsT>(id), ...); }
-  void remove_all(const Entity& entity) noexcept { remove_all(entity.id); }
+  void remove(const EntityId id) noexcept { (remove<ComponentsT>(id), ...); }
+  void remove(const Entity& entity) noexcept { remove(entity.id); }
 
 private:
   template <typename ComponentT>
@@ -315,6 +303,12 @@ private:
                   "ComponentT must be one of the component types defined in ComponentsT.");
     const auto& component_storage = components_storage_[get_component_id<ComponentT>()];
     return static_cast<const ComponentStorage<ComponentT>&>(*component_storage.get());
+  }
+
+  template <typename ComponentT>
+  void remove(const EntityId id) noexcept
+  {
+    get_storage<ComponentT>().remove(id);
   }
 
   using ComponentsStorage = std::array<std::unique_ptr<IComponentStorage>, NUMBER_OF_REGISTERED_COMPONENTS>;
@@ -433,6 +427,7 @@ public:
   static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
 
   using ComponentType = EnumT;
+  using Entity = Entity<ComponentType>;
 
   template <typename SystemT, typename... ArgsT>
   SystemT& create(ArgsT&&... args) noexcept
@@ -473,10 +468,106 @@ public:
     return static_cast<const SystemT&>(*it->second);
   }
 
+  void add_entity(const Entity& entity) noexcept
+  {
+    for (auto& [_, system] : systems_)
+    {
+      system->add_entity(entity);
+    }
+  }
+
+  void remove_entity(const EntityId id) noexcept
+  {
+    for (auto& [_, system] : systems_)
+    {
+      system->remove_entity(id);
+    }
+  }
+
   std::size_t size() const noexcept { return systems_.size(); }
 
 private:
   std::unordered_map<std::type_index, std::unique_ptr<ISystem>> systems_;
+};
+
+template <typename EnumT, typename... ComponentsT>
+class ECSManager
+{
+public:
+  using ComponentType = EnumT;
+  using SystemSignature = SystemSignature<ComponentType>;
+  using Entity = Entity<ComponentType>;
+  using EntitySignature = typename Entity::EntitySignature;
+
+  explicit ECSManager(const std::size_t max_number_of_entities) noexcept
+      : component_manager_{max_number_of_entities}, entity_manager_{max_number_of_entities}
+  {
+  }
+
+  template <typename SystemT, typename... ArgsT>
+  void create_system(ArgsT&&... args) noexcept
+  {
+    system_manager_.template create<SystemT>(std::forward<ArgsT>(args)...);
+  }
+
+  template <typename SystemT>
+  SystemT& get_system() noexcept
+  {
+    return system_manager_.template get<SystemT>();
+  }
+
+  template <typename SystemT>
+  const SystemT& get_system() const noexcept
+  {
+    return system_manager_.template get<SystemT>();
+  }
+
+  Entity create_entity(EntitySignature signature) noexcept
+  {
+    const auto entity = entity_manager_.create(std::move(signature));
+    system_manager_.add_entity(entity);
+    return entity;
+  }
+
+  void destroy_entity(const Entity& entity) noexcept
+  {
+    entity_manager_.destroy(entity.id);
+    system_manager_.remove_entity(entity.id);
+    component_manager_.remove(entity.id);
+  }
+
+  std::size_t get_number_of_entites() const noexcept { return entity_manager_.size(); }
+
+  template <typename ComponentT, typename... ArgsT>
+  void emplace_component(const Entity& entity, ArgsT&&... args) noexcept
+  {
+    component_manager_.template emplace<ComponentT>(entity, std::forward<ArgsT>(args)...);
+  }
+
+  template <typename ComponentT>
+  ComponentT& get_component(const Entity& entity) noexcept
+  {
+    return component_manager_.template get<ComponentT>(entity);
+  }
+
+  template <typename ComponentT>
+  const ComponentT& get_component(const Entity& entity) const noexcept
+  {
+    return component_manager_.template get<ComponentT>(entity);
+  }
+
+  template <typename ComponentT>
+  std::size_t get_number_of_components() const noexcept
+  {
+    return component_manager_.template size<ComponentT>();
+  }
+
+  std::size_t get_total_number_of_components() const noexcept { return component_manager_.total_size(); }
+
+private:
+  ComponentManager<ComponentType, ComponentsT...> component_manager_;
+  EntityManger<ComponentType> entity_manager_;
+  SystemManger<ComponentType> system_manager_{};
 };
 
 } // namespace rtw::ecs
