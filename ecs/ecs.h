@@ -124,6 +124,7 @@ class ComponentStorage final : public IComponentStorage
 {
 public:
   using ComponentType = EnumT;
+  using Entity = Entity<ComponentType>;
 
   static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
   static_assert(std::is_same_v<ComponentType, typename ComponentT::ComponentType>,
@@ -132,37 +133,40 @@ public:
   explicit ComponentStorage(const std::size_t max_number_of_entities) noexcept : components_{max_number_of_entities} {}
 
   template <typename... ArgsT>
-  void emplace(const EntityId id, ArgsT&&... args) noexcept
+  void emplace(const Entity& entity, ArgsT&&... args) noexcept
   {
     const auto index = components_.size();
     components_.push_back(std::forward<ArgsT>(args)...);
-    entity_id_to_index_[id] = index;
-    index_to_entity_id_[index] = id;
+    entity_id_to_index_[entity.id] = index;
+    index_to_entity_id_[index] = entity.id;
   }
 
   bool empty() const noexcept { return components_.empty(); }
   std::size_t size() const noexcept { return components_.size(); }
 
-  bool contains(const EntityId id) const noexcept { return entity_id_to_index_.find(id) != entity_id_to_index_.end(); }
-
-  ComponentT& get(const EntityId id) noexcept
+  bool contains(const Entity& entity) const noexcept
   {
-    assert(contains(id));
-    const auto index = entity_id_to_index_[id];
+    return entity_id_to_index_.find(entity.id) != entity_id_to_index_.end();
+  }
+
+  ComponentT& get(const Entity& entity) noexcept
+  {
+    assert(contains(entity));
+    const auto index = entity_id_to_index_[entity.id];
     return components_[index];
   }
-  const ComponentT& get(const EntityId id) const noexcept { return get(id); }
-  ComponentT& operator[](const EntityId id) noexcept { return get(id); }
-  const ComponentT& operator[](const EntityId id) const noexcept { return get(id); }
+  const ComponentT& get(const Entity& entity) const noexcept { return get(entity); }
+  ComponentT& operator[](const Entity& entity) noexcept { return get(entity); }
+  const ComponentT& operator[](const Entity& entity) const noexcept { return get(entity); }
 
-  void remove(const EntityId id) noexcept
+  void remove(const Entity& entity) noexcept
   {
     if (components_.empty())
     {
       return;
     }
 
-    auto entity_to_remove_it = entity_id_to_index_.find(id);
+    auto entity_to_remove_it = entity_id_to_index_.find(entity.id);
     if (entity_to_remove_it == entity_id_to_index_.end())
     {
       return;
@@ -208,15 +212,9 @@ public:
   }
 
   template <typename ComponentT, typename... ArgsT>
-  void emplace(const EntityId id, ArgsT&&... args) noexcept
-  {
-    get_storage<ComponentT>().emplace(id, std::forward<ArgsT>(args)...);
-  }
-
-  template <typename ComponentT, typename... ArgsT>
   void emplace(const Entity& entity, ArgsT&&... args) noexcept
   {
-    emplace<ComponentT, ArgsT...>(entity.id, std::forward<ArgsT>(args)...);
+    get_storage<ComponentT>().emplace(entity, std::forward<ArgsT>(args)...);
   }
 
   template <typename ComponentT>
@@ -228,43 +226,24 @@ public:
   std::size_t total_size() const noexcept { return (size<ComponentsT>() + ...); }
 
   template <typename ComponentT>
-  bool has(const EntityId id) const noexcept
-  {
-    return get_storage<ComponentT>().contains(id);
-  }
-
-  template <typename ComponentT>
   bool has(const Entity& entity) const noexcept
   {
-    return has<ComponentT>(entity.id);
-  }
-
-  template <typename ComponentT>
-  ComponentT& get(const EntityId id) noexcept
-  {
-    return get_storage<ComponentT>()[id];
+    return get_storage<ComponentT>().contains(entity);
   }
 
   template <typename ComponentT>
   ComponentT& get(const Entity& entity) noexcept
   {
-    return get<ComponentT>(entity.id);
-  }
-
-  template <typename ComponentT>
-  const ComponentT& get(const EntityId id) const noexcept
-  {
-    return get_storage<ComponentT>()[id];
+    return get_storage<ComponentT>()[entity];
   }
 
   template <typename ComponentT>
   const ComponentT& get(const Entity& entity) const noexcept
   {
-    return get<ComponentT>(entity.id);
+    return get_storage<ComponentT>()[entity];
   }
 
-  void remove(const EntityId id) noexcept { (remove<ComponentsT>(id), ...); }
-  void remove(const Entity& entity) noexcept { remove(entity.id); }
+  void remove(const Entity& entity) noexcept { (remove<ComponentsT>(entity), ...); }
 
 private:
   template <typename ComponentT>
@@ -306,9 +285,9 @@ private:
   }
 
   template <typename ComponentT>
-  void remove(const EntityId id) noexcept
+  void remove(const Entity& entity) noexcept
   {
-    get_storage<ComponentT>().remove(id);
+    get_storage<ComponentT>().remove(entity);
   }
 
   using ComponentsStorage = std::array<std::unique_ptr<IComponentStorage>, NUMBER_OF_REGISTERED_COMPONENTS>;
@@ -347,19 +326,11 @@ public:
     return entity;
   }
 
-  void destroy(const EntityId id) noexcept
+  void destroy(const Entity& entity) noexcept
   {
-    assert(id < entities_.size());
-    entities_[id] = Entity{};
-    free_ids_.push(id);
-  }
-
-  void destroy(const Entity& entity) noexcept { destroy(entity.id); }
-
-  Entity get(const EntityId id) const noexcept
-  {
-    assert(id < entities_.size());
-    return entities_[id];
+    assert(entity.id < entities_.size());
+    entities_[entity.id] = Entity{};
+    free_ids_.push(entity.id);
   }
 
   std::size_t size() const noexcept { return entities_.size() - free_ids_.size(); }
@@ -368,6 +339,7 @@ private:
   stl::HeapArray<Entity> entities_;
   stl::Queue<EntityId> free_ids_;
 };
+
 template <typename EnumT>
 class System;
 
@@ -393,7 +365,11 @@ public:
     }
   }
 
-  void remove_entity(const EntityId id) noexcept { entities_.erase(id); }
+  template <typename EnumT>
+  void remove_entity(const Entity<EnumT>& entity) noexcept
+  {
+    entities_.erase(entity.id);
+  }
 
   std::size_t size() const noexcept { return entities_.size(); }
 
@@ -476,11 +452,11 @@ public:
     }
   }
 
-  void remove_entity(const EntityId id) noexcept
+  void remove_entity(const Entity& entity) noexcept
   {
     for (auto& [_, system] : systems_)
     {
-      system->remove_entity(id);
+      system->remove_entity(entity);
     }
   }
 
@@ -531,9 +507,9 @@ public:
 
   void destroy_entity(const Entity& entity) noexcept
   {
-    entity_manager_.destroy(entity.id);
-    system_manager_.remove_entity(entity.id);
-    component_manager_.remove(entity.id);
+    entity_manager_.destroy(entity);
+    system_manager_.remove_entity(entity);
+    component_manager_.remove(entity);
   }
 
   std::size_t get_number_of_entites() const noexcept { return entity_manager_.size(); }
