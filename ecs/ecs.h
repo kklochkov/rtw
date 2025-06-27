@@ -101,7 +101,7 @@ struct std::hash<rtw::ecs::Component<EnumT, VALUE>>
     const auto hash_id = std::hash<rtw::ecs::Id>{}(component.COMPONENT_ID);
     const auto hash_type =
         std::hash<std::underlying_type_t<EnumT>>{}(static_cast<std::underlying_type_t<EnumT>>(component.TYPE));
-    return hash_id ^ (hash_type << 1U); // Combine the two hashes
+    return hash_id ^ (hash_type << 1U);
   }
 };
 
