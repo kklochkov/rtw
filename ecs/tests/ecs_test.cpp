@@ -99,6 +99,18 @@ using ECSManager =
 struct DefaultSystem : public System
 {
   explicit DefaultSystem() noexcept : System{DEFAULT_SYSTEM_SIGNATURE} {}
+
+  void update(ECSManager& ecs_manager)
+  {
+    for (const auto& entity : get_entities())
+    {
+      auto& transform = ecs_manager.get_component<Transform>(entity);
+      auto& rigidbody = ecs_manager.get_component<Rigidbody>(entity);
+
+      transform.data = 42U;
+      rigidbody.data = 24U;
+    }
+  }
 };
 
 } // namespace
@@ -473,4 +485,16 @@ TEST(EcsTest, ecs_basic)
   EXPECT_EQ(ecs_manager.get_total_number_of_components(), 80U);
   EXPECT_EQ(ecs_manager.get_system<DefaultSystem>().size(), 10U);
   EXPECT_EQ(entities.size(), 10U);
+
+  auto& default_system = ecs_manager.get_system<DefaultSystem>();
+  default_system.update(ecs_manager);
+
+  for (const auto entity : default_system.get_entities())
+  {
+    const auto& transform = ecs_manager.get_component<Transform>(entity);
+    const auto& rigidbody = ecs_manager.get_component<Rigidbody>(entity);
+
+    EXPECT_EQ(transform.data, 42U);
+    EXPECT_EQ(rigidbody.data, 24U);
+  }
 }
