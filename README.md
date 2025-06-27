@@ -24,9 +24,12 @@ bazel test //math/...
 ```
 
 ## Currently implemented:
-- [x] [fixed_point](fixed_point) - a fixed-point arithmetic library and a set of math functions including trigonometric functions.
-- [x] [math](math) - a math library, that is compatible with fixed-point arithmetic library.
-- [x] [software renderer](sw_renderer) - a simple software renderer that can optionally built to use fixed-point arithmetic library.
+- [x] [fixed_point](fixed_point) - A fixed-point arithmetic library and a set of math functions including trigonometric functions.
+- [x] [math](math) - A math library, that is compatible with fixed-point arithmetic library.
+- [x] [software renderer](sw_renderer) - A simple software renderer that can optionally built to use fixed-point arithmetic library.
+- [x] [ecs](ecs) - Entity Component System that has type safety and efficient data management.
+- [x] [stl](stl) - A set of custom containers which are relevant for the ECS implementation.
+
 To run the software renderer demo application use the following command:
 ```bash
 bazel run //sandbox/sw_renderer -c opt
