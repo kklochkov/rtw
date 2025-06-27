@@ -44,6 +44,9 @@ struct Entity
 {
   using EntitySignature = EntitySignature<EnumT>;
 
+  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
+  Entity(const EntityId id = {}, EntitySignature signature = {}) : signature{std::move(signature)}, id{id} {}
+
   constexpr bool operator==(const Entity& other) const noexcept { return id == other.id; }
 
   EntitySignature signature{};
@@ -380,7 +383,7 @@ public:
 
   std::size_t size() const noexcept { return entities_.size(); }
 
-  const std::unordered_set<EntityId>& entities() const noexcept { return entities_; }
+  const std::unordered_set<EntityId>& get_entities() const noexcept { return entities_; }
 
 private:
   std::unordered_set<EntityId> entities_;
