@@ -155,7 +155,14 @@ public:
     const auto index = entity_id_to_index_[entity.id];
     return components_[index];
   }
-  const ComponentT& get(const Entity& entity) const noexcept { return get(entity); }
+
+  const ComponentT& get(const Entity& entity) const noexcept
+  {
+    assert(contains(entity));
+    const auto index = entity_id_to_index_[entity.id];
+    return components_[index];
+  }
+
   ComponentT& operator[](const Entity& entity) noexcept { return get(entity); }
   const ComponentT& operator[](const Entity& entity) const noexcept { return get(entity); }
 
@@ -295,7 +302,7 @@ private:
 };
 
 template <typename EnumT>
-class EntityManger
+class EntityManager
 {
 public:
   static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
@@ -304,7 +311,7 @@ public:
   using Entity = Entity<ComponentType>;
   using EntitySignature = typename Entity::EntitySignature;
 
-  explicit EntityManger(const std::size_t max_number_of_entities) noexcept
+  explicit EntityManager(const std::size_t max_number_of_entities) noexcept
       : entities_{max_number_of_entities}, free_ids_{max_number_of_entities}
   {
     for (EntityId::ID_TYPE id = 0U; id < max_number_of_entities; ++id)
@@ -397,7 +404,7 @@ private:
 };
 
 template <typename EnumT>
-class SystemManger
+class SystemManager
 {
 public:
   static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
@@ -512,7 +519,7 @@ public:
     component_manager_.remove(entity);
   }
 
-  std::size_t get_number_of_entites() const noexcept { return entity_manager_.size(); }
+  std::size_t get_number_of_entities() const noexcept { return entity_manager_.size(); }
 
   template <typename ComponentT, typename... ArgsT>
   void emplace_component(const Entity& entity, ArgsT&&... args) noexcept
@@ -542,8 +549,8 @@ public:
 
 private:
   ComponentManager<ComponentType, ComponentsT...> component_manager_;
-  EntityManger<ComponentType> entity_manager_;
-  SystemManger<ComponentType> system_manager_{};
+  EntityManager<ComponentType> entity_manager_;
+  SystemManager<ComponentType> system_manager_{};
 };
 
 } // namespace rtw::ecs
