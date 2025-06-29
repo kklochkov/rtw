@@ -141,26 +141,29 @@ TEST(EventBusTest, event_dispatch)
     EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent45>(), 1U);
   }
 
+  std::vector<std::type_index> subscribers;
   // A const member function of a class, on a const instance
   {
     const TestEventHandler46 handler46;
-    event_bus.subscribe<TestEvent46>(handler46, &TestEventHandler46::handler_non_mutable);
+    auto subscription = event_bus.subscribe<TestEvent46>(handler46, &TestEventHandler46::handler_non_mutable);
     event_bus.publish(TestEvent46{});
     EXPECT_TRUE(handler46.event_handled);
     EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent46>(), 1U);
     EXPECT_EQ(TestEventHandler46::const_invocation_count, 1U);
     EXPECT_EQ(TestEventHandler46::non_const_invocation_count, 0U);
+    subscribers.push_back(subscription);
   }
 
   // A const member function of a class, on a mutable instance
   {
     TestEventHandler46 handler46;
-    event_bus.subscribe<TestEvent46>(handler46, &TestEventHandler46::handler_non_mutable);
+    auto subscription = event_bus.subscribe<TestEvent46>(handler46, &TestEventHandler46::handler_non_mutable);
     event_bus.publish(TestEvent46{});
     EXPECT_TRUE(handler46.event_handled);
     EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent46>(), 2U);
     EXPECT_EQ(TestEventHandler46::const_invocation_count, 3U);
     EXPECT_EQ(TestEventHandler46::non_const_invocation_count, 0U);
+    subscribers.push_back(subscription);
   }
 
   // A mutable member function of a class, on a mutable instance
@@ -183,6 +186,38 @@ TEST(EventBusTest, event_dispatch)
   }
 
   EXPECT_EQ(event_bus.get_total_number_of_subscribers(), 8U);
+
+  {
+    // Unsubscribe the mutable handler
+    for (const auto& sub : subscribers)
+    {
+      event_bus.unsubscribe(sub);
+    }
+    EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent46>(), 1U);
+    event_bus.publish(TestEvent46{});
+    EXPECT_EQ(TestEventHandler46::const_invocation_count, 5U);
+    EXPECT_EQ(TestEventHandler46::non_const_invocation_count, 2U);
+
+    event_bus.unsubscribe<TestEvent46>();
+    EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent46>(), 0U);
+    event_bus.publish(TestEvent46{});
+    EXPECT_EQ(TestEventHandler46::const_invocation_count, 5U);
+    EXPECT_EQ(TestEventHandler46::non_const_invocation_count, 2U);
+
+    event_bus.unsubscribe<TestEvent42>();
+    event_bus.unsubscribe<TestEvent43>();
+    event_bus.unsubscribe<TestEvent44>();
+    event_bus.unsubscribe<TestEvent45>();
+    event_bus.unsubscribe<TestEvent47>();
+  }
+
+  EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent42>(), 0U);
+  EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent43>(), 0U);
+  EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent44>(), 0U);
+  EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent45>(), 0U);
+  EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent46>(), 0U);
+  EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent47>(), 0U);
+  EXPECT_EQ(event_bus.get_total_number_of_subscribers(), 0U);
 }
 
 } // namespace rtw::event_bus
