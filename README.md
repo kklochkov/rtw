@@ -29,6 +29,7 @@ bazel test //math/...
 - [x] [software renderer](sw_renderer) - A simple software renderer that can optionally built to use fixed-point arithmetic library.
 - [x] [ecs](ecs) - Entity Component System that has type safety and efficient data management.
 - [x] [stl](stl) - A set of custom containers which are relevant for the ECS implementation.
+- [x] [event_bus](event_bus) - A message passing library implementing Event Bus pattern.
 
 To run the software renderer demo application use the following command:
 ```bash
