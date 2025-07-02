@@ -6,8 +6,7 @@ Code is written in C++ (C++17) and is not intended to be used in production.
 ## The structure of the project
 
 The top-level folders contain stand alone libraries. Each library has a set of unit tests and (sometimes) benchmarks.
-The [third_party](third_party) folder contains third party libraries that are used in the project.
-The [sandbox](sandbox) folder contains simple applications that use the libraries.
+The [sandbox](sandbox) folder contains simple applications that uses the libraries.
 
 ## Building the project
 
