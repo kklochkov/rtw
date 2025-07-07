@@ -498,3 +498,27 @@ TEST(EcsTest, ecs_basic)
     EXPECT_EQ(rigidbody.data, 24U);
   }
 }
+
+TEST(EcsTest, tagging_and_groupping)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES};
+
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+
+  ecs_manager.tag_entity(entity, "Player");
+  EXPECT_TRUE(ecs_manager.is_entity_tagged(entity, "Player"));
+
+  ecs_manager.add_entity_to_group(entity, "Group1");
+  EXPECT_TRUE(ecs_manager.is_entity_in_group(entity, "Group1"));
+
+  ecs_manager.add_entity_to_group(entity, "Group2");
+  EXPECT_TRUE(ecs_manager.is_entity_in_group(entity, "Group2"));
+  EXPECT_FALSE(ecs_manager.is_entity_in_group(entity, "Group1"));
+
+  ecs_manager.remove_entity_from_group(entity);
+  EXPECT_FALSE(ecs_manager.is_entity_in_group(entity, "Group1"));
+  EXPECT_FALSE(ecs_manager.is_entity_in_group(entity, "Group2"));
+
+  ecs_manager.untag_entity(entity);
+  EXPECT_FALSE(ecs_manager.is_entity_tagged(entity, "Player"));
+}

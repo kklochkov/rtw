@@ -345,9 +345,59 @@ public:
 
   std::size_t size() const noexcept { return entities_.size() - free_ids_.size(); }
 
+  void tag(const Entity& entity, const std::string& tag) noexcept
+  {
+    tag_to_entity_id_[tag] = entity.id;
+    entity_id_to_tag_[entity.id] = tag;
+  }
+
+  void untag(const Entity& entity) noexcept
+  {
+    const auto it = entity_id_to_tag_.find(entity.id);
+    if (it != entity_id_to_tag_.end())
+    {
+      tag_to_entity_id_.erase(it->second);
+      entity_id_to_tag_.erase(it);
+    }
+  }
+
+  bool is_tagged(const Entity& entity, const std::string& tag) const noexcept
+  {
+    const auto it = tag_to_entity_id_.find(tag);
+    return (it != tag_to_entity_id_.end()) && (it->second == entity.id);
+  }
+
+  void add_to_group(const Entity& entity, const std::string& group) noexcept
+  {
+    remove_from_group(entity);
+
+    group_to_entity_ids_[group].insert(entity.id);
+    entity_id_to_group_[entity.id] = group;
+  }
+
+  void remove_from_group(const Entity& entity) noexcept
+  {
+    const auto it = entity_id_to_group_.find(entity.id);
+    if (it != entity_id_to_group_.end())
+    {
+      group_to_entity_ids_[it->second].erase(entity.id);
+      entity_id_to_group_.erase(it);
+    }
+  }
+
+  bool is_in_group(const Entity& entity, const std::string& group) const noexcept
+  {
+    const auto it = entity_id_to_group_.find(entity.id);
+    return (it != entity_id_to_group_.end()) && (it->second == group);
+  }
+
 private:
   stl::HeapArray<Entity> entities_;
   stl::Queue<EntityId> free_ids_;
+  std::unordered_map<std::string, EntityId> tag_to_entity_id_;
+  std::unordered_map<EntityId, std::string> entity_id_to_tag_;
+  std::unordered_map<std::string, std::unordered_set<EntityId>> group_to_entity_ids_;
+  std::unordered_map<EntityId, std::string> entity_id_to_group_;
 };
 
 template <typename EnumT>
@@ -523,6 +573,27 @@ public:
   }
 
   std::size_t get_number_of_entities() const noexcept { return entity_manager_.size(); }
+
+  void tag_entity(const Entity& entity, const std::string& tag) noexcept { entity_manager_.tag(entity, tag); }
+
+  void untag_entity(const Entity& entity) noexcept { entity_manager_.untag(entity); }
+
+  bool is_entity_tagged(const Entity& entity, const std::string& tag) const noexcept
+  {
+    return entity_manager_.is_tagged(entity, tag);
+  }
+
+  void add_entity_to_group(const Entity& entity, const std::string& group) noexcept
+  {
+    entity_manager_.add_to_group(entity, group);
+  }
+
+  void remove_entity_from_group(const Entity& entity) noexcept { entity_manager_.remove_from_group(entity); }
+
+  bool is_entity_in_group(const Entity& entity, const std::string& group) const noexcept
+  {
+    return entity_manager_.is_in_group(entity, group);
+  }
 
   template <typename ComponentT, typename... ArgsT>
   void emplace_component(const Entity& entity, ArgsT&&... args) noexcept
