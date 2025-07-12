@@ -75,7 +75,7 @@ struct ConstMemberFunctionEventHandler final : IEventHandler
   MemberFunctionT member_function;
 };
 
-std::string demangle(const std::type_index& type_index)
+inline std::string demangle(const std::type_index& type_index)
 {
   char* name = abi::__cxa_demangle(type_index.name(), nullptr, nullptr, nullptr);
   std::string demangled_name{name};

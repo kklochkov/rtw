@@ -12,12 +12,18 @@ cc_library(
 )
 
 cc_binary_with_llvm_symbolizer(
-    name = "sw_renderer",
-    srcs = ["main.cpp"],
-    data = ["//sw_renderer/resources:textured_cube"],
+    name = "ecs",
+    srcs = [
+        "application.cpp",
+        "application.h",
+        "events.h",
+        "main.cpp",
+    ],
     deps = [
         ":imgui_sdl2_backend",
         "//constants:time_constants",
+        "//ecs",
+        "//event_bus",
         "//stl",
         "//sw_renderer",
         "@cli11",
