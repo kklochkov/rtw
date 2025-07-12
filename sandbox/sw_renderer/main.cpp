@@ -1,3 +1,4 @@
+#include "constants/time_constants.h"
 #include "sw_renderer/camera.h"
 #include "sw_renderer/obj_loader.h"
 #include "sw_renderer/renderer.h"
@@ -21,14 +22,6 @@
 
 using namespace rtw::sw_renderer::angle_literals;
 
-namespace rtw::sw_renderer
-{
-
-using Seconds = std::chrono::duration<float, std::centi>;
-using Milliseconds = std::chrono::duration<float, std::milli>;
-
-} // namespace rtw::sw_renderer
-
 class Application
 {
 public:
@@ -46,8 +39,8 @@ public:
 private:
   void init_imgui();
   static bool load_textures(const std::filesystem::path& resources_folder, rtw::sw_renderer::Mesh& mesh);
-  void process_events(bool& is_running, const rtw::sw_renderer::Seconds& delta_time);
-  void update(const rtw::sw_renderer::Seconds& delta_time);
+  void process_events(bool& is_running, const rtw::time_constants::Seconds& delta_time);
+  void update(const rtw::time_constants::Seconds& delta_time);
   void render_imgui();
   void render();
 
@@ -209,7 +202,7 @@ bool Application::load_textures(const std::filesystem::path& resources_folder, r
   return true;
 }
 
-void Application::process_events(bool& is_running, const rtw::sw_renderer::Seconds& delta_time)
+void Application::process_events(bool& is_running, const rtw::time_constants::Seconds& delta_time)
 {
   const auto speed = 0.2F * delta_time.count();             // m/s
   const auto angular_speed = 0.6_degF * delta_time.count(); // deg/s -> rad/s
@@ -283,7 +276,7 @@ void Application::process_events(bool& is_running, const rtw::sw_renderer::Secon
   }
 }
 
-void Application::update(const rtw::sw_renderer::Seconds& delta_time)
+void Application::update(const rtw::time_constants::Seconds& delta_time)
 {
   std::ignore = delta_time;
 
@@ -408,7 +401,7 @@ void Application::run()
   while (is_running)
   {
     const auto current_frame_time = std::chrono::system_clock::now();
-    const rtw::sw_renderer::Seconds frame_time = current_frame_time - last_frame_time;
+    const rtw::time_constants::Seconds frame_time = current_frame_time - last_frame_time;
 
     process_events(is_running, frame_time);
     update(frame_time);
@@ -418,7 +411,7 @@ void Application::run()
     last_frame_time = current_frame_time;
     if (sleep_time > 0 && sleep_time < TARGET_FRAME_TIME)
     {
-      std::this_thread::sleep_for(rtw::sw_renderer::Milliseconds(sleep_time));
+      std::this_thread::sleep_for(rtw::time_constants::Milliseconds(sleep_time));
     }
   }
 }
@@ -432,6 +425,8 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
       ->check(CLI::ExistingFile)
       ->default_val("sw_renderer/resources/textured_cube.obj");
 
+  CLI11_PARSE(cli_app, argc, argv);
+
   //  Application app(800, 600);
   Application app(320, 240);
   //  Application app(1024, 768);
@@ -440,8 +435,6 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
   {
     return EXIT_FAILURE;
   }
-
-  CLI11_PARSE(cli_app, argc, argv);
 
   if (!app.load_mesh(mesh_path))
   {

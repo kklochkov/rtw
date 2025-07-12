@@ -5,3 +5,9 @@ cc_library(
     hdrs = ["math_constants.h"],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "time_constants",
+    hdrs = ["time_constants.h"],
+    visibility = ["//visibility:public"],
+)
