@@ -2,6 +2,7 @@
 #include "sandbox/ecs/events.h"
 #include "sw_renderer/color.h"
 
+#include "constants/render_constants.h"
 #include "constants/time_constants.h"
 
 #include <fmt/core.h>
@@ -109,8 +110,6 @@ bool Application::init(const std::string_view window_title, const std::int32_t w
 
 void Application::run()
 {
-  constexpr auto TARGET_FRAME_RATE = 60.0F;
-  constexpr auto TARGET_FRAME_TIME = 1000.0F / TARGET_FRAME_RATE;
   auto last_frame_time = std::chrono::system_clock::now();
 
   while (is_running_)
@@ -122,11 +121,11 @@ void Application::run()
     update(frame_time);
     render();
 
-    const auto sleep_time = TARGET_FRAME_TIME - frame_time.count();
+    const rtw::time_constants::Milliseconds sleep_time{rtw::render_constants::TARGET_FRAME_TIME - frame_time};
     last_frame_time = current_frame_time;
-    if ((sleep_time > 0) && (sleep_time < TARGET_FRAME_TIME))
+    if ((sleep_time.count() > 0) && (sleep_time < rtw::render_constants::TARGET_FRAME_TIME))
     {
-      std::this_thread::sleep_for(rtw::time_constants::Milliseconds(sleep_time));
+      std::this_thread::sleep_for(sleep_time);
     }
   }
 }

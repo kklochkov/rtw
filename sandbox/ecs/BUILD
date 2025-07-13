@@ -21,6 +21,7 @@ cc_binary_with_llvm_symbolizer(
     ],
     deps = [
         ":imgui_sdl2_backend",
+        "//constants:render_constants",
         "//constants:time_constants",
         "//ecs",
         "//event_bus",

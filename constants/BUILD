@@ -11,3 +11,10 @@ cc_library(
     hdrs = ["time_constants.h"],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "render_constants",
+    hdrs = ["render_constants.h"],
+    visibility = ["//visibility:public"],
+    deps = ["//constants:time_constants"],
+)
