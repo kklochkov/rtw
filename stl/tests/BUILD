@@ -7,6 +7,7 @@ cc_test_with_llvm_symbolizer(
         "circular_buffer_test.cpp",
         "contiguous_storage_test.cpp",
         "flags_test.cpp",
+        "flat_unordered_map_test.cpp",
         "heap_array_test.cpp",
         "packed_buffer_test.cpp",
         "queue_test.cpp",
