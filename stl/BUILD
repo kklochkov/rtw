@@ -6,6 +6,7 @@ cc_library(
         "circular_buffer.h",
         "contiguous_storage.h",
         "flags.h",
+        "flat_unordered_map.h",
         "heap_array.h",
         "packed_buffer.h",
         "queue.h",
