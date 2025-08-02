@@ -11,6 +11,7 @@ cc_library(
         "heap_array.h",
         "packed_buffer.h",
         "queue.h",
+        "span.h",
         "static_vector.h",
     ],
     visibility = ["//visibility:public"],
