@@ -7,6 +7,7 @@ cc_library(
         "contiguous_storage.h",
         "flags.h",
         "flat_unordered_map.h",
+        "flat_unordered_set.h",
         "heap_array.h",
         "packed_buffer.h",
         "queue.h",

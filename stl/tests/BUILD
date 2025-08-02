@@ -8,6 +8,7 @@ cc_test_with_llvm_symbolizer(
         "contiguous_storage_test.cpp",
         "flags_test.cpp",
         "flat_unordered_map_test.cpp",
+        "flat_unordered_set_test.cpp",
         "heap_array_test.cpp",
         "packed_buffer_test.cpp",
         "queue_test.cpp",
