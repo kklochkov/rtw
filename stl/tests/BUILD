@@ -12,6 +12,7 @@ cc_test_with_llvm_symbolizer(
         "heap_array_test.cpp",
         "packed_buffer_test.cpp",
         "queue_test.cpp",
+        "span_test.cpp",
         "static_vector_test.cpp",
     ],
     tags = ["no-clang-tidy"],
