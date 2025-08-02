@@ -59,7 +59,11 @@ public:
   }
 
   bool insert(const value_type& value) noexcept { return emplace(value.first, value.second); }
-  bool insert(value_type&& value) noexcept { return emplace(std::move(value.first), std::move(value.second)); }
+  bool insert(value_type&& value) noexcept
+  {
+    auto&& [key, mapped_value] = std::move(value);
+    return emplace(std::move(key), std::move(mapped_value));
+  }
 
   bool erase(const key_type& key) noexcept
   {
@@ -72,6 +76,18 @@ public:
     }
 
     return false;
+  }
+
+  bool erase(const iterator& it) noexcept
+  {
+    if (it != end())
+    {
+      keys_storage_.destruct_at(it.get_index());
+      values_storage_.destruct_at(it.get_index());
+      return false;
+    }
+
+    return true;
   }
 
   void clear() noexcept

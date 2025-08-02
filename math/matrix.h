@@ -8,8 +8,8 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 #include <iosfwd>
+#include <type_traits>
 
 namespace rtw::math
 {
@@ -22,44 +22,40 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) 
 
 struct UninitializedTag
 {
-  enum class Tag : std::uint8_t
-  {
-    TAG
-  };
+  // clang-format off
+  enum class Tag : std::uint8_t { TAG };
+  // clang-format on
   constexpr explicit UninitializedTag(Tag /*tag*/) noexcept {}
 };
-constexpr UninitializedTag UNINITIALIZED{UninitializedTag::Tag::TAG};
+constexpr inline UninitializedTag UNINITIALIZED{UninitializedTag::Tag::TAG};
 
 struct InitializeWithValueTag
 {
-  enum class Tag : std::uint8_t
-  {
-    TAG
-  };
+  // clang-format off
+  enum class Tag : std::uint8_t { TAG };
+  // clang-format on
   constexpr explicit InitializeWithValueTag(Tag /*tag*/) noexcept {}
 };
-// NOLINTNEXTLINE(clang-diagnostic-unused-const-variable,-warnings-as-errors)
-constexpr InitializeWithValueTag INITIALIZE_WITH_VALUE{InitializeWithValueTag::Tag::TAG};
+
+constexpr inline InitializeWithValueTag INITIALIZE_WITH_VALUE{InitializeWithValueTag::Tag::TAG};
 
 struct ZeroTag
 {
-  enum class Tag : std::uint8_t
-  {
-    TAG
-  };
+  // clang-format off
+  enum class Tag : std::uint8_t { TAG };
+  // clang-format on
   constexpr explicit ZeroTag(Tag /*tag*/) noexcept {}
 };
-constexpr ZeroTag ZERO{ZeroTag::Tag::TAG};
+constexpr inline ZeroTag ZERO{ZeroTag::Tag::TAG};
 
 struct IdentityTag
 {
-  enum class Tag : std::uint8_t
-  {
-    TAG
-  };
+  // clang-format off
+  enum class Tag : std::uint8_t { TAG };
+  // clang-format on
   constexpr explicit IdentityTag(Tag /*tag*/) noexcept {}
 };
-constexpr IdentityTag IDENTITY{IdentityTag::Tag::TAG};
+constexpr inline IdentityTag IDENTITY{IdentityTag::Tag::TAG};
 
 /// A matrix that is statically sized.
 /// The matrix is stored in column-major order.

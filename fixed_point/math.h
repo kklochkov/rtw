@@ -87,9 +87,9 @@ constexpr std::uint64_t factorial(const std::uint64_t n) noexcept
   return result;
 }
 
-constexpr std::array INV_FACTORIALS{1.0 / factorial(0U), 1.0 / factorial(1U), 1.0 / factorial(2U), 1.0 / factorial(3U),
-                                    1.0 / factorial(4U), 1.0 / factorial(5U), 1.0 / factorial(6U), 1.0 / factorial(7U),
-                                    1.0 / factorial(8U), 1.0 / factorial(9U)};
+constexpr inline std::array INV_FACTORIALS{
+    1.0 / factorial(0U), 1.0 / factorial(1U), 1.0 / factorial(2U), 1.0 / factorial(3U), 1.0 / factorial(4U),
+    1.0 / factorial(5U), 1.0 / factorial(6U), 1.0 / factorial(7U), 1.0 / factorial(8U), 1.0 / factorial(9U)};
 
 enum class Quadrant : std::uint8_t
 {

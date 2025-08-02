@@ -13,15 +13,15 @@ namespace details
 {
 
 template <typename RasteriseCallbackT>
-constexpr bool IS_PIXEL_RASTERISE_CALLBACK_V = std::is_invocable_r_v<void, RasteriseCallbackT, const Point2I&>;
+constexpr inline bool IS_PIXEL_RASTERISE_CALLBACK_V = std::is_invocable_r_v<void, RasteriseCallbackT, const Point2I&>;
 
 template <typename RasteriseCallbackT>
-constexpr bool IS_BARYCENTRIC_TRIANGLE_RASTERISE_CALLBACK_V =
+constexpr inline bool IS_BARYCENTRIC_TRIANGLE_RASTERISE_CALLBACK_V =
     std::is_invocable_r_v<void, RasteriseCallbackT, const VertexF&, const VertexF&, const VertexF&, const Point2I&,
                           const BarycentricF&>;
 
 template <typename RasteriseCallbackT>
-constexpr bool IS_TRIANGLE_RASTERISE_CALLBACK_V =
+constexpr inline bool IS_TRIANGLE_RASTERISE_CALLBACK_V =
     std::is_invocable_r_v<void, RasteriseCallbackT, const VertexF&, const VertexF&, const VertexF&, const Point2I&>;
 
 } // namespace details

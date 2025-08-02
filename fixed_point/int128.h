@@ -453,7 +453,7 @@ struct IsBigInt<Int<T>> : std::true_type
 {};
 
 template <typename T>
-constexpr bool IS_BIG_INT_V = IsBigInt<T>::value;
+constexpr inline  bool IS_BIG_INT_V = IsBigInt<T>::value;
 
 template <typename T>
 struct IsSignedBigInt : std::false_type
@@ -464,7 +464,7 @@ struct IsSignedBigInt<Int<T>> : std::bool_constant<std::is_signed_v<T>>
 {};
 
 template <typename T>
-constexpr bool IS_SIGNED_BIG_INT_V = IsSignedBigInt<T>::value;
+constexpr inline  bool IS_SIGNED_BIG_INT_V = IsSignedBigInt<T>::value;
 
 } // namespace rtw::fixed_point
 

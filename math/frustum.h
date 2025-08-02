@@ -106,7 +106,7 @@ constexpr Matrix4x4<T> make_perspective_projection_matrix(const FrustumParameter
 /// @param params The parameters of the perspective projection.
 /// @return The frustum.
 template <typename T>
-inline Frustum3<T> make_frustum(const FrustumParameters<T> params) noexcept
+constexpr Frustum3<T> make_frustum(const FrustumParameters<T> params) noexcept
 {
   assert(params.near > T{0});
 

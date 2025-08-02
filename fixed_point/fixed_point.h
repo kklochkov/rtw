@@ -315,7 +315,7 @@ struct IsFixedPoint<FixedPoint<T, FRAC_BITS, SaturationT>> : std::true_type
 {};
 
 template <typename T>
-constexpr bool IS_FIXED_POINT_V = IsFixedPoint<T>::value;
+constexpr inline bool IS_FIXED_POINT_V = IsFixedPoint<T>::value;
 
 template <typename T>
 struct IsFixedPointSigned : std::false_type
@@ -326,10 +326,10 @@ struct IsFixedPointSigned<FixedPoint<T, FRAC_BITS, SaturationT>> : std::bool_con
 {};
 
 template <typename T>
-constexpr bool IS_SIGNED_FIXED_POINT_V = IsFixedPointSigned<T>::value;
+constexpr inline bool IS_SIGNED_FIXED_POINT_V = IsFixedPointSigned<T>::value;
 
 template <typename T>
-constexpr bool IS_ARITHMETIC_V = std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T>;
+constexpr inline bool IS_ARITHMETIC_V = std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T>;
 
 } // namespace rtw::fixed_point
 
