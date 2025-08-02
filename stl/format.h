@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stl/flags.h"
+#include "stl/string_view.h"
 
 #include <fmt/ostream.h>
 
@@ -26,6 +27,11 @@ std::ostream& operator<<(std::ostream& os, const Flags<T>& flags) noexcept
   return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const StringView view) noexcept
+{
+  return os.write(view.data(), static_cast<std::streamsize>(view.size()));
+}
+
 } // namespace rtw::stl
 
 // NOLINTBEGIN(readability-identifier-naming)
@@ -34,6 +40,10 @@ namespace fmt
 
 template <typename T>
 struct formatter<rtw::stl::Flags<T>> : ostream_formatter
+{};
+
+template <>
+struct formatter<rtw::stl::StringView> : ostream_formatter
 {};
 
 } // namespace fmt
