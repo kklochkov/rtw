@@ -173,11 +173,11 @@ public:
   }
 
   iterator begin() noexcept { return data_.get(); }
-  const_iterator begin() const noexcept { return begin(); }
+  const_iterator begin() const noexcept { return data_.get(); }
   const_iterator cbegin() const noexcept { return begin(); }
 
-  iterator end() noexcept { return begin() + used_slots_; }
-  const_iterator end() const noexcept { return end(); }
+  iterator end() noexcept { return begin() + capacity_; }
+  const_iterator end() const noexcept { return begin() + capacity_; }
   const_iterator cend() const noexcept { return end(); }
 
 private:
