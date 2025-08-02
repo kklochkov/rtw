@@ -14,6 +14,7 @@ cc_test_with_llvm_symbolizer(
         "queue_test.cpp",
         "span_test.cpp",
         "static_vector_test.cpp",
+        "string_view_test.cpp",
     ],
     tags = ["no-clang-tidy"],
     deps = [

@@ -13,6 +13,7 @@ cc_library(
         "queue.h",
         "span.h",
         "static_vector.h",
+        "string_view.h",
     ],
     visibility = ["//visibility:public"],
 )
