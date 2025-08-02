@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stl/flags.h"
+#include "stl/flat_unordered_map.h"
 #include "stl/heap_array.h"
 #include "stl/packed_buffer.h"
 #include "stl/queue.h"
@@ -133,7 +134,11 @@ public:
   static_assert(std::is_same_v<ComponentType, typename ComponentT::ComponentType>,
                 "ComponentT must have the same enum type as ComponentType.");
 
-  explicit ComponentStorage(const std::size_t max_number_of_entities) noexcept : components_{max_number_of_entities} {}
+  explicit ComponentStorage(const std::size_t max_number_of_entities) noexcept
+      : components_{max_number_of_entities}, entity_id_to_index_{max_number_of_entities},
+        index_to_entity_id_{max_number_of_entities}
+  {
+  }
 
   template <typename... ArgsT>
   void emplace(const Entity& entity, ArgsT&&... args) noexcept
@@ -199,8 +204,8 @@ public:
 
 private:
   stl::PackedBuffer<ComponentT> components_;
-  std::unordered_map<EntityId, std::size_t> entity_id_to_index_;
-  std::unordered_map<std::size_t, EntityId> index_to_entity_id_;
+  stl::FlatUnorderedMap<EntityId, std::size_t> entity_id_to_index_;
+  stl::FlatUnorderedMap<std::size_t, EntityId> index_to_entity_id_;
 };
 
 template <typename EnumT, typename... ComponentsT>
