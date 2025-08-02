@@ -12,13 +12,13 @@ template <typename T>
 class Angle;
 
 template <typename T>
-constexpr Angle<T> PI{math_constants::PI<T>};
+constexpr inline Angle<T> PI{math_constants::PI<T>};
 
 template <typename T>
-constexpr Angle<T> TAU = T{2} * PI<T>;
+constexpr inline Angle<T> TAU = T{2} * PI<T>;
 
 template <typename T>
-constexpr Angle<T> PI_2 = PI<T> / T{2};
+constexpr inline Angle<T> PI_2 = PI<T> / T{2};
 
 struct DegTag
 {
@@ -39,8 +39,8 @@ struct RadTag
   constexpr explicit RadTag(Tag /*tag*/) noexcept {}
 };
 
-constexpr static DegTag DEG{DegTag::Tag::TAG};
-constexpr static RadTag RAD{RadTag::Tag::TAG};
+constexpr inline DegTag DEG{DegTag::Tag::TAG};
+constexpr inline RadTag RAD{RadTag::Tag::TAG};
 
 template <typename T>
 class Angle
@@ -154,9 +154,15 @@ constexpr AngleF operator""_degF(const long double value) noexcept { return Angl
 
 constexpr AngleF operator""_radF(const long double value) noexcept { return AngleF{RAD, static_cast<float>(value)}; }
 
-constexpr AngleQ16 operator""_degQ16(const long double value) noexcept { return AngleQ16{DEG, static_cast<float>(value)}; }
+constexpr AngleQ16 operator""_degQ16(const long double value) noexcept
+{
+  return AngleQ16{DEG, static_cast<float>(value)};
+}
 
-constexpr AngleQ32 operator""_radQ32(const long double value) noexcept { return AngleQ32{RAD, static_cast<float>(value)}; }
+constexpr AngleQ32 operator""_radQ32(const long double value) noexcept
+{
+  return AngleQ32{RAD, static_cast<float>(value)};
+}
 
 } // namespace angle_literals
 

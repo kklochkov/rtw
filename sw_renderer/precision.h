@@ -14,13 +14,13 @@ using single_precision = fixed_point::FixedPoint16;
 using double_precision = fixed_point::FixedPoint32;
 
 // unit of least precision
-constexpr single_precision ULP{1};// NOLINT(clang-diagnostic-unused-const-variable)
+constexpr inline single_precision ULP{1};
 #else
 using single_precision = float;
 using double_precision = double;
 
 // unit of least precision
-constexpr float ULP{std::numeric_limits<float>::epsilon()}; // NOLINT(clang-diagnostic-unused-const-variable)
+constexpr inline float ULP{std::numeric_limits<float>::epsilon()};
 #endif
 
 } // namespace rtw::sw_renderer

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "sw_renderer/color.h"
-#include "sw_renderer/tex_coord.h"
 #include "sw_renderer/texture.h"
 #include "sw_renderer/types.h"
 

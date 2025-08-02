@@ -4,7 +4,7 @@
 
 #include <fmt/core.h>
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[])// NOLINT(bugprone-exception-escape)
 {
   CLI::App cli_app{"ECS Demo Application"};
   CLI11_PARSE(cli_app, argc, argv);
