@@ -3,6 +3,7 @@
 #include "stl/flags.h"
 #include "stl/flat_unordered_map.h"
 #include "stl/heap_array.h"
+#include "stl/inplace_string.h"
 #include "stl/packed_buffer.h"
 #include "stl/queue.h"
 
@@ -320,7 +321,8 @@ public:
   using EntitySignature = typename Entity::EntitySignature;
 
   explicit EntityManager(const std::size_t max_number_of_entities) noexcept
-      : entities_{max_number_of_entities}, free_ids_{max_number_of_entities}
+      : entities_{max_number_of_entities}, free_ids_{max_number_of_entities}, tag_to_entity_id_{max_number_of_entities},
+        entity_id_to_tag_{max_number_of_entities}, entity_id_to_group_{max_number_of_entities}
   {
     for (EntityId::ID_TYPE id = 0U; id < max_number_of_entities; ++id)
     {
@@ -350,7 +352,7 @@ public:
 
   std::size_t size() const noexcept { return entities_.size() - free_ids_.size(); }
 
-  void tag(const Entity& entity, const std::string& tag) noexcept
+  void tag(const Entity& entity, const stl::InplaceStringSmall& tag) noexcept
   {
     tag_to_entity_id_[tag] = entity.id;
     entity_id_to_tag_[entity.id] = tag;
@@ -366,13 +368,13 @@ public:
     }
   }
 
-  bool is_tagged(const Entity& entity, const std::string& tag) const noexcept
+  bool is_tagged(const Entity& entity, const stl::InplaceStringSmall& tag) const noexcept
   {
     const auto it = tag_to_entity_id_.find(tag);
     return (it != tag_to_entity_id_.end()) && (it->second == entity.id);
   }
 
-  void add_to_group(const Entity& entity, const std::string& group) noexcept
+  void add_to_group(const Entity& entity, const stl::InplaceStringSmall& group) noexcept
   {
     remove_from_group(entity);
 
@@ -390,7 +392,7 @@ public:
     }
   }
 
-  bool is_in_group(const Entity& entity, const std::string& group) const noexcept
+  bool is_in_group(const Entity& entity, const stl::InplaceStringSmall& group) const noexcept
   {
     const auto it = entity_id_to_group_.find(entity.id);
     return (it != entity_id_to_group_.end()) && (it->second == group);
@@ -399,10 +401,10 @@ public:
 private:
   stl::HeapArray<Entity> entities_;
   stl::Queue<EntityId> free_ids_;
-  std::unordered_map<std::string, EntityId> tag_to_entity_id_;
-  std::unordered_map<EntityId, std::string> entity_id_to_tag_;
-  std::unordered_map<std::string, std::unordered_set<EntityId>> group_to_entity_ids_;
-  std::unordered_map<EntityId, std::string> entity_id_to_group_;
+  stl::FlatUnorderedMap<stl::InplaceStringSmall, EntityId> tag_to_entity_id_;
+  stl::FlatUnorderedMap<EntityId, stl::InplaceStringSmall> entity_id_to_tag_;
+  std::unordered_map<stl::InplaceStringSmall, std::unordered_set<EntityId>> group_to_entity_ids_;
+  stl::FlatUnorderedMap<EntityId, stl::InplaceStringSmall> entity_id_to_group_;
 };
 
 template <typename EnumT>
@@ -579,23 +581,26 @@ public:
 
   std::size_t get_number_of_entities() const noexcept { return entity_manager_.size(); }
 
-  void tag_entity(const Entity& entity, const std::string& tag) noexcept { entity_manager_.tag(entity, tag); }
+  void tag_entity(const Entity& entity, const stl::InplaceStringSmall& tag) noexcept
+  {
+    entity_manager_.tag(entity, tag);
+  }
 
   void untag_entity(const Entity& entity) noexcept { entity_manager_.untag(entity); }
 
-  bool is_entity_tagged(const Entity& entity, const std::string& tag) const noexcept
+  bool is_entity_tagged(const Entity& entity, const stl::InplaceStringSmall& tag) const noexcept
   {
     return entity_manager_.is_tagged(entity, tag);
   }
 
-  void add_entity_to_group(const Entity& entity, const std::string& group) noexcept
+  void add_entity_to_group(const Entity& entity, const stl::InplaceStringSmall& group) noexcept
   {
     entity_manager_.add_to_group(entity, group);
   }
 
   void remove_entity_from_group(const Entity& entity) noexcept { entity_manager_.remove_from_group(entity); }
 
-  bool is_entity_in_group(const Entity& entity, const std::string& group) const noexcept
+  bool is_entity_in_group(const Entity& entity, const stl::InplaceStringSmall& group) const noexcept
   {
     return entity_manager_.is_in_group(entity, group);
   }
