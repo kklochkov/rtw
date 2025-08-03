@@ -23,6 +23,9 @@ public:
   using const_iterator = const_pointer;
   constexpr static size_type NPOS = std::string::npos;
 
+  // Default constructor creates an empty StaticString with a capacity of 0.
+  // It is used to move-construct an empty StaticString.
+  StaticString() noexcept = default;
   explicit StaticString(const size_type capacity) noexcept
       : storage_{std::make_unique<char[]>(capacity + 1U)}, capacity_{capacity}
   {
@@ -45,6 +48,40 @@ public:
   StaticString(const_pointer str) noexcept : StaticString{str, std::char_traits<char>::length(str)} {}
   StaticString(StringView str) noexcept : StaticString{str.data(), str.size()} {}
   // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
+
+  StaticString(const StaticString& other) noexcept : StaticString{other.data(), other.size()} {}
+  StaticString(StaticString&& other) noexcept
+      : storage_{std::move(other.storage_)}, size_{other.size_}, capacity_{other.capacity_}
+  {
+    other = StaticString{};
+  }
+  StaticString& operator=(const StaticString& other) noexcept
+  {
+    if (this != &other)
+    {
+      size_ = std::min(capacity_, other.size_);
+      for (size_type i = 0U; i < size_; ++i)
+      {
+        storage_[i] = other.storage_[i];
+      }
+      ensure_null_termination();
+    }
+    return *this;
+  }
+  StaticString& operator=(StaticString&& other) noexcept
+  {
+    if (this != &other)
+    {
+      storage_ = std::move(other.storage_);
+      size_ = other.size_;
+      capacity_ = other.capacity_;
+      other.size_ = 0U;
+      other.capacity_ = 0U;
+      other.storage_ = nullptr;
+    }
+    return *this;
+  }
+  ~StaticString() noexcept = default;
 
   size_type size() const noexcept { return size_; }
   bool empty() const noexcept { return size_ == 0U; }
@@ -130,31 +167,17 @@ public:
     return storage_[size() - 1U];
   }
 
-  iterator begin() noexcept { return &front(); }
-  const_iterator begin() const noexcept { return &front(); }
-  const_iterator cbegin() const noexcept { return &front(); }
+  iterator begin() noexcept { return storage_.get(); }
+  const_iterator begin() const noexcept { return storage_.get(); }
+  const_iterator cbegin() const noexcept { return storage_.get(); }
 
-  iterator end() noexcept
-  {
-    assert(!empty());
-    return &storage_[capacity_];
-  }
+  iterator end() noexcept { return storage_.get() + capacity_; }
+  const_iterator end() const noexcept { return storage_.get() + capacity_; }
+  const_iterator cend() const noexcept { return storage_.get() + capacity_; }
 
-  const_iterator end() const noexcept
-  {
-    assert(!empty());
-    return &storage_[capacity_];
-  }
-
-  const_iterator cend() const noexcept
-  {
-    assert(!empty());
-    return &storage_[capacity_];
-  }
-
-  pointer data() noexcept { return begin(); }
-  const_pointer data() const noexcept { return cbegin(); }
-  const_pointer c_str() const noexcept { return cbegin(); }
+  pointer data() noexcept { return storage_.get(); }
+  const_pointer data() const noexcept { return storage_.get(); }
+  const_pointer c_str() const noexcept { return storage_.get(); }
 
   size_type find(const StaticString& str, const size_type pos = 0U) const noexcept
   {
@@ -219,7 +242,7 @@ private:
     storage_[size_] = '\0'; // Ensure null-termination
   }
 
-  StorageType storage_;
+  StorageType storage_{nullptr};
   size_type size_{0U};
   size_type capacity_{0U};
 };
