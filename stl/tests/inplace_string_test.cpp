@@ -25,7 +25,7 @@ TEST(InplaceStringTest, constructor)
   }
   {
     // C-string constructor
-    rtw::stl::InplaceString<13U> string{"Hello, World!"};
+    rtw::stl::InplaceString string{"Hello, World!"};
     EXPECT_EQ(string.size(), 13U);
     EXPECT_STREQ(string.data(), "Hello, World!");
     EXPECT_EQ(string[0], 'H');
@@ -37,7 +37,7 @@ TEST(InplaceStringTest, constructor)
 
 TEST(InplaceStringTest, size_and_empty)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
   EXPECT_EQ(string.size(), 13U);
   EXPECT_FALSE(string.empty());
 
@@ -48,7 +48,7 @@ TEST(InplaceStringTest, size_and_empty)
 
 TEST(InplaceStringTest, clear)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
   EXPECT_EQ(string.size(), 13U);
   string.clear();
   EXPECT_EQ(string.size(), 0U);
@@ -74,7 +74,7 @@ TEST(InplaceStringTest, push_back)
 
 TEST(InplaceStringTest, operator_brackets)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
   EXPECT_EQ(string[0], 'H');
   EXPECT_EQ(string[12], '!');
   EXPECT_DEATH(string[13], ".*");
@@ -112,14 +112,14 @@ TEST(InplaceStringTest, data_and_c_str)
 
 TEST(InplaceStringTest, front_and_back)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
   EXPECT_EQ(string.front(), 'H');
   EXPECT_EQ(string.back(), '!');
 }
 
 TEST(InplaceStringTest, begin_and_end)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
   const auto* it = string.begin();
   EXPECT_EQ(*it, 'H');
   ++it; // NOLINT
@@ -130,7 +130,7 @@ TEST(InplaceStringTest, begin_and_end)
 
 TEST(InplaceStringTest, substr)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
   rtw::stl::InplaceString<5U> substr = string.substr(7U, 5U);
   EXPECT_EQ(substr.size(), 5U);
   EXPECT_EQ(substr, "World");
@@ -138,9 +138,9 @@ TEST(InplaceStringTest, substr)
 
 TEST(InplaceStringTest, compare)
 {
-  rtw::stl::InplaceString<5U> string1{"Hello"};
-  rtw::stl::InplaceString<5U> string2{"Hello"};
-  rtw::stl::InplaceString<5U> string3{"World"};
+  rtw::stl::InplaceString string1{"Hello"};
+  rtw::stl::InplaceString string2{"Hello"};
+  rtw::stl::InplaceString string3{"World"};
 
   EXPECT_EQ(string1.compare(string2), 0);
   EXPECT_LT(string1.compare(string3), 0);
@@ -149,7 +149,7 @@ TEST(InplaceStringTest, compare)
 
 TEST(InplaceStringTest, starts_with_and_ends_with)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
 
   EXPECT_TRUE(string.starts_with("Hello"));
   EXPECT_FALSE(string.starts_with("World"));
@@ -159,7 +159,7 @@ TEST(InplaceStringTest, starts_with_and_ends_with)
 
 TEST(InplaceStringTest, find)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
 
   EXPECT_EQ(string.find("World"), 7U);
   EXPECT_EQ(string.find("Hello"), 0U);
@@ -171,7 +171,7 @@ TEST(InplaceStringTest, find)
 
 TEST(InplaceStringTest, contains)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
 
   EXPECT_TRUE(string.contains("World"));
   EXPECT_TRUE(string.contains("Hello"));
@@ -182,8 +182,8 @@ TEST(InplaceStringTest, contains)
 
 TEST(InplaceStringTest, equality_operators)
 {
-  rtw::stl::InplaceString<5U> string1{"Hello"};
-  rtw::stl::InplaceString<5U> string2{"Hello"};
+  rtw::stl::InplaceString string1{"Hello"};
+  rtw::stl::InplaceString string2{"Hello"};
   EXPECT_TRUE(string1 == string2);
   EXPECT_FALSE(string1 != string2);
   EXPECT_FALSE(string1 < string2);
@@ -191,7 +191,9 @@ TEST(InplaceStringTest, equality_operators)
   EXPECT_FALSE(string1 > string2);
   EXPECT_TRUE(string1 >= string2);
 
-  rtw::stl::InplaceString<5U> string3{"World"};
+  EXPECT_TRUE(rtw::stl::InplaceString{"Hello"} == rtw::stl::make_string("Hello"));
+
+  rtw::stl::InplaceString string3{"World"};
   EXPECT_FALSE(string1 == string3);
   EXPECT_TRUE(string1 != string3);
   EXPECT_TRUE(string1 < string3);
@@ -203,7 +205,7 @@ TEST(InplaceStringTest, equality_operators)
 
 TEST(InplaceStringTest, ostream_operator)
 {
-  rtw::stl::InplaceString<13U> string{"Hello, World!"};
+  rtw::stl::InplaceString string{"Hello, World!"};
   std::ostringstream oss;
   oss << string;
   EXPECT_EQ(oss.str(), "Hello, World!");
