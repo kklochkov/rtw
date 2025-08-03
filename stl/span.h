@@ -33,9 +33,9 @@ public:
   }
 
   template <typename IteratorBeginT, typename IteratorEndT,
-            typename = std::enable_if_t<(std::is_convertible_v<IteratorBeginT, pointer>
-                                         || std::is_convertible_v<IteratorBeginT, const_pointer>)
-                                        && std::is_same_v<IteratorBeginT, IteratorEndT>>>
+            typename = std::enable_if_t<(
+                std::is_convertible_v<IteratorBeginT, pointer>
+                || std::is_convertible_v<IteratorBeginT, const_pointer>)&&std::is_same_v<IteratorBeginT, IteratorEndT>>>
   constexpr Span(IteratorBeginT first, IteratorEndT last) noexcept
       : data_{first}, size_{static_cast<size_type>(last - first)}
   {

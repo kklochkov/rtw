@@ -1,5 +1,5 @@
-#include "fixed_point/int128.h"
 #include "fixed_point/format.h"
+#include "fixed_point/int128.h"
 
 #include <gtest/gtest.h>
 

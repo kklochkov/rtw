@@ -135,9 +135,9 @@ TEST(StringViewTest, find)
   EXPECT_EQ(view.find("World"), 7U);
   EXPECT_EQ(view.find("Hello"), 0U);
   EXPECT_EQ(view.find("!"), 12U);
-  EXPECT_EQ(view.find("NotFound"),  std::string::npos);
+  EXPECT_EQ(view.find("NotFound"), std::string::npos);
   EXPECT_EQ(view.find('o'), 4U);
-  EXPECT_EQ(view.find('z'),  std::string::npos);
+  EXPECT_EQ(view.find('z'), std::string::npos);
 }
 
 TEST(StringViewTest, contains)
