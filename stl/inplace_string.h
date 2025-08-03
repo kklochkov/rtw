@@ -241,4 +241,22 @@ using InplaceStringMedium = InplaceString<64U>;
 using InplaceStringLarge = InplaceString<128U>;
 using InplaceStringXLarge = InplaceString<256U>;
 
+template <std::size_t CAPACITY>
+InplaceString(const char (&str)[CAPACITY]) -> InplaceString<CAPACITY - 1U>; // -1 to remove null terminator
+
+template <std::size_t CAPACITY>
+InplaceString<CAPACITY - 1U> make_string(const char (&str)[CAPACITY]) // -1 to remove null terminator
+{
+  return InplaceString<CAPACITY - 1U>{StringView{str}};
+}
+
 } // namespace rtw::stl
+
+template <std::size_t CAPACITY>
+struct std::hash<rtw::stl::InplaceString<CAPACITY>>
+{
+  std::size_t operator()(const rtw::stl::InplaceString<CAPACITY>& str) const noexcept
+  {
+    return std::hash<std::string_view>{}(std::string_view{str.data(), str.size()});
+  }
+};
