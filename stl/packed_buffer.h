@@ -118,7 +118,7 @@ class InplacePackedBuffer : public GenericPackedBuffer<T, InplaceContiguousStora
   using Base = GenericPackedBuffer<T, InplaceContiguousStorage<T, CAPACITY>>;
 
 public:
-constexpr   InplacePackedBuffer() noexcept : Base{CAPACITY} {}
+  constexpr InplacePackedBuffer() noexcept : Base{CAPACITY} {}
 };
 
 } // namespace rtw::stl

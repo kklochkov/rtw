@@ -92,9 +92,10 @@ protected:
   using AlignedStorage = AlignedObjectStorage<T>;
 
 public:
-  static_assert(std::is_standard_layout_v<T>, " ContiguousStorage requires T to be standard layout.");
-  static_assert(std::is_trivially_copyable_v<T>, " ContiguousStorage requires T to be trivially copyable.");
-  static_assert(std::is_trivially_destructible_v<T>, " ContiguousStorage requires T to be trivially destructible.");
+  static_assert(std::is_standard_layout_v<T>, "GenericContiguousStorage requires T to be standard layout.");
+  static_assert(std::is_trivially_copyable_v<T>, "GenericContiguousStorage requires T to be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<T>,
+                "GenericContiguousStorage requires T to be trivially destructible.");
 
   using value_type = typename AlignedStorage::value_type;
   using size_type = std::size_t;
@@ -105,12 +106,12 @@ public:
   using iterator = AlignedStorage*;
   using const_iterator = const AlignedStorage*;
 
-constexpr  size_type used_slots() const noexcept { return used_slots_; }
-constexpr  bool empty() const noexcept { return used_slots_ == 0U; }
-constexpr  size_type capacity() const noexcept { return capacity_; }
+  constexpr size_type used_slots() const noexcept { return used_slots_; }
+  constexpr bool empty() const noexcept { return used_slots_ == 0U; }
+  constexpr size_type capacity() const noexcept { return capacity_; }
 
   template <typename... ArgsT>
-constexpr   reference construct_at(const size_type index, ArgsT&&... args) noexcept
+  constexpr reference construct_at(const size_type index, ArgsT&&... args) noexcept
   {
     auto& storage = get_derived().get_storage(index);
     auto& value = storage.construct(std::forward<ArgsT>(args)...);
@@ -118,7 +119,7 @@ constexpr   reference construct_at(const size_type index, ArgsT&&... args) noexc
     return value;
   }
 
-constexpr   reference construct_for_overwrite_at(const size_type index) noexcept
+  constexpr reference construct_for_overwrite_at(const size_type index) noexcept
   {
     auto& storage = get_derived().get_storage(index);
     auto& value = storage.construct_for_overwrite_at();
@@ -126,32 +127,32 @@ constexpr   reference construct_for_overwrite_at(const size_type index) noexcept
     return value;
   }
 
-constexpr   void destruct_at(const size_type index) noexcept
+  constexpr void destruct_at(const size_type index) noexcept
   {
     auto& storage = get_derived().get_storage(index);
     storage.destruct();
     --used_slots_;
   }
 
-constexpr   bool is_constructed(const size_type index) const noexcept
+  constexpr bool is_constructed(const size_type index) const noexcept
   {
     const auto& storage = get_derived().get_storage(index);
     return storage.is_constructed();
   }
 
-constexpr   reference operator[](const size_type index) noexcept
+  constexpr reference operator[](const size_type index) noexcept
   {
     auto& storage = get_derived().get_storage(index);
     return storage.get_reference();
   }
 
-constexpr   const_reference operator[](const size_type index) const noexcept
+  constexpr const_reference operator[](const size_type index) const noexcept
   {
     const auto& storage = get_derived().get_storage(index);
     return storage.get_reference();
   }
 
-constexpr   void clear() noexcept
+  constexpr void clear() noexcept
   {
     for (size_type index = 0U; index < capacity_; ++index)
     {

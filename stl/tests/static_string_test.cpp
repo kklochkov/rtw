@@ -207,9 +207,9 @@ TEST(StaticStringTest, find)
   EXPECT_EQ(string.find("World"), 7U);
   EXPECT_EQ(string.find("Hello"), 0U);
   EXPECT_EQ(string.find("!"), 12U);
-  EXPECT_EQ(string.find("NotFound"),  std::string::npos);
+  EXPECT_EQ(string.find("NotFound"), std::string::npos);
   EXPECT_EQ(string.find('o'), 4U);
-  EXPECT_EQ(string.find('z'),  std::string::npos);
+  EXPECT_EQ(string.find('z'), std::string::npos);
 }
 
 TEST(StaticStringTest, contains)

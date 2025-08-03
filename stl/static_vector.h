@@ -79,7 +79,7 @@ class InplaceStaticVector : public GenericStaticVector<T, InplaceContiguousStora
   using Base = GenericStaticVector<T, InplaceContiguousStorage<T, CAPACITY>>;
 
 public:
-constexpr   InplaceStaticVector() noexcept : Base{CAPACITY} {}
+  constexpr InplaceStaticVector() noexcept : Base{CAPACITY} {}
 };
 
 } // namespace rtw::stl

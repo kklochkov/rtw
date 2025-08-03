@@ -89,7 +89,7 @@ class InplaceCircularBuffer : public GenericCircularBuffer<T, InplaceContiguousS
   using Base = GenericCircularBuffer<T, InplaceContiguousStorage<T, CAPACITY>>;
 
 public:
-constexpr   InplaceCircularBuffer() noexcept : Base{CAPACITY} {}
+  constexpr InplaceCircularBuffer() noexcept : Base{CAPACITY} {}
 };
 
 } // namespace rtw::stl
