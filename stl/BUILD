@@ -9,6 +9,7 @@ cc_library(
         "flat_unordered_map.h",
         "flat_unordered_set.h",
         "heap_array.h",
+        "inplace_string.h",
         "packed_buffer.h",
         "queue.h",
         "span.h",

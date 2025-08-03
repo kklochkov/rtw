@@ -23,7 +23,6 @@ public:
   using const_reference = typename StorageType::const_reference;
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
-  constexpr static size_type NPOS = std::string::npos;
 
   constexpr StringView() noexcept = default;
   constexpr StringView(const_pointer str, const size_type size) noexcept : storage_{str, size} {}
@@ -68,7 +67,7 @@ public:
     return length;
   }
 
-  constexpr StringView substr(const size_type pos = 0U, const size_type count = NPOS) const noexcept
+  constexpr StringView substr(const size_type pos = 0U, const size_type count = std::string::npos) const noexcept
   {
     const size_type length = std::min(count, size() - pos);
     return StringView{storage_.data() + pos, length};
@@ -126,7 +125,7 @@ public:
   {
     if (pos >= size() || str.empty() || size() < str.size())
     {
-      return NPOS;
+      return std::string::npos;
     }
 
     for (size_type i = pos; i <= size() - str.size(); ++i)
@@ -137,7 +136,7 @@ public:
       }
     }
 
-    return NPOS;
+    return std::string::npos;
   }
 
   constexpr size_type find(const_pointer s, const size_type pos = 0U) const noexcept
@@ -149,7 +148,7 @@ public:
   {
     if (pos >= size())
     {
-      return NPOS;
+      return std::string::npos;
     }
 
     for (size_type i = pos; i < size(); ++i)
@@ -160,12 +159,12 @@ public:
       }
     }
 
-    return NPOS;
+    return std::string::npos;
   }
 
-  constexpr bool contains(const StringView str) const noexcept { return find(str) != NPOS; }
-  constexpr bool contains(const_pointer str) const noexcept { return find(str) != NPOS; }
-  constexpr bool contains(const value_type c) const noexcept { return find(c) != NPOS; }
+  constexpr bool contains(const StringView str) const noexcept { return find(str) != std::string::npos; }
+  constexpr bool contains(const_pointer str) const noexcept { return find(str) != std::string::npos; }
+  constexpr bool contains(const value_type c) const noexcept { return find(c) != std::string::npos; }
 
   friend constexpr bool operator==(const StringView lhs, const StringView rhs) noexcept
   {
