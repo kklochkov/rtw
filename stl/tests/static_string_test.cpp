@@ -45,6 +45,47 @@ TEST(StaticStringTest, constructor)
   }
 }
 
+TEST(StaticStringTest, copy_and_move)
+{
+  rtw::stl::StaticString original{"Hello, World!"};
+  rtw::stl::StaticString copy{original};
+  EXPECT_EQ(copy.size(), original.size());
+  EXPECT_STREQ(copy.data(), original.data());
+
+  rtw::stl::StaticString moved{std::move(original)};
+  EXPECT_EQ(moved.size(), 13U);
+  EXPECT_STREQ(moved.data(), "Hello, World!");
+  EXPECT_EQ(original.size(), 0U); // Original should be empty after move
+  EXPECT_TRUE(original.empty());
+  EXPECT_TRUE(original.data() == nullptr); // Original's data should be nullptr after move
+}
+
+TEST(StaticStringTest, copy_and_move_assignment)
+{
+  rtw::stl::StaticString original{"Hello, World!"};
+  rtw::stl::StaticString copy{original.size()};
+  copy = original;
+  EXPECT_EQ(copy.size(), original.size());
+  EXPECT_STREQ(copy.data(), original.data());
+
+  rtw::stl::StaticString moved;
+  moved = std::move(original);
+  EXPECT_EQ(moved.size(), 13U);
+  EXPECT_STREQ(moved.data(), "Hello, World!");
+  EXPECT_EQ(original.size(), 0U); // Original should be empty after move
+  EXPECT_TRUE(original.empty());
+  EXPECT_TRUE(original.data() == nullptr); // Original's data should be nullptr after move
+
+  {
+    // Truncated assignment
+    rtw::stl::StaticString truncated{"Short", 10U};
+    rtw::stl::StaticString long_string{"This is a very long string that will be truncated", 10U};
+    truncated = long_string;
+    EXPECT_EQ(truncated.size(), 10U);
+    EXPECT_STREQ(truncated.data(), "This is a ");
+  }
+}
+
 TEST(StaticStringTest, size_and_empty)
 {
   rtw::stl::StaticString string{"Hello, World!"};
