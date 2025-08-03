@@ -5,8 +5,9 @@
 namespace rtw::stl
 {
 
-template <typename KeyT, typename T, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>>
-class FlatUnorderedMap
+template <typename KeyT, typename T, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>,
+          typename KeyStorageT = ContiguousStorage<KeyT>, typename ValueStorageT = ContiguousStorage<T>>
+class GenericFlatUnorderedMap
 {
 public:
   template <typename ValueRefT, typename ContainerT>
@@ -15,25 +16,23 @@ public:
   using key_type = KeyT;
   using mapped_type = T;
   using value_type = std::pair<key_type, mapped_type>;
-  using key_container_type = ContiguousStorage<key_type>;
-  using value_container_type = ContiguousStorage<mapped_type>;
+  using key_container_type = KeyStorageT;
+  using value_container_type = ValueStorageT;
   using size_type = typename key_container_type::size_type;
   using difference_type = std::ptrdiff_t;
   using reference = std::pair<const key_type&, mapped_type&>;
   using const_reference = std::pair<const key_type&, const mapped_type&>;
   using hasher = HashT;
   using key_equal = KeyEqualT;
-  using iterator = Iterator<reference, FlatUnorderedMap>;
-  using const_iterator = Iterator<const_reference, const FlatUnorderedMap>;
+  using iterator = Iterator<reference, GenericFlatUnorderedMap>;
+  using const_iterator = Iterator<const_reference, const GenericFlatUnorderedMap>;
 
-  explicit FlatUnorderedMap(const size_type capacity) noexcept : keys_storage_{capacity}, values_storage_{capacity} {}
-
-  size_type size() const noexcept { return keys_storage_.used_slots(); }
-  bool empty() const noexcept { return keys_storage_.empty(); }
-  size_type capacity() const noexcept { return keys_storage_.capacity(); }
+  constexpr size_type size() const noexcept { return keys_storage_.used_slots(); }
+  constexpr bool empty() const noexcept { return keys_storage_.empty(); }
+  constexpr size_type capacity() const noexcept { return keys_storage_.capacity(); }
 
   template <typename KT = key_type, typename... ArgsT>
-  bool emplace(KT&& key, ArgsT&&... args) noexcept
+  constexpr bool emplace(KT&& key, ArgsT&&... args) noexcept
   {
     const auto hash_id = hasher_(key);
     for (size_type i = 0U; i < keys_storage_.capacity(); ++i)
@@ -58,14 +57,14 @@ public:
     return false;
   }
 
-  bool insert(const value_type& value) noexcept { return emplace(value.first, value.second); }
-  bool insert(value_type&& value) noexcept
+  constexpr bool insert(const value_type& value) noexcept { return emplace(value.first, value.second); }
+  constexpr bool insert(value_type&& value) noexcept
   {
     auto&& [key, mapped_value] = std::move(value);
     return emplace(std::move(key), std::move(mapped_value));
   }
 
-  bool erase(const key_type& key) noexcept
+  constexpr bool erase(const key_type& key) noexcept
   {
     const auto it = find(key);
     if (it != end())
@@ -78,7 +77,7 @@ public:
     return false;
   }
 
-  bool erase(const iterator& it) noexcept
+  constexpr bool erase(const iterator& it) noexcept
   {
     if (it != end())
     {
@@ -90,14 +89,14 @@ public:
     return true;
   }
 
-  void clear() noexcept
+  constexpr void clear() noexcept
   {
     keys_storage_.clear();
     values_storage_.clear();
   }
 
   template <typename KT = key_type>
-  mapped_type& operator[](KT&& key) noexcept
+  constexpr mapped_type& operator[](KT&& key) noexcept
   {
     const auto hash_id = hasher_(key);
     for (size_type i = 0U; i < keys_storage_.capacity(); ++i)
@@ -116,35 +115,41 @@ public:
       }
     }
 
-    // This is treated by the ContiguousStorage.
+    // This is treated by the Storage.
     return end()->second;
   }
 
-  const mapped_type& operator[](const key_type& key) const noexcept { return find(key)->second; }
+  constexpr const mapped_type& operator[](const key_type& key) const noexcept { return find(key)->second; }
 
-  iterator find(const key_type& key) noexcept { return find<iterator>(this, key); }
-  const_iterator find(const key_type& key) const noexcept { return find<const_iterator>(this, key); }
-  bool contains(const key_type& key) const noexcept { return find(key) != cend(); }
+  constexpr iterator find(const key_type& key) noexcept { return find<iterator>(this, key); }
+  constexpr const_iterator find(const key_type& key) const noexcept { return find<const_iterator>(this, key); }
+  constexpr bool contains(const key_type& key) const noexcept { return find(key) != cend(); }
 
-  const key_container_type& keys() const noexcept { return keys_storage_; }
-  const value_container_type& values() const noexcept { return values_storage_; }
+  constexpr const key_container_type& keys() const noexcept { return keys_storage_; }
+  constexpr const value_container_type& values() const noexcept { return values_storage_; }
 
-  iterator begin() noexcept { return iterator{this, 0U}; }
-  const_iterator begin() const noexcept { return const_iterator{this, 0U}; }
-  const_iterator cbegin() const noexcept { return const_iterator{this, 0U}; }
-  iterator end() noexcept { return iterator{this, keys_storage_.capacity()}; }
-  const_iterator end() const noexcept { return const_iterator{this, keys_storage_.capacity()}; }
-  const_iterator cend() const noexcept { return const_iterator{this, keys_storage_.capacity()}; }
+  constexpr iterator begin() noexcept { return iterator{this, 0U}; }
+  constexpr const_iterator begin() const noexcept { return const_iterator{this, 0U}; }
+  constexpr const_iterator cbegin() const noexcept { return const_iterator{this, 0U}; }
+  constexpr iterator end() noexcept { return iterator{this, keys_storage_.capacity()}; }
+  constexpr const_iterator end() const noexcept { return const_iterator{this, keys_storage_.capacity()}; }
+  constexpr const_iterator cend() const noexcept { return const_iterator{this, keys_storage_.capacity()}; }
+
+protected:
+  constexpr explicit GenericFlatUnorderedMap(const size_type capacity) noexcept
+      : keys_storage_{capacity}, values_storage_{capacity}
+  {
+  }
 
 private:
-  size_type get_index_quadratic(const size_type hash_id, const size_type i) const noexcept
+  constexpr size_type get_index_quadratic(const size_type hash_id, const size_type i) const noexcept
   {
     // Calculate the index using quadratic probing.
     return (hash_id + i * i) % keys_storage_.capacity();
   }
 
   template <typename IteratorT, typename ContainerT>
-  static IteratorT find(ContainerT* container, const key_type& key) noexcept
+  constexpr static IteratorT find(ContainerT* container, const key_type& key) noexcept
   {
     const auto hash_id = container->hasher_(key);
     for (size_type i = 0U; i < container->keys_storage_.capacity(); ++i)
@@ -171,14 +176,16 @@ private:
   key_equal key_equal_{};
 };
 
-template <typename KeyT, typename T, typename HashT, typename KeyEqualT>
+template <typename KeyT, typename T, typename HashT, typename KeyEqualT, typename KeyStorageT, typename ValueStorageT>
 template <typename ValueRefT, typename ContainerT>
-class FlatUnorderedMap<KeyT, T, HashT, KeyEqualT>::Iterator
+class GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, KeyStorageT, ValueStorageT>::Iterator
 {
 public:
-  static_assert(std::is_same_v<ContainerT, FlatUnorderedMap<KeyT, T, HashT, KeyEqualT>>
-                    || std::is_same_v<ContainerT, const FlatUnorderedMap<KeyT, T, HashT, KeyEqualT>>,
-                "Iterator must be used with FlatUnorderedMap or const FlatUnorderedMap.");
+  static_assert(
+      std::is_same_v<ContainerT, GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, KeyStorageT, ValueStorageT>>
+          || std::is_same_v<ContainerT,
+                            const GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, KeyStorageT, ValueStorageT>>,
+      "Iterator must be used with GenericFlatUnorderedMap or const GenericFlatUnorderedMap.");
 
   using reference = ValueRefT;
   using difference_type = typename ContainerT::difference_type;
@@ -191,63 +198,91 @@ public:
   };
   using pointer = ReferenceWrapper;
 
-  Iterator(ContainerT* container, typename ContainerT::size_type index) noexcept : container_{container}, index_{index}
+  constexpr Iterator(ContainerT* container, typename ContainerT::size_type index) noexcept
+      : container_{container}, index_{index}
   {
   }
 
-  size_t get_index() const noexcept { return index_; }
+  constexpr size_t get_index() const noexcept { return index_; }
 
-  reference operator*() const noexcept
+  constexpr reference operator*() const noexcept
   {
     return {container_->keys_storage_[index_], container_->values_storage_[index_]};
   }
 
-  pointer operator->() const noexcept { return ReferenceWrapper{operator*()}; }
+  constexpr pointer operator->() const noexcept { return ReferenceWrapper{operator*()}; }
 
-  Iterator& operator++() noexcept
+  constexpr Iterator& operator++() noexcept
   {
     ++index_;
     return *this;
   }
 
-  Iterator operator++(int) noexcept
+  constexpr Iterator operator++(int) noexcept
   {
     Iterator temp{*this};
     ++(*this);
     return temp;
   }
 
-  Iterator& operator+=(const difference_type offset) noexcept
+  constexpr Iterator& operator+=(const difference_type offset) noexcept
   {
     index_ += offset;
     return *this;
   }
 
-  Iterator& operator--() noexcept
+  constexpr Iterator& operator--() noexcept
   {
     --index_;
     return *this;
   }
 
-  Iterator operator--(int) noexcept
+  constexpr Iterator operator--(int) noexcept
   {
     Iterator temp{*this};
     --(*this);
     return temp;
   }
 
-  Iterator& operator-=(const difference_type offset) noexcept
+  constexpr Iterator& operator-=(const difference_type offset) noexcept
   {
     index_ -= offset;
     return *this;
   }
 
-  bool operator==(const Iterator& other) const noexcept { return index_ == other.index_; }
-  bool operator!=(const Iterator& other) const noexcept { return !(*this == other); }
+  constexpr bool operator==(const Iterator& other) const noexcept { return index_ == other.index_; }
+  constexpr bool operator!=(const Iterator& other) const noexcept { return !(*this == other); }
 
 private:
   ContainerT* container_{nullptr};
   typename ContainerT::size_type index_{0U};
+};
+
+template <typename KeyT, typename T, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>>
+class FlatUnorderedMap
+    : public GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, ContiguousStorage<KeyT>, ContiguousStorage<T>>
+{
+  using Base = GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, ContiguousStorage<KeyT>, ContiguousStorage<T>>;
+
+public:
+  using size_type = typename Base::size_type;
+
+  explicit FlatUnorderedMap(const size_type capacity) noexcept : Base{capacity} {}
+};
+
+template <typename KeyT, typename T, std::size_t CAPACITY, typename HashT = std::hash<KeyT>,
+          typename KeyEqualT = std::equal_to<KeyT>>
+class InplaceFlatUnorderedMap
+    : public GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, InplaceContiguousStorage<KeyT, CAPACITY>,
+                                     InplaceContiguousStorage<T, CAPACITY>>
+{
+  using Base = GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, InplaceContiguousStorage<KeyT, CAPACITY>,
+                                       InplaceContiguousStorage<T, CAPACITY>>;
+
+public:
+  using size_type = typename Base::size_type;
+
+  constexpr InplaceFlatUnorderedMap() noexcept : Base{CAPACITY} {}
 };
 
 } // namespace rtw::stl

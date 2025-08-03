@@ -233,10 +233,7 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const StaticString& string) noexcept;
 
 private:
-  void ensure_null_termination() noexcept
-  {
-    storage_[size_] = '\0'; // Ensure null-termination
-  }
+  void ensure_null_termination() noexcept { storage_[size_] = '\0'; }
 
   StorageType storage_{nullptr};
   size_type size_{0U};
