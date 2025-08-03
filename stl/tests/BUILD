@@ -13,6 +13,7 @@ cc_test_with_llvm_symbolizer(
         "packed_buffer_test.cpp",
         "queue_test.cpp",
         "span_test.cpp",
+        "static_string_test.cpp",
         "static_vector_test.cpp",
         "string_view_test.cpp",
     ],

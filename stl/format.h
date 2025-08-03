@@ -2,6 +2,7 @@
 
 #include "stl/flags.h"
 #include "stl/string_view.h"
+#include "stl/static_string.h"
 
 #include <fmt/ostream.h>
 
@@ -32,6 +33,11 @@ std::ostream& operator<<(std::ostream& os, const StringView view) noexcept
   return os.write(view.data(), static_cast<std::streamsize>(view.size()));
 }
 
+std::ostream& operator<<(std::ostream& os, const StaticString& string) noexcept
+{
+  return os.write(string.data(), static_cast<std::streamsize>(string.size()));
+}
+
 } // namespace rtw::stl
 
 // NOLINTBEGIN(readability-identifier-naming)
@@ -44,6 +50,10 @@ struct formatter<rtw::stl::Flags<T>> : ostream_formatter
 
 template <>
 struct formatter<rtw::stl::StringView> : ostream_formatter
+{};
+
+template <>
+struct formatter<rtw::stl::StaticString> : ostream_formatter
 {};
 
 } // namespace fmt
