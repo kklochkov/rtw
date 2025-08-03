@@ -85,9 +85,10 @@ private:
   bool constructed_ : 1;
 };
 
-template <typename T>
-class ContiguousStorage
+template <typename T, typename DerivedT>
+class GenericContiguousStorage
 {
+protected:
   using AlignedStorage = AlignedObjectStorage<T>;
 
 public:
@@ -104,86 +105,155 @@ public:
   using iterator = AlignedStorage*;
   using const_iterator = const AlignedStorage*;
 
-  explicit ContiguousStorage(const size_type capacity) noexcept
-      : data_{std::make_unique<AlignedStorage[]>(capacity)}, capacity_{capacity}
+constexpr  size_type used_slots() const noexcept { return used_slots_; }
+constexpr  bool empty() const noexcept { return used_slots_ == 0U; }
+constexpr  size_type capacity() const noexcept { return capacity_; }
+
+  template <typename... ArgsT>
+constexpr   reference construct_at(const size_type index, ArgsT&&... args) noexcept
+  {
+    auto& storage = get_derived().get_storage(index);
+    auto& value = storage.construct(std::forward<ArgsT>(args)...);
+    ++used_slots_;
+    return value;
+  }
+
+constexpr   reference construct_for_overwrite_at(const size_type index) noexcept
+  {
+    auto& storage = get_derived().get_storage(index);
+    auto& value = storage.construct_for_overwrite_at();
+    ++used_slots_;
+    return value;
+  }
+
+constexpr   void destruct_at(const size_type index) noexcept
+  {
+    auto& storage = get_derived().get_storage(index);
+    storage.destruct();
+    --used_slots_;
+  }
+
+constexpr   bool is_constructed(const size_type index) const noexcept
+  {
+    const auto& storage = get_derived().get_storage(index);
+    return storage.is_constructed();
+  }
+
+constexpr   reference operator[](const size_type index) noexcept
+  {
+    auto& storage = get_derived().get_storage(index);
+    return storage.get_reference();
+  }
+
+constexpr   const_reference operator[](const size_type index) const noexcept
+  {
+    const auto& storage = get_derived().get_storage(index);
+    return storage.get_reference();
+  }
+
+constexpr   void clear() noexcept
+  {
+    for (size_type index = 0U; index < capacity_; ++index)
+    {
+      auto& storage = get_derived().get_storage(index);
+      storage.destruct();
+    }
+    used_slots_ = 0U;
+  }
+
+  constexpr iterator begin() noexcept { return get_derived().get_storage(); }
+  constexpr const_iterator begin() const noexcept { return get_derived().get_storage(); }
+  constexpr const_iterator cbegin() const noexcept { return begin(); }
+
+  constexpr iterator end() noexcept { return begin() + capacity_; }
+  constexpr const_iterator end() const noexcept { return begin() + capacity_; }
+  constexpr const_iterator cend() const noexcept { return end(); }
+
+protected:
+  constexpr explicit GenericContiguousStorage(const size_t capacity) noexcept : capacity_{capacity}
   {
     assert(capacity > 0U);
+  }
+
+private:
+  constexpr DerivedT& get_derived() noexcept { return static_cast<DerivedT&>(*this); }
+  constexpr const DerivedT& get_derived() const noexcept { return static_cast<const DerivedT&>(*this); }
+
+  size_type used_slots_{0U};
+  size_type capacity_{0U};
+};
+
+template <typename T>
+class ContiguousStorage : public GenericContiguousStorage<T, ContiguousStorage<T>>
+{
+  using Base = GenericContiguousStorage<T, ContiguousStorage<T>>;
+  using AlignedStorage = typename Base::AlignedStorage;
+
+  friend Base;
+
+public:
+  using size_type = typename Base::size_type;
+
+  explicit ContiguousStorage(const size_type capacity) noexcept
+      : Base{capacity}, data_{std::make_unique<AlignedStorage[]>(capacity)}
+  {
   }
 
   ContiguousStorage(const ContiguousStorage&) noexcept = delete;
   ContiguousStorage(ContiguousStorage&&) noexcept = default;
   ContiguousStorage& operator=(const ContiguousStorage&) noexcept = delete;
   ContiguousStorage& operator=(ContiguousStorage&&) noexcept = default;
-  ~ContiguousStorage() { clear(); }
-
-  size_type used_slots() const noexcept { return used_slots_; }
-  bool empty() const noexcept { return used_slots_ == 0U; }
-  size_type capacity() const noexcept { return capacity_; }
-
-  template <typename... ArgsT>
-  reference construct_at(const size_type index, ArgsT&&... args) noexcept
-  {
-    assert(index < capacity_);
-    auto& value = data_.get()[index].construct(std::forward<ArgsT>(args)...);
-    ++used_slots_;
-    return value;
-  }
-
-  reference construct_for_overwrite_at(const size_type index) noexcept
-  {
-    assert(index < capacity_);
-    auto& value = data_.get()[index].construct_for_overwrite_at();
-    ++used_slots_;
-    return value;
-  }
-
-  void destruct_at(const size_type index) noexcept
-  {
-    assert(index < capacity_);
-    assert(!empty());
-    data_.get()[index].destruct();
-    --used_slots_;
-  }
-
-  bool is_constructed(const size_type index) const noexcept
-  {
-    assert(index < capacity_);
-    return data_.get()[index].is_constructed();
-  }
-
-  reference operator[](const size_type index) noexcept
-  {
-    assert(index < capacity_);
-    return data_.get()[index].get_reference();
-  }
-
-  const_reference operator[](const size_type index) const noexcept
-  {
-    assert(index < capacity_);
-    return data_.get()[index].get_reference();
-  }
-
-  void clear() noexcept
-  {
-    for (size_type index = 0U; index < capacity_; ++index)
-    {
-      data_.get()[index].destruct();
-    }
-    used_slots_ = 0U;
-  }
-
-  iterator begin() noexcept { return data_.get(); }
-  const_iterator begin() const noexcept { return data_.get(); }
-  const_iterator cbegin() const noexcept { return begin(); }
-
-  iterator end() noexcept { return begin() + capacity_; }
-  const_iterator end() const noexcept { return begin() + capacity_; }
-  const_iterator cend() const noexcept { return end(); }
+  ~ContiguousStorage() = default;
 
 private:
+  AlignedStorage& get_storage(const size_type index) noexcept
+  {
+    assert(index < Base::capacity());
+    return data_.get()[index];
+  }
+
+  const AlignedStorage& get_storage(const size_type index) const noexcept
+  {
+    assert(index < Base::capacity());
+    return data_.get()[index];
+  }
+
+  AlignedStorage* get_storage() noexcept { return data_.get(); }
+  const AlignedStorage* get_storage() const noexcept { return data_.get(); }
+
   std::unique_ptr<AlignedStorage[]> data_;
-  size_type used_slots_{0U};
-  size_type capacity_{0U};
+};
+
+template <typename T, std::size_t CAPACITY>
+class InplaceContiguousStorage : public GenericContiguousStorage<T, ContiguousStorage<T>>
+{
+  using Base = GenericContiguousStorage<T, ContiguousStorage<T>>;
+  using AlignedStorage = typename Base::AlignedStorage;
+
+  friend Base;
+
+public:
+  using size_type = typename Base::size_type;
+
+  constexpr InplaceContiguousStorage() noexcept : Base{CAPACITY} {}
+
+private:
+  constexpr AlignedStorage& get_storage(const size_type index) noexcept
+  {
+    assert(index < Base::capacity());
+    return data_[index];
+  }
+
+  constexpr const AlignedStorage& get_storage(const size_type index) const noexcept
+  {
+    assert(index < Base::capacity());
+    return data_[index];
+  }
+
+  constexpr AlignedStorage* get_storage() noexcept { return data_.data(); }
+  constexpr const AlignedStorage* get_storage() const noexcept { return data_.data(); }
+
+  alignas(AlignedStorage) std::array<AlignedStorage, CAPACITY> data_{};
 };
 
 template <typename IteratorT>

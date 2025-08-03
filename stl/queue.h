@@ -5,10 +5,10 @@
 namespace rtw::stl
 {
 
-template <typename T>
-class Queue
+template <typename T, typename StorageT = ContiguousStorage<T>>
+class GenericQueue
 {
-  using StorageType = ContiguousStorage<T>;
+  using StorageType = StorageT;
 
 public:
   using value_type = typename StorageType::value_type;
@@ -16,14 +16,12 @@ public:
   using reference = typename StorageType::reference;
   using const_reference = typename StorageType::const_reference;
 
-  explicit Queue(const size_type capacity) noexcept : storage_{capacity} {}
-
-  size_type size() const noexcept { return storage_.used_slots(); }
-  bool empty() const noexcept { return storage_.empty(); }
-  size_type capacity() const noexcept { return storage_.capacity(); }
+  constexpr size_type size() const noexcept { return storage_.used_slots(); }
+  constexpr bool empty() const noexcept { return storage_.empty(); }
+  constexpr size_type capacity() const noexcept { return storage_.capacity(); }
 
   template <typename... ArgsT>
-  reference emplace(ArgsT&&... args) noexcept
+  constexpr reference emplace(ArgsT&&... args) noexcept
   {
     assert(tail_ + 1U <= capacity());
     tail_ = empty() ? head_ : (tail_ + 1U) % capacity();
@@ -31,49 +29,52 @@ public:
   }
 
   template <typename U = T>
-  void push(U&& value) noexcept
+  constexpr void push(U&& value) noexcept
   {
     emplace(std::forward<U>(value));
   }
 
-  void pop(T& value) noexcept
+  constexpr void pop(T& value) noexcept
   {
     assert(!empty());
     value = storage_[head_];
     pop_front();
   }
 
-  void pop() noexcept
+  constexpr void pop() noexcept
   {
     assert(!empty());
     pop_front();
   }
 
-  reference front() noexcept
+  constexpr reference front() noexcept
   {
     assert(!empty());
     return storage_[head_];
   }
 
-  const_reference front() const noexcept { return front(); }
+  constexpr const_reference front() const noexcept { return front(); }
 
-  reference back() noexcept
+  constexpr reference back() noexcept
   {
     assert(!empty());
     return storage_[tail_];
   }
 
-  const_reference back() const noexcept { return back(); }
+  constexpr const_reference back() const noexcept { return back(); }
 
-  void clear()
+  constexpr void clear()
   {
     head_ = 0U;
     tail_ = 0U;
     storage_.clear();
   }
 
+protected:
+  constexpr explicit GenericQueue(const size_type capacity) noexcept : storage_{capacity} {}
+
 private:
-  void pop_front()
+  constexpr void pop_front()
   {
     storage_.destruct_at(head_);
     head_ = (head_ + 1U) % capacity();
@@ -82,6 +83,26 @@ private:
   StorageType storage_;
   size_type head_{0U};
   size_type tail_{0U};
+};
+
+template <typename T>
+class Queue : public GenericQueue<T, ContiguousStorage<T>>
+{
+  using Base = GenericQueue<T, ContiguousStorage<T>>;
+
+public:
+  using size_type = typename Base::size_type;
+
+  explicit Queue(const size_type capacity) noexcept : Base{capacity} {}
+};
+
+template <typename T, std::size_t CAPACITY>
+class InplaceQueue : public GenericQueue<T, InplaceContiguousStorage<T, CAPACITY>>
+{
+  using Base = GenericQueue<T, InplaceContiguousStorage<T, CAPACITY>>;
+
+public:
+  constexpr InplaceQueue() noexcept : Base{CAPACITY} {}
 };
 
 } // namespace rtw::stl
