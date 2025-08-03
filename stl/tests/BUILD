@@ -10,6 +10,7 @@ cc_test_with_llvm_symbolizer(
         "flat_unordered_map_test.cpp",
         "flat_unordered_set_test.cpp",
         "heap_array_test.cpp",
+        "inplace_string_test.cpp",
         "packed_buffer_test.cpp",
         "queue_test.cpp",
         "span_test.cpp",

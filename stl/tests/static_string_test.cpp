@@ -1,3 +1,4 @@
+#include "stl/format.h" // IWYU pragma: keep
 #include "stl/static_string.h"
 
 #include <gtest/gtest.h>
@@ -10,17 +11,6 @@ TEST(StaticStringTest, constructor)
     EXPECT_EQ(string.size(), 0U);
     EXPECT_EQ(string.capacity(), 10U);
     EXPECT_TRUE(string.empty());
-  }
-  {
-    // Pointer and size constructor
-    const char* str = "Hello, World!";
-    rtw::stl::StaticString string{str, 13U};
-    EXPECT_EQ(string.size(), 13U);
-    EXPECT_STREQ(string.data(), str);
-    EXPECT_EQ(string[0], 'H');
-    EXPECT_EQ(string[12], '!');
-    EXPECT_TRUE(string.starts_with("Hello"));
-    EXPECT_TRUE(string.ends_with("World!"));
   }
   {
     // Pointer constructor
@@ -78,11 +68,11 @@ TEST(StaticStringTest, copy_and_move_assignment)
 
   {
     // Truncated assignment
-    rtw::stl::StaticString truncated{"Short", 10U};
-    rtw::stl::StaticString long_string{"This is a very long string that will be truncated", 10U};
+    rtw::stl::StaticString truncated{"Short"};
+    rtw::stl::StaticString long_string{"This is a very long string that will be truncated"};
     truncated = long_string;
-    EXPECT_EQ(truncated.size(), 10U);
-    EXPECT_STREQ(truncated.data(), "This is a ");
+    EXPECT_EQ(truncated.size(), 5U);
+    EXPECT_STREQ(truncated.data(), "This ");
   }
 }
 
@@ -134,7 +124,8 @@ TEST(StaticStringTest, operator_brackets)
 TEST(StaticStringTest, operator_plus_equal)
 {
   {
-    rtw::stl::StaticString string{"Hello", 40U};
+    rtw::stl::StaticString string{15U};
+    string += "Hello";
     string += ", World!";
     EXPECT_EQ(string.size(), 13U);
     EXPECT_STREQ(string.data(), "Hello, World!");
@@ -145,7 +136,8 @@ TEST(StaticStringTest, operator_plus_equal)
   }
   {
     // Concatenating two StaticStrings with different sizes leading to truncated result
-    rtw::stl::StaticString string{"123", 5U};
+    rtw::stl::StaticString string{5U};
+    string += "123";
     string += rtw::stl::StaticString{"456"};
 
     EXPECT_EQ(string.size(), 5U);
@@ -215,9 +207,9 @@ TEST(StaticStringTest, find)
   EXPECT_EQ(string.find("World"), 7U);
   EXPECT_EQ(string.find("Hello"), 0U);
   EXPECT_EQ(string.find("!"), 12U);
-  EXPECT_EQ(string.find("NotFound"), rtw::stl::StaticString::NPOS);
+  EXPECT_EQ(string.find("NotFound"),  std::string::npos);
   EXPECT_EQ(string.find('o'), 4U);
-  EXPECT_EQ(string.find('z'), rtw::stl::StaticString::NPOS);
+  EXPECT_EQ(string.find('z'),  std::string::npos);
 }
 
 TEST(StaticStringTest, contains)

@@ -21,7 +21,6 @@ public:
   using const_pointer = const value_type*;
   using iterator = pointer;
   using const_iterator = const_pointer;
-  constexpr static size_type NPOS = std::string::npos;
 
   // Default constructor creates an empty StaticString with a capacity of 0.
   // It is used to move-construct an empty StaticString.
@@ -33,23 +32,20 @@ public:
     ensure_null_termination();
   }
 
-  StaticString(const_pointer str, const size_type capacity) noexcept : StaticString{capacity}
+  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
+  StaticString(StringView str) noexcept : StaticString{str.size()}
   {
-    assert(str != nullptr);
-    size_ = std::min(capacity, std::char_traits<char>::length(str));
+    size_ = str.size();
     for (size_type i = 0U; i < size_; ++i)
     {
       storage_[i] = str[i];
     }
     ensure_null_termination();
   }
-
-  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
-  StaticString(const_pointer str) noexcept : StaticString{str, std::char_traits<char>::length(str)} {}
-  StaticString(StringView str) noexcept : StaticString{str.data(), str.size()} {}
+  StaticString(const_pointer str) noexcept : StaticString{StringView{str}} {}
   // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
 
-  StaticString(const StaticString& other) noexcept : StaticString{other.data(), other.size()} {}
+  StaticString(const StaticString& other) noexcept : StaticString{StringView{other.data(), other.size()}} {}
   StaticString(StaticString&& other) noexcept
       : storage_{std::move(other.storage_)}, size_{other.size_}, capacity_{other.capacity_}
   {
@@ -222,7 +218,7 @@ public:
   bool contains(const_pointer s) const noexcept { return StringView{data(), size()}.contains(StringView{s}); }
   bool contains(const value_type c) const noexcept { return StringView{data(), size()}.contains(c); }
 
-  StringView substr(const size_type pos = 0U, const size_type count = NPOS) const noexcept
+  StringView substr(const size_type pos = 0U, const size_type count = std::string::npos) const noexcept
   {
     return StringView{data(), size()}.substr(pos, count);
   }

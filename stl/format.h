@@ -1,8 +1,9 @@
 #pragma once
 
 #include "stl/flags.h"
-#include "stl/string_view.h"
+#include "stl/inplace_string.h"
 #include "stl/static_string.h"
+#include "stl/string_view.h"
 
 #include <fmt/ostream.h>
 
@@ -28,12 +29,18 @@ std::ostream& operator<<(std::ostream& os, const Flags<T>& flags) noexcept
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const StringView view) noexcept
+inline std::ostream& operator<<(std::ostream& os, const StringView view) noexcept
 {
   return os.write(view.data(), static_cast<std::streamsize>(view.size()));
 }
 
-std::ostream& operator<<(std::ostream& os, const StaticString& string) noexcept
+inline std::ostream& operator<<(std::ostream& os, const StaticString& string) noexcept
+{
+  return os.write(string.data(), static_cast<std::streamsize>(string.size()));
+}
+
+template <std::size_t CAPACITY>
+std::ostream& operator<<(std::ostream& os, const InplaceString<CAPACITY>& string) noexcept
 {
   return os.write(string.data(), static_cast<std::streamsize>(string.size()));
 }
@@ -54,6 +61,10 @@ struct formatter<rtw::stl::StringView> : ostream_formatter
 
 template <>
 struct formatter<rtw::stl::StaticString> : ostream_formatter
+{};
+
+template <std::size_t CAPACITY>
+struct formatter<rtw::stl::InplaceString<CAPACITY>> : ostream_formatter
 {};
 
 } // namespace fmt
