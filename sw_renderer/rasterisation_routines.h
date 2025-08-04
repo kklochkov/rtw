@@ -221,9 +221,9 @@ void visit_pixels(const Point2I& v0_raster, const Point2I& v1_raster, const sing
 {
   for (auto y = v0_raster.y(); y <= v1_raster.y(); ++y)
   {
-    auto x_start = static_cast<std::int32_t>(inv_slope0 * static_cast<single_precision>(y - v0_raster.y())
+    auto x_start = static_cast<std::int32_t>((inv_slope0 * static_cast<single_precision>(y - v0_raster.y()))
                                              + static_cast<single_precision>(v0_raster.x()));
-    auto x_end = static_cast<std::int32_t>(inv_slope1 * static_cast<single_precision>(y - v1_raster.y())
+    auto x_end = static_cast<std::int32_t>((inv_slope1 * static_cast<single_precision>(y - v1_raster.y()))
                                            + static_cast<single_precision>(v1_raster.x()));
 
     if (x_start > x_end)

@@ -107,7 +107,7 @@ template <typename T, typename BaseT = GenericPackedBuffer<T, ContiguousStorage<
 class PackedBuffer : public BaseT
 {
 public:
-  explicit PackedBuffer(const  typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
+  explicit PackedBuffer(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
 };
 
 template <typename T, std::size_t CAPACITY>

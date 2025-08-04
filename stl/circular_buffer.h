@@ -78,7 +78,7 @@ template <typename T, typename BaseT = GenericCircularBuffer<T, ContiguousStorag
 class CircularBuffer : public BaseT
 {
 public:
-    explicit CircularBuffer(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
+  explicit CircularBuffer(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
 };
 
 template <typename T, std::size_t CAPACITY>

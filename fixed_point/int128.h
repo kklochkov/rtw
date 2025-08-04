@@ -115,7 +115,7 @@ public:
     }
 
     constexpr auto POW_2_64 = get_pow_2_64<F>();
-    return static_cast<F>(hi_) * POW_2_64 + static_cast<F>(lo_);
+    return (static_cast<F>(hi_) * POW_2_64) + static_cast<F>(lo_);
   }
 
   template <typename U = T, typename = std::enable_if_t<std::is_signed_v<U>>>
@@ -302,14 +302,14 @@ private:
     const lo_type lo_lo_product = b_lo * a_lo;
     const lo_type lo_lo_carry = lo_lo_product >> HALF_WORD_SIZE;
 
-    const lo_type lo_hi_product = b_lo * a_hi + lo_lo_carry;
+    const lo_type lo_hi_product = (b_lo * a_hi) + lo_lo_carry;
     const lo_type lo_hi_result = lo_hi_product & LO_MASK;
     const lo_type lo_hi_carry = lo_hi_product >> HALF_WORD_SIZE;
 
-    const lo_type hi_lo_product = b_hi * a_lo + lo_hi_result;
+    const lo_type hi_lo_product = (b_hi * a_lo) + lo_hi_result;
     const lo_type hi_lo_carry = hi_lo_product >> HALF_WORD_SIZE;
 
-    return Int{static_cast<hi_type>(b_hi * a_hi + lo_hi_carry + hi_lo_carry), static_cast<lo_type>(a * b)};
+    return Int{static_cast<hi_type>((b_hi * a_hi) + lo_hi_carry + hi_lo_carry), static_cast<lo_type>(a * b)};
   }
 
   constexpr static Int mul(const Int lhs, const Int rhs) noexcept
@@ -435,7 +435,7 @@ template <typename T, typename = std::enable_if_t<std::is_unsigned_v<T>>>
 constexpr std::int32_t count_leading_zero(const Int<T> value)
 {
   const auto hi_count = count_leading_zero(value.hi());
-  return hi_count + static_cast<std::uint32_t>(hi_count == Int<T>::HI_BITS) * count_leading_zero(value.lo());
+  return hi_count + (static_cast<std::uint32_t>(hi_count == Int<T>::HI_BITS) * count_leading_zero(value.lo()));
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>

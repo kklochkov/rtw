@@ -140,7 +140,7 @@ T distance(const Angle<T>& lhs, const Angle<T>& rhs) noexcept
 template <typename T>
 Angle<T> interpolate(const Angle<T>& lhs, const Angle<T>& rhs, const T t) noexcept
 {
-  return normalize(Angle<T>{(T{1} - t) * lhs + t * rhs});
+  return normalize(Angle<T>{((T{1} - t) * lhs) + (t * rhs)});
 }
 
 namespace angle_literals

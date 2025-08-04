@@ -35,7 +35,7 @@ void Renderer::draw_pixel(const Point2I& point, const Color color)
 
 void Renderer::draw_pixel(const Point2I& point, const Color color, const std::uint16_t size)
 {
-  const Point2I p0{point.x() - size / 2, point.y() - size / 2};
+  const Point2I p0{point.x() - (size / 2), point.y() - (size / 2)};
   const auto w = static_cast<std::int32_t>(width()) - 1;
   const auto h = static_cast<std::int32_t>(height()) - 1;
   for (std::uint16_t i = 0U; i < size; ++i)
