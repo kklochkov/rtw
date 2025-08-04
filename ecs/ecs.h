@@ -2,6 +2,7 @@
 
 #include "stl/flags.h"
 #include "stl/flat_unordered_map.h"
+#include "stl/flat_unordered_set.h"
 #include "stl/heap_array.h"
 #include "stl/inplace_string.h"
 #include "stl/packed_buffer.h"
@@ -323,9 +324,12 @@ public:
   using Entity = Entity<ComponentType>;
   using EntitySignature = typename Entity::EntitySignature;
 
+  constexpr static std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP = 100U; // TODO: Make this configurable.
+
   explicit EntityManager(const std::size_t max_number_of_entities) noexcept
       : entities_{max_number_of_entities}, free_ids_{max_number_of_entities}, tag_to_entity_id_{max_number_of_entities},
-        entity_id_to_tag_{max_number_of_entities}, entity_id_to_group_{max_number_of_entities}
+        entity_id_to_tag_{max_number_of_entities}, group_to_entity_ids_{max_number_of_entities},
+        entity_id_to_group_{max_number_of_entities}
   {
     for (EntityId::ID_TYPE id = 0U; id < max_number_of_entities; ++id)
     {
@@ -406,7 +410,9 @@ private:
   stl::Queue<EntityId> free_ids_;
   stl::FlatUnorderedMap<stl::InplaceStringSmall, EntityId> tag_to_entity_id_;
   stl::FlatUnorderedMap<EntityId, stl::InplaceStringSmall> entity_id_to_tag_;
-  std::unordered_map<stl::InplaceStringSmall, std::unordered_set<EntityId>> group_to_entity_ids_;
+  stl::FlatUnorderedMap<stl::InplaceStringSmall,
+                        stl::InplaceFlatUnorderedSet<EntityId, MAX_NUMBER_OF_ENTITIES_PER_GROUP>>
+      group_to_entity_ids_;
   stl::FlatUnorderedMap<EntityId, stl::InplaceStringSmall> entity_id_to_group_;
 };
 
