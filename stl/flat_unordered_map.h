@@ -27,6 +27,8 @@ public:
   using iterator = Iterator<reference, GenericFlatUnorderedMap>;
   using const_iterator = Iterator<const_reference, const GenericFlatUnorderedMap>;
 
+  constexpr GenericFlatUnorderedMap() noexcept = default;
+
   constexpr size_type size() const noexcept { return keys_storage_.used_slots(); }
   constexpr bool empty() const noexcept { return keys_storage_.empty(); }
   constexpr size_type capacity() const noexcept { return keys_storage_.capacity(); }
@@ -258,31 +260,19 @@ private:
   typename ContainerT::size_type index_{0U};
 };
 
-template <typename KeyT, typename T, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>>
-class FlatUnorderedMap
-    : public GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, ContiguousStorage<KeyT>, ContiguousStorage<T>>
+template <typename KeyT, typename T, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>,
+          typename BaseT =
+              GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, ContiguousStorage<KeyT>, ContiguousStorage<T>>>
+class FlatUnorderedMap : public BaseT
 {
-  using Base = GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, ContiguousStorage<KeyT>, ContiguousStorage<T>>;
-
 public:
-  using size_type = typename Base::size_type;
-
-  explicit FlatUnorderedMap(const size_type capacity) noexcept : Base{capacity} {}
+  explicit FlatUnorderedMap(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
 };
 
 template <typename KeyT, typename T, std::size_t CAPACITY, typename HashT = std::hash<KeyT>,
           typename KeyEqualT = std::equal_to<KeyT>>
-class InplaceFlatUnorderedMap
-    : public GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, InplaceContiguousStorage<KeyT, CAPACITY>,
-                                     InplaceContiguousStorage<T, CAPACITY>>
-{
-  using Base = GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, InplaceContiguousStorage<KeyT, CAPACITY>,
-                                       InplaceContiguousStorage<T, CAPACITY>>;
-
-public:
-  using size_type = typename Base::size_type;
-
-  constexpr InplaceFlatUnorderedMap() noexcept : Base{CAPACITY} {}
-};
+using InplaceFlatUnorderedMap =
+    GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, InplaceContiguousStorage<KeyT, CAPACITY>,
+                            InplaceContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl

@@ -200,12 +200,6 @@ public:
   {
   }
 
-  ContiguousStorage(const ContiguousStorage&) noexcept = delete;
-  ContiguousStorage(ContiguousStorage&&) noexcept = default;
-  ContiguousStorage& operator=(const ContiguousStorage&) noexcept = delete;
-  ContiguousStorage& operator=(ContiguousStorage&&) noexcept = default;
-  ~ContiguousStorage() = default;
-
 private:
   AlignedStorage& get_storage(const size_type index) noexcept
   {
@@ -226,14 +220,16 @@ private:
 };
 
 template <typename T, std::size_t CAPACITY>
-class InplaceContiguousStorage : public GenericContiguousStorage<T, ContiguousStorage<T>>
+class InplaceContiguousStorage : public GenericContiguousStorage<T, InplaceContiguousStorage<T, CAPACITY>>
 {
-  using Base = GenericContiguousStorage<T, ContiguousStorage<T>>;
+  using Base = GenericContiguousStorage<T, InplaceContiguousStorage<T, CAPACITY>>;
   using AlignedStorage = typename Base::AlignedStorage;
 
   friend Base;
 
 public:
+  static_assert(CAPACITY > 0U, "CAPACITY must be greater than 0.");
+
   using size_type = typename Base::size_type;
 
   constexpr InplaceContiguousStorage() noexcept : Base{CAPACITY} {}
