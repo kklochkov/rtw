@@ -8,7 +8,7 @@ namespace
 
 enum class ComponentType : std::uint8_t
 {
-  NONE,
+  NONE = 0U,
   TRANSFORM = 1U << 0U,
   RIGID_BODY = 1U << 1U,
   COLLIDER = 1U << 2U,
