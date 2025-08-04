@@ -1,7 +1,7 @@
 fail_fast: false
 repos:
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: 'v17.0.6'
+    rev: 'v19.1.7'
     hooks:
       - id: clang-format
         types_or: [c++]

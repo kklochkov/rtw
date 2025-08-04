@@ -72,7 +72,7 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> tan(const FixedPoint<T, FRAC_BIT
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 class FixedPoint
 {
-  // clang-format off
+  // clang-format off: https://github.com/llvm/llvm-project/issues/53960
   struct PrivateCtorTag {};
   // clang-format on
   constexpr static PrivateCtorTag PRIVATE_CTOR = {};
