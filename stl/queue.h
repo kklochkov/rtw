@@ -16,6 +16,8 @@ public:
   using reference = typename StorageType::reference;
   using const_reference = typename StorageType::const_reference;
 
+  constexpr GenericQueue() noexcept = default;
+
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
   constexpr size_type capacity() const noexcept { return storage_.capacity(); }
@@ -85,24 +87,14 @@ private:
   size_type tail_{0U};
 };
 
-template <typename T>
-class Queue : public GenericQueue<T, ContiguousStorage<T>>
+template <typename T, typename BaseT = GenericQueue<T, ContiguousStorage<T>>>
+class Queue : public BaseT
 {
-  using Base = GenericQueue<T, ContiguousStorage<T>>;
-
 public:
-  using size_type = typename Base::size_type;
-
-  explicit Queue(const size_type capacity) noexcept : Base{capacity} {}
+  explicit Queue(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
 };
 
 template <typename T, std::size_t CAPACITY>
-class InplaceQueue : public GenericQueue<T, InplaceContiguousStorage<T, CAPACITY>>
-{
-  using Base = GenericQueue<T, InplaceContiguousStorage<T, CAPACITY>>;
-
-public:
-  constexpr InplaceQueue() noexcept : Base{CAPACITY} {}
-};
+using InplaceQueue = GenericQueue<T, InplaceContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl

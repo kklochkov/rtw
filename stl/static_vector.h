@@ -20,6 +20,8 @@ public:
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
 
+  constexpr GenericStaticVector() noexcept = default;
+
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
   constexpr size_type capacity() const noexcept { return storage_.capacity(); }
@@ -62,24 +64,14 @@ private:
   StorageType storage_;
 };
 
-template <typename T>
-class StaticVector : public GenericStaticVector<T, ContiguousStorage<T>>
+template <typename T, typename BaseT = GenericStaticVector<T, ContiguousStorage<T>>>
+class StaticVector : public BaseT
 {
-  using Base = GenericStaticVector<T, ContiguousStorage<T>>;
-
 public:
-  using size_type = typename Base::size_type;
-
-  explicit StaticVector(const size_type capacity) noexcept : Base{capacity} {}
+  explicit StaticVector(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
 };
 
 template <typename T, std::size_t CAPACITY>
-class InplaceStaticVector : public GenericStaticVector<T, InplaceContiguousStorage<T, CAPACITY>>
-{
-  using Base = GenericStaticVector<T, InplaceContiguousStorage<T, CAPACITY>>;
-
-public:
-  constexpr InplaceStaticVector() noexcept : Base{CAPACITY} {}
-};
+using InplaceStaticVector = GenericStaticVector<T, InplaceContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl

@@ -20,6 +20,8 @@ public:
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
 
+  constexpr GenericCircularBuffer() noexcept = default;
+
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
   constexpr size_type capacity() const noexcept { return storage_.capacity(); }
@@ -72,24 +74,14 @@ private:
   size_type head_{0U};
 };
 
-template <typename T>
-class CircularBuffer : public GenericCircularBuffer<T, ContiguousStorage<T>>
+template <typename T, typename BaseT = GenericCircularBuffer<T, ContiguousStorage<T>>>
+class CircularBuffer : public BaseT
 {
-  using Base = GenericCircularBuffer<T, ContiguousStorage<T>>;
-
 public:
-  using size_type = typename Base::size_type;
-
-  explicit CircularBuffer(const size_type capacity) noexcept : Base{capacity} {}
+    explicit CircularBuffer(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
 };
 
 template <typename T, std::size_t CAPACITY>
-class InplaceCircularBuffer : public GenericCircularBuffer<T, InplaceContiguousStorage<T, CAPACITY>>
-{
-  using Base = GenericCircularBuffer<T, InplaceContiguousStorage<T, CAPACITY>>;
-
-public:
-  constexpr InplaceCircularBuffer() noexcept : Base{CAPACITY} {}
-};
+using InplaceCircularBuffer = GenericCircularBuffer<T, InplaceContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl

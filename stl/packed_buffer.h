@@ -51,6 +51,8 @@ public:
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
 
+  constexpr GenericPackedBuffer() noexcept = default;
+
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
   constexpr size_type capacity() const noexcept { return storage_.capacity(); }
@@ -101,24 +103,14 @@ private:
   StorageType storage_;
 };
 
-template <typename T>
-class PackedBuffer : public GenericPackedBuffer<T, ContiguousStorage<T>>
+template <typename T, typename BaseT = GenericPackedBuffer<T, ContiguousStorage<T>>>
+class PackedBuffer : public BaseT
 {
-  using Base = GenericPackedBuffer<T, ContiguousStorage<T>>;
-
 public:
-  using size_type = typename Base::size_type;
-
-  explicit PackedBuffer(const size_type capacity) noexcept : Base{capacity} {}
+  explicit PackedBuffer(const  typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
 };
 
 template <typename T, std::size_t CAPACITY>
-class InplacePackedBuffer : public GenericPackedBuffer<T, InplaceContiguousStorage<T, CAPACITY>>
-{
-  using Base = GenericPackedBuffer<T, InplaceContiguousStorage<T, CAPACITY>>;
-
-public:
-  constexpr InplacePackedBuffer() noexcept : Base{CAPACITY} {}
-};
+using InplacePackedBuffer = GenericPackedBuffer<T, InplaceContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl
