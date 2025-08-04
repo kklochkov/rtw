@@ -18,23 +18,52 @@ struct Struct
 };
 
 using AlignedObjectStorage = rtw::stl::AlignedObjectStorage<Struct>;
-using ContiguousStorage = rtw::stl::ContiguousStorage<Struct>;
+using InplaceContiguousStorage = rtw::stl::InplaceContiguousStorage<Struct, 10U>;
 
 } // namespace
 
-TEST(ContiguousStorageTest, constructor)
+TEST(AlignedObjectStorageTest, basic)
 {
-  ContiguousStorage storage{10U};
+  static_assert(std::is_trivially_copyable_v<AlignedObjectStorage>,
+                "AlignedObjectStorage  should be trivially copyable.");
+
+  AlignedObjectStorage storage{};
+
+  EXPECT_FALSE(storage.is_constructed());
+  EXPECT_DEATH(storage.get_pointer(), ".*");
+  EXPECT_DEATH(storage.get_reference(), ".*");
+
+  storage.construct(1.0F, 2, std::uint8_t{3});
+  EXPECT_TRUE(storage.is_constructed());
+  EXPECT_EQ(*storage.get_pointer(), (Struct{1.0F, 2, 3}));
+  EXPECT_EQ(storage.get_reference(), (Struct{1.0F, 2, 3}));
+
+  storage.destruct();
+  EXPECT_FALSE(storage.is_constructed());
+  EXPECT_DEATH(storage.get_pointer(), ".*");
+  EXPECT_DEATH(storage.get_reference(), ".*");
+
+  auto& value = storage.construct_for_overwrite_at();
+  value = Struct{4.0F, 5, 6};
+  EXPECT_TRUE(storage.is_constructed());
+  EXPECT_EQ(*storage.get_pointer(), (Struct{4.0F, 5, 6}));
+  EXPECT_EQ(storage.get_reference(), (Struct{4.0F, 5, 6}));
+}
+
+TEST(InplaceContiguousStorageTest, constructor)
+{
+  static_assert(std::is_trivially_copyable_v<InplaceContiguousStorage>,
+                "InplaceContiguousStorage should be trivially copyable.");
+
+  InplaceContiguousStorage storage;
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
-
-  EXPECT_DEATH(ContiguousStorage{0U}, ".*");
 }
 
-TEST(ContiguousStorageTest, construct)
+TEST(InplaceContiguousStorageTest, construct)
 {
-  ContiguousStorage storage{10U};
+  InplaceContiguousStorage storage;
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
@@ -87,9 +116,9 @@ TEST(ContiguousStorageTest, construct)
   EXPECT_FALSE(storage.empty());
 }
 
-TEST(ContiguousStorageTest, destruct)
+TEST(InplaceContiguousStorageTest, destruct)
 {
-  ContiguousStorage storage{10U};
+  InplaceContiguousStorage storage;
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
@@ -141,9 +170,9 @@ TEST(ContiguousStorageTest, destruct)
   }
 }
 
-TEST(ContiguousStorageTest, iterators)
+TEST(InplaceContiguousStorageTest, iterators)
 {
-  ContiguousStorage storage{10U};
+  InplaceContiguousStorage storage;
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());

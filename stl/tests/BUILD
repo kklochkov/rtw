@@ -11,6 +11,7 @@ cc_test_with_llvm_symbolizer(
         "flat_unordered_set_test.cpp",
         "heap_array_test.cpp",
         "inplace_circular_buffer_test.cpp",
+        "inplace_contiguous_storage_test.cpp",
         "inplace_flat_unordered_map_test.cpp",
         "inplace_flat_unordered_set_test.cpp",
         "inplace_packed_buffer_test.cpp",

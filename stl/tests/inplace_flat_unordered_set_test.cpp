@@ -11,6 +11,11 @@ using InplaceFlatUnorderedSet = rtw::stl::InplaceFlatUnorderedSet<std::size_t, 1
 
 TEST(InplaceFlatUnorderedSet, constructor)
 {
+  static_assert(std::is_trivially_copyable_v<InplaceFlatUnorderedSet>,
+                "InplaceFlatUnorderedSet should be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<InplaceFlatUnorderedSet>,
+                "InplaceFlatUnorderedSet should be trivially destructible.");
+
   InplaceFlatUnorderedSet set;
   EXPECT_EQ(set.size(), 0U);
   EXPECT_EQ(set.capacity(), 10U);

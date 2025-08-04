@@ -22,11 +22,6 @@ public:
   using const_pointer = const value_type*;
 
   constexpr AlignedObjectStorage() noexcept : constructed_{false} {}
-  constexpr AlignedObjectStorage(const AlignedObjectStorage&) noexcept = default;
-  constexpr AlignedObjectStorage(AlignedObjectStorage&&) noexcept = default;
-  constexpr AlignedObjectStorage& operator=(const AlignedObjectStorage&) noexcept = default;
-  constexpr AlignedObjectStorage& operator=(AlignedObjectStorage&&) noexcept = default;
-  ~AlignedObjectStorage() noexcept { destruct(); }
 
   constexpr bool is_constructed() const noexcept { return constructed_; }
 
@@ -53,7 +48,7 @@ public:
   {
     if (is_constructed())
     {
-      get_pointer()->~T();
+      // For trivially destructible types explicitly calling destruct is not necessary.
       constructed_ = false;
     }
   }

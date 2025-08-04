@@ -5,6 +5,11 @@
 
 TEST(InplaceStringTest, constructor)
 {
+  static_assert(std::is_trivially_copyable_v<rtw::stl::InplaceString<10U>>,
+                "InplaceString should be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<rtw::stl::InplaceString<10U>>,
+                "InplaceString should be trivially destructible.");
+
   {
     // Default constructor
     rtw::stl::InplaceString<10U> string{};

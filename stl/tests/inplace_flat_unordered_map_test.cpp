@@ -23,6 +23,11 @@ using InplaceFlatUnorderedMap = rtw::stl::InplaceFlatUnorderedMap<std::size_t, S
 
 TEST(InplaceFlatUnorderedMap, constructor)
 {
+  static_assert(std::is_trivially_copyable_v<InplaceFlatUnorderedMap>,
+                "InplaceFlatUnorderedMap should be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<InplaceFlatUnorderedMap>,
+                "InplaceFlatUnorderedMap should be trivially destructible.");
+
   InplaceFlatUnorderedMap map;
   EXPECT_EQ(map.size(), 0U);
   EXPECT_EQ(map.capacity(), 10U);
