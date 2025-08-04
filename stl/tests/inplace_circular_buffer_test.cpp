@@ -23,6 +23,11 @@ using InplaceCircularBuffer = rtw::stl::InplaceCircularBuffer<Struct, 10U>;
 
 TEST(InplaceCircularBufferTest, constructor)
 {
+  static_assert(std::is_trivially_copyable_v<InplaceCircularBuffer>,
+                "InplaceCircularBuffer should be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<InplaceCircularBuffer>,
+                "InplaceCircularBuffer should be trivially destructible.");
+
   InplaceCircularBuffer buffer;
   EXPECT_EQ(buffer.size(), 0U);
   EXPECT_EQ(buffer.capacity(), 10U);

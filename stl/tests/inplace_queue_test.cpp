@@ -23,6 +23,9 @@ using InplaceQueue = rtw::stl::InplaceQueue<Struct, 10U>;
 
 TEST(InplaceQueueTest, constructor)
 {
+  static_assert(std::is_trivially_copyable_v<InplaceQueue>, "InplaceQueue should be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<InplaceQueue>, "InplaceQueue should be trivially destructible.");
+
   InplaceQueue queue;
   EXPECT_EQ(queue.size(), 0U);
   EXPECT_EQ(queue.capacity(), 10U);

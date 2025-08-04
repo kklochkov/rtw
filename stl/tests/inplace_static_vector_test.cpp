@@ -23,6 +23,10 @@ using InplaceStaticVector = rtw::stl::InplaceStaticVector<Struct, 10U>;
 
 TEST(InplaceStaticVectorTest, constructor)
 {
+  static_assert(std::is_trivially_copyable_v<InplaceStaticVector>, "InplaceStaticVector should be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<InplaceStaticVector>,
+                "InplaceStaticVector should be trivially destructible.");
+
   InplaceStaticVector vector;
   EXPECT_EQ(vector.size(), 0U);
   EXPECT_EQ(vector.capacity(), 10U);
