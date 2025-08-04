@@ -20,8 +20,8 @@ public:
 
   void clear() { std::fill(buffer_.begin(), buffer_.end(), std::numeric_limits<float>::max()); }
 
-  void set_depth(const std::size_t x, const std::size_t y, const float depth) { buffer_[y * width_ + x] = depth; }
-  float depth(const std::size_t x, const std::size_t y) const { return buffer_[y * width_ + x]; }
+  void set_depth(const std::size_t x, const std::size_t y, const float depth) { buffer_[(y * width_) + x] = depth; }
+  float depth(const std::size_t x, const std::size_t y) const { return buffer_[(y * width_) + x]; }
 
 private:
   std::vector<float> buffer_;

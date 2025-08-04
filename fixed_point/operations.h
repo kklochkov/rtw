@@ -56,7 +56,7 @@ constexpr F round_to_nearest_integer(const F value) noexcept
 template <typename F, typename = std::enable_if_t<std::is_floating_point_v<F>>>
 constexpr F fmod(const F dividend, const F divisor) noexcept
 {
-  return dividend - divisor * static_cast<F>(static_cast<std::int64_t>(dividend / divisor));
+  return dividend - (divisor * static_cast<F>(static_cast<std::int64_t>(dividend / divisor)));
 }
 
 } // namespace rtw::fixed_point

@@ -56,6 +56,7 @@ bool Application::init(const std::string_view window_title, const std::int32_t w
 #endif
   }
 
+  // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
   sdl_window_ = SDL_CreateWindow(window_title.data(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window_width,
                                  window_height, SDL_WINDOW_ALLOW_HIGHDPI);
 

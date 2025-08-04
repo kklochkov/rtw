@@ -23,8 +23,11 @@ public:
   std::size_t bytes_per_pixel() const { return bytes_per_pixel_; }
   std::size_t pitch() const { return pitch_; }
 
-  void set_pixel(const std::size_t x, const std::size_t y, const Color color) { buffer_[y * width_ + x] = color.rgba; }
-  Color pixel(const std::size_t x, const std::size_t y) const { return Color{buffer_[y * width_ + x]}; }
+  void set_pixel(const std::size_t x, const std::size_t y, const Color color)
+  {
+    buffer_[(y * width_) + x] = color.rgba;
+  }
+  Color pixel(const std::size_t x, const std::size_t y) const { return Color{buffer_[(y * width_) + x]}; }
 
   void clear(const Color color) { std::fill(buffer_.begin(), buffer_.end(), color.rgba); }
 

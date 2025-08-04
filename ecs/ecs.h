@@ -68,9 +68,12 @@ struct Component
   constexpr static ComponentType TYPE = VALUE;
   constexpr static ComponentId COMPONENT_ID{details::log2(static_cast<std::underlying_type_t<ComponentType>>(VALUE))};
 
+  constexpr ComponentType get_type() const noexcept { return TYPE; }
+  constexpr ComponentId get_component_id() const noexcept { return COMPONENT_ID; }
+
   constexpr bool operator==(const Component& other) const noexcept
   {
-    return TYPE == other.TYPE && COMPONENT_ID == other.COMPONENT_ID;
+    return TYPE == other.get_type() && COMPONENT_ID == other.get_component_id();
   }
 };
 
