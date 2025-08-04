@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) 
 
 struct UninitializedTag
 {
-  // clang-format off
+  // clang-format off: https://github.com/llvm/llvm-project/issues/62067
   enum class Tag : std::uint8_t { TAG };
   // clang-format on
   constexpr explicit UninitializedTag(Tag /*tag*/) noexcept {}
