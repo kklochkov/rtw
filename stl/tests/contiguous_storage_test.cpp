@@ -9,6 +9,11 @@ struct Struct
 {
   Struct() = default;
   Struct(const float a, const std::int32_t b, const std::uint8_t c) : a{a}, b{b}, c{c} {}
+  Struct(const Struct&) = default;
+  Struct(Struct&&) = default;
+  Struct& operator=(const Struct&) = default;
+  Struct& operator=(Struct&&) = default;
+  ~Struct() {} // NOLINT: intentionally make class non-trivial
 
   float a{};
   std::int32_t b{};
@@ -17,13 +22,17 @@ struct Struct
   bool operator==(const Struct& other) const { return std::tie(a, b, c) == std::tie(other.a, other.b, other.c); }
 };
 
-using AlignedObjectStorage = rtw::stl::AlignedObjectStorage<Struct>;
 using ContiguousStorage = rtw::stl::ContiguousStorage<Struct>;
+using AlignedObjectStorage = ContiguousStorage::storage_type;
 
 } // namespace
 
 TEST(ContiguousStorageTest, constructor)
 {
+  static_assert(!AlignedObjectStorage::is_trivial::value, "AlignedObjectStorage should not trival.");
+  static_assert(!std::is_trivially_copyable_v<AlignedObjectStorage>,
+                "AlignedObjectStorage should not be trivially copyable.");
+
   ContiguousStorage storage{10U};
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
