@@ -7,14 +7,21 @@
 namespace rtw::stl
 {
 
+namespace details
+{
 template <typename T>
-class AlignedObjectStorage
+constexpr inline bool IS_TRIVIAL_V =
+    std::is_standard_layout_v<T> && std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
+} // namespace details
+
+template <typename T, bool IS_TRIVIAL>
+class AlignedObjectStorage;
+
+template <typename T>
+class AlignedObjectStorage<T, true>
 {
 public:
-  static_assert(std::is_standard_layout_v<T>, "AlignedObjectStorage requires T to be standard layout.");
-  static_assert(std::is_trivially_copyable_v<T>, "AlignedObjectStorage requires T to be trivially copyable.");
-  static_assert(std::is_trivially_destructible_v<T>, "AlignedObjectStorage requires T to be trivially destructible.");
-
+  using is_trivial = std::true_type;
   using value_type = T;
   using reference = value_type&;
   using const_reference = const value_type&;
@@ -80,26 +87,87 @@ private:
   bool constructed_ : 1;
 };
 
+template <typename T>
+class AlignedObjectStorage<T, false>
+{
+public:
+  using is_trivial = std::false_type;
+  using value_type = T;
+  using reference = value_type&;
+  using const_reference = const value_type&;
+  using pointer = value_type*;
+  using const_pointer = const value_type*;
+
+  constexpr AlignedObjectStorage() noexcept : constructed_{false} {}
+
+  constexpr bool is_constructed() const noexcept { return constructed_; }
+
+  template <typename... ArgsT>
+  constexpr reference construct(ArgsT&&... args) noexcept
+  {
+    assert(!is_constructed());
+    data_ = T{std::forward<ArgsT>(args)...};
+    constructed_ = true;
+    return data_;
+  }
+
+  constexpr reference construct_for_overwrite_at() noexcept
+  {
+    assert(!is_constructed());
+    data_ = T{};
+    constructed_ = true;
+    return data_;
+  }
+
+  constexpr void destruct() noexcept
+  {
+    if (is_constructed())
+    {
+      // No need to explicitly call the destructor, bease it will be called either during new value assignment or when
+      // during desturction of the storage.
+      constructed_ = false;
+    }
+  }
+
+  constexpr pointer get_pointer() noexcept
+  {
+    assert(is_constructed());
+    return &data_;
+  }
+  constexpr const_pointer get_pointer() const noexcept
+  {
+    assert(is_constructed());
+    return &data_;
+  }
+  constexpr pointer operator->() noexcept { return get_pointer(); }
+  constexpr const_pointer operator->() const noexcept { return get_pointer(); }
+
+  constexpr reference get_reference() noexcept { return *get_pointer(); }
+  constexpr const_reference get_reference() const noexcept { return *get_pointer(); }
+  constexpr reference operator*() noexcept { return get_reference(); }
+  constexpr const_reference operator*() const noexcept { return get_reference(); }
+
+  constexpr const std::byte* get_raw_pointer() const noexcept { return nullptr; }
+  constexpr std::size_t get_raw_size() const noexcept { return 0U; }
+
+private:
+  T data_;
+  bool constructed_ : 1;
+};
+
 template <typename T, typename DerivedT>
 class GenericContiguousStorage
 {
-protected:
-  using AlignedStorage = AlignedObjectStorage<T>;
-
 public:
-  static_assert(std::is_standard_layout_v<T>, "GenericContiguousStorage requires T to be standard layout.");
-  static_assert(std::is_trivially_copyable_v<T>, "GenericContiguousStorage requires T to be trivially copyable.");
-  static_assert(std::is_trivially_destructible_v<T>,
-                "GenericContiguousStorage requires T to be trivially destructible.");
-
-  using value_type = typename AlignedStorage::value_type;
+  using storage_type = AlignedObjectStorage<T, details::IS_TRIVIAL_V<T>>;
+  using value_type = typename storage_type::value_type;
   using size_type = std::size_t;
-  using reference = typename AlignedStorage::reference;
-  using const_reference = typename AlignedStorage::const_reference;
-  using pointer = typename AlignedStorage::pointer;
-  using const_pointer = typename AlignedStorage::const_pointer;
-  using iterator = AlignedStorage*;
-  using const_iterator = const AlignedStorage*;
+  using reference = typename storage_type::reference;
+  using const_reference = typename storage_type::const_reference;
+  using pointer = typename storage_type::pointer;
+  using const_pointer = typename storage_type::const_pointer;
+  using iterator = storage_type*;
+  using const_iterator = const storage_type*;
 
   constexpr size_type used_slots() const noexcept { return used_slots_; }
   constexpr bool empty() const noexcept { return used_slots_ == 0U; }
@@ -183,69 +251,69 @@ template <typename T>
 class ContiguousStorage : public GenericContiguousStorage<T, ContiguousStorage<T>>
 {
   using Base = GenericContiguousStorage<T, ContiguousStorage<T>>;
-  using AlignedStorage = typename Base::AlignedStorage;
 
   friend Base;
 
 public:
+  using storage_type = typename Base::storage_type;
   using size_type = typename Base::size_type;
 
   explicit ContiguousStorage(const size_type capacity) noexcept
-      : Base{capacity}, data_{std::make_unique<AlignedStorage[]>(capacity)}
+      : Base{capacity}, data_{std::make_unique<storage_type[]>(capacity)}
   {
   }
 
 private:
-  AlignedStorage& get_storage(const size_type index) noexcept
+  storage_type& get_storage(const size_type index) noexcept
   {
     assert(index < Base::capacity());
     return data_.get()[index];
   }
 
-  const AlignedStorage& get_storage(const size_type index) const noexcept
+  const storage_type& get_storage(const size_type index) const noexcept
   {
     assert(index < Base::capacity());
     return data_.get()[index];
   }
 
-  AlignedStorage* get_storage() noexcept { return data_.get(); }
-  const AlignedStorage* get_storage() const noexcept { return data_.get(); }
+  storage_type* get_storage() noexcept { return data_.get(); }
+  const storage_type* get_storage() const noexcept { return data_.get(); }
 
-  std::unique_ptr<AlignedStorage[]> data_;
+  std::unique_ptr<storage_type[]> data_;
 };
 
 template <typename T, std::size_t CAPACITY>
 class InplaceContiguousStorage : public GenericContiguousStorage<T, InplaceContiguousStorage<T, CAPACITY>>
 {
   using Base = GenericContiguousStorage<T, InplaceContiguousStorage<T, CAPACITY>>;
-  using AlignedStorage = typename Base::AlignedStorage;
 
   friend Base;
 
 public:
   static_assert(CAPACITY > 0U, "CAPACITY must be greater than 0.");
 
+  using storage_type = typename Base::storage_type;
   using size_type = typename Base::size_type;
 
   constexpr InplaceContiguousStorage() noexcept : Base{CAPACITY} {}
 
 private:
-  constexpr AlignedStorage& get_storage(const size_type index) noexcept
+  constexpr storage_type& get_storage(const size_type index) noexcept
   {
     assert(index < Base::capacity());
     return data_[index];
   }
 
-  constexpr const AlignedStorage& get_storage(const size_type index) const noexcept
+  constexpr const storage_type& get_storage(const size_type index) const noexcept
   {
     assert(index < Base::capacity());
     return data_[index];
   }
 
-  constexpr AlignedStorage* get_storage() noexcept { return data_.data(); }
-  constexpr const AlignedStorage* get_storage() const noexcept { return data_.data(); }
+  constexpr storage_type* get_storage() noexcept { return data_.data(); }
+  constexpr const storage_type* get_storage() const noexcept { return data_.data(); }
 
-  alignas(AlignedStorage) std::array<AlignedStorage, CAPACITY> data_{};
+  alignas(storage_type) std::array<storage_type, CAPACITY> data_{};
 };
 
 template <typename IteratorT>

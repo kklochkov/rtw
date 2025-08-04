@@ -17,15 +17,16 @@ struct Struct
   bool operator==(const Struct& other) const { return std::tie(a, b, c) == std::tie(other.a, other.b, other.c); }
 };
 
-using AlignedObjectStorage = rtw::stl::AlignedObjectStorage<Struct>;
 using InplaceContiguousStorage = rtw::stl::InplaceContiguousStorage<Struct, 10U>;
+using AlignedObjectStorage = InplaceContiguousStorage::storage_type;
 
 } // namespace
 
 TEST(AlignedObjectStorageTest, basic)
 {
+  static_assert(AlignedObjectStorage::is_trivial::value, "AlignedObjectStorage should be trivially copyable.");
   static_assert(std::is_trivially_copyable_v<AlignedObjectStorage>,
-                "AlignedObjectStorage  should be trivially copyable.");
+                "AlignedObjectStorage should be trivially copyable.");
 
   AlignedObjectStorage storage{};
 
