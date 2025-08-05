@@ -27,6 +27,8 @@ TEST(AlignedObjectStorageTest, basic)
   static_assert(AlignedObjectStorage::is_trivial::value, "AlignedObjectStorage should be trivially copyable.");
   static_assert(std::is_trivially_copyable_v<AlignedObjectStorage>,
                 "AlignedObjectStorage should be trivially copyable.");
+  static_assert(sizeof(AlignedObjectStorage) == sizeof(Struct) + alignof(Struct),
+                "AlignedObjectStorage should have the same size as Struct plus alignment.");
 
   AlignedObjectStorage storage{};
 

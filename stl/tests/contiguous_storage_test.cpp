@@ -32,6 +32,8 @@ TEST(ContiguousStorageTest, constructor)
   static_assert(!AlignedObjectStorage::is_trivial::value, "AlignedObjectStorage should not trival.");
   static_assert(!std::is_trivially_copyable_v<AlignedObjectStorage>,
                 "AlignedObjectStorage should not be trivially copyable.");
+  static_assert(sizeof(AlignedObjectStorage) == sizeof(Struct) + alignof(Struct),
+                "AlignedObjectStorage should have the same size as Struct plus alignment.");
 
   ContiguousStorage storage{10U};
   EXPECT_EQ(storage.used_slots(), 0U);
