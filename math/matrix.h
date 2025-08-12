@@ -646,7 +646,7 @@ constexpr Matrix<T, ROWS, 1> back_substitution(const Matrix<T, ROWS, COLS>& matr
                                                const Matrix<T, ROWS, 1>& vector) noexcept
 {
   Matrix<T, ROWS, 1> result{math::UNINITIALIZED};
-  for (std::uint16_t row = ROWS - 1U; row < ROWS; --row)
+  for (std::uint16_t row = ROWS; row-- > 0U;)
   {
     result[row] = vector[row];
     for (std::uint16_t col = row + 1U; col < COLS; ++col)
