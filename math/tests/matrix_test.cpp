@@ -4,6 +4,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+// Test matrices were generated using https://catonmat.net/tools/generate-random-matrices
+// and validated with https://matrixcalc.org/
+
 // FixedPoint16 has lower precision and requires a larger epsilon
 template <typename T>
 constexpr auto EPSILON = std::is_same_v<typename T::value_type, rtw::fixed_point::FixedPoint16> ? 7.0e-3F : 1.0e-4F;
