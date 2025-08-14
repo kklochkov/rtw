@@ -47,6 +47,8 @@ TEST(FlatUnorderedSet, emplace_and_operator_brackets)
     EXPECT_TRUE(set.emplace(2U));
     EXPECT_FALSE(set.emplace(3U));
     EXPECT_EQ(set.size(), 2U);
+
+    EXPECT_TRUE(rtw::stl::is_memory_contiguous(set.begin(), set.end()));
   }
 }
 
@@ -78,6 +80,8 @@ TEST(FlatUnorderedSet, insert_and_operator_brackets)
     EXPECT_TRUE(set.insert(2U));
     EXPECT_FALSE(set.insert(3U));
     EXPECT_EQ(set.size(), 2U);
+
+    EXPECT_TRUE(rtw::stl::is_memory_contiguous(set.begin(), set.end()));
   }
 }
 
@@ -110,13 +114,13 @@ TEST(FlatUnorderedSet, find)
   set.emplace(1U);
   set.emplace(2U);
 
-  auto* it = set.find(1U);
+  auto it = set.find(1U);
   EXPECT_NE(it, set.end());
-  EXPECT_EQ(it->get_reference(), 1U);
+  EXPECT_EQ(*it, 1U);
 
   it = set.find(2U);
   EXPECT_NE(it, set.end());
-  EXPECT_EQ(it->get_reference(), 2U);
+  EXPECT_EQ(*it, 2U);
 
   it = set.find(3U);
   EXPECT_EQ(it, set.end()); // Non-existing key

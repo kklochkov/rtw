@@ -150,8 +150,8 @@ TEST(InplaceStaticVectorTest, iterators)
   std::size_t index = 0U;
   for (const auto& value : vector)
   {
-    EXPECT_EQ(&*value, &vector[index]);
-    EXPECT_EQ(*value, vector[index]);
+    EXPECT_EQ(&value, &vector[index]);
+    EXPECT_EQ(value, vector[index]);
     ++index;
   }
 

@@ -24,8 +24,8 @@ using InplacePackedBuffer = rtw::stl::InplacePackedBuffer<Struct, 10U>;
 TEST(InplacePackedBufferTest, constructor)
 {
   static_assert(std::is_trivially_copyable_v<InplacePackedBuffer>, "InplacePackedBuffer should be trivially copyable.");
-  static_assert(std::is_trivially_destructible_v<InplacePackedBuffer>, "InplacePackedBuffer should be trivially destructible.");
-
+  static_assert(std::is_trivially_destructible_v<InplacePackedBuffer>,
+                "InplacePackedBuffer should be trivially destructible.");
 
   InplacePackedBuffer buffer;
   EXPECT_EQ(buffer.size(), 0U);
@@ -188,8 +188,8 @@ TEST(InplacePackedBufferTest, iterators)
   std::size_t index = 0U;
   for (const auto& value : buffer)
   {
-    EXPECT_EQ(&*value, &buffer[index]);
-    EXPECT_EQ(*value, buffer[index]);
+    EXPECT_EQ(&value, &buffer[index]);
+    EXPECT_EQ(value, buffer[index]);
     ++index;
   }
 

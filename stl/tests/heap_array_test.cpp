@@ -36,8 +36,13 @@ TEST(HeapArrayTest, basic)
 
   for (const auto& s : heap_array)
   {
-    EXPECT_TRUE(s.is_constructed());
-    EXPECT_EQ(*s, Struct{});
+    EXPECT_EQ(s, Struct{});
+  }
+
+  for (auto it = heap_array.begin(); it != heap_array.end(); ++it)
+  {
+    EXPECT_TRUE(it.is_constructed());
+    EXPECT_EQ(*it, Struct{});
   }
 
   for (std::size_t i = 0U; i < heap_array.size(); ++i)
@@ -67,8 +72,8 @@ TEST(HeapArrayTest, iterators)
   std::size_t index = 0U;
   for (const auto& value : heap_array)
   {
-    EXPECT_EQ(&*value, &heap_array[index]);
-    EXPECT_EQ(*value, heap_array[index]);
+    EXPECT_EQ(&value, &heap_array[index]);
+    EXPECT_EQ(value, heap_array[index]);
     ++index;
   }
 

@@ -167,9 +167,9 @@ public:
   const_iterator begin() const noexcept { return storage_.get(); }
   const_iterator cbegin() const noexcept { return storage_.get(); }
 
-  iterator end() noexcept { return storage_.get() + capacity_; }
-  const_iterator end() const noexcept { return storage_.get() + capacity_; }
-  const_iterator cend() const noexcept { return storage_.get() + capacity_; }
+  iterator end() noexcept { return storage_.get() + size_; }
+  const_iterator end() const noexcept { return storage_.get() + size_; }
+  const_iterator cend() const noexcept { return storage_.get() + size_; }
 
   pointer data() noexcept { return storage_.get(); }
   const_pointer data() const noexcept { return storage_.get(); }
