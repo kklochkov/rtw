@@ -171,14 +171,14 @@ TEST(ContiguousStorageTest, iterators)
   std::size_t index = 0U;
   for (const auto& value : storage)
   {
-    EXPECT_EQ(&*value, &storage[index]);
-    EXPECT_EQ(value.get_pointer(), &storage[index]);
-    EXPECT_EQ(*value, storage[index]);
+    EXPECT_EQ(&value, &storage[index]);
+    EXPECT_EQ(value, storage[index]);
     ++index;
   }
 
-  EXPECT_EQ(&(**(storage.begin() + 1U)), &storage[1U]);
-  EXPECT_EQ(**(storage.begin() + 1U), *expected[1U]);
+  EXPECT_EQ(*(storage.begin() + 1U), storage[1U]);
+  EXPECT_EQ(&*(storage.begin() + 1U), &storage[1U]);
+  EXPECT_EQ(*(storage.begin() + 1U), *expected[1U]);
 
   EXPECT_TRUE(rtw::stl::is_memory_contiguous(expected.begin(), expected.end()));
   EXPECT_TRUE(rtw::stl::is_memory_contiguous(storage.begin(), storage.end()));

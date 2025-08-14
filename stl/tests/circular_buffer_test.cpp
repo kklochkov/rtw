@@ -160,8 +160,8 @@ TEST(CircularBufferTest, iterators)
   std::size_t index = 0U;
   for (const auto& value : buffer)
   {
-    EXPECT_EQ(&*value, &buffer[index]);
-    EXPECT_EQ(*value, buffer[index]);
+    EXPECT_EQ(&value, &buffer[index]);
+    EXPECT_EQ(value, buffer[index]);
     ++index;
   }
 

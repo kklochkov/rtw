@@ -62,12 +62,11 @@ public:
 
   constexpr pointer get_pointer() noexcept
   {
-    assert(is_constructed());
-    return std::launder(reinterpret_cast<T*>(data_.data())); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    return std::launder(reinterpret_cast<T*>(data_.data()));
   }
   constexpr const_pointer get_pointer() const noexcept
   {
-    assert(is_constructed());
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     return std::launder(reinterpret_cast<const T*>(data_.data()));
   }
@@ -129,16 +128,8 @@ public:
     }
   }
 
-  constexpr pointer get_pointer() noexcept
-  {
-    assert(is_constructed());
-    return &data_;
-  }
-  constexpr const_pointer get_pointer() const noexcept
-  {
-    assert(is_constructed());
-    return &data_;
-  }
+  constexpr pointer get_pointer() noexcept { return &data_; }
+  constexpr const_pointer get_pointer() const noexcept { return &data_; }
   constexpr pointer operator->() noexcept { return get_pointer(); }
   constexpr const_pointer operator->() const noexcept { return get_pointer(); }
 
@@ -159,15 +150,19 @@ template <typename T, typename DerivedT>
 class GenericContiguousStorage
 {
 public:
+  template <typename ValueRefT, typename ContainerT>
+  class Iterator;
+
   using storage_type = AlignedObjectStorage<T, details::IS_TRIVIAL_V<T>>;
   using value_type = typename storage_type::value_type;
   using size_type = std::size_t;
+  using difference_type = std::ptrdiff_t;
   using reference = typename storage_type::reference;
   using const_reference = typename storage_type::const_reference;
   using pointer = typename storage_type::pointer;
   using const_pointer = typename storage_type::const_pointer;
-  using iterator = storage_type*;
-  using const_iterator = const storage_type*;
+  using iterator = Iterator<reference, GenericContiguousStorage>;
+  using const_iterator = Iterator<const_reference, const GenericContiguousStorage>;
 
   constexpr size_type used_slots() const noexcept { return used_slots_; }
   constexpr bool empty() const noexcept { return used_slots_ == 0U; }
@@ -225,13 +220,13 @@ public:
     used_slots_ = 0U;
   }
 
-  constexpr iterator begin() noexcept { return get_derived().get_storage(); }
-  constexpr const_iterator begin() const noexcept { return get_derived().get_storage(); }
-  constexpr const_iterator cbegin() const noexcept { return begin(); }
+  constexpr iterator begin() noexcept { return iterator{this, 0U}; }
+  constexpr const_iterator begin() const noexcept { return const_iterator{this, 0U}; }
+  constexpr const_iterator cbegin() const noexcept { return const_iterator{this, 0U}; }
 
-  constexpr iterator end() noexcept { return begin() + capacity_; }
-  constexpr const_iterator end() const noexcept { return begin() + capacity_; }
-  constexpr const_iterator cend() const noexcept { return end(); }
+  constexpr iterator end() noexcept { return iterator{this, used_slots_}; }
+  constexpr const_iterator end() const noexcept { return const_iterator{this, used_slots_}; }
+  constexpr const_iterator cend() const noexcept { return const_iterator{this, used_slots_}; }
 
 protected:
   constexpr explicit GenericContiguousStorage(const size_t capacity) noexcept : capacity_{capacity}
@@ -245,6 +240,124 @@ private:
 
   size_type used_slots_{0U};
   size_type capacity_{0U};
+};
+
+namespace details
+{
+
+struct ContiguousStorageIteratorTag : std::input_iterator_tag
+{};
+
+}; // namespace details
+
+template <typename T, typename DerivedT>
+template <typename ValueRefT, typename ContainerT>
+class GenericContiguousStorage<T, DerivedT>::Iterator
+{
+public:
+  static_assert(std::is_same_v<ContainerT, GenericContiguousStorage<T, DerivedT>>
+                    || std::is_same_v<ContainerT, const GenericContiguousStorage<T, DerivedT>>,
+                "Iterator must be used with GenericContiguousStorage or const GenericContiguousStorage.");
+
+  using value_type = typename ContainerT::value_type;
+  using reference = ValueRefT;
+  using pointer = std::add_pointer_t<reference>;
+  using difference_type = typename ContainerT::difference_type;
+  using iterator_category = details::ContiguousStorageIteratorTag;
+  using iterator_concept = std::random_access_iterator_tag;
+  using storage_type = typename ContainerT::storage_type;
+
+  constexpr Iterator(ContainerT* container, typename ContainerT::size_type index) noexcept
+      : container_{container}, index_{index}
+  {
+  }
+
+  constexpr size_t get_index() const noexcept { return index_; }
+  constexpr bool is_constructed() const noexcept { return container_->is_constructed(index_); }
+
+  constexpr reference operator*() const noexcept { return (*container_)[index_]; }
+  constexpr pointer operator->() const noexcept { return &(*container_)[index_]; }
+
+  constexpr storage_type& get_storage() noexcept { return container_->get_derived().get_storage(index_); }
+  constexpr const storage_type& get_storage() const noexcept { return container_->get_derived().get_storage(index_); }
+
+  constexpr Iterator& operator++() noexcept
+  {
+    ++index_;
+    return *this;
+  }
+
+  constexpr reference& operator[](const difference_type offset) const noexcept
+  {
+    return (*container_)[index_ + offset];
+  }
+
+  constexpr Iterator operator++(int) noexcept
+  {
+    Iterator temp{*this};
+    ++(*this);
+    return temp;
+  }
+
+  constexpr Iterator& operator+=(const difference_type offset) noexcept
+  {
+    index_ += offset;
+    return *this;
+  }
+
+  constexpr Iterator& operator--() noexcept
+  {
+    --index_;
+    return *this;
+  }
+
+  constexpr Iterator operator--(int) noexcept
+  {
+    Iterator temp{*this};
+    --(*this);
+    return temp;
+  }
+
+  constexpr Iterator& operator-=(const difference_type offset) noexcept
+  {
+    index_ -= offset;
+    return *this;
+  }
+
+  friend constexpr bool operator==(const Iterator& lhs, const Iterator& rhs) noexcept
+  {
+    return lhs.container_ == rhs.container_ && lhs.index_ == rhs.index_;
+  }
+
+  friend constexpr bool operator!=(const Iterator& lhs, const Iterator& rhs) noexcept { return !(lhs == rhs); }
+
+  friend constexpr Iterator operator+(const difference_type offset, const Iterator& it) noexcept
+  {
+    return Iterator{it.container_, it.index_ + offset};
+  }
+  friend constexpr Iterator operator+(const Iterator& it, const difference_type offset) noexcept
+  {
+    return Iterator{it.container_, it.index_ + offset};
+  }
+
+  friend constexpr Iterator operator-(const difference_type offset, const Iterator& it) noexcept
+  {
+    return Iterator{it.container_, it.index_ - offset};
+  }
+  friend constexpr Iterator operator-(const Iterator& it, const difference_type offset) noexcept
+  {
+    return Iterator{it.container_, it.index_ - offset};
+  }
+
+  friend constexpr difference_type operator-(const Iterator& lhs, const Iterator& rhs) noexcept
+  {
+    assert(lhs.container_ == rhs.container_);
+    return lhs.index_ - rhs.index_;
+  }
+
+private:
+  ContainerT* container_{nullptr};
+  typename ContainerT::size_type index_{0U};
 };
 
 template <typename T>
@@ -324,9 +437,21 @@ constexpr bool is_memory_contiguous(IteratorT begin, IteratorT end) noexcept
   const auto size = std::distance(begin, end);
   for (std::ptrdiff_t i = 0U; i < size; ++i)
   {
-    const auto* a = &*(std::next(begin, i));
-    const auto* b = &*(std::next(&*begin, i));
-    contiguous &= a == b;
+    if constexpr (std::is_same_v<typename IteratorT::iterator_category, details::ContiguousStorageIteratorTag>)
+    {
+      // The special threatment is required, because of the AlignedObjectStorage,
+      // since this class manages wrapped object memory and its lifetime.
+      // So, we would like to check if all AlignedObjectStorage are laid out in the same contiguous memory.
+      const auto* a = &*(std::next(begin.get_storage().get_pointer(), i));
+      const auto* b = &*(std::next(&*begin.get_storage(), i));
+      contiguous &= a == b;
+    }
+    else
+    {
+      const auto* a = &*(std::next(begin, i));
+      const auto* b = &*(std::next(&*begin, i));
+      contiguous &= a == b;
+    }
   }
 
   return contiguous;

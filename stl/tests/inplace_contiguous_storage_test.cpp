@@ -33,8 +33,6 @@ TEST(AlignedObjectStorageTest, basic)
   AlignedObjectStorage storage{};
 
   EXPECT_FALSE(storage.is_constructed());
-  EXPECT_DEATH(storage.get_pointer(), ".*");
-  EXPECT_DEATH(storage.get_reference(), ".*");
 
   storage.construct(1.0F, 2, std::uint8_t{3});
   EXPECT_TRUE(storage.is_constructed());
@@ -43,8 +41,6 @@ TEST(AlignedObjectStorageTest, basic)
 
   storage.destruct();
   EXPECT_FALSE(storage.is_constructed());
-  EXPECT_DEATH(storage.get_pointer(), ".*");
-  EXPECT_DEATH(storage.get_reference(), ".*");
 
   auto& value = storage.construct_for_overwrite_at();
   value = Struct{4.0F, 5, 6};
@@ -192,14 +188,14 @@ TEST(InplaceContiguousStorageTest, iterators)
   std::size_t index = 0U;
   for (const auto& value : storage)
   {
-    EXPECT_EQ(&*value, &storage[index]);
-    EXPECT_EQ(value.get_pointer(), &storage[index]);
-    EXPECT_EQ(*value, storage[index]);
+    EXPECT_EQ(&value, &storage[index]);
+    EXPECT_EQ(value, storage[index]);
     ++index;
   }
 
-  EXPECT_EQ(&(**(storage.begin() + 1U)), &storage[1U]);
-  EXPECT_EQ(**(storage.begin() + 1U), *expected[1U]);
+  EXPECT_EQ(*(storage.begin() + 1U), storage[1U]);
+  EXPECT_EQ(&*(storage.begin() + 1U), &storage[1U]);
+  EXPECT_EQ(*(storage.begin() + 1U), *expected[1U]);
 
   EXPECT_TRUE(rtw::stl::is_memory_contiguous(expected.begin(), expected.end()));
   EXPECT_TRUE(rtw::stl::is_memory_contiguous(storage.begin(), storage.end()));

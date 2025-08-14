@@ -227,6 +227,11 @@ public:
     return temp;
   }
 
+  constexpr Iterator operator+(const difference_type offset) const noexcept
+  {
+    return Iterator{container_, index_ + offset};
+  }
+
   constexpr Iterator& operator+=(const difference_type offset) noexcept
   {
     index_ += offset;
@@ -244,6 +249,11 @@ public:
     Iterator temp{*this};
     --(*this);
     return temp;
+  }
+
+  constexpr Iterator operator-(const difference_type offset) const noexcept
+  {
+    return Iterator{container_, index_ - offset};
   }
 
   constexpr Iterator& operator-=(const difference_type offset) noexcept

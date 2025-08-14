@@ -75,9 +75,9 @@ public:
   constexpr iterator begin() noexcept { return storage_.begin(); }
   constexpr const_iterator begin() const noexcept { return storage_.begin(); }
   constexpr const_iterator cbegin() const noexcept { return storage_.cbegin(); }
-  constexpr iterator end() noexcept { return storage_.end(); }
-  constexpr const_iterator end() const noexcept { return storage_.end(); }
-  constexpr const_iterator cend() const noexcept { return storage_.cend(); }
+  constexpr iterator end() noexcept { return iterator{&storage_, storage_.capacity()}; }
+  constexpr const_iterator end() const noexcept { return const_iterator{&storage_, storage_.capacity()}; }
+  constexpr const_iterator cend() const noexcept { return const_iterator{&storage_, storage_.capacity()}; }
 
 protected:
   constexpr explicit GenericFlatUnorderedSet(const size_type capacity) noexcept : storage_{capacity} {}
