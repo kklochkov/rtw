@@ -9,40 +9,38 @@ template <typename KeyT, typename HashT = std::hash<KeyT>, typename KeyEqualT = 
           typename KeyStorageT = ContiguousStorage<KeyT>>
 class GenericFlatUnorderedSet
 {
-  using StorageType = KeyStorageT;
-
 public:
   template <typename ValueRefT, typename ContainerT>
   class Iterator;
 
   using key_type = KeyT;
   using value_type = KeyT;
-  using size_type = typename StorageType::size_type;
+  using key_container_type = KeyStorageT;
+  using size_type = typename key_container_type::size_type;
   using difference_type = std::ptrdiff_t;
   using reference = key_type&;
   using const_reference = const key_type&;
   using hasher = HashT;
   using key_equal = KeyEqualT;
-  using iterator = Iterator<reference, GenericFlatUnorderedSet>;
   using const_iterator = Iterator<const_reference, const GenericFlatUnorderedSet>;
 
   constexpr GenericFlatUnorderedSet() noexcept = default;
 
-  constexpr size_type size() const noexcept { return storage_.used_slots(); }
-  constexpr bool empty() const noexcept { return storage_.empty(); }
-  constexpr size_type capacity() const noexcept { return storage_.capacity(); }
+  constexpr size_type size() const noexcept { return keys_storage_.used_slots(); }
+  constexpr bool empty() const noexcept { return keys_storage_.empty(); }
+  constexpr size_type capacity() const noexcept { return keys_storage_.capacity(); }
 
   template <typename KT = key_type>
   constexpr bool emplace(KT&& key) noexcept
   {
     const auto hash_id = hasher_(key);
-    for (size_type i = 0U; i < storage_.capacity(); ++i)
+    for (size_type i = 0U; i < keys_storage_.capacity(); ++i)
     {
       const size_type index = get_index_quadratic(hash_id, i);
 
-      if (!storage_.is_constructed(index))
+      if (!keys_storage_.is_constructed(index))
       {
-        storage_.construct_at(index, std::forward<KT>(key));
+        keys_storage_.construct_at(index, std::forward<KT>(key));
         return true;
       }
     }
@@ -59,50 +57,58 @@ public:
     const auto it = find(key);
     if (it != end())
     {
-      storage_.destruct_at(it.get_index());
+      keys_storage_.destruct_at(it.get_index());
       return true;
     }
 
     return false;
   }
 
-  constexpr void clear() noexcept { storage_.clear(); }
+  constexpr bool erase(const const_iterator& it) noexcept
+  {
+    if (it != end())
+    {
+      keys_storage_.destruct_at(it.get_index());
+      return false;
+    }
 
-  constexpr iterator find(const key_type& key) noexcept { return find<iterator>(this, key); }
+    return true;
+  }
+
+  constexpr void clear() noexcept { keys_storage_.clear(); }
+
   constexpr const_iterator find(const key_type& key) const noexcept { return find<const_iterator>(this, key); }
   constexpr bool contains(const key_type& key) const noexcept { return find(key) != cend(); }
 
-  constexpr iterator begin() noexcept { return iterator::make_begin_iterator(this); }
   constexpr const_iterator begin() const noexcept { return const_iterator::make_begin_iterator(this); }
   constexpr const_iterator cbegin() const noexcept { return const_iterator::make_begin_iterator(this); }
-  constexpr iterator end() noexcept { return iterator::make_end_iterator(this); }
   constexpr const_iterator end() const noexcept { return const_iterator::make_end_iterator(this); }
   constexpr const_iterator cend() const noexcept { return const_iterator::make_end_iterator(this); }
 
 protected:
-  constexpr explicit GenericFlatUnorderedSet(const size_type capacity) noexcept : storage_{capacity} {}
+  constexpr explicit GenericFlatUnorderedSet(const size_type capacity) noexcept : keys_storage_{capacity} {}
 
 private:
   constexpr size_type get_index_quadratic(const size_type hash_id, const size_type i) const noexcept
   {
     // Calculate the index using quadratic probing.
-    return (hash_id + i * i) % storage_.capacity();
+    return (hash_id + i * i) % keys_storage_.capacity();
   }
 
   template <typename IteratorT, typename ContainerT>
   constexpr static IteratorT find(ContainerT* container, const key_type& key) noexcept
   {
     const auto hash_id = container->hasher_(key);
-    for (size_type i = 0U; i < container->storage_.capacity(); ++i)
+    for (size_type i = 0U; i < container->keys_storage_.capacity(); ++i)
     {
       const size_type index = container->get_index_quadratic(hash_id, i);
 
-      if (!container->storage_.is_constructed(index))
+      if (!container->keys_storage_.is_constructed(index))
       {
         return container->end();
       }
 
-      if (container->key_equal_(container->storage_[index], key))
+      if (container->key_equal_(container->keys_storage_[index], key))
       {
         return IteratorT{container, index};
       }
@@ -111,7 +117,7 @@ private:
     return container->end();
   }
 
-  StorageType storage_;
+  key_container_type keys_storage_;
   hasher hasher_{};
   key_equal key_equal_{};
 };
@@ -152,9 +158,9 @@ public:
   }
 
   constexpr size_type get_index() const noexcept { return index_; }
-  constexpr bool is_constructed() const noexcept { return container_->storage_.is_constructed(index_); }
+  constexpr bool is_constructed() const noexcept { return container_->keys_storage_.is_constructed(index_); }
 
-  constexpr reference operator*() const noexcept { return container_->storage_[index_]; }
+  constexpr reference operator*() const noexcept { return container_->keys_storage_[index_]; }
   constexpr pointer operator->() const noexcept { return *operator*(); }
 
   constexpr Iterator& operator++() noexcept
@@ -199,7 +205,7 @@ private:
   constexpr void adjust_index() noexcept
   {
     // Adjust the index to point to the first constructed element or the end of the container.
-    for (; (index_ < container_->capacity()) && !container_->storage_.is_constructed(index_); ++index_)
+    for (; (index_ < container_->capacity()) && !container_->keys_storage_.is_constructed(index_); ++index_)
     {
     }
   }
