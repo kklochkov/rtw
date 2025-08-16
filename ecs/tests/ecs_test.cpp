@@ -66,12 +66,14 @@ struct Damage : rtw::ecs::Component<ComponentType, ComponentType::DAMAGE>
   std::uint32_t data;
 };
 
-constexpr std::size_t MAX_NUMBER_OF_ENTITIES = 1'000;
-constexpr std::size_t MAX_NUMBER_OF_ENTITIES_PER_SYSTEM = 100;
+constexpr std::size_t MAX_NUMBER_OF_ENTITIES = 1'000U;
+constexpr std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP = 100U;
+constexpr std::size_t MAX_NUMBER_OF_ENTITIES_PER_SYSTEM = 100U;
+constexpr std::size_t MAX_NUMBER_OF_SYSTEMS = 10U;
 
 using ComponentManager =
     rtw::ecs::ComponentManager<ComponentType, Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>;
-using EntityManager = rtw::ecs::EntityManager<ComponentType>;
+using EntityManager = rtw::ecs::EntityManager<ComponentType, MAX_NUMBER_OF_ENTITIES_PER_GROUP>;
 using SystemManager = rtw::ecs::SystemManager<ComponentType>;
 using System = rtw::ecs::System<ComponentType>;
 using Entity = rtw::ecs::Entity<ComponentType>;
@@ -94,8 +96,8 @@ static_assert(std::is_same_v<ComponentManager::ComponentType, EntityManager::Com
 static_assert(std::is_same_v<SystemManager ::ComponentType, EntityManager::ComponentType>,
               "SystemManager's ComponentType must match EntityManager's ComponentType.");
 
-using ECSManager =
-    rtw::ecs::ECSManager<ComponentType, Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>;
+using ECSManager = rtw::ecs::ECSManager<ComponentType, MAX_NUMBER_OF_ENTITIES_PER_GROUP, Transform, Rigidbody, Collider,
+                                        Sprite, Mesh, Debug, Health, Damage>;
 
 struct DefaultSystem : public System
 {
@@ -365,7 +367,7 @@ TEST(EcsTest, system_basic)
 {
   ComponentManager component_manager{MAX_NUMBER_OF_ENTITIES};
   EntityManager entity_manager{MAX_NUMBER_OF_ENTITIES};
-  SystemManager system_manager{};
+  SystemManager system_manager{MAX_NUMBER_OF_SYSTEMS};
 
   auto& system = system_manager.create<DefaultSystem>();
   EXPECT_EQ(system.get_signature(), DEFAULT_SYSTEM_SIGNATURE);
@@ -386,7 +388,7 @@ TEST(EcsTest, system_basic)
 
 TEST(EcsTest, ecs_basic)
 {
-  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES};
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
   ecs_manager.create_system<DefaultSystem>();
 
   std::vector<Entity> entities;
@@ -502,7 +504,7 @@ TEST(EcsTest, ecs_basic)
 
 TEST(EcsTest, tagging_and_groupping)
 {
-  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES};
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
 
   const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
 

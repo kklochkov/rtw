@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <type_traits>
 #include <typeindex>
-#include <unordered_map>
 
 namespace rtw::ecs
 {
@@ -313,7 +312,7 @@ private:
   ComponentsStorage components_storage_{};
 };
 
-template <typename EnumT>
+template <typename EnumT, std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP>
 class EntityManager
 {
 public:
@@ -322,8 +321,6 @@ public:
   using ComponentType = EnumT;
   using Entity = Entity<ComponentType>;
   using EntitySignature = typename Entity::EntitySignature;
-
-  constexpr static std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP = 100U; // TODO: Make this configurable.
 
   explicit EntityManager(const std::size_t max_number_of_entities) noexcept
       : entities_{max_number_of_entities}, free_ids_{max_number_of_entities}, tag_to_entity_id_{max_number_of_entities},
@@ -483,6 +480,8 @@ public:
   using ComponentType = EnumT;
   using Entity = Entity<ComponentType>;
 
+  explicit SystemManager(const std::size_t max_number_of_systems) noexcept : systems_{max_number_of_systems} {}
+
   template <typename SystemT, typename... ArgsT>
   SystemT& create(ArgsT&&... args) noexcept
   {
@@ -524,16 +523,18 @@ public:
 
   void add_entity(const Entity& entity) noexcept
   {
-    for (auto& [_, system] : systems_)
+    for (auto it = systems_.begin(); it != systems_.end(); ++it)
     {
+      auto& system = it->second;
       system->add_entity(entity);
     }
   }
 
   void remove_entity(const Entity& entity) noexcept
   {
-    for (auto& [_, system] : systems_)
+    for (auto it = systems_.begin(); it != systems_.end(); ++it)
     {
+      auto& system = it->second;
       system->remove_entity(entity);
     }
   }
@@ -541,10 +542,10 @@ public:
   std::size_t size() const noexcept { return systems_.size(); }
 
 private:
-  std::unordered_map<std::type_index, std::unique_ptr<ISystem>> systems_;
+  stl::FlatUnorderedMap<std::type_index, std::unique_ptr<ISystem>> systems_;
 };
 
-template <typename EnumT, typename... ComponentsT>
+template <typename EnumT, std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP, typename... ComponentsT>
 class ECSManager
 {
 public:
@@ -553,8 +554,9 @@ public:
   using Entity = Entity<ComponentType>;
   using EntitySignature = typename Entity::EntitySignature;
 
-  explicit ECSManager(const std::size_t max_number_of_entities) noexcept
-      : component_manager_{max_number_of_entities}, entity_manager_{max_number_of_entities}
+  ECSManager(const std::size_t max_number_of_entities, const std::size_t max_number_of_systems) noexcept
+      : component_manager_{max_number_of_entities}, entity_manager_{max_number_of_entities},
+        system_manager_{max_number_of_systems}
   {
   }
 
@@ -644,8 +646,8 @@ public:
 
 private:
   ComponentManager<ComponentType, ComponentsT...> component_manager_;
-  EntityManager<ComponentType> entity_manager_;
-  SystemManager<ComponentType> system_manager_{};
+  EntityManager<ComponentType, MAX_NUMBER_OF_ENTITIES_PER_GROUP> entity_manager_;
+  SystemManager<ComponentType> system_manager_;
 };
 
 } // namespace rtw::ecs
