@@ -13,7 +13,6 @@
 #include <type_traits>
 #include <typeindex>
 #include <unordered_map>
-#include <unordered_set>
 
 namespace rtw::ecs
 {
@@ -422,7 +421,7 @@ class System;
 class ISystem
 {
 public:
-  ISystem() noexcept = default;
+  explicit ISystem(const std::size_t max_number_of_entities) noexcept : entities_{max_number_of_entities} {}
   ISystem(const ISystem&) noexcept = delete;
   ISystem(ISystem&&) noexcept = default;
   ISystem& operator=(const ISystem&) noexcept = delete;
@@ -449,10 +448,10 @@ public:
 
   std::size_t size() const noexcept { return entities_.size(); }
 
-  const std::unordered_set<EntityId>& get_entities() const noexcept { return entities_; }
+  const stl::FlatUnorderedSet<EntityId>& get_entities() const noexcept { return entities_; }
 
 private:
-  std::unordered_set<EntityId> entities_;
+  stl::FlatUnorderedSet<EntityId> entities_;
 };
 
 template <typename EnumT>
@@ -464,7 +463,10 @@ public:
   using ComponentType = EnumT;
   using SystemSignature = SystemSignature<ComponentType>;
 
-  explicit System(SystemSignature signature) noexcept : signature_{std::move(signature)} {}
+  System(SystemSignature signature, const std::size_t max_number_of_entities) noexcept
+      : ISystem{max_number_of_entities}, signature_{std::move(signature)}
+  {
+  }
 
   const SystemSignature& get_signature() const noexcept { return signature_; }
 
