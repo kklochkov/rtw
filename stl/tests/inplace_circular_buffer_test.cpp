@@ -32,6 +32,7 @@ TEST(InplaceCircularBufferTest, constructor)
   EXPECT_EQ(buffer.size(), 0U);
   EXPECT_EQ(buffer.capacity(), 10U);
   EXPECT_TRUE(buffer.empty());
+  EXPECT_TRUE(buffer.begin() == buffer.end());
 }
 
 TEST(InplaceCircularBufferTest, push_back)
@@ -49,6 +50,7 @@ TEST(InplaceCircularBufferTest, push_back)
   }
 
   EXPECT_EQ(buffer.size(), buffer.capacity());
+  EXPECT_FALSE(buffer.begin() == buffer.end());
 
   for (std::size_t i = 0U; i < buffer.size(); ++i)
   {
@@ -65,9 +67,11 @@ TEST(InplaceCircularBufferTest, push_back)
   EXPECT_EQ(buffer[1U], (Struct{14.0F, 14, 14U}));
 
   buffer.clear();
+
   EXPECT_EQ(buffer.size(), 0U);
   EXPECT_EQ(buffer.capacity(), 10U);
   EXPECT_TRUE(buffer.empty());
+  EXPECT_TRUE(buffer.begin() == buffer.end());
 }
 
 TEST(InplaceCircularBufferTest, emplace_back)

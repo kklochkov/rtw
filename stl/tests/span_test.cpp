@@ -29,6 +29,7 @@ TEST(SpanTest, constructors)
     EXPECT_EQ(span.size(), 0U);
     EXPECT_TRUE(span.empty());
     EXPECT_EQ(span.data(), nullptr);
+    EXPECT_TRUE(span.begin() == span.end());
   }
 
   {
@@ -38,6 +39,7 @@ TEST(SpanTest, constructors)
     EXPECT_EQ(span.size(), 3U);
     EXPECT_FALSE(span.empty());
     EXPECT_EQ(span.data(), arr);
+    EXPECT_FALSE(span.begin() == span.end());
   }
 
   {
@@ -47,6 +49,7 @@ TEST(SpanTest, constructors)
     EXPECT_EQ(span.size(), 3U);
     EXPECT_FALSE(span.empty());
     EXPECT_EQ(span.data(), arr);
+    EXPECT_FALSE(span.begin() == span.end());
   }
 
   {
@@ -56,6 +59,7 @@ TEST(SpanTest, constructors)
     EXPECT_EQ(span.size(), 3U);
     EXPECT_FALSE(span.empty());
     EXPECT_EQ(span.data(), arr);
+    EXPECT_FALSE(span.begin() == span.end());
   }
 
   {
@@ -66,6 +70,7 @@ TEST(SpanTest, constructors)
     EXPECT_EQ(span.size(), original.size());
     EXPECT_FALSE(span.empty());
     EXPECT_EQ(span.data(), original.data());
+    EXPECT_FALSE(span.begin() == span.end());
   }
 
   {
@@ -76,6 +81,7 @@ TEST(SpanTest, constructors)
     EXPECT_EQ(const_span.size(), original.size());
     EXPECT_FALSE(const_span.empty());
     EXPECT_EQ(const_span.data(), original.data());
+    EXPECT_FALSE(const_span.begin() == const_span.end());
   }
 
   {
@@ -85,6 +91,7 @@ TEST(SpanTest, constructors)
     EXPECT_EQ(span.size(), vec.size());
     EXPECT_FALSE(span.empty());
     EXPECT_EQ(span.data(), vec.data());
+    EXPECT_FALSE(span.begin() == span.end());
   }
 }
 

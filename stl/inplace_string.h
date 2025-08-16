@@ -132,9 +132,9 @@ public:
   constexpr const_iterator begin() const noexcept { return storage_.data(); }
   constexpr const_iterator cbegin() const noexcept { return storage_.data(); }
 
-  constexpr iterator end() noexcept { return storage_.data() + capacity(); }
-  constexpr const_iterator end() const noexcept { return storage_.data() + capacity(); }
-  constexpr const_iterator cend() const noexcept { return storage_.data() + capacity(); }
+  constexpr iterator end() noexcept { return storage_.data() + size(); }
+  constexpr const_iterator end() const noexcept { return storage_.data() + size(); }
+  constexpr const_iterator cend() const noexcept { return storage_.data() + size(); }
 
   constexpr pointer data() noexcept { return storage_.data(); }
   constexpr const_pointer data() const noexcept { return storage_.data(); }

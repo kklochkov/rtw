@@ -39,6 +39,7 @@ TEST(ContiguousStorageTest, constructor)
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
+  EXPECT_TRUE(storage.cbegin() == storage.cend());
 
   EXPECT_DEATH(ContiguousStorage{0U}, ".*");
 }
@@ -70,12 +71,14 @@ TEST(ContiguousStorageTest, construct)
 
   EXPECT_EQ(storage.used_slots(), storage.capacity());
   EXPECT_FALSE(storage.empty());
+  EXPECT_FALSE(storage.cbegin() == storage.cend());
 
   storage.clear();
 
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
+  EXPECT_TRUE(storage.cbegin() == storage.cend());
 
   for (std::size_t i = 0U; i < storage.capacity(); ++i)
   {

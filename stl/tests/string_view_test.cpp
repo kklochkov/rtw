@@ -11,6 +11,7 @@ TEST(StringViewTest, constructor)
     EXPECT_EQ(view.size(), 0U);
     EXPECT_EQ(view.data(), nullptr);
     EXPECT_TRUE(view.empty());
+    EXPECT_TRUE(view.begin() == view.end());
   }
   {
     // Pointer and size constructor
@@ -22,6 +23,7 @@ TEST(StringViewTest, constructor)
     EXPECT_EQ(view[12], '!');
     EXPECT_TRUE(view.starts_with("Hello"));
     EXPECT_TRUE(view.ends_with("World!"));
+    EXPECT_FALSE(view.begin() == view.end());
   }
   {
     // Pointer constructor
@@ -33,6 +35,7 @@ TEST(StringViewTest, constructor)
     EXPECT_EQ(view[12], '!');
     EXPECT_TRUE(view.starts_with("Hello"));
     EXPECT_TRUE(view.ends_with("World!"));
+    EXPECT_FALSE(view.begin() == view.end());
   }
   {
     // C-string constructor
@@ -43,6 +46,7 @@ TEST(StringViewTest, constructor)
     EXPECT_EQ(view[12], '!');
     EXPECT_TRUE(view.starts_with("Hello"));
     EXPECT_TRUE(view.ends_with("World!"));
+    EXPECT_FALSE(view.begin() == view.end());
   }
 }
 
