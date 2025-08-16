@@ -67,6 +67,7 @@ struct Damage : rtw::ecs::Component<ComponentType, ComponentType::DAMAGE>
 };
 
 constexpr std::size_t MAX_NUMBER_OF_ENTITIES = 1'000;
+constexpr std::size_t MAX_NUMBER_OF_ENTITIES_PER_SYSTEM = 100;
 
 using ComponentManager =
     rtw::ecs::ComponentManager<ComponentType, Transform, Rigidbody, Collider, Sprite, Mesh, Debug, Health, Damage>;
@@ -98,7 +99,7 @@ using ECSManager =
 
 struct DefaultSystem : public System
 {
-  explicit DefaultSystem() noexcept : System{DEFAULT_SYSTEM_SIGNATURE} {}
+  DefaultSystem() noexcept : System{DEFAULT_SYSTEM_SIGNATURE, MAX_NUMBER_OF_ENTITIES_PER_SYSTEM} {}
 
   void update(ECSManager& ecs_manager)
   {
