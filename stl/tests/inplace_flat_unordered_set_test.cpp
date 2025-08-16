@@ -20,6 +20,7 @@ TEST(InplaceFlatUnorderedSet, constructor)
   EXPECT_EQ(set.size(), 0U);
   EXPECT_EQ(set.capacity(), 10U);
   EXPECT_TRUE(set.empty());
+  EXPECT_TRUE(set.begin() == set.end());
 }
 
 TEST(InplaceFlatUnorderedSet, emplace_and_operator_brackets)
@@ -36,12 +37,26 @@ TEST(InplaceFlatUnorderedSet, emplace_and_operator_brackets)
 
     EXPECT_TRUE(set.contains(1U));
     EXPECT_TRUE(set.contains(2U));
+    EXPECT_FALSE(set.begin() == set.end());
+    EXPECT_EQ(std::distance(set.begin(), set.end()), 2);
+
+    {
+      // Check number of iterations
+      std::size_t iterations = 0U;
+      for (const auto& key : set)
+      {
+        ++iterations;
+        EXPECT_TRUE(key == 1U || key == 2U);
+      }
+      EXPECT_EQ(iterations, 2U);
+    }
 
     set.clear();
+
     EXPECT_EQ(set.size(), 0U);
     EXPECT_TRUE(set.empty());
-
-    EXPECT_TRUE(rtw::stl::is_memory_contiguous(set.begin(), set.end()));
+    EXPECT_TRUE(set.begin() == set.end());
+    EXPECT_EQ(std::distance(set.begin(), set.end()), 0);
   }
   {
     rtw::stl::InplaceFlatUnorderedSet<std::size_t, 2U> set;
@@ -50,8 +65,7 @@ TEST(InplaceFlatUnorderedSet, emplace_and_operator_brackets)
     EXPECT_TRUE(set.emplace(2U));
     EXPECT_FALSE(set.emplace(3U));
     EXPECT_EQ(set.size(), 2U);
-
-    EXPECT_TRUE(rtw::stl::is_memory_contiguous(set.begin(), set.end()));
+    EXPECT_FALSE(set.begin() == set.end());
   }
 }
 
@@ -69,12 +83,13 @@ TEST(InplaceFlatUnorderedSet, insert_and_operator_brackets)
 
     EXPECT_TRUE(set.contains(1U));
     EXPECT_TRUE(set.contains(2U));
+    EXPECT_FALSE(set.begin() == set.end());
 
     set.clear();
+
     EXPECT_EQ(set.size(), 0U);
     EXPECT_TRUE(set.empty());
-
-    EXPECT_TRUE(rtw::stl::is_memory_contiguous(set.begin(), set.end()));
+    EXPECT_TRUE(set.begin() == set.end());
   }
   {
     rtw::stl::InplaceFlatUnorderedSet<std::size_t, 2U> set;
@@ -83,8 +98,6 @@ TEST(InplaceFlatUnorderedSet, insert_and_operator_brackets)
     EXPECT_TRUE(set.insert(2U));
     EXPECT_FALSE(set.insert(3U));
     EXPECT_EQ(set.size(), 2U);
-
-    EXPECT_TRUE(rtw::stl::is_memory_contiguous(set.begin(), set.end()));
   }
 }
 
@@ -106,8 +119,6 @@ TEST(InplaceFlatUnorderedSet, erase)
   EXPECT_FALSE(set.contains(2U));
 
   EXPECT_FALSE(set.erase(3U)); // Erasing non-existing key
-
-  EXPECT_TRUE(rtw::stl::is_memory_contiguous(set.begin(), set.end()));
 }
 
 TEST(InplaceFlatUnorderedSet, find)
@@ -127,6 +138,4 @@ TEST(InplaceFlatUnorderedSet, find)
 
   it = set.find(3U);
   EXPECT_EQ(it, set.end()); // Non-existing key
-
-  EXPECT_TRUE(rtw::stl::is_memory_contiguous(set.begin(), set.end()));
 }

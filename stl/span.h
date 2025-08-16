@@ -109,21 +109,9 @@ public:
   constexpr const_iterator begin() const noexcept { return data_; }
   constexpr const_iterator cbegin() const noexcept { return data_; }
 
-  constexpr iterator end() noexcept
-  {
-    assert(!empty());
-    return data_ + size_;
-  }
-  constexpr const_iterator end() const noexcept
-  {
-    assert(!empty());
-    return data_ + size_;
-  }
-  constexpr const_iterator cend() const noexcept
-  {
-    assert(!empty());
-    return data_ + size_;
-  }
+  constexpr iterator end() noexcept { return data_ + size_; }
+  constexpr const_iterator end() const noexcept { return data_ + size_; }
+  constexpr const_iterator cend() const noexcept { return data_ + size_; }
 
   constexpr Span<element_type> first(const size_type count) const noexcept
   {

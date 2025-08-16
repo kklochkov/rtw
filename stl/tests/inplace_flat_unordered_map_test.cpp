@@ -32,6 +32,7 @@ TEST(InplaceFlatUnorderedMap, constructor)
   EXPECT_EQ(map.size(), 0U);
   EXPECT_EQ(map.capacity(), 10U);
   EXPECT_TRUE(map.empty());
+  EXPECT_TRUE(map.begin() == map.end());
 }
 
 TEST(InplaceFlatUnorderedMap, emplace_and_operator_brackets)
@@ -54,10 +55,26 @@ TEST(InplaceFlatUnorderedMap, emplace_and_operator_brackets)
 
     EXPECT_TRUE(map.contains(1U));
     EXPECT_TRUE(map.contains(2U));
+    EXPECT_FALSE(map.begin() == map.end());
+    EXPECT_EQ(std::distance(map.begin(), map.end()), 2);
+
+    {
+      // Check number of iterations
+      std::size_t iterations = 0U;
+      for (const auto& [key, _] : map)
+      {
+        ++iterations;
+        EXPECT_TRUE(key == 1U || key == 2U);
+      }
+      EXPECT_EQ(iterations, 2U);
+    }
 
     map.clear();
+
     EXPECT_EQ(map.size(), 0U);
     EXPECT_TRUE(map.empty());
+    EXPECT_TRUE(map.begin() == map.end());
+    EXPECT_EQ(std::distance(map.begin(), map.end()), 0);
   }
   {
     rtw::stl::InplaceFlatUnorderedMap<std::size_t, Struct, 2U> map;
@@ -91,10 +108,13 @@ TEST(InplaceFlatUnorderedMap, insert_and_operator_brackets)
 
     EXPECT_TRUE(map.contains(1U));
     EXPECT_TRUE(map.contains(2U));
+    EXPECT_FALSE(map.begin() == map.end());
 
     map.clear();
+
     EXPECT_EQ(map.size(), 0U);
     EXPECT_TRUE(map.empty());
+    EXPECT_TRUE(map.begin() == map.end());
   }
   {
     rtw::stl::InplaceFlatUnorderedMap<std::size_t, Struct, 2U> map;

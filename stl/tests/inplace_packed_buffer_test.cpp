@@ -31,6 +31,7 @@ TEST(InplacePackedBufferTest, constructor)
   EXPECT_EQ(buffer.size(), 0U);
   EXPECT_EQ(buffer.capacity(), 10U);
   EXPECT_TRUE(buffer.empty());
+  EXPECT_TRUE(buffer.begin() == buffer.end());
 }
 
 TEST(InplacePackedBufferTest, push_back)
@@ -48,6 +49,7 @@ TEST(InplacePackedBufferTest, push_back)
   }
 
   EXPECT_EQ(buffer.size(), buffer.capacity());
+  EXPECT_FALSE(buffer.begin() == buffer.end());
 
   for (std::size_t i = 0U; i < buffer.size(); ++i)
   {
@@ -58,9 +60,11 @@ TEST(InplacePackedBufferTest, push_back)
   EXPECT_DEATH(buffer.push_back(Struct{}), ".*");
 
   buffer.clear();
+
   EXPECT_EQ(buffer.size(), 0U);
   EXPECT_EQ(buffer.capacity(), 10U);
   EXPECT_TRUE(buffer.empty());
+  EXPECT_TRUE(buffer.begin() == buffer.end());
 }
 
 TEST(InplacePackedBufferTest, emplace_back)

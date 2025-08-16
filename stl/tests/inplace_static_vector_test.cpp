@@ -31,6 +31,7 @@ TEST(InplaceStaticVectorTest, constructor)
   EXPECT_EQ(vector.size(), 0U);
   EXPECT_EQ(vector.capacity(), 10U);
   EXPECT_TRUE(vector.empty());
+  EXPECT_TRUE(vector.begin() == vector.end());
 }
 
 TEST(InplaceStaticVectorTest, push_back)
@@ -48,6 +49,7 @@ TEST(InplaceStaticVectorTest, push_back)
   }
 
   EXPECT_EQ(vector.size(), vector.capacity());
+  EXPECT_FALSE(vector.begin() == vector.end());
 
   for (std::size_t i = 0U; i < vector.size(); ++i)
   {
@@ -58,9 +60,11 @@ TEST(InplaceStaticVectorTest, push_back)
   EXPECT_DEATH(vector.push_back(Struct{}), ".*");
 
   vector.clear();
+
   EXPECT_EQ(vector.size(), 0U);
   EXPECT_EQ(vector.capacity(), 10U);
   EXPECT_TRUE(vector.empty());
+  EXPECT_TRUE(vector.begin() == vector.end());
 }
 
 TEST(InplaceStaticVectorTest, emplace_back)

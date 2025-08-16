@@ -165,6 +165,7 @@ public:
   using const_iterator = Iterator<const_reference, const GenericContiguousStorage>;
 
   constexpr size_type used_slots() const noexcept { return used_slots_; }
+  constexpr size_type size() const noexcept { return used_slots_; }
   constexpr bool empty() const noexcept { return used_slots_ == 0U; }
   constexpr size_type capacity() const noexcept { return capacity_; }
 
@@ -245,7 +246,7 @@ private:
 namespace details
 {
 
-struct ContiguousStorageIteratorTag : std::input_iterator_tag
+struct ContiguousStorageIteratorTag : std::random_access_iterator_tag
 {};
 
 }; // namespace details
@@ -272,7 +273,6 @@ public:
   {
   }
 
-  constexpr size_t get_index() const noexcept { return index_; }
   constexpr bool is_constructed() const noexcept { return container_->is_constructed(index_); }
 
   constexpr reference operator*() const noexcept { return (*container_)[index_]; }
