@@ -49,8 +49,8 @@ public:
     return false;
   }
 
-  constexpr bool insert(const value_type& value) noexcept { return emplace(value); }
-  constexpr bool insert(value_type&& value) noexcept { return emplace(std::move(value)); }
+  constexpr bool insert(const key_type& value) noexcept { return emplace(value); }
+  constexpr bool insert(key_type&& value) noexcept { return emplace(std::move(value)); }
 
   constexpr bool erase(const key_type& key) noexcept
   {
