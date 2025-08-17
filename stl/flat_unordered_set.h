@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stl/contiguous_storage.h"
+#include "stl/iterator.h"
 
 namespace rtw::stl
 {
@@ -9,10 +10,10 @@ template <typename KeyT, typename HashT = std::hash<KeyT>, typename KeyEqualT = 
           typename KeyStorageT = ContiguousStorage<KeyT>>
 class GenericFlatUnorderedSet
 {
-public:
-  template <typename ValueRefT, typename ContainerT>
-  class Iterator;
+  template <details::IteratorType, typename ValueRefT, typename ContainerT>
+  friend class HashIterator;
 
+public:
   using key_type = KeyT;
   using value_type = KeyT;
   using key_container_type = KeyStorageT;
@@ -22,7 +23,7 @@ public:
   using const_reference = const key_type&;
   using hasher = HashT;
   using key_equal = KeyEqualT;
-  using const_iterator = Iterator<const_reference, const GenericFlatUnorderedSet>;
+  using const_iterator = SetIterator<const_reference, const GenericFlatUnorderedSet>;
 
   constexpr GenericFlatUnorderedSet() noexcept = default;
 
@@ -120,98 +121,6 @@ private:
   key_container_type keys_storage_;
   hasher hasher_{};
   key_equal key_equal_{};
-};
-
-template <typename KeyT, typename HashT, typename KeyEqualT, typename KeyStorageT>
-template <typename ValueRefT, typename ContainerT>
-class GenericFlatUnorderedSet<KeyT, HashT, KeyEqualT, KeyStorageT>::Iterator
-{
-public:
-  static_assert(std::is_same_v<ContainerT, GenericFlatUnorderedSet<KeyT, HashT, KeyEqualT, KeyStorageT>>
-                    || std::is_same_v<ContainerT, const GenericFlatUnorderedSet<KeyT, HashT, KeyEqualT, KeyStorageT>>,
-                "Iterator must be used with GenericFlatUnorderedSet or const GenericFlatUnorderedSet.");
-
-  using value_type = typename ContainerT::value_type;
-  using reference = ValueRefT;
-  using pointer = std::add_pointer_t<reference>;
-  using difference_type = typename ContainerT::difference_type;
-  using size_type = typename ContainerT::size_type;
-  using iterator_category = std::input_iterator_tag;
-  using iterator_concept = std::random_access_iterator_tag;
-
-  constexpr Iterator(ContainerT* container, const size_type index) noexcept : container_{container}, index_{index}
-  {
-    assert(container != nullptr);
-  }
-
-  constexpr static Iterator make_begin_iterator(ContainerT* container) noexcept
-  {
-    // When the container is empty, use the capacity as the index to indicate the end.
-    Iterator it{container, container->empty() * container->capacity()};
-    it.adjust_index();
-    return it;
-  }
-
-  constexpr static Iterator make_end_iterator(ContainerT* container) noexcept
-  {
-    return Iterator{container, container->capacity()};
-  }
-
-  constexpr size_type get_index() const noexcept { return index_; }
-  constexpr bool is_constructed() const noexcept { return container_->keys_storage_.is_constructed(index_); }
-
-  constexpr reference operator*() const noexcept { return container_->keys_storage_[index_]; }
-  constexpr pointer operator->() const noexcept { return *operator*(); }
-
-  constexpr Iterator& operator++() noexcept
-  {
-    ++index_;
-    adjust_index();
-    return *this;
-  }
-
-  constexpr Iterator operator++(int) noexcept
-  {
-    Iterator temp{*this};
-    ++(*this);
-    return temp;
-  }
-
-  friend constexpr bool operator==(const Iterator& lhs, const Iterator& rhs) noexcept
-  {
-    return (lhs.container_ == rhs.container_) && (lhs.index_ == rhs.index_);
-  }
-
-  friend constexpr bool operator!=(const Iterator& lhs, const Iterator& rhs) noexcept { return !(lhs == rhs); }
-
-  friend constexpr difference_type operator-(const Iterator& lhs, const Iterator& rhs) noexcept
-  {
-    assert(lhs.container_ == rhs.container_);
-    if (((lhs.index_ < lhs.container_->capacity()) && (rhs.index_ < rhs.container_->capacity()))
-        || ((lhs.index_ >= lhs.container_->capacity()) && (rhs.index_ >= rhs.container_->capacity())))
-    {
-      return static_cast<difference_type>(lhs.index_) - static_cast<difference_type>(rhs.index_);
-    }
-
-    if (lhs.index_ >= lhs.container_->capacity())
-    {
-      return static_cast<difference_type>(lhs.container_->size()) - static_cast<difference_type>(rhs.index_);
-    }
-
-    return static_cast<difference_type>(lhs.index_) - static_cast<difference_type>(rhs.container_->size());
-  }
-
-private:
-  constexpr void adjust_index() noexcept
-  {
-    // Adjust the index to point to the first constructed element or the end of the container.
-    for (; (index_ < container_->capacity()) && !container_->keys_storage_.is_constructed(index_); ++index_)
-    {
-    }
-  }
-
-  ContainerT* container_;
-  size_type index_;
 };
 
 template <typename KeyT, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>,

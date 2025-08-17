@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stl/contiguous_storage.h"
+#include "stl/iterator.h"
 
 namespace rtw::stl
 {
@@ -9,10 +10,10 @@ template <typename KeyT, typename T, typename HashT = std::hash<KeyT>, typename 
           typename KeyStorageT = ContiguousStorage<KeyT>, typename ValueStorageT = ContiguousStorage<T>>
 class GenericFlatUnorderedMap
 {
-public:
-  template <typename ValueRefT, typename ContainerT>
-  class Iterator;
+  template <details::IteratorType, typename ValueRefT, typename ContainerT>
+  friend class HashIterator;
 
+public:
   using key_type = KeyT;
   using mapped_type = T;
   using value_type = std::pair<key_type, mapped_type>;
@@ -24,8 +25,8 @@ public:
   using const_reference = std::pair<const key_type&, const mapped_type&>;
   using hasher = HashT;
   using key_equal = KeyEqualT;
-  using iterator = Iterator<reference, GenericFlatUnorderedMap>;
-  using const_iterator = Iterator<const_reference, const GenericFlatUnorderedMap>;
+  using iterator = MapIterator<reference, GenericFlatUnorderedMap>;
+  using const_iterator = MapIterator<const_reference, const GenericFlatUnorderedMap>;
 
   constexpr GenericFlatUnorderedMap() noexcept = default;
 
@@ -176,110 +177,6 @@ private:
   value_container_type values_storage_;
   hasher hasher_{};
   key_equal key_equal_{};
-};
-
-template <typename KeyT, typename T, typename HashT, typename KeyEqualT, typename KeyStorageT, typename ValueStorageT>
-template <typename ValueRefT, typename ContainerT>
-class GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, KeyStorageT, ValueStorageT>::Iterator
-{
-public:
-  static_assert(
-      std::is_same_v<ContainerT, GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, KeyStorageT, ValueStorageT>>
-          || std::is_same_v<ContainerT,
-                            const GenericFlatUnorderedMap<KeyT, T, HashT, KeyEqualT, KeyStorageT, ValueStorageT>>,
-      "Iterator must be used with GenericFlatUnorderedMap or const GenericFlatUnorderedMap.");
-
-  using value_type = typename ContainerT::value_type;
-  using reference = ValueRefT;
-  using difference_type = typename ContainerT::difference_type;
-  using size_type = typename ContainerT::size_type;
-  using iterator_category = std::input_iterator_tag;
-  using iterator_concept = std::random_access_iterator_tag;
-
-  struct ReferenceWrapper
-  {
-    reference ref;
-
-    const reference* operator->() const noexcept { return &ref; }
-  };
-  using pointer = ReferenceWrapper;
-
-  constexpr Iterator(ContainerT* container, const size_type index) noexcept : container_{container}, index_{index}
-  {
-    assert(container != nullptr);
-  }
-
-  constexpr static Iterator make_begin_iterator(ContainerT* container) noexcept
-  {
-    // When the container is empty, use the capacity as the index to indicate the end.
-    Iterator it{container, container->empty() * container->capacity()};
-    it.adjust_index();
-    return it;
-  }
-
-  constexpr static Iterator make_end_iterator(ContainerT* container) noexcept
-  {
-    return Iterator{container, container->capacity()};
-  }
-
-  constexpr size_type get_index() const noexcept { return index_; }
-
-  constexpr reference operator*() const noexcept
-  {
-    return {container_->keys_storage_[index_], container_->values_storage_[index_]};
-  }
-
-  constexpr pointer operator->() const noexcept { return ReferenceWrapper{operator*()}; }
-
-  constexpr Iterator& operator++() noexcept
-  {
-    ++index_;
-    adjust_index();
-    return *this;
-  }
-
-  constexpr Iterator operator++(int) noexcept
-  {
-    Iterator temp{*this};
-    ++(*this);
-    return temp;
-  }
-
-  friend constexpr bool operator==(const Iterator& lhs, const Iterator& rhs) noexcept
-  {
-    return (lhs.container_ == rhs.container_) && (lhs.index_ == rhs.index_);
-  }
-
-  friend constexpr bool operator!=(const Iterator& lhs, const Iterator& rhs) noexcept { return !(lhs == rhs); }
-
-  friend constexpr difference_type operator-(const Iterator& lhs, const Iterator& rhs) noexcept
-  {
-    assert(lhs.container_ == rhs.container_);
-    if (((lhs.index_ < lhs.container_->capacity()) && (rhs.index_ < rhs.container_->capacity()))
-        || ((lhs.index_ >= lhs.container_->capacity()) && (rhs.index_ >= rhs.container_->capacity())))
-    {
-      return static_cast<difference_type>(lhs.index_) - static_cast<difference_type>(rhs.index_);
-    }
-
-    if (lhs.index_ >= lhs.container_->capacity())
-    {
-      return static_cast<difference_type>(lhs.container_->size()) - static_cast<difference_type>(rhs.index_);
-    }
-
-    return static_cast<difference_type>(lhs.index_) - static_cast<difference_type>(rhs.container_->size());
-  }
-
-private:
-  constexpr void adjust_index() noexcept
-  {
-    // Adjust the index to point to the first constructed element or the end of the container.
-    for (; (index_ < container_->capacity()) && !container_->keys_storage_.is_constructed(index_); ++index_)
-    {
-    }
-  }
-
-  ContainerT* container_;
-  size_type index_;
 };
 
 template <typename KeyT, typename T, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>,
