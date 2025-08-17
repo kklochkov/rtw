@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stl/iterator.h"
+
 #include <array>
 #include <cassert>
 #include <memory>
@@ -149,12 +151,12 @@ private:
 template <typename T, typename DerivedT>
 class GenericContiguousStorage
 {
+  template <typename ValueRefT, typename ContainerT>
+  friend class ContiguousStorageIterator;
+
   friend DerivedT;
 
 public:
-  template <typename ValueRefT, typename ContainerT>
-  class Iterator;
-
   using storage_type = AlignedObjectStorage<T, details::IS_TRIVIAL_V<T>>;
   using value_type = typename storage_type::value_type;
   using size_type = std::size_t;
@@ -163,8 +165,8 @@ public:
   using const_reference = typename storage_type::const_reference;
   using pointer = typename storage_type::pointer;
   using const_pointer = typename storage_type::const_pointer;
-  using iterator = Iterator<reference, GenericContiguousStorage>;
-  using const_iterator = Iterator<const_reference, const GenericContiguousStorage>;
+  using iterator = ContiguousStorageIterator<reference, GenericContiguousStorage>;
+  using const_iterator = ContiguousStorageIterator<const_reference, const GenericContiguousStorage>;
 
   constexpr size_type used_slots() const noexcept { return used_slots_; }
   constexpr size_type size() const noexcept { return used_slots_; }
@@ -244,126 +246,12 @@ private:
   size_type capacity_{0U};
 };
 
-namespace details
-{
-
-struct ContiguousStorageIteratorTag : std::random_access_iterator_tag
-{};
-
-}; // namespace details
-
-template <typename T, typename DerivedT>
-template <typename ValueRefT, typename ContainerT>
-class GenericContiguousStorage<T, DerivedT>::Iterator
-{
-public:
-  static_assert(std::is_same_v<ContainerT, GenericContiguousStorage<T, DerivedT>>
-                    || std::is_same_v<ContainerT, const GenericContiguousStorage<T, DerivedT>>,
-                "Iterator must be used with GenericContiguousStorage or const GenericContiguousStorage.");
-
-  using value_type = typename ContainerT::value_type;
-  using reference = ValueRefT;
-  using pointer = std::add_pointer_t<reference>;
-  using difference_type = typename ContainerT::difference_type;
-  using iterator_category = details::ContiguousStorageIteratorTag;
-  using iterator_concept = std::random_access_iterator_tag;
-  using storage_type = typename ContainerT::storage_type;
-
-  constexpr Iterator(ContainerT* container, typename ContainerT::size_type index) noexcept
-      : container_{container}, index_{index}
-  {
-  }
-
-  constexpr bool is_constructed() const noexcept { return container_->is_constructed(index_); }
-
-  constexpr reference operator*() const noexcept { return (*container_)[index_]; }
-  constexpr pointer operator->() const noexcept { return &(*container_)[index_]; }
-
-  constexpr storage_type& get_storage() noexcept { return container_->get_derived().get_storage(index_); }
-  constexpr const storage_type& get_storage() const noexcept { return container_->get_derived().get_storage(index_); }
-
-  constexpr Iterator& operator++() noexcept
-  {
-    ++index_;
-    return *this;
-  }
-
-  constexpr reference& operator[](const difference_type offset) const noexcept
-  {
-    return (*container_)[index_ + offset];
-  }
-
-  constexpr Iterator operator++(int) noexcept
-  {
-    Iterator temp{*this};
-    ++(*this);
-    return temp;
-  }
-
-  constexpr Iterator& operator+=(const difference_type offset) noexcept
-  {
-    index_ += offset;
-    return *this;
-  }
-
-  constexpr Iterator& operator--() noexcept
-  {
-    --index_;
-    return *this;
-  }
-
-  constexpr Iterator operator--(int) noexcept
-  {
-    Iterator temp{*this};
-    --(*this);
-    return temp;
-  }
-
-  constexpr Iterator& operator-=(const difference_type offset) noexcept
-  {
-    index_ -= offset;
-    return *this;
-  }
-
-  friend constexpr bool operator==(const Iterator& lhs, const Iterator& rhs) noexcept
-  {
-    return lhs.container_ == rhs.container_ && lhs.index_ == rhs.index_;
-  }
-
-  friend constexpr bool operator!=(const Iterator& lhs, const Iterator& rhs) noexcept { return !(lhs == rhs); }
-
-  friend constexpr Iterator operator+(const difference_type offset, const Iterator& it) noexcept
-  {
-    return Iterator{it.container_, it.index_ + offset};
-  }
-  friend constexpr Iterator operator+(const Iterator& it, const difference_type offset) noexcept
-  {
-    return Iterator{it.container_, it.index_ + offset};
-  }
-
-  friend constexpr Iterator operator-(const difference_type offset, const Iterator& it) noexcept
-  {
-    return Iterator{it.container_, it.index_ - offset};
-  }
-  friend constexpr Iterator operator-(const Iterator& it, const difference_type offset) noexcept
-  {
-    return Iterator{it.container_, it.index_ - offset};
-  }
-
-  friend constexpr difference_type operator-(const Iterator& lhs, const Iterator& rhs) noexcept
-  {
-    assert(lhs.container_ == rhs.container_);
-    return lhs.index_ - rhs.index_;
-  }
-
-private:
-  ContainerT* container_{nullptr};
-  typename ContainerT::size_type index_{0U};
-};
-
 template <typename T>
 class ContiguousStorage : public GenericContiguousStorage<T, ContiguousStorage<T>>
 {
+  template <typename ValueRefT, typename ContainerT>
+  friend class ContiguousStorageIterator;
+
   using Base = GenericContiguousStorage<T, ContiguousStorage<T>>;
 
   friend Base;
@@ -396,6 +284,9 @@ private:
 template <typename T, std::size_t CAPACITY>
 class InplaceContiguousStorage : public GenericContiguousStorage<T, InplaceContiguousStorage<T, CAPACITY>>
 {
+  template <typename ValueRefT, typename ContainerT>
+  friend class ContiguousStorageIterator;
+
   using Base = GenericContiguousStorage<T, InplaceContiguousStorage<T, CAPACITY>>;
 
   friend Base;

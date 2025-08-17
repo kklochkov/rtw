@@ -437,8 +437,8 @@ private:
   constexpr reference value(const size_type index) noexcept { return storage_[index]; }
   constexpr const_reference value(const size_type index) const noexcept { return storage_[index]; }
 
-constexpr  pointer get_data() noexcept { return storage_.data(); }
-constexpr  const_pointer get_data() const noexcept { return storage_.data(); }
+  constexpr pointer get_data() noexcept { return storage_.data(); }
+  constexpr const_pointer get_data() const noexcept { return storage_.data(); }
 
   StorageType storage_;
 };
