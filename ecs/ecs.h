@@ -4,7 +4,7 @@
 #include "stl/flat_unordered_map.h"
 #include "stl/flat_unordered_set.h"
 #include "stl/heap_array.h"
-#include "stl/inplace_string.h"
+#include "stl/static_string.h"
 #include "stl/packed_buffer.h"
 #include "stl/queue.h"
 

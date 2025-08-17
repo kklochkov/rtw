@@ -1,5 +1,5 @@
 #include "stl/format.h" // IWYU pragma: keep
-#include "stl/inplace_string.h"
+#include "stl/static_string.h"
 
 #include <gtest/gtest.h>
 

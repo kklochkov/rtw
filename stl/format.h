@@ -1,7 +1,6 @@
 #pragma once
 
 #include "stl/flags.h"
-#include "stl/inplace_string.h"
 #include "stl/static_string.h"
 #include "stl/string_view.h"
 
@@ -34,13 +33,8 @@ inline std::ostream& operator<<(std::ostream& os, const StringView view) noexcep
   return os.write(view.data(), static_cast<std::streamsize>(view.size()));
 }
 
-inline std::ostream& operator<<(std::ostream& os, const StaticString& string) noexcept
-{
-  return os.write(string.data(), static_cast<std::streamsize>(string.size()));
-}
-
-template <std::size_t CAPACITY>
-std::ostream& operator<<(std::ostream& os, const InplaceString<CAPACITY>& string) noexcept
+template <typename DerivedT>
+inline std::ostream& operator<<(std::ostream& os, const GenericStaticString<DerivedT>& string) noexcept
 {
   return os.write(string.data(), static_cast<std::streamsize>(string.size()));
 }
@@ -59,12 +53,8 @@ template <>
 struct formatter<rtw::stl::StringView> : ostream_formatter
 {};
 
-template <>
-struct formatter<rtw::stl::StaticString> : ostream_formatter
-{};
-
-template <std::size_t CAPACITY>
-struct formatter<rtw::stl::InplaceString<CAPACITY>> : ostream_formatter
+template <typename DerivedT>
+struct formatter<rtw::stl::GenericStaticString<DerivedT>> : ostream_formatter
 {};
 
 } // namespace fmt
