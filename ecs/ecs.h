@@ -4,9 +4,9 @@
 #include "stl/flat_unordered_map.h"
 #include "stl/flat_unordered_set.h"
 #include "stl/heap_array.h"
-#include "stl/static_string.h"
 #include "stl/packed_buffer.h"
 #include "stl/queue.h"
+#include "stl/static_string.h"
 
 #include <array>
 #include <cstdint>

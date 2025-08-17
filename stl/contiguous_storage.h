@@ -149,6 +149,8 @@ private:
 template <typename T, typename DerivedT>
 class GenericContiguousStorage
 {
+  friend DerivedT;
+
 public:
   template <typename ValueRefT, typename ContainerT>
   class Iterator;
@@ -229,13 +231,12 @@ public:
   constexpr const_iterator end() const noexcept { return const_iterator{this, used_slots_}; }
   constexpr const_iterator cend() const noexcept { return const_iterator{this, used_slots_}; }
 
-protected:
+private:
   constexpr explicit GenericContiguousStorage(const size_t capacity) noexcept : capacity_{capacity}
   {
     assert(capacity > 0U);
   }
 
-private:
   constexpr DerivedT& get_derived() noexcept { return static_cast<DerivedT&>(*this); }
   constexpr const DerivedT& get_derived() const noexcept { return static_cast<const DerivedT&>(*this); }
 
