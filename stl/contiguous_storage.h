@@ -389,9 +389,6 @@ private:
     return data_.get()[index];
   }
 
-  storage_type* get_storage() noexcept { return data_.get(); }
-  const storage_type* get_storage() const noexcept { return data_.get(); }
-
   std::unique_ptr<storage_type[]> data_;
 };
 
@@ -422,9 +419,6 @@ private:
     assert(index < Base::capacity());
     return data_[index];
   }
-
-  constexpr storage_type* get_storage() noexcept { return data_.data(); }
-  constexpr const storage_type* get_storage() const noexcept { return data_.data(); }
 
   alignas(storage_type) std::array<storage_type, CAPACITY> data_{};
 };
