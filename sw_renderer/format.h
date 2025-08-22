@@ -16,7 +16,7 @@ template <typename T>
 std::ostream& operator<<(std::ostream& os, const TexCoord<T>& coord) noexcept
 {
   os << "TexCoord";
-  return math::details::operator<<(os, coord);
+  return math::details::operator<< <math::details::FormatType::VECTOR>(os, coord);
 }
 
 inline std::ostream& operator<<(std::ostream& os, const Color color) noexcept

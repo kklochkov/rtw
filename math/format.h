@@ -17,13 +17,19 @@ namespace rtw::math
 namespace details
 {
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
+enum class FormatType : std::uint8_t
+{
+  MATRIX,
+  VECTOR,
+};
+
+template <FormatType FORMAT, typename T, std::uint16_t ROWS, std::uint16_t COLS>
 std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
   const auto temp_format = os.flags();
 
   os << std::fixed << std::setprecision(4) << '[';
-  if constexpr (COLS == 1)
+  if constexpr (FORMAT == FormatType::VECTOR)
   {
     for (std::uint16_t row = 0U; row < ROWS; ++row)
     {
@@ -34,7 +40,7 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) 
       }
     }
   }
-  else
+  else if constexpr (FORMAT == FormatType::MATRIX)
   {
     os << '\n';
     for (std::uint16_t row = 0U; row < ROWS; ++row)
@@ -50,6 +56,10 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) 
       os << '\n';
     }
   }
+  else
+  {
+    static_assert(FORMAT == FormatType::VECTOR || FORMAT == FormatType::MATRIX, "Invalid format type");
+  }
   os << ']';
 
   os.flags(temp_format);
@@ -62,28 +72,28 @@ template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
 std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
   os << "Matrix" << ROWS << "x" << COLS;
-  return details::operator<<(os, matrix);
+  return details::operator<< <details::FormatType::MATRIX>(os, matrix);
 }
 
 template <typename T, std::uint16_t N>
 std::ostream& operator<<(std::ostream& os, const Vector<T, N>& vector) noexcept
 {
   os << "Vector" << N;
-  return details::operator<<(os, vector);
+  return details::operator<< <details::FormatType::VECTOR>(os, vector);
 }
 
 template <typename T, std::uint16_t N>
 std::ostream& operator<<(std::ostream& os, const Point<T, N>& point) noexcept
 {
   os << "Point" << N;
-  return details::operator<<(os, point);
+  return details::operator<< <details::FormatType::VECTOR>(os, point);
 }
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const Barycentric<T>& coord) noexcept
 {
   os << "Barycentric";
-  return math::details::operator<<(os, coord);
+  return math::details::operator<< <details::FormatType::VECTOR>(os, coord);
 }
 
 } // namespace rtw::math
