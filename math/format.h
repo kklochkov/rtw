@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) 
 {
   const auto temp_format = os.flags();
 
-  os << std::fixed << std::setprecision(4) << '[';
+  os << std::fixed << std::setprecision(6) << '[';
   if constexpr (FORMAT == FormatType::VECTOR)
   {
     for (std::uint16_t row = 0U; row < ROWS; ++row)
