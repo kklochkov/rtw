@@ -148,7 +148,7 @@ TEST(Barycentric, operator_stream)
   constexpr rtw::math::BarycentricF B{1.0F, 2.0F, 3.0F};
   std::stringstream ss;
   ss << B;
-  constexpr auto EXPECTED = R"(Barycentric[1.0000 2.0000 3.0000])";
+  constexpr auto EXPECTED = R"(Barycentric[1.000000 2.000000 3.000000])";
   EXPECT_EQ(ss.str(), EXPECTED);
 }
 

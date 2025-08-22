@@ -161,6 +161,6 @@ TEST(TextCoord, operator_stream)
   constexpr rtw::sw_renderer::TexCoord<float> T{1.0F, 2.0F};
   std::stringstream ss;
   ss << T;
-  constexpr auto EXPECTED = R"(TexCoord[1.0000 2.0000])";
+  constexpr auto EXPECTED = R"(TexCoord[1.000000 2.000000])";
   EXPECT_EQ(ss.str(), EXPECTED);
 }
