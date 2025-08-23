@@ -341,8 +341,8 @@ template <typename T>
 constexpr inline bool IS_SIGNED_FIXED_POINT_V = IsFixedPointSigned<T>::value;
 
 template <typename T>
-constexpr inline bool IS_ARITHMETIC_V = std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T> ||
-                                        IS_COMPLEX_V<T>;
+constexpr inline bool IS_ARITHMETIC_V =
+    std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T> || IS_COMPLEX_V<T>;
 
 } // namespace rtw::fixed_point
 
