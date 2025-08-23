@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iosfwd>
 #include <type_traits>
 
 namespace rtw::stl
@@ -16,12 +15,6 @@ template <typename T>
 constexpr inline bool IS_SCOPED_ENUM_V = std::is_enum_v<T> && test_scoped_enum(T{});
 
 } // namespace details
-
-template <typename T>
-class Flags;
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const Flags<T>& flags) noexcept;
 
 template <typename T>
 class Flags
@@ -101,8 +94,6 @@ public:
   friend constexpr bool operator!=(const Flags& lhs, const T rhs) noexcept { return lhs.flags_ != Flags{rhs}.flags_; }
   friend constexpr bool operator!=(const T lhs, const Flags& rhs) noexcept { return Flags{lhs}.flags_ != rhs.flags_; }
   /// @}
-
-  friend std::ostream& operator<< <T>(std::ostream& os, const Flags& flags) noexcept;
 
 private:
   constexpr explicit Flags(const underlying_type flags) noexcept : flags_{flags} {}

@@ -9,17 +9,10 @@
 #include <complex>
 #include <cstddef>
 #include <cstdint>
-#include <iosfwd>
 #include <type_traits>
 
 namespace rtw::math
 {
-
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
-class Matrix;
-
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
-std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) noexcept;
 
 struct UninitializedTag
 {
@@ -464,8 +457,6 @@ public:
 
   friend constexpr bool operator!=(const Matrix& lhs, const Matrix& rhs) noexcept { return !(lhs == rhs); }
   /// @}
-
-  friend std::ostream& operator<< <T, ROWS, COLS>(std::ostream& os, const Matrix& matrix) noexcept;
 
 private:
   std::array<value_type, SIZE> data_;

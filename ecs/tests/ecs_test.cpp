@@ -1,5 +1,4 @@
 #include "ecs/ecs.h"
-#include "stl/format.h" // IWYU pragma: keep
 
 #include <gtest/gtest.h>
 

@@ -1,5 +1,5 @@
 #include "stl/flags.h"
-#include "stl/format.h" // IWYU pragma: keep
+#include "stl/format.h"
 
 #include <gtest/gtest.h>
 

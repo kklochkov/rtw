@@ -1,6 +1,5 @@
 #pragma once
 
-#include "fixed_point/format.h" // IWYU pragma: export
 #include "math/barycentric.h"
 #include "math/matrix.h"
 #include "math/point.h"

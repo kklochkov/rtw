@@ -2,17 +2,10 @@
 
 #include "stl/string_view.h"
 
-#include <iosfwd>
 #include <memory>
 
 namespace rtw::stl
 {
-
-template <typename DerivedT>
-class GenericStaticString;
-
-template <typename DerivedT>
-std::ostream& operator<<(std::ostream& os, const GenericStaticString<DerivedT>& string) noexcept;
 
 template <typename DerivedT>
 class GenericStaticString
@@ -295,8 +288,6 @@ public:
   {
     return rhs.compare(lhs) <= 0;
   }
-
-  friend std::ostream& operator<< <DerivedT>(std::ostream& os, const GenericStaticString& string) noexcept;
 
 private:
   constexpr GenericStaticString() noexcept = default;

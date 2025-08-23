@@ -7,16 +7,12 @@
 #include <algorithm>
 #include <complex>
 #include <cstdint>
-#include <iosfwd>
 
 namespace rtw::fixed_point
 {
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 class FixedPoint;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-std::ostream& operator<<(std::ostream& os, const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
 
 namespace math
 {
@@ -279,8 +275,6 @@ public:
     return lhs.value_ >= rhs.value_;
   }
   /// @}
-
-  friend std::ostream& operator<< <T, FRACTIONAL_BITS, SaturationT>(std::ostream& os, const FixedPoint value) noexcept;
 
   /// Math functions
   /// @{

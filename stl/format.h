@@ -21,7 +21,7 @@ std::ostream& operator<<(std::ostream& os, const Flags<T>& flags) noexcept
   const char values[] = {'0', '1'};
   for (std::size_t i = bits_count; i--;)
   {
-    os << values[(flags.flags_ >> i) & 1U];
+    os << values[(static_cast<typename Flags<T>::underlying_type>(flags) >> i) & 1U];
   }
 
   os << ')';
