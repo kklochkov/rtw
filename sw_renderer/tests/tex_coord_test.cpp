@@ -1,4 +1,4 @@
-#include "sw_renderer/format.h" // IWYU pragma: keep
+#include "sw_renderer/format.h"
 #include "sw_renderer/types.h"
 
 #include <gmock/gmock.h>

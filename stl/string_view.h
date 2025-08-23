@@ -2,7 +2,6 @@
 
 #include "stl/span.h"
 
-#include <iosfwd>
 #include <string>
 
 namespace rtw::stl
@@ -172,22 +171,16 @@ public:
   }
 
   friend constexpr bool operator!=(const StringView lhs, const StringView rhs) noexcept { return !(lhs == rhs); }
-
   friend constexpr bool operator<(const StringView lhs, const StringView rhs) noexcept { return lhs.compare(rhs) < 0; }
-
   friend constexpr bool operator<=(const StringView lhs, const StringView rhs) noexcept
   {
     return lhs.compare(rhs) <= 0;
   }
-
   friend constexpr bool operator>(const StringView lhs, const StringView rhs) noexcept { return lhs.compare(rhs) > 0; }
-
   friend constexpr bool operator>=(const StringView lhs, const StringView rhs) noexcept
   {
     return lhs.compare(rhs) >= 0;
   }
-
-  friend std::ostream& operator<<(std::ostream& os, const StringView view) noexcept;
 
 private:
   StorageType storage_;

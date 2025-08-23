@@ -1,4 +1,4 @@
-#include "stl/format.h" // IWYU pragma: keep
+#include "stl/format.h"
 #include "stl/string_view.h"
 
 #include <gtest/gtest.h>

@@ -1,4 +1,4 @@
-#include "math/format.h" // IWYU pragma: keep
+#include "math/format.h"
 #include "math/matrix.h"
 
 #include <gmock/gmock.h>

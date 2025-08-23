@@ -1,5 +1,4 @@
 #include "math/convex_polygon.h"
-#include "math/format.h" // IWYU pragma: keep
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

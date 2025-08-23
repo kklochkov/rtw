@@ -15,8 +15,8 @@ template <typename T>
 std::ostream& operator<<(std::ostream& os, const Int<T> value) noexcept
 {
   const auto temp_format = os.flags();
-  os << "0x" << std::hex << std::setw(16) << std::setfill('0') << value.hi_ << std::hex << std::setw(16)
-     << std::setfill('0') << value.lo_;
+  os << "0x" << std::hex << std::setw(16) << std::setfill('0') << value.hi() << std::hex << std::setw(16)
+     << std::setfill('0') << value.lo();
   os.flags(temp_format);
   return os;
 }

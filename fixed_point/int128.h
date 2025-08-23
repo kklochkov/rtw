@@ -5,17 +5,10 @@
 
 #include <cassert>
 #include <cstdint>
-#include <iosfwd>
 #include <limits>
 
 namespace rtw::fixed_point
 {
-
-template <typename T>
-class Int;
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const Int<T> value) noexcept;
 
 enum class ArithmeticType : std::uint8_t
 {
@@ -280,8 +273,6 @@ public:
                static_cast<lo_type>(~lhs.lo_ + 1U)};
   }
   /// @}
-
-  friend std::ostream& operator<< <T>(std::ostream& os, const Int value) noexcept;
 
 private:
   /// Multiplication algorithm. Adjusted version of the algorithm from: Hacker's Delight, 2nd Edition
