@@ -1179,7 +1179,7 @@ public:
     using ComplexMatrix = rtw::math::Matrix<std::complex<MatrixValueType>, Matrix::NUM_ROWS, Matrix::NUM_COLS>;
 
     // The float calculations are not very precise, so we need a larger epsilon.
-    constexpr static MatrixValueType EPSILON = std::is_same_v<MatrixValueType, float> ? 3e-1F : 1e-12;
+    constexpr static MatrixValueType EPSILON = std::is_same_v<MatrixValueType, float> ? 3e-3F : 1e-12;
 
     const auto eigenvalues = rtw::math::eigenvalues(a);
     const auto eigenvectors = rtw::math::eigenvectors(a, eigenvalues.eigenvalues);
