@@ -5,6 +5,7 @@
 #include "fixed_point/operations.h"
 
 #include <algorithm>
+#include <complex>
 #include <cstdint>
 #include <iosfwd>
 
@@ -326,10 +327,22 @@ struct IsFixedPointSigned<FixedPoint<T, FRAC_BITS, SaturationT>> : std::bool_con
 {};
 
 template <typename T>
+struct IsComplex : std::false_type
+{};
+
+template <typename T>
+struct IsComplex<std::complex<T>> : std::true_type
+{};
+
+template <typename T>
+constexpr inline bool IS_COMPLEX_V = IsComplex<T>::value;
+
+template <typename T>
 constexpr inline bool IS_SIGNED_FIXED_POINT_V = IsFixedPointSigned<T>::value;
 
 template <typename T>
-constexpr inline bool IS_ARITHMETIC_V = std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T>;
+constexpr inline bool IS_ARITHMETIC_V = std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T> ||
+                                        IS_COMPLEX_V<T>;
 
 } // namespace rtw::fixed_point
 
