@@ -11,42 +11,14 @@
 namespace rtw::fixed_point
 {
 
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-class FixedPoint;
-
-namespace math
+struct RawValueConstructTag
 {
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> clamp(const FixedPoint<T, FRAC_BITS, SaturationT> value,
-                                                      const FixedPoint<T, FRAC_BITS, SaturationT> min,
-                                                      const FixedPoint<T, FRAC_BITS, SaturationT> max) noexcept;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> floor(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> ceil(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> round(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> sqrt(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> sin(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> cos(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> tan(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept;
-
-} // namespace math
+  // clang-format off: https://github.com/llvm/llvm-project/issues/62067, https://github.com/llvm/llvm-project/issues/53960
+  enum class Tag : std::uint8_t { TAG };
+  // clang-format on
+  constexpr explicit RawValueConstructTag(Tag /*tag*/) noexcept {}
+};
+constexpr inline RawValueConstructTag RAW_VALUE_CONSTRUCT{RawValueConstructTag::Tag::TAG};
 
 /// Fixed-point number representation using QM.N format (ARM notation).
 /// Overflows are handled by saturating the result to the minimum or maximum value.
@@ -69,12 +41,6 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> tan(const FixedPoint<T, FRAC_BIT
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 class FixedPoint
 {
-  // clang-format off: https://github.com/llvm/llvm-project/issues/53960
-  struct PrivateCtorTag {};
-  // clang-format on
-  constexpr static PrivateCtorTag PRIVATE_CTOR = {};
-  constexpr FixedPoint(PrivateCtorTag /*tag*/, const T value) noexcept : value_(value) {}
-
   constexpr static T saturate_and_cast(const SaturationT value) noexcept
   {
     return static_cast<T>(
@@ -108,6 +74,8 @@ public:
 
   constexpr FixedPoint() noexcept = default;
 
+  constexpr FixedPoint(RawValueConstructTag /*tag*/, const T value) noexcept : value_{value} {}
+
   // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
   constexpr FixedPoint(const I value) noexcept
@@ -124,17 +92,19 @@ public:
   }
   // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
 
-  constexpr static FixedPoint min() noexcept { return FixedPoint(PRIVATE_CTOR, MIN_INTEGER); }
-  constexpr static FixedPoint max() noexcept { return FixedPoint(PRIVATE_CTOR, MAX_INTEGER); }
+  constexpr static FixedPoint min() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, MIN_INTEGER); }
+  constexpr static FixedPoint max() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, MAX_INTEGER); }
 
   /// Constants
   /// @{
-  constexpr static FixedPoint pi() noexcept { return FixedPoint(PRIVATE_CTOR, PI_INTEGER); }
-  constexpr static FixedPoint pi_2() noexcept { return FixedPoint(PRIVATE_CTOR, PI_2_INTEGER); }
-  constexpr static FixedPoint pi_4() noexcept { return FixedPoint(PRIVATE_CTOR, PI_4_INTEGER); }
-  constexpr static FixedPoint two_pi() noexcept { return FixedPoint(PRIVATE_CTOR, TWO_PI_INTEGER); }
+  constexpr static FixedPoint pi() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, PI_INTEGER); }
+  constexpr static FixedPoint pi_2() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, PI_2_INTEGER); }
+  constexpr static FixedPoint pi_4() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, PI_4_INTEGER); }
+  constexpr static FixedPoint two_pi() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, TWO_PI_INTEGER); }
   constexpr static FixedPoint tau() noexcept { return two_pi(); }
   /// @}
+
+  constexpr T raw_value() const noexcept { return value_; }
 
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
   constexpr explicit operator I() const noexcept
@@ -151,7 +121,7 @@ public:
   template <typename U = T, typename = std::enable_if_t<std::is_signed_v<U>>>
   constexpr FixedPoint operator-() const noexcept
   {
-    return FixedPoint(PRIVATE_CTOR, -value_);
+    return FixedPoint(RAW_VALUE_CONSTRUCT, -value_);
   }
 
   constexpr FixedPoint& operator+=(const FixedPoint rhs) noexcept
@@ -216,7 +186,7 @@ public:
 
   constexpr FixedPoint& operator++() noexcept
   {
-    *this += FixedPoint(PRIVATE_CTOR, 1);
+    *this += FixedPoint(RAW_VALUE_CONSTRUCT, 1);
     return *this;
   }
 
@@ -229,7 +199,7 @@ public:
 
   constexpr FixedPoint& operator--() noexcept
   {
-    *this -= FixedPoint(PRIVATE_CTOR, 1);
+    *this -= FixedPoint(RAW_VALUE_CONSTRUCT, 1);
     return *this;
   }
 
@@ -274,19 +244,6 @@ public:
   {
     return lhs.value_ >= rhs.value_;
   }
-  /// @}
-
-  /// Math functions
-  /// @{
-  friend constexpr FixedPoint math::abs(const FixedPoint value) noexcept;
-  friend constexpr FixedPoint math::clamp(const FixedPoint value, const FixedPoint min, const FixedPoint max) noexcept;
-  friend constexpr FixedPoint math::floor(const FixedPoint value) noexcept;
-  friend constexpr FixedPoint math::ceil(const FixedPoint value) noexcept;
-  friend constexpr FixedPoint math::round(const FixedPoint value) noexcept;
-  friend constexpr FixedPoint math::sqrt(const FixedPoint value) noexcept;
-  friend constexpr FixedPoint math::sin(const FixedPoint value) noexcept;
-  friend constexpr FixedPoint math::cos(const FixedPoint value) noexcept;
-  friend constexpr FixedPoint math::tan(const FixedPoint value) noexcept;
   /// @}
 
 private:
