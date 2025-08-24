@@ -720,9 +720,12 @@ constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>&
   norm = sqrt(norm);
 
   T sign{1};
-  if constexpr (!fixed_point::IS_COMPLEX_V<T>)
+  if constexpr (fixed_point::IS_COMPLEX_V<T>)
   {
-    // For complex numbers it is not necessary to adjust the sign of the norm.
+    sign = fixed_point::sign(v[start_row].real() < 0);
+  }
+  else
+  {
     sign = fixed_point::sign(v[start_row] < 0);
   }
 
