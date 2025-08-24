@@ -11,7 +11,7 @@ template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
-  return FixedPoint(FixedPoint::PRIVATE_CTOR, std::abs(value.value_));
+  return FixedPoint(RAW_VALUE_CONSTRUCT, std::abs(value.raw_value()));
 }
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
@@ -20,7 +20,7 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> clamp(const FixedPoint<T, FRAC_B
                                                       const FixedPoint<T, FRAC_BITS, SaturationT> max) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
-  return FixedPoint(FixedPoint::PRIVATE_CTOR, std::clamp(value.value_, min.value_, max.value_));
+  return FixedPoint(RAW_VALUE_CONSTRUCT, std::clamp(value.raw_value(), min.raw_value(), max.raw_value()));
 }
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
@@ -28,7 +28,7 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> floor(const FixedPoint<T, FRAC_B
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
   // Clear the fractional part and round down
-  return FixedPoint(FixedPoint::PRIVATE_CTOR, value.value_ & FixedPoint::INTEGER_MASK);
+  return FixedPoint(RAW_VALUE_CONSTRUCT, value.raw_value() & FixedPoint::INTEGER_MASK);
 }
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
@@ -36,7 +36,7 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> ceil(const FixedPoint<T, FRAC_BI
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
   // Clear the fractional part and round up
-  return FixedPoint(FixedPoint::PRIVATE_CTOR, (value.value_ + FixedPoint::FRACTION_MASK) & FixedPoint::INTEGER_MASK);
+  return FixedPoint(RAW_VALUE_CONSTRUCT, (value.raw_value() + FixedPoint::FRACTION_MASK) & FixedPoint::INTEGER_MASK);
 }
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
@@ -44,7 +44,7 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> round(const FixedPoint<T, FRAC_B
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
   // Clear the fractional part and round to the nearest integer
-  return FixedPoint(FixedPoint::PRIVATE_CTOR, (value.value_ + FixedPoint::HALF) & FixedPoint::INTEGER_MASK);
+  return FixedPoint(RAW_VALUE_CONSTRUCT, (value.raw_value() + FixedPoint::HALF) & FixedPoint::INTEGER_MASK);
 }
 
 /// Calculate the square root of a fixed-point number using the Heron's (Babylonian) method.
@@ -53,14 +53,14 @@ template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> sqrt(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
-  if (value.value_ == 0)
+  if (value.raw_value() == 0)
   {
     return value;
   }
 
-  assert((value.value_ > 0) && "Cannot calculate the square root of a negative number");
+  assert((value.raw_value() > 0) && "Cannot calculate the square root of a negative number");
 
-  constexpr FixedPoint HALF(FixedPoint::PRIVATE_CTOR, FixedPoint::HALF);
+  constexpr FixedPoint HALF(RAW_VALUE_CONSTRUCT, FixedPoint::HALF);
 
   FixedPoint guess = value * HALF;
   FixedPoint previous_guess{};
