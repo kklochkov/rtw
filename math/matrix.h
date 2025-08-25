@@ -1095,14 +1095,9 @@ constexpr void inplace_partial_normalize(Matrix<T, ROWS, 1U>& v, const std::uint
 template <typename T, std::uint16_t ROWS>
 constexpr void inplace_normalize_householder_vector(Matrix<T, ROWS, 1U>& v, const std::uint16_t rows) noexcept
 {
-  auto norm = partial_norm(v, rows);
-  if (norm == T{0})
-  {
-    return;
-  }
-
   const std::uint16_t start_row = 0U;
   const auto sign = fixed_point::sign(v[start_row] < 0);
+  const auto norm = partial_norm(v, rows);
   const auto alpha = sign * norm; // Adjust the sign of norm to prevent numerical instability.
   v[start_row] += alpha;          // v[start_row] = v[start_row] + sign(v[start_row]) * ||v||
 
