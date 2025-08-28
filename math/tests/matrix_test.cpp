@@ -787,6 +787,32 @@ TYPED_TEST(Matrix3x3Test, modified_gram_schmidt_qr_solve)
     this->evaluate_solve(A, B, EXPECTED_X, x, epsilon);
   }
 }
+
+TYPED_TEST(Matrix3x3Test, cholesky_decomposition)
+{
+  constexpr TypeParam EXPECTED_A{0.5428F, 0.6227F, 0.8200F, 0.6227F, 1.7851F, 1.0809F, 0.8200F, 1.0809F, 1.3183F};
+  const auto l = rtw::math::matrix_decomposition::cholesky::decompose(EXPECTED_A);
+  const auto lt = rtw::math::transpose(l);
+  const auto a = l * lt;
+  for (std::uint32_t i = 0U; i < a.size(); ++i)
+  {
+    EXPECT_NEAR(static_cast<double>(a[i]), static_cast<double>(EXPECTED_A[i]), EPSILON<TypeParam>);
+  }
+}
+
+TYPED_TEST(Matrix3x3Test, cholesky_solve)
+{
+  using Vector = rtw::math::Matrix<typename TypeParam::value_type, 3, 1>;
+  constexpr TypeParam A{0.5428F, 0.6227F, 0.8200F, 0.6227F, 1.7851F, 1.0809F, 0.8200F, 1.0809F, 1.3183F};
+  constexpr Vector B{1.0F, 2.0F, 3.0F};
+
+  const auto x = rtw::math::matrix_decomposition::qr::modified_gram_schmidt::solve(A, B);
+  const auto ax = A * x;
+  for (std::uint32_t i = 0U; i < ax.size(); ++i)
+  {
+    EXPECT_NEAR(static_cast<double>(ax[i]), static_cast<double>(B[i]), EPSILON<TypeParam>);
+  }
+}
 //-----------------------------------------------------------------------------------------
 template <typename T>
 class Matrix4x4Test : public ::testing::Test

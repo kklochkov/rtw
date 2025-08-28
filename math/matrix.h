@@ -675,6 +675,29 @@ constexpr Matrix<T, ROWS, 1> back_substitution(const Matrix<T, ROWS, COLS>& matr
   return result;
 }
 
+/// Compute the forward substitution of a matrix of a system of linear equations.
+/// https://en.wikipedia.org/wiki/Triangular_matrix#Forward_and_back_substitution
+/// @param[in] matrix The matrix. The matrix must be lower triangular.
+/// @param[in] vector The vector.
+/// @return The solution to the system of linear equations.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1> forward_substitution(const Matrix<T, ROWS, COLS>& matrix,
+                                                  const Matrix<T, ROWS, 1>& vector) noexcept
+{
+  Matrix<T, ROWS, 1> result{math::UNINITIALIZED};
+  for (std::uint16_t row = 0U; row < ROWS; ++row)
+  {
+    result[row] = vector[row];
+    for (std::uint16_t col = 0U; col < row; ++col)
+    {
+      result[row] -= matrix(row, col) * result[col];
+    }
+    assert(matrix(row, row) != T{0});
+    result[row] /= matrix(row, row);
+  }
+  return result;
+}
+
 namespace qr
 {
 
@@ -978,6 +1001,63 @@ constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<
 } // namespace modified_gram_schmidt
 
 } // namespace qr
+
+namespace cholesky
+{
+/// Compute the Cholesky decomposition of a symmetric, positive-definite matrix.
+/// https://en.wikipedia.org/wiki/Cholesky_decomposition
+/// @param[in] matrix The matrix.
+/// @return The Cholesky decomposition of the matrix.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
+{
+  using fixed_point::math::sqrt;
+  using std::sqrt;
+
+  Matrix<T, ROWS, COLS> result{math::ZERO};
+
+  for (std::uint16_t col = 0U; col < COLS; ++col)
+  {
+    for (std::uint16_t row = 0U; row <= col; ++row)
+    {
+      T sum{0};
+      for (std::uint16_t k = 0U; k < row; ++k)
+      {
+        sum += result(row, k) * result(col, k);
+      }
+
+      if (row == col)
+      {
+        const auto diag = matrix(row, row) - sum;
+        assert(diag > T{0}); // The matrix must be positive-definite.
+        result(row, row) = sqrt(diag);
+      }
+      else
+      {
+        assert(result(row, row) != T{0});
+        result(col, row) = (matrix(col, row) - sum) / result(row, row);
+      }
+    }
+  }
+
+  return result;
+}
+
+/// Solve a system of linear equations (Ax = b) using the Cholesky decomposition.
+/// The matrix A must be symmetric and positive-definite.
+/// @param[in] a The matrix.
+/// @param[in] b The vector.
+/// @return The solution to the system of linear equations.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
+{
+  const auto l = decompose(a);
+  const auto y = forward_substitution(l, b);
+  return back_substitution(transpose(l), y);
+}
+
+} // namespace cholesky
+
 } // namespace matrix_decomposition
 
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS) && (ROWS > 3)>>
