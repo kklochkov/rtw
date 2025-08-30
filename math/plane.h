@@ -18,7 +18,7 @@ struct Plane3
 
 using Plane3F = Plane3<float>;
 using Plane3D = Plane3<double>;
-using Plane3Q16 = Plane3<fixed_point::FixedPoint16>;
-using Plane3Q32 = Plane3<fixed_point::FixedPoint32>;
+using Plane3Q16 = Plane3<multiprecision::FixedPoint16>;
+using Plane3Q32 = Plane3<multiprecision::FixedPoint32>;
 
 } // namespace rtw::math

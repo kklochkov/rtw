@@ -71,7 +71,7 @@ public:
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
   constexpr const Matrix& as_matrix() const noexcept { return static_cast<const Matrix&>(*this); }
 
-  template <typename U = value_type, typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<U>>>
+  template <typename U = value_type, typename = std::enable_if_t<multiprecision::IS_ARITHMETIC_V<U>>>
   constexpr Vector<U, N> cast() const noexcept
   {
     return Vector<U, N>{as_matrix().template cast<U>()};
@@ -151,8 +151,8 @@ using Vector2 = Vector<T, 2>;
 using Vector2F = Vector2<float>;
 using Vector2D = Vector2<double>;
 using Vector2I = Vector2<std::int32_t>;
-using Vector2Q16 = Vector2<fixed_point::FixedPoint16>;
-using Vector2Q32 = Vector2<fixed_point::FixedPoint32>;
+using Vector2Q16 = Vector2<multiprecision::FixedPoint16>;
+using Vector2Q32 = Vector2<multiprecision::FixedPoint32>;
 
 /// 3D space aliases.
 template <typename T>
@@ -160,8 +160,8 @@ using Vector3 = Vector<T, 3>;
 using Vector3F = Vector3<float>;
 using Vector3D = Vector3<double>;
 using Vector3I = Vector3<std::int32_t>;
-using Vector3Q16 = Vector3<fixed_point::FixedPoint16>;
-using Vector3Q32 = Vector3<fixed_point::FixedPoint32>;
+using Vector3Q16 = Vector3<multiprecision::FixedPoint16>;
+using Vector3Q32 = Vector3<multiprecision::FixedPoint32>;
 
 /// Homogeneous 3D space aliases.
 template <typename T>
@@ -169,8 +169,8 @@ using Vector4 = Vector<T, 4>;
 using Vector4F = Vector4<float>;
 using Vector4D = Vector4<double>;
 using Vector4I = Vector4<std::int32_t>;
-using Vector4Q16 = Vector4<fixed_point::FixedPoint16>;
-using Vector4Q32 = Vector4<fixed_point::FixedPoint32>;
+using Vector4Q16 = Vector4<multiprecision::FixedPoint16>;
+using Vector4Q32 = Vector4<multiprecision::FixedPoint32>;
 
 template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, typename = std::enable_if_t<(P <= M)>>
 constexpr Vector<T, N> operator*(const Matrix<T, N, M>& lhs, const Vector<T, P>& rhs) noexcept

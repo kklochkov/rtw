@@ -1,7 +1,7 @@
 #pragma once
 
-#include "fixed_point/fixed_point.h"
 #include "math/point.h"
+#include "multiprecision/fixed_point.h"
 
 namespace rtw::math
 {
@@ -11,7 +11,7 @@ namespace rtw::math
 /// @param b The second value.
 /// @param t The interpolation factor.
 /// @return The interpolated value.
-template <typename T, typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<T>>>
+template <typename T, typename = std::enable_if_t<multiprecision::IS_ARITHMETIC_V<T>>>
 constexpr T lerp(const T a, const T b, const T t) noexcept
 {
   return a + (b - a) * t;

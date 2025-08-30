@@ -76,7 +76,7 @@ public:
   constexpr explicit operator Vector() const noexcept { return Vector(as_matrix()); }
   constexpr explicit operator Matrix() const noexcept { return as_matrix(); }
 
-  template <typename U = value_type, typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<U>>>
+  template <typename U = value_type, typename = std::enable_if_t<multiprecision::IS_ARITHMETIC_V<U>>>
   constexpr Point<U, N> cast() const noexcept
   {
     return Point<U, N>{as_matrix().template cast<U>()};
@@ -160,8 +160,8 @@ using Point2 = Point<T, 2>;
 using Point2F = Point2<float>;
 using Point2D = Point2<double>;
 using Point2I = Point2<std::int32_t>;
-using Point2Q16 = Point2<fixed_point::FixedPoint16>;
-using Point2Q32 = Point2<fixed_point::FixedPoint32>;
+using Point2Q16 = Point2<multiprecision::FixedPoint16>;
+using Point2Q32 = Point2<multiprecision::FixedPoint32>;
 
 /// 3D space aliases.
 template <typename T>
@@ -169,8 +169,8 @@ using Point3 = Point<T, 3>;
 using Point3F = Point3<float>;
 using Point3D = Point3<double>;
 using Point3I = Point3<std::int32_t>;
-using Point3Q16 = Point3<fixed_point::FixedPoint16>;
-using Point3Q32 = Point3<fixed_point::FixedPoint32>;
+using Point3Q16 = Point3<multiprecision::FixedPoint16>;
+using Point3Q32 = Point3<multiprecision::FixedPoint32>;
 
 /// Homogeneous 3D space aliases.
 template <typename T>
@@ -178,7 +178,7 @@ using Point4 = Point<T, 4>;
 using Point4F = Point4<float>;
 using Point4D = Point4<double>;
 using Point4I = Point4<std::int32_t>;
-using Point4Q16 = Point4<fixed_point::FixedPoint16>;
-using Point4Q32 = Point4<fixed_point::FixedPoint32>;
+using Point4Q16 = Point4<multiprecision::FixedPoint16>;
+using Point4Q32 = Point4<multiprecision::FixedPoint32>;
 
 } // namespace rtw::math

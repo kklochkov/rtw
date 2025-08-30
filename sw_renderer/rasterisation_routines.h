@@ -38,7 +38,7 @@ template <typename RasteriseCallbackT,
           typename = std::enable_if_t<details::IS_PIXEL_RASTERISE_CALLBACK_V<RasteriseCallbackT>>>
 void draw_line_dda(const Point2I& p0, const Point2I& p1, RasteriseCallbackT rasterise)
 {
-  using fixed_point::math::abs;
+  using multiprecision::math::abs;
   using std::abs;
 
   Vector2F delta = (p1 - p0).cast<single_precision>();
@@ -132,8 +132,8 @@ template <typename RasteriseCallbackT,
           typename = std::enable_if_t<details::IS_BARYCENTRIC_TRIANGLE_RASTERISE_CALLBACK_V<RasteriseCallbackT>>>
 void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2, RasteriseCallbackT rasterise)
 {
-  using fixed_point::math::ceil;
-  using fixed_point::math::floor;
+  using multiprecision::math::ceil;
+  using multiprecision::math::floor;
   using std::ceil;
   using std::floor;
 

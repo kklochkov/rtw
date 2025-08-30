@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants/math_constants.h"
-#include "fixed_point/fixed_point.h"
+#include "multiprecision/fixed_point.h"
 
 #include <cmath>
 
@@ -48,7 +48,7 @@ class Angle
 public:
   using value_type = T;
 
-  static_assert(fixed_point::IS_ARITHMETIC_V<value_type>, "T must be arithmetic");
+  static_assert(multiprecision::IS_ARITHMETIC_V<value_type>, "T must be arithmetic");
 
   constexpr Angle() noexcept = default;
   constexpr explicit Angle(const value_type value) noexcept : rad_(value) {}
@@ -116,8 +116,8 @@ private:
 
 using AngleF = Angle<float>;
 using AngleD = Angle<double>;
-using AngleQ16 = Angle<fixed_point::FixedPoint16>;
-using AngleQ32 = Angle<fixed_point::FixedPoint32>;
+using AngleQ16 = Angle<multiprecision::FixedPoint16>;
+using AngleQ32 = Angle<multiprecision::FixedPoint32>;
 
 template <typename T>
 Angle<T> normalize(const Angle<T>& angle) noexcept
@@ -207,7 +207,7 @@ struct EulerAngles
 
 using EulerAnglesF = EulerAngles<float>;
 using EulerAnglesD = EulerAngles<double>;
-using EulerAnglesQ16 = EulerAngles<fixed_point::FixedPoint16>;
-using EulerAnglesQ32 = EulerAngles<fixed_point::FixedPoint32>;
+using EulerAnglesQ16 = EulerAngles<multiprecision::FixedPoint16>;
+using EulerAnglesQ32 = EulerAngles<multiprecision::FixedPoint32>;
 
 } // namespace rtw::math

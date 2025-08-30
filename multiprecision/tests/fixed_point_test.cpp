@@ -1,5 +1,5 @@
-#include "fixed_point/fixed_point.h"
-#include "fixed_point/format.h"
+#include "multiprecision/fixed_point.h"
+#include "multiprecision/format.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -8,83 +8,83 @@
 
 TEST(FixedPoint8, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint8::BITS == 16);
-  static_assert(rtw::fixed_point::FixedPoint8::FRACTIONAL_BITS == 8);
-  static_assert(rtw::fixed_point::FixedPoint8::INTEGER_BITS == 7);
-  static_assert(rtw::fixed_point::FixedPoint8::ONE == 256);
-  static_assert(rtw::fixed_point::FixedPoint8::RESOLUTION == 0.00390625);
-  static_assert(rtw::fixed_point::FixedPoint8::min() == -128.0);
-  static_assert(rtw::fixed_point::FixedPoint8::max() == 127.99609375);
-  static_assert(rtw::fixed_point::FixedPoint8::PI_INTEGER == 804);
+  static_assert(rtw::multiprecision::FixedPoint8::BITS == 16);
+  static_assert(rtw::multiprecision::FixedPoint8::FRACTIONAL_BITS == 8);
+  static_assert(rtw::multiprecision::FixedPoint8::INTEGER_BITS == 7);
+  static_assert(rtw::multiprecision::FixedPoint8::ONE == 256);
+  static_assert(rtw::multiprecision::FixedPoint8::RESOLUTION == 0.00390625);
+  static_assert(rtw::multiprecision::FixedPoint8::min() == -128.0);
+  static_assert(rtw::multiprecision::FixedPoint8::max() == 127.99609375);
+  static_assert(rtw::multiprecision::FixedPoint8::PI_INTEGER == 804);
 }
 
 TEST(FixedPoint8u, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint8U::BITS == 16);
-  static_assert(rtw::fixed_point::FixedPoint8U::FRACTIONAL_BITS == 8);
-  static_assert(rtw::fixed_point::FixedPoint8U::INTEGER_BITS == 8);
-  static_assert(rtw::fixed_point::FixedPoint8U::ONE == 256);
-  static_assert(rtw::fixed_point::FixedPoint8U::RESOLUTION == 0.00390625);
-  static_assert(rtw::fixed_point::FixedPoint8U::min() == 0.0);
-  static_assert(rtw::fixed_point::FixedPoint8U::max() == 255.99609375);
-  static_assert(rtw::fixed_point::FixedPoint8U::PI_INTEGER == 804);
+  static_assert(rtw::multiprecision::FixedPoint8U::BITS == 16);
+  static_assert(rtw::multiprecision::FixedPoint8U::FRACTIONAL_BITS == 8);
+  static_assert(rtw::multiprecision::FixedPoint8U::INTEGER_BITS == 8);
+  static_assert(rtw::multiprecision::FixedPoint8U::ONE == 256);
+  static_assert(rtw::multiprecision::FixedPoint8U::RESOLUTION == 0.00390625);
+  static_assert(rtw::multiprecision::FixedPoint8U::min() == 0.0);
+  static_assert(rtw::multiprecision::FixedPoint8U::max() == 255.99609375);
+  static_assert(rtw::multiprecision::FixedPoint8U::PI_INTEGER == 804);
 }
 
 TEST(FixedPoint16, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint16::BITS == 32);
-  static_assert(rtw::fixed_point::FixedPoint16::FRACTIONAL_BITS == 16);
-  static_assert(rtw::fixed_point::FixedPoint16::INTEGER_BITS == 15);
-  static_assert(rtw::fixed_point::FixedPoint16::ONE == 65'536);
-  static_assert(rtw::fixed_point::FixedPoint16::RESOLUTION == 0.0000152587890625);
-  static_assert(rtw::fixed_point::FixedPoint16::min() == -32768.0);
-  static_assert(rtw::fixed_point::FixedPoint16::max() == 32767.999984741211);
-  static_assert(rtw::fixed_point::FixedPoint16::PI_INTEGER == 205'887);
+  static_assert(rtw::multiprecision::FixedPoint16::BITS == 32);
+  static_assert(rtw::multiprecision::FixedPoint16::FRACTIONAL_BITS == 16);
+  static_assert(rtw::multiprecision::FixedPoint16::INTEGER_BITS == 15);
+  static_assert(rtw::multiprecision::FixedPoint16::ONE == 65'536);
+  static_assert(rtw::multiprecision::FixedPoint16::RESOLUTION == 0.0000152587890625);
+  static_assert(rtw::multiprecision::FixedPoint16::min() == -32768.0);
+  static_assert(rtw::multiprecision::FixedPoint16::max() == 32767.999984741211);
+  static_assert(rtw::multiprecision::FixedPoint16::PI_INTEGER == 205'887);
 }
 
 TEST(FixedPoint16U, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint16U::BITS == 32);
-  static_assert(rtw::fixed_point::FixedPoint16U::FRACTIONAL_BITS == 16);
-  static_assert(rtw::fixed_point::FixedPoint16U::INTEGER_BITS == 16);
-  static_assert(rtw::fixed_point::FixedPoint16U::ONE == 65'536);
-  static_assert(rtw::fixed_point::FixedPoint16U::RESOLUTION == 0.0000152587890625);
-  static_assert(rtw::fixed_point::FixedPoint16U::min() == 0.0);
-  static_assert(rtw::fixed_point::FixedPoint16U::max() == 65535.999984741211);
-  static_assert(rtw::fixed_point::FixedPoint16U::PI_INTEGER == 205'887);
+  static_assert(rtw::multiprecision::FixedPoint16U::BITS == 32);
+  static_assert(rtw::multiprecision::FixedPoint16U::FRACTIONAL_BITS == 16);
+  static_assert(rtw::multiprecision::FixedPoint16U::INTEGER_BITS == 16);
+  static_assert(rtw::multiprecision::FixedPoint16U::ONE == 65'536);
+  static_assert(rtw::multiprecision::FixedPoint16U::RESOLUTION == 0.0000152587890625);
+  static_assert(rtw::multiprecision::FixedPoint16U::min() == 0.0);
+  static_assert(rtw::multiprecision::FixedPoint16U::max() == 65535.999984741211);
+  static_assert(rtw::multiprecision::FixedPoint16U::PI_INTEGER == 205'887);
 }
 
 TEST(FixedPoint32, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint32::BITS == 64);
-  static_assert(rtw::fixed_point::FixedPoint32::FRACTIONAL_BITS == 32);
-  static_assert(rtw::fixed_point::FixedPoint32::INTEGER_BITS == 31);
-  static_assert(rtw::fixed_point::FixedPoint32::ONE == 4'294'967'296);
-  static_assert(rtw::fixed_point::FixedPoint32::RESOLUTION == 0.00000000023283064365386962890625);
-  static_assert(rtw::fixed_point::FixedPoint32::min() == -2147483648.0);
-  static_assert(rtw::fixed_point::FixedPoint32::max() == 2147483648.0);
-  static_assert(rtw::fixed_point::FixedPoint32::PI_INTEGER == 13'493'037'705);
+  static_assert(rtw::multiprecision::FixedPoint32::BITS == 64);
+  static_assert(rtw::multiprecision::FixedPoint32::FRACTIONAL_BITS == 32);
+  static_assert(rtw::multiprecision::FixedPoint32::INTEGER_BITS == 31);
+  static_assert(rtw::multiprecision::FixedPoint32::ONE == 4'294'967'296);
+  static_assert(rtw::multiprecision::FixedPoint32::RESOLUTION == 0.00000000023283064365386962890625);
+  static_assert(rtw::multiprecision::FixedPoint32::min() == -2147483648.0);
+  static_assert(rtw::multiprecision::FixedPoint32::max() == 2147483648.0);
+  static_assert(rtw::multiprecision::FixedPoint32::PI_INTEGER == 13'493'037'705);
 }
 
 TEST(FixedPoint32U, constants)
 {
-  static_assert(rtw::fixed_point::FixedPoint32U::BITS == 64);
-  static_assert(rtw::fixed_point::FixedPoint32U::FRACTIONAL_BITS == 32);
-  static_assert(rtw::fixed_point::FixedPoint32U::INTEGER_BITS == 32);
-  static_assert(rtw::fixed_point::FixedPoint32U::ONE == 4'294'967'296);
-  static_assert(rtw::fixed_point::FixedPoint32U::RESOLUTION == 0.00000000023283064365386962890625);
-  static_assert(rtw::fixed_point::FixedPoint32U::min() == 0.0);
-  static_assert(rtw::fixed_point::FixedPoint32U::max() == 4294967296.0);
-  static_assert(rtw::fixed_point::FixedPoint32U::PI_INTEGER == 13'493'037'705);
+  static_assert(rtw::multiprecision::FixedPoint32U::BITS == 64);
+  static_assert(rtw::multiprecision::FixedPoint32U::FRACTIONAL_BITS == 32);
+  static_assert(rtw::multiprecision::FixedPoint32U::INTEGER_BITS == 32);
+  static_assert(rtw::multiprecision::FixedPoint32U::ONE == 4'294'967'296);
+  static_assert(rtw::multiprecision::FixedPoint32U::RESOLUTION == 0.00000000023283064365386962890625);
+  static_assert(rtw::multiprecision::FixedPoint32U::min() == 0.0);
+  static_assert(rtw::multiprecision::FixedPoint32U::max() == 4294967296.0);
+  static_assert(rtw::multiprecision::FixedPoint32U::PI_INTEGER == 13'493'037'705);
 }
 // -----------------------------------------------------------------------------------------------
 template <typename T>
 class FixedPointTest : public ::testing::Test
 {};
 
-using FixedPointTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint8U, rtw::fixed_point::FixedPoint16,
-                     rtw::fixed_point::FixedPoint16U, rtw::fixed_point::FixedPoint32, rtw::fixed_point::FixedPoint32U>;
+using FixedPointTypes = ::testing::Types<rtw::multiprecision::FixedPoint8, rtw::multiprecision::FixedPoint8U,
+                                         rtw::multiprecision::FixedPoint16, rtw::multiprecision::FixedPoint16U,
+                                         rtw::multiprecision::FixedPoint32, rtw::multiprecision::FixedPoint32U>;
 TYPED_TEST_SUITE(FixedPointTest, FixedPointTypes, );
 
 TYPED_TEST(FixedPointTest, traits)
@@ -235,8 +235,8 @@ public:
   constexpr static std::array<std::uint32_t, 10> CTOR_TEST_EXPECTED_UINT32 = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
 };
 
-using SignedFixedPointTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8, rtw::fixed_point::FixedPoint16, rtw::fixed_point::FixedPoint32>;
+using SignedFixedPointTypes = ::testing::Types<rtw::multiprecision::FixedPoint8, rtw::multiprecision::FixedPoint16,
+                                               rtw::multiprecision::FixedPoint32>;
 TYPED_TEST_SUITE(SignedFixedPointTest, SignedFixedPointTypes, );
 
 TYPED_TEST(SignedFixedPointTest, ctor)
@@ -419,8 +419,8 @@ public:
   constexpr static std::array<std::uint32_t, 10> CTOR_TEST_EXPECTED_UINT32 = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
 };
 
-using UnsignedFixedPointTypes =
-    ::testing::Types<rtw::fixed_point::FixedPoint8U, rtw::fixed_point::FixedPoint16U, rtw::fixed_point::FixedPoint32U>;
+using UnsignedFixedPointTypes = ::testing::Types<rtw::multiprecision::FixedPoint8U, rtw::multiprecision::FixedPoint16U,
+                                                 rtw::multiprecision::FixedPoint32U>;
 TYPED_TEST_SUITE(UnsignedFixedPointTest, UnsignedFixedPointTypes, );
 
 TYPED_TEST(UnsignedFixedPointTest, ctor)
@@ -572,73 +572,73 @@ TYPED_TEST(UnsignedFixedPointTest, arithmetic_saturate)
 TEST(fixed_point, operator_stream)
 {
   {
-    const rtw::fixed_point::FixedPoint8 a(1.23);
+    const rtw::multiprecision::FixedPoint8 a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "fp8.8(1.23047)");
   }
   {
-    const rtw::fixed_point::FixedPoint16 a(1.23);
+    const rtw::multiprecision::FixedPoint16 a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "fp16.16(1.23)");
   }
   {
-    const rtw::fixed_point::FixedPoint32 a(1.23);
+    const rtw::multiprecision::FixedPoint32 a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "fp32.32(1.23)");
   }
   {
-    const rtw::fixed_point::FixedPoint8U a(1.23);
+    const rtw::multiprecision::FixedPoint8U a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp8.8(1.23047)");
   }
   {
-    const rtw::fixed_point::FixedPoint16U a(1.23);
+    const rtw::multiprecision::FixedPoint16U a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp16.16(1.23)");
   }
   {
-    const rtw::fixed_point::FixedPoint32U a(1.23);
+    const rtw::multiprecision::FixedPoint32U a(1.23);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp32.32(1.23)");
   }
   {
-    const rtw::fixed_point::FixedPoint8 a(-123);
+    const rtw::multiprecision::FixedPoint8 a(-123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "fp8.8(-123)");
   }
   {
-    const rtw::fixed_point::FixedPoint16 a(-123);
+    const rtw::multiprecision::FixedPoint16 a(-123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "fp16.16(-123)");
   }
   {
-    const rtw::fixed_point::FixedPoint32 a(-123);
+    const rtw::multiprecision::FixedPoint32 a(-123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "fp32.32(-123)");
   }
   {
-    const rtw::fixed_point::FixedPoint8U a(123);
+    const rtw::multiprecision::FixedPoint8U a(123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp8.8(123)");
   }
   {
-    const rtw::fixed_point::FixedPoint16U a(123);
+    const rtw::multiprecision::FixedPoint16U a(123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp16.16(123)");
   }
   {
-    const rtw::fixed_point::FixedPoint32U a(123);
+    const rtw::multiprecision::FixedPoint32U a(123);
     std::stringstream ss;
     ss << a;
     EXPECT_EQ(ss.str(), "ufp32.32(123)");

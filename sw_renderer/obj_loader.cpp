@@ -75,9 +75,11 @@ void parse_face(const std::string& line, Face& face)
   {
     iss.ignore(1); // Ignore " "
     std::uint32_t index = 0U;
-    if (const bool ok = try_parse_index(iss, index))
+
+    const bool ok = try_parse_index(iss, index);
+    assert(ok);
+    if (ok)
     {
-      assert(ok);
       face.vertex_indices[i] = index;
     }
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "fixed_point/fixed_point.h"
-#include "fixed_point/math.h"
+#include "multiprecision/fixed_point.h"
+#include "multiprecision/math.h"
 
 #include <array>
 #include <cassert>
@@ -113,7 +113,7 @@ public:
 
   static_assert(ROWS > 0, "ROWS must be greater than 0");
   static_assert(COLS > 0, "COLS must be greater than 0");
-  static_assert(fixed_point::IS_ARITHMETIC_V<T>, "T must be arithmetic");
+  static_assert(multiprecision::IS_ARITHMETIC_V<T>, "T must be arithmetic");
 
   constexpr explicit Matrix(UninitializedTag /*tag*/) noexcept {}
   constexpr explicit Matrix(ZeroTag /*tag*/) noexcept : data_{value_type{0}} {}
@@ -130,7 +130,7 @@ public:
   template <typename... ArgsT,
             typename = std::enable_if_t<
                 (sizeof...(ArgsT) <= SIZE)
-                && (fixed_point::IS_ARITHMETIC_V<std::remove_cv_t<std::remove_reference_t<ArgsT>>> && ...)>>
+                && (multiprecision::IS_ARITHMETIC_V<std::remove_cv_t<std::remove_reference_t<ArgsT>>> && ...)>>
   constexpr explicit Matrix(ArgsT&&... args) noexcept : data_{std::forward<ArgsT>(args)...}
   {
   }
@@ -147,7 +147,7 @@ public:
   constexpr std::uint16_t cols() const noexcept { return COLS; }
   constexpr std::uint32_t size() const noexcept { return SIZE; }
 
-  template <typename U = value_type, typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<U>>>
+  template <typename U = value_type, typename = std::enable_if_t<multiprecision::IS_ARITHMETIC_V<U>>>
   constexpr Matrix<U, ROWS, COLS> cast() const noexcept
   {
     Matrix<U, ROWS, COLS> result{math::UNINITIALIZED};
@@ -159,7 +159,7 @@ public:
   }
 
   template <typename U = value_type,
-            typename = std::enable_if_t<fixed_point::IS_ARITHMETIC_V<U> && fixed_point::IS_COMPLEX_V<T>>>
+            typename = std::enable_if_t<multiprecision::IS_ARITHMETIC_V<U> && multiprecision::IS_COMPLEX_V<T>>>
   constexpr Matrix<U, ROWS, COLS> real() const noexcept
   {
     Matrix<U, ROWS, COLS> result{math::UNINITIALIZED};
@@ -483,22 +483,22 @@ template <typename T>
 using Matrix2x2 = Matrix<T, 2, 2>;
 using Matrix2x2F = Matrix2x2<float>;
 using Matrix2x2D = Matrix2x2<double>;
-using Matrix2x2Q16 = Matrix2x2<fixed_point::FixedPoint16>;
-using Matrix2x2Q32 = Matrix2x2<fixed_point::FixedPoint32>;
+using Matrix2x2Q16 = Matrix2x2<multiprecision::FixedPoint16>;
+using Matrix2x2Q32 = Matrix2x2<multiprecision::FixedPoint32>;
 
 template <typename T>
 using Matrix3x3 = Matrix<T, 3, 3>;
 using Matrix3x3F = Matrix3x3<float>;
 using Matrix3x3D = Matrix3x3<double>;
-using Matrix3x3Q16 = Matrix3x3<fixed_point::FixedPoint16>;
-using Matrix3x3Q32 = Matrix3x3<fixed_point::FixedPoint32>;
+using Matrix3x3Q16 = Matrix3x3<multiprecision::FixedPoint16>;
+using Matrix3x3Q32 = Matrix3x3<multiprecision::FixedPoint32>;
 
 template <typename T>
 using Matrix4x4 = Matrix<T, 4, 4>;
 using Matrix4x4F = Matrix4x4<float>;
 using Matrix4x4D = Matrix4x4<double>;
-using Matrix4x4Q16 = Matrix4x4<fixed_point::FixedPoint16>;
-using Matrix4x4Q32 = Matrix4x4<fixed_point::FixedPoint32>;
+using Matrix4x4Q16 = Matrix4x4<multiprecision::FixedPoint16>;
+using Matrix4x4Q32 = Matrix4x4<multiprecision::FixedPoint32>;
 
 /// Compute the determinant of a square, 2 by 2 matrix.
 /// https://en.m.wikipedia.org/wiki/Determinant
@@ -539,7 +539,7 @@ constexpr T determinant(const Matrix<T, ROWS, COLS>& matrix) noexcept
   T det{0};
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {
-    const auto sign = fixed_point::sign(col % 2);
+    const auto sign = multiprecision::sign(col % 2);
     det += sign * matrix(0, col) * determinant(matrix.minor(0, col));
   }
   return det;
@@ -613,7 +613,7 @@ constexpr T norm2(const Matrix<T, ROWS, 1>& vector) noexcept
 template <typename T, std::uint16_t ROWS>
 constexpr T norm(const Matrix<T, ROWS, 1>& vector) noexcept
 {
-  using fixed_point::math::sqrt;
+  using multiprecision::math::sqrt;
   using std::sqrt;
   return sqrt(norm2(vector));
 }
@@ -738,18 +738,18 @@ constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>&
     norm += v[row] * v[row];
   }
 
-  using fixed_point::math::sqrt;
+  using multiprecision::math::sqrt;
   using std::sqrt;
   norm = sqrt(norm);
 
   T sign{1};
-  if constexpr (fixed_point::IS_COMPLEX_V<T>)
+  if constexpr (multiprecision::IS_COMPLEX_V<T>)
   {
-    sign = fixed_point::sign(v[start_row].real() < 0);
+    sign = multiprecision::sign(v[start_row].real() < 0);
   }
   else
   {
-    sign = fixed_point::sign(v[start_row] < 0);
+    sign = multiprecision::sign(v[start_row] < 0);
   }
 
   const auto alpha = sign * norm; // Adjust the sign of norm to prevent numerical instability.
@@ -854,7 +854,7 @@ namespace details
 template <typename T>
 constexpr T hypot(const T a, const T b) noexcept
 {
-  using fixed_point::math::sqrt;
+  using multiprecision::math::sqrt;
   using std::sqrt;
   return sqrt((a * a) + (b * b));
 }
@@ -1011,7 +1011,7 @@ namespace cholesky
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
 constexpr Matrix<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
 {
-  using fixed_point::math::sqrt;
+  using multiprecision::math::sqrt;
   using std::sqrt;
 
   Matrix<T, ROWS, COLS> result{math::ZERO};
@@ -1144,7 +1144,7 @@ template <typename T, std::uint16_t ROWS>
 constexpr T partial_norm(const Matrix<T, ROWS, 1U>& v, const std::uint16_t rows) noexcept
 {
   // Create a MatrixView or VectorView and implement some methods there?
-  using fixed_point::math::sqrt;
+  using multiprecision::math::sqrt;
   using std::sqrt;
 
   T norm{0};
@@ -1176,7 +1176,7 @@ template <typename T, std::uint16_t ROWS>
 constexpr void inplace_normalize_householder_vector(Matrix<T, ROWS, 1U>& v, const std::uint16_t rows) noexcept
 {
   const std::uint16_t start_row = 0U;
-  const auto sign = fixed_point::sign(v[start_row] < 0);
+  const auto sign = multiprecision::sign(v[start_row] < 0);
   const auto norm = partial_norm(v, rows);
   const auto alpha = sign * norm; // Adjust the sign of norm to prevent numerical instability.
   v[start_row] += alpha;          // v[start_row] = v[start_row] + sign(v[start_row]) * ||v||
@@ -1300,8 +1300,8 @@ template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename ComplexT 
 constexpr Matrix<ComplexT, ROWS, 1U> extract_eigenvalues(const Matrix<T, ROWS, COLS>& matrix,
                                                          const T tolerance) noexcept
 {
-  using fixed_point::math::abs;
-  using fixed_point::math::sqrt;
+  using multiprecision::math::abs;
+  using multiprecision::math::sqrt;
   using std::abs;
   using std::sqrt;
 
@@ -1325,7 +1325,7 @@ constexpr Matrix<ComplexT, ROWS, 1U> extract_eigenvalues(const Matrix<T, ROWS, C
       else
       {
         // Real eigenvalues
-        const auto sign = fixed_point::sign(half_trace < 0);
+        const auto sign = multiprecision::sign(half_trace < 0);
         const auto eigenvalue1 = half_trace + (sign * sqrt_discriminant);
         const auto eigenvalue2 = trace_det.determinant / eigenvalue1;
         result[row] = ComplexT{eigenvalue1, T{0}};
@@ -1355,7 +1355,7 @@ template <typename T>
 constexpr T default_tolerance() noexcept
 {
   std::uint16_t tolerance_factor = 100U;
-  if constexpr (fixed_point::IS_FIXED_POINT_V<T>)
+  if constexpr (multiprecision::IS_FIXED_POINT_V<T>)
   {
     tolerance_factor = 1;
   }
@@ -1382,7 +1382,7 @@ constexpr EigenvaluesResult<T, ROWS> eigenvalues(const Matrix<T, ROWS, COLS>& ma
                                                  const std::uint16_t max_iterations = 1'000U,
                                                  const T tolerance = default_tolerance<T>()) noexcept
 {
-  using fixed_point::math::abs;
+  using multiprecision::math::abs;
   using std::abs;
 
   auto hessenberg = details::hessenberg(matrix);

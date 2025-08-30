@@ -200,7 +200,7 @@ void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF
 
 void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
 {
-  using fixed_point::math::clamp;
+  using multiprecision::math::clamp;
   using std::clamp;
 
   constexpr single_precision ZERO{0.0F};

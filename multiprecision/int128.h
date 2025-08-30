@@ -1,13 +1,13 @@
 #pragma once
 
 #include "constants/math_constants.h"
-#include "fixed_point/operations.h"
+#include "multiprecision/operations.h"
 
 #include <cassert>
 #include <cstdint>
 #include <limits>
 
-namespace rtw::fixed_point
+namespace rtw::multiprecision
 {
 
 enum class ArithmeticType : std::uint8_t
@@ -457,7 +457,7 @@ struct IsSignedBigInt<Int<T>> : std::bool_constant<std::is_signed_v<T>>
 template <typename T>
 constexpr inline bool IS_SIGNED_BIG_INT_V = IsSignedBigInt<T>::value;
 
-} // namespace rtw::fixed_point
+} // namespace rtw::multiprecision
 
 // std traits
 namespace std
@@ -465,9 +465,9 @@ namespace std
 // NOLINTBEGIN(readability-identifier-naming)
 
 template <typename T>
-struct numeric_limits<rtw::fixed_point::Int<T>>
+struct numeric_limits<rtw::multiprecision::Int<T>>
 {
-  using Int = rtw::fixed_point::Int<T>;
+  using Int = rtw::multiprecision::Int<T>;
 
   constexpr static bool is_specialized = true;
   constexpr static bool is_signed = std::is_signed_v<T>;

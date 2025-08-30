@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <type_traits>
 
-namespace rtw::fixed_point
+namespace rtw::multiprecision
 {
 
 /// Sign bit of an integer.
@@ -59,4 +59,4 @@ constexpr F fmod(const F dividend, const F divisor) noexcept
   return dividend - (divisor * static_cast<F>(static_cast<std::int64_t>(dividend / divisor)));
 }
 
-} // namespace rtw::fixed_point
+} // namespace rtw::multiprecision

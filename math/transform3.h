@@ -1,9 +1,9 @@
 #pragma once
 
-#include "fixed_point/math.h"
 #include "math/angle.h"
 #include "math/matrix.h"
 #include "math/vector.h"
+#include "multiprecision/math.h"
 
 namespace rtw::math::transform3
 {
@@ -60,8 +60,8 @@ constexpr Matrix3x3<T> make_scale(const Vector3<T>& scale) noexcept
 template <typename T>
 constexpr Matrix3x3<T> make_rotation_x(const Angle<T> roll) noexcept
 {
-  using rtw::fixed_point::math::cos;
-  using rtw::fixed_point::math::sin;
+  using rtw::multiprecision::math::cos;
+  using rtw::multiprecision::math::sin;
   using std::cos;
   using std::sin;
 
@@ -93,8 +93,8 @@ constexpr Matrix3x3<T> make_so3_x(const Angle<T> roll) noexcept
 template <typename T>
 constexpr Matrix3x3<T> make_rotation_y(const Angle<T> pitch) noexcept
 {
-  using rtw::fixed_point::math::cos;
-  using rtw::fixed_point::math::sin;
+  using rtw::multiprecision::math::cos;
+  using rtw::multiprecision::math::sin;
   using std::cos;
   using std::sin;
 
@@ -126,8 +126,8 @@ constexpr Matrix3x3<T> make_so3_y(const Angle<T> pitch) noexcept
 template <typename T>
 constexpr Matrix3x3<T> make_rotation_z(const Angle<T> yaw) noexcept
 {
-  using rtw::fixed_point::math::cos;
-  using rtw::fixed_point::math::sin;
+  using rtw::multiprecision::math::cos;
+  using rtw::multiprecision::math::sin;
   using std::cos;
   using std::sin;
 

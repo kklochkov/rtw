@@ -1,14 +1,14 @@
 #pragma once
 
 #include "constants/math_constants.h"
-#include "fixed_point/int128.h"
-#include "fixed_point/operations.h"
+#include "multiprecision/int128.h"
+#include "multiprecision/operations.h"
 
 #include <algorithm>
 #include <complex>
 #include <cstdint>
 
-namespace rtw::fixed_point
+namespace rtw::multiprecision
 {
 
 struct RawValueConstructTag
@@ -259,6 +259,8 @@ using FixedPoint8U = FixedPoint<std::uint16_t, 8, std::uint32_t>;
 using FixedPoint16U = FixedPoint<std::uint32_t, 16, std::uint64_t>;
 using FixedPoint32U = FixedPoint<std::uint64_t, 32, Int128U>;
 
+// ----------------------------------------------------------------------------
+
 template <typename T>
 struct IsFixedPoint : std::false_type
 {};
@@ -296,7 +298,7 @@ template <typename T>
 constexpr inline bool IS_ARITHMETIC_V =
     std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T> || IS_COMPLEX_V<T>;
 
-} // namespace rtw::fixed_point
+} // namespace rtw::multiprecision
 
 // std traits
 namespace std
@@ -304,9 +306,9 @@ namespace std
 
 // NOLINTBEGIN(readability-identifier-naming)
 template <typename T, std::int8_t FRAC_BITS, typename SaturationT>
-struct numeric_limits<rtw::fixed_point::FixedPoint<T, FRAC_BITS, SaturationT>>
+struct numeric_limits<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>>
 {
-  using FixedPoint = rtw::fixed_point::FixedPoint<T, FRAC_BITS, SaturationT>;
+  using FixedPoint = rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>;
 
   constexpr static bool is_specialized = true;
   constexpr static bool is_signed = std::is_signed_v<T>;

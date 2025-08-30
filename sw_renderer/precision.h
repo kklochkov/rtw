@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef RTW_USE_FIXED_POINT
-#include "fixed_point/fixed_point.h"
+#include "multiprecision/fixed_point.h"
 #endif
 
 #include <limits>
@@ -10,8 +10,8 @@ namespace rtw::sw_renderer
 {
 
 #ifdef RTW_USE_FIXED_POINT
-using single_precision = fixed_point::FixedPoint16;
-using double_precision = fixed_point::FixedPoint32;
+using single_precision = multiprecision::FixedPoint16;
+using double_precision = multiprecision::FixedPoint32;
 
 // unit of least precision
 constexpr inline single_precision ULP{1};
