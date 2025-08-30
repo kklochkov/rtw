@@ -19,7 +19,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//constants:math_constants",
-        "//fixed_point",
+        "//multiprecision",
     ],
 )
 
@@ -29,7 +29,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":math",
-        "//fixed_point:format",
+        "//multiprecision:format",
         "@fmt",
     ],
 )

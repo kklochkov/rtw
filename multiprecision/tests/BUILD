@@ -1,7 +1,7 @@
 load("//:cc_defs.bzl", "cc_test_with_llvm_symbolizer")
 
 cc_test_with_llvm_symbolizer(
-    name = "fixed_point_test",
+    name = "multiprecision_test",
     size = "small",
     srcs = [
         "fixed_point_test.cpp",
@@ -11,8 +11,8 @@ cc_test_with_llvm_symbolizer(
     ],
     tags = ["no-clang-tidy"],
     deps = [
-        "//fixed_point",
-        "//fixed_point:format",
+        "//multiprecision",
+        "//multiprecision:format",
         "@googletest//:gtest_main",
     ],
 )

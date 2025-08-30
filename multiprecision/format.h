@@ -1,14 +1,14 @@
 #pragma once
 
-#include "fixed_point/fixed_point.h"
-#include "fixed_point/int128.h"
+#include "multiprecision/fixed_point.h"
+#include "multiprecision/int128.h"
 
 #include <fmt/ostream.h>
 
 #include <iomanip>
 #include <ostream>
 
-namespace rtw::fixed_point
+namespace rtw::multiprecision
 {
 
 template <typename T>
@@ -42,18 +42,18 @@ std::ostream& operator<<(std::ostream& os, const FixedPoint<T, FRAC_BITS, Satura
   return os;
 }
 
-} // namespace rtw::fixed_point
+} // namespace rtw::multiprecision
 
 // NOLINTBEGIN(readability-identifier-naming)
 namespace fmt
 {
 
 template <typename T>
-struct formatter<rtw::fixed_point::Int<T>> : ostream_formatter
+struct formatter<rtw::multiprecision::Int<T>> : ostream_formatter
 {};
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-struct formatter<rtw::fixed_point::FixedPoint<T, FRAC_BITS, SaturationT>> : ostream_formatter
+struct formatter<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>> : ostream_formatter
 {};
 
 } // namespace fmt

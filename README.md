@@ -23,7 +23,7 @@ bazel test //math/...
 ```
 
 ## Currently implemented:
-- [x] [fixed_point](fixed_point) - A fixed-point arithmetic library and a set of math functions including trigonometric functions.
+- [x] [multiprecision](multiprecision) - A set of classes to work with big ints and fixed-point. Includes arithmetic library and a set of math functions including trigonometric functions.
 - [x] [math](math) - A math library, that is compatible with fixed-point arithmetic library.
 - [x] [software renderer](sw_renderer) - A simple software renderer that can optionally built to use fixed-point arithmetic library.
 - [x] [ecs](ecs) - Entity Component System that has type safety and efficient data management.

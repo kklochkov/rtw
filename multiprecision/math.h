@@ -1,10 +1,10 @@
 #pragma once
 
-#include "fixed_point/fixed_point.h"
+#include "multiprecision/fixed_point.h"
 
 #include <array>
 
-namespace rtw::fixed_point::math
+namespace rtw::multiprecision::math
 {
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
@@ -167,7 +167,7 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> normalize_angle(FixedPoint<T, FR
 /// Side note: an alternative approach is to use Chebyshev polynomials or Bhaskara I's sine approximation formula.
 /// Robin Green's "Even Faster Math Functions" provides a good overview of the different approaches.
 /// https://basesandframes.wordpress.com/2020/04/04/even-faster-math-functions/
-/// See also fixed_point/analysis/chebyshev_trig.py for comparing the Taylor series and Chebyshev polynomials.
+/// See also multiprecision/analysis/chebyshev_trig.py for comparing the Taylor series and Chebyshev polynomials.
 /// @param value The angle in radians.
 /// @return The sine of the angle.
 /// @{
@@ -240,4 +240,4 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> tan(const FixedPoint<T, FRAC_BIT
   return two * half_tan / (FixedPoint{1} - half_tan_pow_2);
 }
 
-} // namespace rtw::fixed_point::math
+} // namespace rtw::multiprecision::math

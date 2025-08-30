@@ -1,10 +1,10 @@
 #pragma once
 
-#include "fixed_point/format.h"
 #include "math/barycentric.h"
 #include "math/matrix.h"
 #include "math/point.h"
 #include "math/vector.h"
+#include "multiprecision/format.h"
 
 #include <fmt/ostream.h>
 

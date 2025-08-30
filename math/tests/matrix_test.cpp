@@ -9,7 +9,7 @@
 
 // FixedPoint16 has lower precision and requires a larger epsilon
 template <typename T>
-constexpr auto EPSILON = std::is_same_v<typename T::value_type, rtw::fixed_point::FixedPoint16> ? 7.0e-3F : 1.0e-4F;
+constexpr auto EPSILON = std::is_same_v<typename T::value_type, rtw::multiprecision::FixedPoint16> ? 7.0e-3F : 1.0e-4F;
 
 template <typename T>
 class Matrix2x2Test : public ::testing::Test
@@ -1163,8 +1163,8 @@ TYPED_TEST(Matrix4x4Test, minor)
 //-----------------------------------------------------------------------------------------
 using Matrix5x5F = rtw::math::Matrix<float, 5, 5>;
 using Matrix5x5D = rtw::math::Matrix<double, 5, 5>;
-using Matrix5x5Q16 = rtw::math::Matrix<rtw::fixed_point::FixedPoint16, 5, 5>;
-using Matrix5x5Q32 = rtw::math::Matrix<rtw::fixed_point::FixedPoint32, 5, 5>;
+using Matrix5x5Q16 = rtw::math::Matrix<rtw::multiprecision::FixedPoint16, 5, 5>;
+using Matrix5x5Q32 = rtw::math::Matrix<rtw::multiprecision::FixedPoint32, 5, 5>;
 
 template <typename T>
 class Matrix5x5Test : public ::testing::Test

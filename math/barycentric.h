@@ -86,8 +86,8 @@ public:
 
 using BarycentricF = Barycentric<float>;
 using BarycentricD = Barycentric<double>;
-using BarycentricQ16 = Barycentric<fixed_point::FixedPoint16>;
-using BarycentricQ32 = Barycentric<fixed_point::FixedPoint32>;
+using BarycentricQ16 = Barycentric<multiprecision::FixedPoint16>;
+using BarycentricQ32 = Barycentric<multiprecision::FixedPoint32>;
 
 /// Make a barycentric coordinate from a point and a triangle.
 /// The winding order is counter-clockwise.

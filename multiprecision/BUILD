@@ -1,7 +1,7 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "fixed_point",
+    name = "multiprecision",
     hdrs = [
         "fixed_point.h",
         "int128.h",
@@ -17,7 +17,7 @@ cc_library(
     hdrs = ["format.h"],
     visibility = ["//visibility:public"],
     deps = [
-        ":fixed_point",
+        ":multiprecision",
         "@fmt",
     ],
 )

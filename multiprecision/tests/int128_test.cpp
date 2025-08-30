@@ -1,5 +1,5 @@
-#include "fixed_point/format.h"
-#include "fixed_point/int128.h"
+#include "multiprecision/format.h"
+#include "multiprecision/int128.h"
 
 #include <gtest/gtest.h>
 
@@ -7,7 +7,7 @@
 
 // These aliases are used solely for the purpose of testing of the Int class against the built-in integer types.
 // They should not be used in production code.
-namespace rtw::fixed_point
+namespace rtw::multiprecision
 {
 using Int16 = Int<std::int8_t>;
 using Int16U = Int<std::uint8_t>;
@@ -15,7 +15,7 @@ using Int32 = Int<std::int16_t>;
 using Int32U = Int<std::uint16_t>;
 using Int64 = Int<std::int32_t>;
 using Int64U = Int<std::uint32_t>;
-} // namespace rtw::fixed_point
+} // namespace rtw::multiprecision
 
 // -----------------------------------------------------------------------------
 
@@ -105,13 +105,13 @@ void unpack_hi_lo(const PackedIntT packed, HiIntT& hi, LoIntT& lo)
 template <typename IntT, typename ResultT, typename ContainerT>
 void check_conversion_ctor(const ContainerT& test_case)
 {
-  using CustomIntT = rtw::fixed_point::Int<IntT>;
+  using CustomIntT = rtw::multiprecision::Int<IntT>;
 
   for (const auto& expected : test_case)
   {
     const CustomIntT result{expected};
     const auto result_t = pack_hi_lo<ResultT>(result.hi(), result.lo());
-    const IntT expected_hi = -rtw::fixed_point::sign_bit(expected); // The sign is in the hi part
+    const IntT expected_hi = -rtw::multiprecision::sign_bit(expected); // The sign is in the hi part
     const auto expected_lo =
         static_cast<typename CustomIntT::lo_type>(expected); // The lo part is the same as the input
     EXPECT_EQ(result_t, expected);
@@ -182,7 +182,7 @@ void check_operation(const typename CustomIntT::hi_type a, const typename Custom
 // NOLINTEND(readability-function-cognitive-complexity)
 
 template <typename IntT, typename ResultT, OperationType OPERATION, typename ContainerT,
-          typename CustomIntT = rtw::fixed_point::Int<IntT>>
+          typename CustomIntT = rtw::multiprecision::Int<IntT>>
 void check(const ContainerT& test_case)
 {
   for (const auto& [a, b] : test_case)
@@ -199,7 +199,7 @@ void check(const ContainerT& test_case)
 
 TEST(Int16, conversion_ctor)
 {
-  using rtw::fixed_point::Int16;
+  using rtw::multiprecision::Int16;
 
   constexpr std::array TEST_CASE = {
       std::int8_t{0}, std::int8_t{-128}, std::int8_t{-19}, std::int8_t{17}, std::int8_t{127},
@@ -210,7 +210,7 @@ TEST(Int16, conversion_ctor)
 
 TEST(Int16U, conversion_ctor)
 {
-  using rtw::fixed_point::Int16U;
+  using rtw::multiprecision::Int16U;
 
   constexpr std::array TEST_CASE = {
       std::uint8_t{0},
@@ -224,7 +224,7 @@ TEST(Int16U, conversion_ctor)
 
 TEST(Int32, conversion_ctor)
 {
-  using rtw::fixed_point::Int32;
+  using rtw::multiprecision::Int32;
 
   constexpr std::array TEST_CASE = {
       std::int16_t{0}, std::int16_t{-32'768}, std::int16_t{-19}, std::int16_t{17}, std::int16_t{32'767},
@@ -235,7 +235,7 @@ TEST(Int32, conversion_ctor)
 
 TEST(Int32U, conversion_ctor)
 {
-  using rtw::fixed_point::Int32U;
+  using rtw::multiprecision::Int32U;
 
   constexpr std::array TEST_CASE = {
       std::uint16_t{0},
@@ -249,7 +249,7 @@ TEST(Int32U, conversion_ctor)
 
 TEST(Int64, conversion_ctor)
 {
-  using rtw::fixed_point::Int64;
+  using rtw::multiprecision::Int64;
 
   constexpr std::array TEST_CASE = {
       std::int32_t{0}, std::int32_t{-2'147'483'648}, std::int32_t{-19}, std::int32_t{17}, std::int32_t{2'147'483'647},
@@ -260,7 +260,7 @@ TEST(Int64, conversion_ctor)
 
 TEST(Int64U, conversion_ctor)
 {
-  using rtw::fixed_point::Int64U;
+  using rtw::multiprecision::Int64U;
 
   constexpr std::array TEST_CASE = {
       std::uint32_t{0},
@@ -274,7 +274,7 @@ TEST(Int64U, conversion_ctor)
 
 TEST(Int16, arithmetic_operations)
 {
-  using rtw::fixed_point::Int16;
+  using rtw::multiprecision::Int16;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::int8_t, std::int8_t>{0, 0},      std::pair<std::int8_t, std::int8_t>{-128, -128},
@@ -293,7 +293,7 @@ TEST(Int16, arithmetic_operations)
 
 TEST(Int16U, arithmetic_operations)
 {
-  using rtw::fixed_point::Int16U;
+  using rtw::multiprecision::Int16U;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::uint8_t, std::uint8_t>{0, 0},   std::pair<std::uint8_t, std::uint8_t>{0, 255},
@@ -310,7 +310,7 @@ TEST(Int16U, arithmetic_operations)
 
 TEST(Int32, arithmetic_operations)
 {
-  using rtw::fixed_point::Int32;
+  using rtw::multiprecision::Int32;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::int16_t, std::int16_t>{0, 0},
@@ -333,7 +333,7 @@ TEST(Int32, arithmetic_operations)
 
 TEST(Int32U, arithmetic_operations)
 {
-  using rtw::fixed_point::Int32U;
+  using rtw::multiprecision::Int32U;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::uint16_t, std::uint16_t>{0, 0},      std::pair<std::uint16_t, std::uint16_t>{0, 65'535},
@@ -350,7 +350,7 @@ TEST(Int32U, arithmetic_operations)
 
 TEST(Int64, arithmetic_operations)
 {
-  using rtw::fixed_point::Int64;
+  using rtw::multiprecision::Int64;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::int32_t, std::int32_t>{0, 0},
@@ -373,7 +373,7 @@ TEST(Int64, arithmetic_operations)
 
 TEST(Int64U, arithmetic_operations)
 {
-  using rtw::fixed_point::Int64U;
+  using rtw::multiprecision::Int64U;
 
   constexpr std::array TEST_CASE = {
       std::pair<std::uint32_t, std::uint32_t>{0, 0},
@@ -394,9 +394,9 @@ template <typename T>
 class IntTest : public ::testing::Test
 {};
 
-using IntTypes = ::testing::Types<rtw::fixed_point::Int16, rtw::fixed_point::Int16U, rtw::fixed_point::Int32,
-                                  rtw::fixed_point::Int32U, rtw::fixed_point::Int64, rtw::fixed_point::Int64U,
-                                  rtw::fixed_point::Int128, rtw::fixed_point::Int128U>;
+using IntTypes = ::testing::Types<rtw::multiprecision::Int16, rtw::multiprecision::Int16U, rtw::multiprecision::Int32,
+                                  rtw::multiprecision::Int32U, rtw::multiprecision::Int64, rtw::multiprecision::Int64U,
+                                  rtw::multiprecision::Int128, rtw::multiprecision::Int128U>;
 TYPED_TEST_SUITE(IntTest, IntTypes, );
 
 TYPED_TEST(IntTest, traits)
@@ -413,7 +413,7 @@ TYPED_TEST(IntTest, traits)
 
 TEST(Int128, arithmetic_operations)
 {
-  using rtw::fixed_point::Int128;
+  using rtw::multiprecision::Int128;
 
   {
     // Addition
@@ -474,7 +474,7 @@ TEST(Int128, arithmetic_operations)
 
 TEST(Int128U, arithmetic_operations)
 {
-  using rtw::fixed_point::Int128U;
+  using rtw::multiprecision::Int128U;
 
   {
     // Addition
@@ -570,10 +570,10 @@ TEST(Int128U, arithmetic_operations)
 
 TEST(Int, negate)
 {
-  using rtw::fixed_point::Int128;
-  using rtw::fixed_point::Int16;
-  using rtw::fixed_point::Int32;
-  using rtw::fixed_point::Int64;
+  using rtw::multiprecision::Int128;
+  using rtw::multiprecision::Int16;
+  using rtw::multiprecision::Int32;
+  using rtw::multiprecision::Int64;
 
   {
     EXPECT_EQ(-Int16(36), Int16(-36));
@@ -592,10 +592,10 @@ TEST(Int, negate)
     EXPECT_EQ(-Int128(-369), Int128(369));
   }
 
-  using rtw::fixed_point::Int128U;
-  using rtw::fixed_point::Int16U;
-  using rtw::fixed_point::Int32U;
-  using rtw::fixed_point::Int64U;
+  using rtw::multiprecision::Int128U;
+  using rtw::multiprecision::Int16U;
+  using rtw::multiprecision::Int32U;
+  using rtw::multiprecision::Int64U;
 
   {
     EXPECT_EQ(-Int16U(36), Int16U(-36));
@@ -617,7 +617,7 @@ TEST(Int, negate)
 
 TEST(Int16u, bitwise_shifts)
 {
-  using rtw::fixed_point::Int16U;
+  using rtw::multiprecision::Int16U;
 
   Int16U a = 1;
   a <<= 0;
@@ -639,7 +639,7 @@ TEST(Int16u, bitwise_shifts)
 
 TEST(Int32U, bitwise_shifts)
 {
-  using rtw::fixed_point::Int32U;
+  using rtw::multiprecision::Int32U;
 
   Int32U a = 1;
   a <<= 0;
@@ -661,7 +661,7 @@ TEST(Int32U, bitwise_shifts)
 
 TEST(Int64U, bitwise_shifts)
 {
-  using rtw::fixed_point::Int64U;
+  using rtw::multiprecision::Int64U;
 
   Int64U a = 1;
   a <<= 0;
@@ -683,7 +683,7 @@ TEST(Int64U, bitwise_shifts)
 
 TEST(Int128U, bitwise_shifts)
 {
-  using rtw::fixed_point::Int128U;
+  using rtw::multiprecision::Int128U;
 
   Int128U a = 1;
   a <<= 127;
@@ -699,29 +699,29 @@ TEST(operators, count_leading_zero_16)
 {
   // Shift left
   {
-    rtw::fixed_point::Int16U a = {0xFF, 0xFF};
+    rtw::multiprecision::Int16U a = {0xFF, 0xFF};
     std::uint16_t expected = 0xFFFF;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int16U::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::multiprecision::Int16U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int16U::BITS);
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int16U::BITS);
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
   }
   // Shift right
   {
-    rtw::fixed_point::Int16U a = 1;
+    rtw::multiprecision::Int16U a = 1;
     std::uint16_t expected = 1;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int16U::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::multiprecision::Int16U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int16U::BITS); // a == 0
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int16U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
   }
 }
 
@@ -729,30 +729,30 @@ TEST(operators, count_leading_zero_32)
 {
   // Shift left
   {
-    rtw::fixed_point::Int32U a = {0xFFFF, 0xFFFF};
+    rtw::multiprecision::Int32U a = {0xFFFF, 0xFFFF};
     std::uint32_t expected = 0xFF'FF'FF'FF;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int32U::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::multiprecision::Int32U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), i);
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), i);
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int32U::BITS);
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int32U::BITS);
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
   }
   // Shift right
   {
-    rtw::fixed_point::Int32U a = 1;
+    rtw::multiprecision::Int32U a = 1;
     std::uint32_t expected = 1;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int32U::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::multiprecision::Int32U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int32U::BITS); // a == 0
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int32U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
   }
 }
 
@@ -760,30 +760,30 @@ TEST(operators, count_leading_zero_64)
 {
   // Shift left
   {
-    rtw::fixed_point::Int64U a = {0xFF'FF'FF'FF, 0xFF'FF'FF'FF};
+    rtw::multiprecision::Int64U a = {0xFF'FF'FF'FF, 0xFF'FF'FF'FF};
     std::uint64_t expected = 0xFF'FF'FF'FF'FF'FF'FF'FF;
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int64U::BITS; ++i)
+    for (std::uint32_t i = 0; i <= rtw::multiprecision::Int64U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), i);
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), i);
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int64U::BITS);
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int64U::BITS);
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
   }
   // Shift right
   {
-    rtw::fixed_point::Int64U a = 1;
+    rtw::multiprecision::Int64U a = 1;
     std::uint64_t expected = 1;
-    for (std::uint64_t i = 0; i <= rtw::fixed_point::Int64U::BITS; ++i)
+    for (std::uint64_t i = 0; i <= rtw::multiprecision::Int64U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int64U::BITS); // a == 0
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int64U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
   }
 }
 
@@ -791,24 +791,24 @@ TEST(operators, count_leading_zero_128)
 {
   // Shift left
   {
-    rtw::fixed_point::Int128U a = {0xFF'FF'FF'FF'FF'FF'FF'FF, 0xFF'FF'FF'FF'FF'FF'FF'FF};
-    for (std::uint32_t i = 0; i <= rtw::fixed_point::Int128U::BITS; ++i)
+    rtw::multiprecision::Int128U a = {0xFF'FF'FF'FF'FF'FF'FF'FF, 0xFF'FF'FF'FF'FF'FF'FF'FF};
+    for (std::uint32_t i = 0; i <= rtw::multiprecision::Int128U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), i);
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), i);
       a >>= 1;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128U::BITS);
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int128U::BITS);
   }
   // Shift right
   {
-    rtw::fixed_point::Int128U a = 1;
-    for (std::uint64_t i = 0; i < rtw::fixed_point::Int128U::BITS; ++i)
+    rtw::multiprecision::Int128U a = 1;
+    for (std::uint64_t i = 0; i < rtw::multiprecision::Int128U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128U::BITS - i - 1);
+      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int128U::BITS - i - 1);
       a <<= 1;
     }
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int128U::BITS); // a == 0
     a <<= 1;
-    EXPECT_EQ(rtw::fixed_point::count_leading_zero(a), rtw::fixed_point::Int128U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int128U::BITS); // a == 0
   }
 }
