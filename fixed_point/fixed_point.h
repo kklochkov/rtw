@@ -57,6 +57,7 @@ public:
   constexpr static T ONE = 1UL << FRACTIONAL_BITS;
   constexpr static T HALF = ONE >> 1U;
   constexpr static double RESOLUTION = 1.0L / static_cast<double>(ONE);
+  constexpr static double ULP = RESOLUTION; // Unit in the last place or Unit of least precision (ULP)
   constexpr static T MAX_INTEGER = std::numeric_limits<T>::max();
   constexpr static T MIN_INTEGER = std::numeric_limits<T>::min();
   constexpr static T FRACTION_MASK = ONE - 1U;
