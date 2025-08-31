@@ -1,6 +1,8 @@
 #pragma once
 
 #include "multiprecision/fixed_point.h"
+#include "multiprecision/int128.h"
+#include "multiprecision/operations.h"
 
 #include <array>
 
@@ -12,6 +14,12 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BIT
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
   return FixedPoint(RAW_VALUE_CONSTRUCT, std::abs(value.raw_value()));
+}
+
+template <typename T>
+constexpr Int<T> abs(const Int<T> value) noexcept
+{
+  return sign(value < Int<T>{0}) * value;
 }
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>

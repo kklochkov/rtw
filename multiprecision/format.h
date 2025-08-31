@@ -2,6 +2,7 @@
 
 #include "multiprecision/fixed_point.h"
 #include "multiprecision/int128.h"
+#include "multiprecision/rational.h"
 
 #include <fmt/ostream.h>
 
@@ -42,6 +43,21 @@ std::ostream& operator<<(std::ostream& os, const FixedPoint<T, FRAC_BITS, Satura
   return os;
 }
 
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Rational<T> value) noexcept
+{
+  const auto temp_format = os.flags();
+  os << value.numerator();
+
+  if (value.denominator() != T{1})
+  {
+    os << '/' << value.denominator();
+  }
+
+  os.flags(temp_format);
+  return os;
+}
+
 } // namespace rtw::multiprecision
 
 // NOLINTBEGIN(readability-identifier-naming)
@@ -54,6 +70,10 @@ struct formatter<rtw::multiprecision::Int<T>> : ostream_formatter
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 struct formatter<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>> : ostream_formatter
+{};
+
+template <typename T>
+struct formatter<rtw::multiprecision::Rational<T>> : ostream_formatter
 {};
 
 } // namespace fmt

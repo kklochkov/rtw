@@ -8,6 +8,7 @@ cc_test_with_llvm_symbolizer(
         "int128_test.cpp",
         "math_tests.cpp",
         "operations_test.cpp",
+        "rational_test.cpp",
     ],
     tags = ["no-clang-tidy"],
     deps = [

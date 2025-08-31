@@ -7,6 +7,7 @@ cc_library(
         "int128.h",
         "math.h",
         "operations.h",
+        "rational.h",
     ],
     visibility = ["//visibility:public"],
     deps = ["//constants:math_constants"],
