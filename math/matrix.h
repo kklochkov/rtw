@@ -411,15 +411,16 @@ public:
   friend constexpr Matrix<value_type, ROWS, OTHER_COLS>
   operator*(const Matrix& lhs, const Matrix<value_type, COLS, OTHER_COLS>& rhs) noexcept
   {
-    // TODO: make this more cache friendly.
+    // Blocking multiplication might be implemented in the future, but it only makes sense for large matrices.
     Matrix<value_type, ROWS, OTHER_COLS> result{math::ZERO};
     for (std::uint16_t row = 0U; row < ROWS; ++row)
     {
-      for (std::uint16_t other_col = 0U; other_col < OTHER_COLS; ++other_col)
+      for (std::uint16_t col = 0U; col < COLS; ++col)
       {
-        for (std::uint16_t col = 0U; col < COLS; ++col)
+        const auto lhs_val = lhs(row, col);
+        for (std::uint16_t other_col = 0U; other_col < OTHER_COLS; ++other_col)
         {
-          result(row, other_col) += lhs(row, col) * rhs(col, other_col);
+          result(row, other_col) += lhs_val * rhs(col, other_col);
         }
       }
     }
