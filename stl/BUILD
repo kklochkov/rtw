@@ -13,6 +13,7 @@ cc_library(
         "packed_buffer.h",
         "queue.h",
         "span.h",
+        "stack.h",
         "static_string.h",
         "static_vector.h",
         "string_view.h",
