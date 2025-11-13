@@ -124,8 +124,8 @@ public:
   {
     if (is_constructed())
     {
-      // No need to explicitly call the destructor, bease it will be called either during new value assignment or when
-      // during desturction of the storage.
+      // No need to explicitly call the destructor, base it will be called either during new value assignment or when
+      // during destruction of the storage.
       constructed_ = false;
     }
   }
@@ -325,7 +325,7 @@ constexpr bool is_memory_contiguous(IteratorT begin, IteratorT end) noexcept
   {
     if constexpr (std::is_same_v<typename IteratorT::iterator_category, details::ContiguousStorageIteratorTag>)
     {
-      // The special threatment is required, because of the AlignedObjectStorage,
+      // The special treatment is required, because of the AlignedObjectStorage,
       // since this class manages wrapped object memory and its lifetime.
       // So, we would like to check if all AlignedObjectStorage are laid out in the same contiguous memory.
       const auto* a = &*(std::next(begin.get_storage().get_pointer(), i));

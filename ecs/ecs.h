@@ -4,6 +4,7 @@
 #include "stl/flat_unordered_map.h"
 #include "stl/flat_unordered_set.h"
 #include "stl/heap_array.h"
+#include "stl/id.h"
 #include "stl/packed_buffer.h"
 #include "stl/queue.h"
 #include "stl/static_string.h"
@@ -21,19 +22,7 @@ namespace details
 constexpr std::uint8_t log2(const std::uint64_t n) noexcept { return n > 1U ? 1U + log2(n / 2U) : 0U; }
 } // namespace details
 
-struct Id
-{
-  using ID_TYPE = std::uint32_t;
-
-  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
-  constexpr operator ID_TYPE() const noexcept { return id; }
-  constexpr bool operator==(const Id& other) const noexcept { return id == other.id; }
-  constexpr bool operator!=(const Id& other) const noexcept { return !(*this == other); }
-
-  ID_TYPE id{};
-};
-
-struct EntityId : Id
+struct EntityId : stl::Id
 {};
 
 template <typename EnumT>
@@ -54,7 +43,7 @@ struct Entity
   EntityId id{};
 };
 
-struct ComponentId : Id
+struct ComponentId : stl::Id
 {};
 
 template <typename EnumT, EnumT VALUE>
@@ -105,7 +94,7 @@ struct std::hash<rtw::ecs::Component<EnumT, VALUE>>
 {
   std::size_t operator()(const rtw::ecs::Component<EnumT, VALUE>& component) const noexcept
   {
-    const auto hash_id = std::hash<rtw::ecs::Id>{}(component.COMPONENT_ID);
+    const auto hash_id = std::hash<rtw::stl::Id>{}(component.COMPONENT_ID);
     const auto hash_type =
         std::hash<std::underlying_type_t<EnumT>>{}(static_cast<std::underlying_type_t<EnumT>>(component.TYPE));
     return hash_id ^ (hash_type << 1U);
