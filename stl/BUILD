@@ -8,6 +8,7 @@ cc_library(
         "flags.h",
         "flat_unordered_map.h",
         "flat_unordered_set.h",
+        "graph.h",
         "heap_array.h",
         "id.h",
         "iterator.h",
