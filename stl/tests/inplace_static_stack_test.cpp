@@ -1,4 +1,4 @@
-#include "stl/stack.h"
+#include "stl/static_stack.h"
 
 #include <gtest/gtest.h>
 
@@ -17,24 +17,25 @@ struct Struct
   bool operator==(const Struct& other) const { return std::tie(a, b, c) == std::tie(other.a, other.b, other.c); }
 };
 
-using InplaceStack = rtw::stl::InplaceStack<Struct, 10U>;
+using InplaceStaticStack = rtw::stl::InplaceStaticStack<Struct, 10U>;
 
 } // namespace
 
-TEST(InplaceStackTest, constructor)
+TEST(InplaceStaticStackTest, constructor)
 {
-  static_assert(std::is_trivially_copyable_v<InplaceStack>, "InplaceStack should be trivially copyable.");
-  static_assert(std::is_trivially_destructible_v<InplaceStack>, "InplaceStack should be trivially destructible.");
+  static_assert(std::is_trivially_copyable_v<InplaceStaticStack>, "InplaceStaticStack should be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<InplaceStaticStack>,
+                "InplaceStaticStack should be trivially destructible.");
 
-  InplaceStack stack;
+  InplaceStaticStack stack;
   EXPECT_EQ(stack.size(), 0U);
   EXPECT_EQ(stack.capacity(), 10U);
   EXPECT_TRUE(stack.empty());
 }
 
-TEST(InplaceStackTest, push_pop)
+TEST(InplaceStaticStackTest, push_pop)
 {
-  InplaceStack stack;
+  InplaceStaticStack stack;
   EXPECT_EQ(stack.size(), 0U);
   EXPECT_EQ(stack.capacity(), 10U);
   EXPECT_TRUE(stack.empty());
@@ -70,9 +71,9 @@ TEST(InplaceStackTest, push_pop)
   EXPECT_DEATH(stack.pop(), ".*");
 }
 
-TEST(InplaceStackTest, emplace_pop)
+TEST(InplaceStaticStackTest, emplace_pop)
 {
-  InplaceStack stack;
+  InplaceStaticStack stack;
   EXPECT_EQ(stack.size(), 0U);
   EXPECT_EQ(stack.capacity(), 10U);
   EXPECT_TRUE(stack.empty());

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "stl/contiguous_storage.h"
 #include "stl/iterator.h"
+#include "stl/static_contiguous_storage.h"
 
 namespace rtw::stl
 {
 
 template <typename KeyT, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>,
-          typename KeyStorageT = ContiguousStorage<KeyT>>
-class GenericFlatUnorderedSet
+          typename KeyStorageT = StaticContiguousStorage<KeyT>>
+class GenericStaticFlatUnorderedSet
 {
   template <details::IteratorType, typename ValueRefT, typename ContainerT>
   friend class HashIterator;
@@ -23,9 +23,10 @@ public:
   using const_reference = const key_type&;
   using hasher = HashT;
   using key_equal = KeyEqualT;
-  using const_iterator = SetIterator<const_reference, const GenericFlatUnorderedSet>;
+  using const_iterator = SetIterator<const_reference, const GenericStaticFlatUnorderedSet>;
 
-  constexpr GenericFlatUnorderedSet() noexcept = default;
+  constexpr GenericStaticFlatUnorderedSet() noexcept = default;
+  constexpr explicit GenericStaticFlatUnorderedSet(const size_type capacity) noexcept : keys_storage_{capacity} {}
 
   constexpr size_type size() const noexcept { return keys_storage_.used_slots(); }
   constexpr bool empty() const noexcept { return keys_storage_.empty(); }
@@ -86,9 +87,6 @@ public:
   constexpr const_iterator end() const noexcept { return const_iterator::make_end_iterator(this); }
   constexpr const_iterator cend() const noexcept { return const_iterator::make_end_iterator(this); }
 
-protected:
-  constexpr explicit GenericFlatUnorderedSet(const size_type capacity) noexcept : keys_storage_{capacity} {}
-
 private:
   constexpr size_type get_index_quadratic(const size_type hash_id, const size_type i) const noexcept
   {
@@ -123,17 +121,12 @@ private:
   key_equal key_equal_{};
 };
 
-template <typename KeyT, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>,
-          typename BaseT = GenericFlatUnorderedSet<KeyT, HashT, KeyEqualT, ContiguousStorage<KeyT>>>
-class FlatUnorderedSet : public BaseT
-{
-public:
-  explicit FlatUnorderedSet(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
-};
+template <typename KeyT, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>>
+using StaticFlatUnorderedSet = GenericStaticFlatUnorderedSet<KeyT, HashT, KeyEqualT, StaticContiguousStorage<KeyT>>;
 
 template <typename KeyT, std::size_t CAPACITY, typename HashT = std::hash<KeyT>,
           typename KeyEqualT = std::equal_to<KeyT>>
-using InplaceFlatUnorderedSet =
-    GenericFlatUnorderedSet<KeyT, HashT, KeyEqualT, InplaceContiguousStorage<KeyT, CAPACITY>>;
+using InplaceStaticFlatUnorderedSet =
+    GenericStaticFlatUnorderedSet<KeyT, HashT, KeyEqualT, InplaceStaticContiguousStorage<KeyT, CAPACITY>>;
 
 } // namespace rtw::stl

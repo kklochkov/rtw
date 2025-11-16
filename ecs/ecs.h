@@ -1,12 +1,12 @@
 #pragma once
 
 #include "stl/flags.h"
-#include "stl/flat_unordered_map.h"
-#include "stl/flat_unordered_set.h"
 #include "stl/heap_array.h"
 #include "stl/id.h"
 #include "stl/packed_buffer.h"
-#include "stl/queue.h"
+#include "stl/static_flat_unordered_map.h"
+#include "stl/static_flat_unordered_set.h"
+#include "stl/static_queue.h"
 #include "stl/static_string.h"
 
 #include <array>
@@ -196,8 +196,8 @@ public:
 
 private:
   stl::PackedBuffer<ComponentT> components_;
-  stl::FlatUnorderedMap<EntityId, std::size_t> entity_id_to_index_;
-  stl::FlatUnorderedMap<std::size_t, EntityId> index_to_entity_id_;
+  stl::StaticFlatUnorderedMap<EntityId, std::size_t> entity_id_to_index_;
+  stl::StaticFlatUnorderedMap<std::size_t, EntityId> index_to_entity_id_;
 };
 
 template <typename EnumT, typename... ComponentsT>
@@ -392,13 +392,13 @@ public:
 
 private:
   stl::HeapArray<Entity> entities_;
-  stl::Queue<EntityId> free_ids_;
-  stl::FlatUnorderedMap<stl::InplaceStringSmall, EntityId> tag_to_entity_id_;
-  stl::FlatUnorderedMap<EntityId, stl::InplaceStringSmall> entity_id_to_tag_;
-  stl::FlatUnorderedMap<stl::InplaceStringSmall,
-                        stl::InplaceFlatUnorderedSet<EntityId, MAX_NUMBER_OF_ENTITIES_PER_GROUP>>
+  stl::StaticQueue<EntityId> free_ids_;
+  stl::StaticFlatUnorderedMap<stl::InplaceStringSmall, EntityId> tag_to_entity_id_;
+  stl::StaticFlatUnorderedMap<EntityId, stl::InplaceStringSmall> entity_id_to_tag_;
+  stl::StaticFlatUnorderedMap<stl::InplaceStringSmall,
+                              stl::InplaceStaticFlatUnorderedSet<EntityId, MAX_NUMBER_OF_ENTITIES_PER_GROUP>>
       group_to_entity_ids_;
-  stl::FlatUnorderedMap<EntityId, stl::InplaceStringSmall> entity_id_to_group_;
+  stl::StaticFlatUnorderedMap<EntityId, stl::InplaceStringSmall> entity_id_to_group_;
 };
 
 template <typename EnumT>
@@ -434,10 +434,10 @@ public:
 
   std::size_t size() const noexcept { return entities_.size(); }
 
-  const stl::FlatUnorderedSet<EntityId>& get_entities() const noexcept { return entities_; }
+  const stl::StaticFlatUnorderedSet<EntityId>& get_entities() const noexcept { return entities_; }
 
 private:
-  stl::FlatUnorderedSet<EntityId> entities_;
+  stl::StaticFlatUnorderedSet<EntityId> entities_;
 };
 
 template <typename EnumT>
@@ -531,7 +531,7 @@ public:
   std::size_t size() const noexcept { return systems_.size(); }
 
 private:
-  stl::FlatUnorderedMap<std::type_index, std::unique_ptr<ISystem>> systems_;
+  stl::StaticFlatUnorderedMap<std::type_index, std::unique_ptr<ISystem>> systems_;
 };
 
 template <typename EnumT, std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP, typename... ComponentsT>

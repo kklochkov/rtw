@@ -1,4 +1,4 @@
-#include "stl/contiguous_storage.h"
+#include "stl/static_contiguous_storage.h"
 
 #include <gtest/gtest.h>
 
@@ -9,11 +9,6 @@ struct Struct
 {
   Struct() = default;
   Struct(const float a, const std::int32_t b, const std::uint8_t c) : a{a}, b{b}, c{c} {}
-  Struct(const Struct&) = default;
-  Struct(Struct&&) = default;
-  Struct& operator=(const Struct&) = default;
-  Struct& operator=(Struct&&) = default;
-  ~Struct() {} // NOLINT: intentionally make class non-trivial
 
   float a{};
   std::int32_t b{};
@@ -22,31 +17,53 @@ struct Struct
   bool operator==(const Struct& other) const { return std::tie(a, b, c) == std::tie(other.a, other.b, other.c); }
 };
 
-using ContiguousStorage = rtw::stl::ContiguousStorage<Struct>;
-using AlignedObjectStorage = ContiguousStorage::storage_type;
+using InplaceStaticContiguousStorage = rtw::stl::InplaceStaticContiguousStorage<Struct, 10U>;
+using AlignedObjectStorage = InplaceStaticContiguousStorage::storage_type;
 
 } // namespace
 
-TEST(ContiguousStorageTest, constructor)
+TEST(AlignedObjectStorageTest, basic)
 {
-  static_assert(!AlignedObjectStorage::is_trivial::value, "AlignedObjectStorage should not trival.");
-  static_assert(!std::is_trivially_copyable_v<AlignedObjectStorage>,
-                "AlignedObjectStorage should not be trivially copyable.");
+  static_assert(AlignedObjectStorage::is_trivial::value, "AlignedObjectStorage should be trivially copyable.");
+  static_assert(std::is_trivially_copyable_v<AlignedObjectStorage>,
+                "AlignedObjectStorage should be trivially copyable.");
   static_assert(sizeof(AlignedObjectStorage) == sizeof(Struct) + alignof(Struct),
                 "AlignedObjectStorage should have the same size as Struct plus alignment.");
 
-  ContiguousStorage storage{10U};
+  AlignedObjectStorage storage{};
+
+  EXPECT_FALSE(storage.is_constructed());
+
+  storage.construct(1.0F, 2, std::uint8_t{3});
+  EXPECT_TRUE(storage.is_constructed());
+  EXPECT_EQ(*storage.get_pointer(), (Struct{1.0F, 2, 3}));
+  EXPECT_EQ(storage.get_reference(), (Struct{1.0F, 2, 3}));
+
+  storage.destruct();
+  EXPECT_FALSE(storage.is_constructed());
+
+  auto& value = storage.construct_for_overwrite_at();
+  value = Struct{4.0F, 5, 6};
+  EXPECT_TRUE(storage.is_constructed());
+  EXPECT_EQ(*storage.get_pointer(), (Struct{4.0F, 5, 6}));
+  EXPECT_EQ(storage.get_reference(), (Struct{4.0F, 5, 6}));
+}
+
+TEST(InplaceStaticContiguousStorageTest, constructor)
+{
+  static_assert(std::is_trivially_copyable_v<InplaceStaticContiguousStorage>,
+                "InplaceStaticContiguousStorage should be trivially copyable.");
+
+  InplaceStaticContiguousStorage storage;
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
-  EXPECT_TRUE(storage.cbegin() == storage.cend());
-
-  EXPECT_DEATH(ContiguousStorage{0U}, ".*");
+  EXPECT_TRUE(storage.begin() == storage.end());
 }
 
-TEST(ContiguousStorageTest, construct)
+TEST(InplaceStaticContiguousStorageTest, construct)
 {
-  ContiguousStorage storage{10U};
+  InplaceStaticContiguousStorage storage;
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
@@ -71,14 +88,14 @@ TEST(ContiguousStorageTest, construct)
 
   EXPECT_EQ(storage.used_slots(), storage.capacity());
   EXPECT_FALSE(storage.empty());
-  EXPECT_FALSE(storage.cbegin() == storage.cend());
+  EXPECT_FALSE(storage.begin() == storage.end());
 
   storage.clear();
 
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
-  EXPECT_TRUE(storage.cbegin() == storage.cend());
+  EXPECT_TRUE(storage.begin() == storage.end());
 
   for (std::size_t i = 0U; i < storage.capacity(); ++i)
   {
@@ -101,9 +118,9 @@ TEST(ContiguousStorageTest, construct)
   EXPECT_FALSE(storage.empty());
 }
 
-TEST(ContiguousStorageTest, destruct)
+TEST(InplaceStaticContiguousStorageTest, destruct)
 {
-  ContiguousStorage storage{10U};
+  InplaceStaticContiguousStorage storage;
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());
@@ -155,9 +172,9 @@ TEST(ContiguousStorageTest, destruct)
   }
 }
 
-TEST(ContiguousStorageTest, iterators)
+TEST(InplaceStaticContiguousStorageTest, iterators)
 {
-  ContiguousStorage storage{10U};
+  InplaceStaticContiguousStorage storage;
   EXPECT_EQ(storage.used_slots(), 0U);
   EXPECT_EQ(storage.capacity(), 10U);
   EXPECT_TRUE(storage.empty());

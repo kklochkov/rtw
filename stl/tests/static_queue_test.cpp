@@ -1,4 +1,4 @@
-#include "stl/queue.h"
+#include "stl/static_queue.h"
 
 #include <gtest/gtest.h>
 
@@ -17,23 +17,23 @@ struct Struct
   bool operator==(const Struct& other) const { return std::tie(a, b, c) == std::tie(other.a, other.b, other.c); }
 };
 
-using Queue = rtw::stl::Queue<Struct>;
+using StaticQueue = rtw::stl::StaticQueue<Struct>;
 
 } // namespace
 
 TEST(QueueTest, constructor)
 {
-  Queue queue{10U};
+  StaticQueue queue{10U};
   EXPECT_EQ(queue.size(), 0U);
   EXPECT_EQ(queue.capacity(), 10U);
   EXPECT_TRUE(queue.empty());
 
-  EXPECT_DEATH(Queue{0U}, ".*");
+  EXPECT_DEATH(StaticQueue{0U}, ".*");
 }
 
 TEST(QueueTest, push_pop)
 {
-  Queue queue{10U};
+  StaticQueue queue{10U};
   EXPECT_EQ(queue.size(), 0U);
   EXPECT_EQ(queue.capacity(), 10U);
   EXPECT_TRUE(queue.empty());
@@ -71,7 +71,7 @@ TEST(QueueTest, push_pop)
 
 TEST(QueueTest, emplace_pop)
 {
-  Queue queue{10U};
+  StaticQueue queue{10U};
   EXPECT_EQ(queue.size(), 0U);
   EXPECT_EQ(queue.capacity(), 10U);
   EXPECT_TRUE(queue.empty());

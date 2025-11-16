@@ -1,29 +1,32 @@
-#include "stl/flat_unordered_set.h"
+#include "stl/static_flat_unordered_set.h"
 
 #include <gtest/gtest.h>
 
 namespace
 {
 
-using FlatUnorderedSet = rtw::stl::FlatUnorderedSet<std::size_t>;
+using InplaceStaticFlatUnorderedSet = rtw::stl::InplaceStaticFlatUnorderedSet<std::size_t, 10U>;
 
 } // namespace
 
-TEST(FlatUnorderedSet, constructor)
+TEST(InplaceStaticFlatUnorderedSet, constructor)
 {
-  FlatUnorderedSet set{10U};
+  static_assert(std::is_trivially_copyable_v<InplaceStaticFlatUnorderedSet>,
+                "InplaceStaticFlatUnorderedSet should be trivially copyable.");
+  static_assert(std::is_trivially_destructible_v<InplaceStaticFlatUnorderedSet>,
+                "InplaceStaticFlatUnorderedSet should be trivially destructible.");
+
+  InplaceStaticFlatUnorderedSet set;
   EXPECT_EQ(set.size(), 0U);
   EXPECT_EQ(set.capacity(), 10U);
   EXPECT_TRUE(set.empty());
   EXPECT_TRUE(set.begin() == set.end());
-
-  EXPECT_DEATH(FlatUnorderedSet{0U}, ".*");
 }
 
-TEST(FlatUnorderedSet, emplace_and_operator_brackets)
+TEST(InplaceStaticFlatUnorderedSet, emplace_and_operator_brackets)
 {
   {
-    FlatUnorderedSet set{10U};
+    InplaceStaticFlatUnorderedSet set;
 
     EXPECT_TRUE(set.emplace(1U));
     EXPECT_EQ(set.size(), 1U);
@@ -56,7 +59,7 @@ TEST(FlatUnorderedSet, emplace_and_operator_brackets)
     EXPECT_EQ(std::distance(set.begin(), set.end()), 0);
   }
   {
-    FlatUnorderedSet set{2U};
+    rtw::stl::InplaceStaticFlatUnorderedSet<std::size_t, 2U> set;
 
     EXPECT_TRUE(set.emplace(1U));
     EXPECT_TRUE(set.emplace(2U));
@@ -66,10 +69,10 @@ TEST(FlatUnorderedSet, emplace_and_operator_brackets)
   }
 }
 
-TEST(FlatUnorderedSet, insert_and_operator_brackets)
+TEST(InplaceStaticFlatUnorderedSet, insert_and_operator_brackets)
 {
   {
-    FlatUnorderedSet set{10U};
+    InplaceStaticFlatUnorderedSet set;
 
     EXPECT_TRUE(set.insert(1U));
     EXPECT_EQ(set.size(), 1U);
@@ -89,7 +92,7 @@ TEST(FlatUnorderedSet, insert_and_operator_brackets)
     EXPECT_TRUE(set.begin() == set.end());
   }
   {
-    FlatUnorderedSet set{2U};
+    rtw::stl::InplaceStaticFlatUnorderedSet<std::size_t, 2U> set;
 
     EXPECT_TRUE(set.insert(1U));
     EXPECT_TRUE(set.insert(2U));
@@ -98,9 +101,9 @@ TEST(FlatUnorderedSet, insert_and_operator_brackets)
   }
 }
 
-TEST(FlatUnorderedSet, erase)
+TEST(InplaceStaticFlatUnorderedSet, erase)
 {
-  FlatUnorderedSet set{10U};
+  InplaceStaticFlatUnorderedSet set;
 
   set.emplace(1U);
   set.emplace(2U);
@@ -118,9 +121,9 @@ TEST(FlatUnorderedSet, erase)
   EXPECT_FALSE(set.erase(3U)); // Erasing non-existing key
 }
 
-TEST(FlatUnorderedSet, find)
+TEST(InplaceStaticFlatUnorderedSet, find)
 {
-  FlatUnorderedSet set{10U};
+  InplaceStaticFlatUnorderedSet set;
 
   set.emplace(1U);
   set.emplace(2U);

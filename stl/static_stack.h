@@ -1,12 +1,12 @@
 #pragma once
 
-#include "stl/contiguous_storage.h"
+#include "stl/static_contiguous_storage.h"
 
 namespace rtw::stl
 {
 
-template <typename T, typename StorageT = ContiguousStorage<T>>
-class GenericStack
+template <typename T, typename StorageT = StaticContiguousStorage<T>>
+class GenericStaticStack
 {
   using StorageType = StorageT;
 
@@ -16,7 +16,8 @@ public:
   using reference = typename StorageType::reference;
   using const_reference = typename StorageType::const_reference;
 
-  constexpr GenericStack() noexcept = default;
+  constexpr GenericStaticStack() noexcept = default;
+  constexpr explicit GenericStaticStack(const size_type capacity) noexcept : storage_{capacity} {}
 
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
@@ -72,22 +73,15 @@ public:
     storage_.clear();
   }
 
-protected:
-  constexpr explicit GenericStack(const size_type capacity) noexcept : storage_{capacity} {}
-
 private:
   StorageType storage_;
   size_type top_{0U};
 };
 
-template <typename T, typename BaseT = GenericStack<T, ContiguousStorage<T>>>
-class Stack : public BaseT
-{
-public:
-  explicit Stack(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
-};
+template <typename T>
+using StaticStack = GenericStaticStack<T, StaticContiguousStorage<T>>;
 
 template <typename T, std::size_t CAPACITY>
-using InplaceStack = GenericStack<T, InplaceContiguousStorage<T, CAPACITY>>;
+using InplaceStaticStack = GenericStaticStack<T, InplaceStaticContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl

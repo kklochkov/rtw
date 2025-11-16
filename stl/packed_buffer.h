@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stl/contiguous_storage.h"
+#include "stl/static_contiguous_storage.h"
 
 namespace rtw::stl
 {
@@ -36,7 +36,7 @@ namespace rtw::stl
 /// - remove(0) => a = {}
 ///
 /// @tparam T Type of the element to be stored in the buffer.
-template <typename T, typename StorageT = ContiguousStorage<T>>
+template <typename T, typename StorageT = StaticContiguousStorage<T>>
 class GenericPackedBuffer
 {
   using StorageType = StorageT;
@@ -51,6 +51,7 @@ public:
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
 
+  constexpr explicit GenericPackedBuffer(const size_type capacity) noexcept : storage_{capacity} {}
   constexpr GenericPackedBuffer() noexcept = default;
 
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
@@ -96,21 +97,14 @@ public:
   constexpr const_iterator end() const noexcept { return storage_.end(); }
   constexpr const_iterator cend() const noexcept { return storage_.cend(); }
 
-protected:
-  constexpr explicit GenericPackedBuffer(const size_type capacity) noexcept : storage_{capacity} {}
-
 private:
   StorageType storage_;
 };
 
-template <typename T, typename BaseT = GenericPackedBuffer<T, ContiguousStorage<T>>>
-class PackedBuffer : public BaseT
-{
-public:
-  explicit PackedBuffer(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
-};
+template <typename T>
+using PackedBuffer = GenericPackedBuffer<T, StaticContiguousStorage<T>>;
 
 template <typename T, std::size_t CAPACITY>
-using InplacePackedBuffer = GenericPackedBuffer<T, InplaceContiguousStorage<T, CAPACITY>>;
+using InplacePackedBuffer = GenericPackedBuffer<T, InplaceStaticContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl

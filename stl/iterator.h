@@ -9,7 +9,7 @@ namespace rtw::stl
 
 namespace details
 {
-struct ContiguousStorageIteratorTag : std::random_access_iterator_tag
+struct StaticContiguousStorageIteratorTag : std::random_access_iterator_tag
 {};
 
 enum class IteratorType : std::uint8_t
@@ -21,18 +21,18 @@ enum class IteratorType : std::uint8_t
 } // namespace details
 
 template <typename ValueRefT, typename ContainerT>
-class ContiguousStorageIterator
+class StaticContiguousStorageIterator
 {
 public:
   using value_type = typename ContainerT::value_type;
   using reference = ValueRefT;
   using pointer = std::add_pointer_t<reference>;
   using difference_type = typename ContainerT::difference_type;
-  using iterator_category = details::ContiguousStorageIteratorTag;
+  using iterator_category = details::StaticContiguousStorageIteratorTag;
   using iterator_concept = std::random_access_iterator_tag;
   using storage_type = typename ContainerT::storage_type;
 
-  constexpr ContiguousStorageIterator(ContainerT* container, typename ContainerT::size_type index) noexcept
+  constexpr StaticContiguousStorageIterator(ContainerT* container, typename ContainerT::size_type index) noexcept
       : container_{container}, index_{index}
   {
   }
@@ -45,7 +45,7 @@ public:
   constexpr storage_type& get_storage() noexcept { return container_->get_derived().get_storage(index_); }
   constexpr const storage_type& get_storage() const noexcept { return container_->get_derived().get_storage(index_); }
 
-  constexpr ContiguousStorageIterator& operator++() noexcept
+  constexpr StaticContiguousStorageIterator& operator++() noexcept
   {
     ++index_;
     return *this;
@@ -56,72 +56,74 @@ public:
     return (*container_)[index_ + offset];
   }
 
-  constexpr ContiguousStorageIterator operator++(int) noexcept
+  constexpr StaticContiguousStorageIterator operator++(int) noexcept
   {
-    ContiguousStorageIterator temp{*this};
+    StaticContiguousStorageIterator temp{*this};
     ++(*this);
     return temp;
   }
 
-  constexpr ContiguousStorageIterator& operator+=(const difference_type offset) noexcept
+  constexpr StaticContiguousStorageIterator& operator+=(const difference_type offset) noexcept
   {
     index_ += offset;
     return *this;
   }
 
-  constexpr ContiguousStorageIterator& operator--() noexcept
+  constexpr StaticContiguousStorageIterator& operator--() noexcept
   {
     --index_;
     return *this;
   }
 
-  constexpr ContiguousStorageIterator operator--(int) noexcept
+  constexpr StaticContiguousStorageIterator operator--(int) noexcept
   {
-    ContiguousStorageIterator temp{*this};
+    StaticContiguousStorageIterator temp{*this};
     --(*this);
     return temp;
   }
 
-  constexpr ContiguousStorageIterator& operator-=(const difference_type offset) noexcept
+  constexpr StaticContiguousStorageIterator& operator-=(const difference_type offset) noexcept
   {
     index_ -= offset;
     return *this;
   }
 
-  friend constexpr bool operator==(const ContiguousStorageIterator& lhs, const ContiguousStorageIterator& rhs) noexcept
+  friend constexpr bool operator==(const StaticContiguousStorageIterator& lhs,
+                                   const StaticContiguousStorageIterator& rhs) noexcept
   {
     return lhs.container_ == rhs.container_ && lhs.index_ == rhs.index_;
   }
 
-  friend constexpr bool operator!=(const ContiguousStorageIterator& lhs, const ContiguousStorageIterator& rhs) noexcept
+  friend constexpr bool operator!=(const StaticContiguousStorageIterator& lhs,
+                                   const StaticContiguousStorageIterator& rhs) noexcept
   {
     return !(lhs == rhs);
   }
 
-  friend constexpr ContiguousStorageIterator operator+(const difference_type offset,
-                                                       const ContiguousStorageIterator& it) noexcept
+  friend constexpr StaticContiguousStorageIterator operator+(const difference_type offset,
+                                                             const StaticContiguousStorageIterator& it) noexcept
   {
-    return ContiguousStorageIterator{it.container_, it.index_ + offset};
+    return StaticContiguousStorageIterator{it.container_, it.index_ + offset};
   }
-  friend constexpr ContiguousStorageIterator operator+(const ContiguousStorageIterator& it,
-                                                       const difference_type offset) noexcept
+  friend constexpr StaticContiguousStorageIterator operator+(const StaticContiguousStorageIterator& it,
+                                                             const difference_type offset) noexcept
   {
-    return ContiguousStorageIterator{it.container_, it.index_ + offset};
-  }
-
-  friend constexpr ContiguousStorageIterator operator-(const difference_type offset,
-                                                       const ContiguousStorageIterator& it) noexcept
-  {
-    return ContiguousStorageIterator{it.container_, it.index_ - offset};
-  }
-  friend constexpr ContiguousStorageIterator operator-(const ContiguousStorageIterator& it,
-                                                       const difference_type offset) noexcept
-  {
-    return ContiguousStorageIterator{it.container_, it.index_ - offset};
+    return StaticContiguousStorageIterator{it.container_, it.index_ + offset};
   }
 
-  friend constexpr difference_type operator-(const ContiguousStorageIterator& lhs,
-                                             const ContiguousStorageIterator& rhs) noexcept
+  friend constexpr StaticContiguousStorageIterator operator-(const difference_type offset,
+                                                             const StaticContiguousStorageIterator& it) noexcept
+  {
+    return StaticContiguousStorageIterator{it.container_, it.index_ - offset};
+  }
+  friend constexpr StaticContiguousStorageIterator operator-(const StaticContiguousStorageIterator& it,
+                                                             const difference_type offset) noexcept
+  {
+    return StaticContiguousStorageIterator{it.container_, it.index_ - offset};
+  }
+
+  friend constexpr difference_type operator-(const StaticContiguousStorageIterator& lhs,
+                                             const StaticContiguousStorageIterator& rhs) noexcept
   {
     assert(lhs.container_ == rhs.container_);
     return lhs.index_ - rhs.index_;

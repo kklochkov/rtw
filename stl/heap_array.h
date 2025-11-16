@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stl/contiguous_storage.h"
+#include "stl/static_contiguous_storage.h"
 
 namespace rtw::stl
 {
@@ -8,7 +8,7 @@ namespace rtw::stl
 template <typename T>
 class HeapArray
 {
-  using StorageType = ContiguousStorage<T>;
+  using StorageType = StaticContiguousStorage<T>;
 
 public:
   using value_type = typename StorageType::value_type;

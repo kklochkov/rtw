@@ -149,10 +149,10 @@ private:
 };
 
 template <typename T, typename DerivedT>
-class GenericContiguousStorage
+class GenericStaticContiguousStorage
 {
   template <typename ValueRefT, typename ContainerT>
-  friend class ContiguousStorageIterator;
+  friend class StaticContiguousStorageIterator;
 
   friend DerivedT;
 
@@ -165,8 +165,8 @@ public:
   using const_reference = typename storage_type::const_reference;
   using pointer = typename storage_type::pointer;
   using const_pointer = typename storage_type::const_pointer;
-  using iterator = ContiguousStorageIterator<reference, GenericContiguousStorage>;
-  using const_iterator = ContiguousStorageIterator<const_reference, const GenericContiguousStorage>;
+  using iterator = StaticContiguousStorageIterator<reference, GenericStaticContiguousStorage>;
+  using const_iterator = StaticContiguousStorageIterator<const_reference, const GenericStaticContiguousStorage>;
 
   constexpr size_type used_slots() const noexcept { return used_slots_; }
   constexpr size_type size() const noexcept { return used_slots_; }
@@ -234,7 +234,7 @@ public:
   constexpr const_iterator cend() const noexcept { return const_iterator{this, used_slots_}; }
 
 private:
-  constexpr explicit GenericContiguousStorage(const size_t capacity) noexcept : capacity_{capacity}
+  constexpr explicit GenericStaticContiguousStorage(const size_t capacity) noexcept : capacity_{capacity}
   {
     assert(capacity > 0U);
   }
@@ -247,12 +247,12 @@ private:
 };
 
 template <typename T>
-class ContiguousStorage : public GenericContiguousStorage<T, ContiguousStorage<T>>
+class StaticContiguousStorage : public GenericStaticContiguousStorage<T, StaticContiguousStorage<T>>
 {
   template <typename ValueRefT, typename ContainerT>
-  friend class ContiguousStorageIterator;
+  friend class StaticContiguousStorageIterator;
 
-  using Base = GenericContiguousStorage<T, ContiguousStorage<T>>;
+  using Base = GenericStaticContiguousStorage<T, StaticContiguousStorage<T>>;
 
   friend Base;
 
@@ -260,7 +260,7 @@ public:
   using storage_type = typename Base::storage_type;
   using size_type = typename Base::size_type;
 
-  explicit ContiguousStorage(const size_type capacity) noexcept
+  explicit StaticContiguousStorage(const size_type capacity) noexcept
       : Base{capacity}, data_{std::make_unique<storage_type[]>(capacity)}
   {
   }
@@ -282,12 +282,13 @@ private:
 };
 
 template <typename T, std::size_t CAPACITY>
-class InplaceContiguousStorage : public GenericContiguousStorage<T, InplaceContiguousStorage<T, CAPACITY>>
+class InplaceStaticContiguousStorage
+    : public GenericStaticContiguousStorage<T, InplaceStaticContiguousStorage<T, CAPACITY>>
 {
   template <typename ValueRefT, typename ContainerT>
-  friend class ContiguousStorageIterator;
+  friend class StaticContiguousStorageIterator;
 
-  using Base = GenericContiguousStorage<T, InplaceContiguousStorage<T, CAPACITY>>;
+  using Base = GenericStaticContiguousStorage<T, InplaceStaticContiguousStorage<T, CAPACITY>>;
 
   friend Base;
 
@@ -297,7 +298,7 @@ public:
   using storage_type = typename Base::storage_type;
   using size_type = typename Base::size_type;
 
-  constexpr InplaceContiguousStorage() noexcept : Base{CAPACITY} {}
+  constexpr InplaceStaticContiguousStorage() noexcept : Base{CAPACITY} {}
 
 private:
   constexpr storage_type& get_storage(const size_type index) noexcept
@@ -323,7 +324,7 @@ constexpr bool is_memory_contiguous(IteratorT begin, IteratorT end) noexcept
   const auto size = std::distance(begin, end);
   for (std::ptrdiff_t i = 0U; i < size; ++i)
   {
-    if constexpr (std::is_same_v<typename IteratorT::iterator_category, details::ContiguousStorageIteratorTag>)
+    if constexpr (std::is_same_v<typename IteratorT::iterator_category, details::StaticContiguousStorageIteratorTag>)
     {
       // The special treatment is required, because of the AlignedObjectStorage,
       // since this class manages wrapped object memory and its lifetime.

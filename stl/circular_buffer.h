@@ -1,11 +1,11 @@
 #pragma once
 
-#include "stl/contiguous_storage.h"
+#include "stl/static_contiguous_storage.h"
 
 namespace rtw::stl
 {
 
-template <typename T, typename StorageT = ContiguousStorage<T>>
+template <typename T, typename StorageT = StaticContiguousStorage<T>>
 class GenericCircularBuffer
 {
   using StorageType = StorageT;
@@ -21,6 +21,7 @@ public:
   using const_iterator = typename StorageType::const_iterator;
 
   constexpr GenericCircularBuffer() noexcept = default;
+  constexpr explicit GenericCircularBuffer(const size_type capacity) noexcept : storage_{capacity} {}
 
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
@@ -66,22 +67,15 @@ public:
   constexpr const_iterator end() const noexcept { return storage_.end(); }
   constexpr const_iterator cend() const noexcept { return storage_.cend(); }
 
-protected:
-  constexpr explicit GenericCircularBuffer(const size_type capacity) noexcept : storage_{capacity} {}
-
 private:
   StorageType storage_;
   size_type head_{0U};
 };
 
-template <typename T, typename BaseT = GenericCircularBuffer<T, ContiguousStorage<T>>>
-class CircularBuffer : public BaseT
-{
-public:
-  explicit CircularBuffer(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
-};
+template <typename T>
+using CircularBuffer = GenericCircularBuffer<T, StaticContiguousStorage<T>>;
 
 template <typename T, std::size_t CAPACITY>
-using InplaceCircularBuffer = GenericCircularBuffer<T, InplaceContiguousStorage<T, CAPACITY>>;
+using InplaceCircularBuffer = GenericCircularBuffer<T, InplaceStaticContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl

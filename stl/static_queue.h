@@ -1,12 +1,12 @@
 #pragma once
 
-#include "stl/contiguous_storage.h"
+#include "stl/static_contiguous_storage.h"
 
 namespace rtw::stl
 {
 
-template <typename T, typename StorageT = ContiguousStorage<T>>
-class GenericQueue
+template <typename T, typename StorageT = StaticContiguousStorage<T>>
+class GenericStaticQueue
 {
   using StorageType = StorageT;
 
@@ -16,7 +16,8 @@ public:
   using reference = typename StorageType::reference;
   using const_reference = typename StorageType::const_reference;
 
-  constexpr GenericQueue() noexcept = default;
+  constexpr GenericStaticQueue() noexcept = default;
+  constexpr explicit GenericStaticQueue(const size_type capacity) noexcept : storage_{capacity} {}
 
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
@@ -72,9 +73,6 @@ public:
     storage_.clear();
   }
 
-protected:
-  constexpr explicit GenericQueue(const size_type capacity) noexcept : storage_{capacity} {}
-
 private:
   constexpr void pop_front()
   {
@@ -87,14 +85,10 @@ private:
   size_type tail_{0U};
 };
 
-template <typename T, typename BaseT = GenericQueue<T, ContiguousStorage<T>>>
-class Queue : public BaseT
-{
-public:
-  explicit Queue(const typename BaseT::size_type capacity) noexcept : BaseT{capacity} {}
-};
+template <typename T>
+using StaticQueue = GenericStaticQueue<T, StaticContiguousStorage<T>>;
 
 template <typename T, std::size_t CAPACITY>
-using InplaceQueue = GenericQueue<T, InplaceContiguousStorage<T, CAPACITY>>;
+using InplaceStaticQueue = GenericStaticQueue<T, InplaceStaticContiguousStorage<T, CAPACITY>>;
 
 } // namespace rtw::stl

@@ -1,4 +1,4 @@
-#include "stl/stack.h"
+#include "stl/static_stack.h"
 
 #include <gtest/gtest.h>
 
@@ -17,23 +17,23 @@ struct Struct
   bool operator==(const Struct& other) const { return std::tie(a, b, c) == std::tie(other.a, other.b, other.c); }
 };
 
-using Stack = rtw::stl::Stack<Struct>;
+using StaticStack = rtw::stl::StaticStack<Struct>;
 
 } // namespace
 
-TEST(StackTest, constructor)
+TEST(StaticStackTest, constructor)
 {
-  Stack stack{10U};
+  StaticStack stack{10U};
   EXPECT_EQ(stack.size(), 0U);
   EXPECT_EQ(stack.capacity(), 10U);
   EXPECT_TRUE(stack.empty());
 
-  EXPECT_DEATH(Stack{0U}, ".*");
+  EXPECT_DEATH(StaticStack{0U}, ".*");
 }
 
-TEST(StackTest, push_pop)
+TEST(StaticStackTest, push_pop)
 {
-  Stack stack{10U};
+  StaticStack stack{10U};
   EXPECT_EQ(stack.size(), 0U);
   EXPECT_EQ(stack.capacity(), 10U);
   EXPECT_TRUE(stack.empty());
@@ -69,9 +69,9 @@ TEST(StackTest, push_pop)
   EXPECT_DEATH(stack.pop(), ".*");
 }
 
-TEST(StackTest, emplace_pop)
+TEST(StaticStackTest, emplace_pop)
 {
-  Stack stack{10U};
+  StaticStack stack{10U};
   EXPECT_EQ(stack.size(), 0U);
   EXPECT_EQ(stack.capacity(), 10U);
   EXPECT_TRUE(stack.empty());

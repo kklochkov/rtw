@@ -2,8 +2,8 @@
 
 #include "stl/heap_array.h"
 #include "stl/id.h"
-#include "stl/queue.h"
-#include "stl/stack.h"
+#include "stl/static_queue.h"
+#include "stl/static_stack.h"
 #include "stl/static_vector.h"
 
 #include <array>
@@ -86,8 +86,8 @@ public:
   using size_type = typename AdjacencyListTraitsType::adjacency_list_type::size_type;
   using edge_container_type = typename AdjacencyListTraitsType::edge_container_type;
 
-  constexpr explicit GenericDirectedGraph(const size_type capacity) noexcept : vertex_attributes_{capacity} {}
   constexpr GenericDirectedGraph() noexcept = default;
+  constexpr explicit GenericDirectedGraph(const size_type capacity) noexcept : vertex_attributes_{capacity} {}
 
   constexpr size_type size() const noexcept { return vertex_attributes_.size(); }
   constexpr bool empty() const noexcept { return vertex_attributes_.empty(); }
@@ -182,7 +182,7 @@ struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT>
   }
 
   template <typename T>
-  using bfs_queue_type = Queue<T>;
+  using bfs_queue_type = StaticQueue<T>;
 
   template <typename T>
   constexpr static bfs_queue_type<T> make_bfs_queue(const graph_type& graph) noexcept
@@ -191,7 +191,7 @@ struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT>
   }
 
   template <typename T>
-  using dfs_stack_type = Stack<T>;
+  using dfs_stack_type = StaticStack<T>;
 
   template <typename T>
   constexpr static dfs_stack_type<T> make_dfs_stack(const graph_type& graph) noexcept
@@ -218,7 +218,7 @@ struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT, std::integral
   }
 
   template <typename T>
-  using bfs_queue_type = InplaceQueue<T, CAPACITY>;
+  using bfs_queue_type = InplaceStaticQueue<T, CAPACITY>;
 
   template <typename T>
   constexpr static bfs_queue_type<T> make_bfs_queue(const graph_type& /*graph*/) noexcept
@@ -227,7 +227,7 @@ struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT, std::integral
   }
 
   template <typename T>
-  using dfs_stack_type = InplaceStack<T, CAPACITY>;
+  using dfs_stack_type = InplaceStaticStack<T, CAPACITY>;
 
   template <typename T>
   constexpr static dfs_stack_type<T> make_dfs_stack(const graph_type& /*graph*/) noexcept

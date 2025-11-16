@@ -1,4 +1,4 @@
-#include "stl/flat_unordered_map.h"
+#include "stl/static_flat_unordered_map.h"
 
 #include <gtest/gtest.h>
 
@@ -17,28 +17,25 @@ struct Struct
   bool operator==(const Struct& other) const { return std::tie(a, b, c) == std::tie(other.a, other.b, other.c); }
 };
 
-using InplaceFlatUnorderedMap = rtw::stl::InplaceFlatUnorderedMap<std::size_t, Struct, 10U>;
+using StaticFlatUnorderedMap = rtw::stl::StaticFlatUnorderedMap<std::size_t, Struct>;
 
 } // namespace
 
-TEST(InplaceFlatUnorderedMap, constructor)
+TEST(StaticFlatUnorderedMap, constructor)
 {
-  static_assert(std::is_trivially_copyable_v<InplaceFlatUnorderedMap>,
-                "InplaceFlatUnorderedMap should be trivially copyable.");
-  static_assert(std::is_trivially_destructible_v<InplaceFlatUnorderedMap>,
-                "InplaceFlatUnorderedMap should be trivially destructible.");
-
-  InplaceFlatUnorderedMap map;
+  StaticFlatUnorderedMap map{10U};
   EXPECT_EQ(map.size(), 0U);
   EXPECT_EQ(map.capacity(), 10U);
   EXPECT_TRUE(map.empty());
   EXPECT_TRUE(map.begin() == map.end());
+
+  EXPECT_DEATH(StaticFlatUnorderedMap{0U}, ".*");
 }
 
-TEST(InplaceFlatUnorderedMap, emplace_and_operator_brackets)
+TEST(StaticFlatUnorderedMap, emplace_and_operator_brackets)
 {
   {
-    InplaceFlatUnorderedMap map;
+    StaticFlatUnorderedMap map{10U};
 
     EXPECT_TRUE(map.emplace(1U, Struct{1.0F, 2, 3}));
     EXPECT_EQ(map.size(), 1U);
@@ -77,7 +74,7 @@ TEST(InplaceFlatUnorderedMap, emplace_and_operator_brackets)
     EXPECT_EQ(std::distance(map.begin(), map.end()), 0);
   }
   {
-    rtw::stl::InplaceFlatUnorderedMap<std::size_t, Struct, 2U> map;
+    StaticFlatUnorderedMap map{2U};
 
     EXPECT_TRUE(map.emplace(1U, Struct{1.0F, 2, 3}));
     EXPECT_TRUE(map.emplace(2U, Struct{4.0F, 5, 6}));
@@ -88,10 +85,10 @@ TEST(InplaceFlatUnorderedMap, emplace_and_operator_brackets)
   }
 }
 
-TEST(InplaceFlatUnorderedMap, insert_and_operator_brackets)
+TEST(StaticFlatUnorderedMap, insert_and_operator_brackets)
 {
   {
-    InplaceFlatUnorderedMap map;
+    StaticFlatUnorderedMap map{10U};
 
     EXPECT_TRUE(map.insert({1U, Struct{1.0F, 2, 3}}));
     EXPECT_EQ(map.size(), 1U);
@@ -117,7 +114,7 @@ TEST(InplaceFlatUnorderedMap, insert_and_operator_brackets)
     EXPECT_TRUE(map.begin() == map.end());
   }
   {
-    rtw::stl::InplaceFlatUnorderedMap<std::size_t, Struct, 2U> map;
+    StaticFlatUnorderedMap map{2U};
 
     EXPECT_TRUE(map.insert({1U, Struct{1.0F, 2, 3}}));
     EXPECT_TRUE(map.insert({2U, Struct{4.0F, 5, 6}}));
@@ -128,10 +125,10 @@ TEST(InplaceFlatUnorderedMap, insert_and_operator_brackets)
   }
 }
 
-TEST(InplaceFlatUnorderedMap, operator_brackets)
+TEST(StaticFlatUnorderedMap, operator_brackets)
 {
   {
-    InplaceFlatUnorderedMap map;
+    StaticFlatUnorderedMap map{10U};
 
     map[1U] = Struct{1.0F, 2, 3};
     EXPECT_EQ(map.size(), 1U);
@@ -154,7 +151,7 @@ TEST(InplaceFlatUnorderedMap, operator_brackets)
     EXPECT_TRUE(map.empty());
   }
   {
-    rtw::stl::InplaceFlatUnorderedMap<std::size_t, Struct, 2U> map;
+    StaticFlatUnorderedMap map{2U};
 
     map[1U] = Struct{1.0F, 2, 3};
     map[2U] = Struct{4.0F, 5, 6};
@@ -165,9 +162,9 @@ TEST(InplaceFlatUnorderedMap, operator_brackets)
   }
 }
 
-TEST(InplaceFlatUnorderedMap, erase)
+TEST(StaticFlatUnorderedMap, erase)
 {
-  InplaceFlatUnorderedMap map;
+  StaticFlatUnorderedMap map{10U};
 
   map.emplace(1U, Struct{1.0F, 2, 3});
   map.emplace(2U, Struct{4.0F, 5, 6});
@@ -185,9 +182,9 @@ TEST(InplaceFlatUnorderedMap, erase)
   EXPECT_FALSE(map.erase(3U)); // Erasing non-existing key
 }
 
-TEST(InplaceFlatUnorderedMap, find)
+TEST(StaticFlatUnorderedMap, find)
 {
-  InplaceFlatUnorderedMap map;
+  StaticFlatUnorderedMap map{10U};
 
   map.emplace(1U, Struct{1.0F, 2, 3});
   map.emplace(2U, Struct{4.0F, 5, 6});
