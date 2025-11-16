@@ -28,6 +28,15 @@ public:
     }
   }
 
+  template <typename U = T>
+  HeapArray(const size_type capacity, const U& initial_value) noexcept : storage_{capacity}
+  {
+    for (size_type i = 0; i < capacity; ++i)
+    {
+      storage_.construct_at(i, initial_value);
+    }
+  }
+
   size_type size() const noexcept { return storage_.used_slots(); }
 
   reference operator[](const size_type index) noexcept { return storage_[index]; }
