@@ -114,6 +114,9 @@ TEST(InplaceGraphTest, has_cycle)
     EXPECT_TRUE(rtw::stl::graph::has_cycle_bfs(graph));
     EXPECT_TRUE(rtw::stl::graph::has_cycle_dfs_iterative(graph));
     EXPECT_TRUE(rtw::stl::graph::has_cycle_dfs_recursive(graph));
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_bfs(graph).has_value());
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_dfs_recursive(graph).has_value());
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_dfs_iterative(graph).has_value());
   }
   {
     InplaceDirectedGraph graph;
@@ -125,6 +128,9 @@ TEST(InplaceGraphTest, has_cycle)
     EXPECT_TRUE(rtw::stl::graph::has_cycle_bfs(graph));
     EXPECT_TRUE(rtw::stl::graph::has_cycle_dfs_iterative(graph));
     EXPECT_TRUE(rtw::stl::graph::has_cycle_dfs_recursive(graph));
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_bfs(graph).has_value());
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_dfs_recursive(graph).has_value());
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_dfs_iterative(graph).has_value());
   }
   {
     rtw::stl::graph::GenericInplaceDirectedGraph<6U, VertexAttributes> graph;
@@ -186,6 +192,9 @@ TEST(InplaceGraphTest, has_cycle)
     EXPECT_TRUE(rtw::stl::graph::has_cycle_bfs(graph));
     EXPECT_TRUE(rtw::stl::graph::has_cycle_dfs_iterative(graph));
     EXPECT_TRUE(rtw::stl::graph::has_cycle_dfs_recursive(graph));
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_bfs(graph).has_value());
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_dfs_recursive(graph).has_value());
+    EXPECT_FALSE(rtw::stl::graph::topological_sort_dfs_iterative(graph).has_value());
   }
   {
     InplaceDirectedGraph graph;
@@ -200,5 +209,8 @@ TEST(InplaceGraphTest, has_cycle)
     EXPECT_FALSE(rtw::stl::graph::has_cycle_bfs(graph));
     EXPECT_FALSE(rtw::stl::graph::has_cycle_dfs_iterative(graph));
     EXPECT_FALSE(rtw::stl::graph::has_cycle_dfs_recursive(graph));
+    EXPECT_TRUE(rtw::stl::graph::topological_sort_bfs(graph).has_value());
+    EXPECT_TRUE(rtw::stl::graph::topological_sort_dfs_recursive(graph).has_value());
+    EXPECT_TRUE(rtw::stl::graph::topological_sort_dfs_iterative(graph).has_value());
   }
 }

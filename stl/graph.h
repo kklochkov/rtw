@@ -7,6 +7,7 @@
 #include "stl/static_vector.h"
 
 #include <array>
+#include <optional>
 #include <vector>
 
 namespace rtw::stl::graph
@@ -165,10 +166,10 @@ namespace details
 {
 
 template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
-struct HasCycleAlgorithmTraits;
+struct AlgorithmTraits;
 
 template <typename VertexAttributesT, typename EdgeAttributesT>
-struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT>
+struct AlgorithmTraits<VertexAttributesT, EdgeAttributesT>
 {
   using graph_type = GenericDirectedGraph<VertexAttributesT, EdgeAttributesT>;
 
@@ -179,6 +180,15 @@ struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT>
   constexpr static buffer_type<T> make_buffer(const graph_type& graph, const T& value) noexcept
   {
     return buffer_type<T>{graph.size(), value};
+  }
+
+  template <typename T>
+  using static_vector_type = StaticVector<T>;
+
+  template <typename T>
+  constexpr static static_vector_type<T> make_static_vector(const graph_type& graph) noexcept
+  {
+    return static_vector_type<T>{graph.size()};
   }
 
   template <typename T>
@@ -201,7 +211,7 @@ struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT>
 };
 
 template <typename VertexAttributesT, typename EdgeAttributesT, std::size_t CAPACITY>
-struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT, std::integral_constant<std::size_t, CAPACITY>>
+struct AlgorithmTraits<VertexAttributesT, EdgeAttributesT, std::integral_constant<std::size_t, CAPACITY>>
 {
   using graph_type =
       GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, std::integral_constant<std::size_t, CAPACITY>>;
@@ -215,6 +225,15 @@ struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT, std::integral
     buffer_type<T> buffer{};
     std::fill(buffer.begin(), buffer.end(), value);
     return buffer;
+  }
+
+  template <typename T>
+  using static_vector_type = InplaceStaticVector<T, CAPACITY>;
+
+  template <typename T>
+  constexpr static static_vector_type<T> make_static_vector(const graph_type& /*graph*/) noexcept
+  {
+    return static_vector_type<T>{};
   }
 
   template <typename T>
@@ -241,9 +260,9 @@ struct HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT, std::integral
 template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
 inline bool has_cycle_bfs(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
 {
-  using HasCycleTraits = details::HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
+  using AlgorithmTraits = details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
 
-  auto in_degree = HasCycleTraits::template make_buffer<std::int32_t>(graph, 0);
+  auto in_degree = AlgorithmTraits::template make_buffer<std::int32_t>(graph, 0);
   for (auto u = graph.get_first_vertex_id(); u <= graph.get_last_vertex_id(); ++u)
   {
     const auto& edges = graph.get_edges(u);
@@ -253,7 +272,7 @@ inline bool has_cycle_bfs(const GenericDirectedGraph<VertexAttributesT, EdgeAttr
     }
   }
 
-  auto bfs_queue = HasCycleTraits::template make_bfs_queue<VertexId>(graph);
+  auto bfs_queue = AlgorithmTraits::template make_bfs_queue<VertexId>(graph);
   for (auto u = graph.get_first_vertex_id(); u <= graph.get_last_vertex_id(); ++u)
   {
     if (in_degree[u] == 0)
@@ -292,9 +311,9 @@ template <typename VertexAttributesT, typename EdgeAttributesT, typename... Args
 inline bool
 has_cycle_dfs_recursive(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
 {
-  using HasCycleTraits = details::HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
-  using Graph = typename HasCycleTraits::graph_type;
-  using States = typename HasCycleTraits::template buffer_type<VisitState>;
+  using AlgorithmTraits = details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
+  using Graph = typename AlgorithmTraits::graph_type;
+  using States = typename AlgorithmTraits::template buffer_type<VisitState>;
 
   const auto has_cycle_dfs = [](States& states, const Graph& g, const VertexId u, const auto& has_cycle_dfs_ref) -> bool
   {
@@ -322,7 +341,7 @@ has_cycle_dfs_recursive(const GenericDirectedGraph<VertexAttributesT, EdgeAttrib
     return false;
   };
 
-  auto visit_states = HasCycleTraits::template make_buffer<VisitState>(graph, VisitState::UNVISITED);
+  auto visit_states = AlgorithmTraits::template make_buffer<VisitState>(graph, VisitState::UNVISITED);
   for (auto u = graph.get_first_vertex_id(); u <= graph.get_last_vertex_id(); ++u)
   {
     if (visit_states[u] == VisitState::UNVISITED)
@@ -341,7 +360,7 @@ template <typename VertexAttributesT, typename EdgeAttributesT, typename... Args
 inline bool
 has_cycle_dfs_iterative(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
 {
-  using HasCycleTraits = details::HasCycleAlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
+  using AlgorithmTraits = details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
 
   struct VertexSearchAttributes
   {
@@ -349,14 +368,14 @@ has_cycle_dfs_iterative(const GenericDirectedGraph<VertexAttributesT, EdgeAttrib
     bool on_stack{false};
   };
 
-  auto attributes = HasCycleTraits::template make_buffer<VertexSearchAttributes>(graph, VertexSearchAttributes{});
+  auto attributes = AlgorithmTraits::template make_buffer<VertexSearchAttributes>(graph, VertexSearchAttributes{});
   {
     auto& vertex_attr = attributes[graph.get_first_vertex_id()];
     vertex_attr.state = VisitState::VISITING;
     vertex_attr.on_stack = true;
   }
 
-  auto dfs_stack = HasCycleTraits::template make_dfs_stack<VertexId>(graph);
+  auto dfs_stack = AlgorithmTraits::template make_dfs_stack<VertexId>(graph);
   dfs_stack.push(graph.get_first_vertex_id());
 
   while (!dfs_stack.empty())
@@ -402,6 +421,185 @@ has_cycle_dfs_iterative(const GenericDirectedGraph<VertexAttributesT, EdgeAttrib
   }
 
   return false;
+}
+
+template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
+inline std::optional<typename details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT,
+                                                       ArgsT...>::template static_vector_type<VertexId>>
+topological_sort_bfs(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
+{
+  using AlgorithmTraits = details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
+
+  auto in_degree = AlgorithmTraits::template make_buffer<std::int32_t>(graph, 0);
+  for (auto u = graph.get_first_vertex_id(); u <= graph.get_last_vertex_id(); ++u)
+  {
+    const auto& edges = graph.get_edges(u);
+    for (const auto& edge : edges)
+    {
+      ++in_degree[edge.to];
+    }
+  }
+
+  auto bfs_queue = AlgorithmTraits::template make_bfs_queue<VertexId>(graph);
+  for (auto u = graph.get_first_vertex_id(); u <= graph.get_last_vertex_id(); ++u)
+  {
+    if (in_degree[u] == 0)
+    {
+      bfs_queue.push(u);
+    }
+  }
+
+  auto result = AlgorithmTraits::template make_static_vector<VertexId>(graph);
+  while (!bfs_queue.empty())
+  {
+    VertexId u{};
+    bfs_queue.pop(u);
+    result.push_back(u);
+
+    const auto& edges = graph.get_edges(u);
+    for (const auto& edge : edges)
+    {
+      --in_degree[edge.to];
+      if (in_degree[edge.to] == 0)
+      {
+        bfs_queue.push(edge.to);
+      }
+    }
+  }
+
+  if (result.size() != graph.size())
+  {
+    return std::nullopt; // Graph has a cycle.
+  }
+
+  return result;
+}
+
+template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
+inline std::optional<typename details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT,
+                                                       ArgsT...>::template static_vector_type<VertexId>>
+topological_sort_dfs_recursive(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
+{
+  using AlgorithmTraits = details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
+  using Graph = typename AlgorithmTraits::graph_type;
+  using States = typename AlgorithmTraits::template buffer_type<VisitState>;
+  using ResultVector = typename AlgorithmTraits::template static_vector_type<VertexId>;
+
+  const auto has_cycle_dfs = [](ResultVector& result, States& states, const Graph& g, const VertexId u,
+                                const auto& has_cycle_dfs_ref) -> bool
+  {
+    states[u] = VisitState::VISITING;
+
+    const auto& edges = g.get_edges(u);
+    for (const auto& edge : edges)
+    {
+      const auto v = edge.to;
+      if (states[v] == VisitState::VISITING)
+      {
+        return true;
+      }
+
+      if (states[v] == VisitState::UNVISITED)
+      {
+        if (has_cycle_dfs_ref(result, states, g, v, has_cycle_dfs_ref))
+        {
+          return true;
+        }
+      }
+    }
+
+    states[u] = VisitState::VISITED;
+    result.push_back(u);
+    return false;
+  };
+
+  auto result = AlgorithmTraits::template make_static_vector<VertexId>(graph);
+  auto visit_states = AlgorithmTraits::template make_buffer<VisitState>(graph, VisitState::UNVISITED);
+  for (auto u = graph.get_first_vertex_id(); u <= graph.get_last_vertex_id(); ++u)
+  {
+    if (visit_states[u] == VisitState::UNVISITED)
+    {
+      if (has_cycle_dfs(result, visit_states, graph, u, has_cycle_dfs))
+      {
+        return std::nullopt;
+      }
+    }
+  }
+
+  std::reverse(result.begin(), result.end());
+  return result;
+}
+
+template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
+inline std::optional<typename details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT,
+                                                       ArgsT...>::template static_vector_type<VertexId>>
+topological_sort_dfs_iterative(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
+{
+  using AlgorithmTraits = details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT, ArgsT...>;
+
+  struct VertexSearchAttributes
+  {
+    VisitState state{VisitState::UNVISITED};
+    bool on_stack{false};
+  };
+
+  auto attributes = AlgorithmTraits::template make_buffer<VertexSearchAttributes>(graph, VertexSearchAttributes{});
+  {
+    auto& vertex_attr = attributes[graph.get_first_vertex_id()];
+    vertex_attr.state = VisitState::VISITING;
+    vertex_attr.on_stack = true;
+  }
+
+  auto result = AlgorithmTraits::template make_static_vector<VertexId>(graph);
+
+  auto dfs_stack = AlgorithmTraits::template make_dfs_stack<VertexId>(graph);
+  dfs_stack.push(graph.get_first_vertex_id());
+
+  while (!dfs_stack.empty())
+  {
+    const auto u = dfs_stack.top();
+    auto& u_attr = attributes[u];
+
+    bool unvisited_found = false;
+
+    {
+      const auto& edges = graph.get_edges(u);
+      for (const auto& edge : edges)
+      {
+        const auto v = edge.to;
+        auto& v_attr = attributes[v];
+        if (v_attr.state == VisitState::VISITING)
+        {
+          if (v_attr.on_stack)
+          {
+            return std::nullopt;
+          }
+        }
+
+        if (v_attr.state == VisitState::UNVISITED)
+        {
+          // An unvisited neighbor found, push it to the stack and start exploring it.
+          unvisited_found = true;
+          v_attr.state = VisitState::VISITING;
+          v_attr.on_stack = true;
+          dfs_stack.push(v);
+          break;
+        }
+      }
+    }
+
+    if (!unvisited_found)
+    {
+      // All neighbors have been visited, mark the vertex as fully visited.
+      u_attr.state = VisitState::VISITED;
+      u_attr.on_stack = false;
+      dfs_stack.pop();
+      result.push_back(u);
+    }
+  }
+
+  std::reverse(result.begin(), result.end());
+  return result;
 }
 
 } // namespace rtw::stl::graph

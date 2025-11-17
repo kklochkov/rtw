@@ -1,5 +1,6 @@
 #include "stl/static_vector.h"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 namespace
@@ -164,4 +165,31 @@ TEST(StaticVectorTest, iterators)
   vector.pop_back();
 
   EXPECT_TRUE(rtw::stl::is_memory_contiguous(vector.begin(), vector.end()));
+}
+
+TEST(StaticVectorTest, reverse_iterator)
+{
+  StaticVector vector{10U};
+  EXPECT_EQ(vector.size(), 0U);
+  EXPECT_EQ(vector.capacity(), 10U);
+  EXPECT_TRUE(vector.empty());
+
+  std::vector<Struct> expected;
+  for (std::size_t i = 0U; i < vector.capacity(); ++i)
+  {
+    vector.emplace_back(static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                        static_cast<std::uint8_t>(i + 1U));
+    expected.emplace_back(static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                          static_cast<std::uint8_t>(i + 1U));
+  }
+
+  std::reverse(expected.begin(), expected.end());
+  std::reverse(vector.begin(), vector.end());
+
+  EXPECT_THAT(expected, ::testing::ElementsAreArray(vector));
+
+  std::reverse(expected.rbegin(), expected.rend());
+  std::reverse(vector.rbegin(), vector.rend());
+
+  EXPECT_THAT(expected, ::testing::ElementsAreArray(vector));
 }
