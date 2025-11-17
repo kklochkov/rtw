@@ -100,6 +100,18 @@ public:
     return !(lhs == rhs);
   }
 
+  friend constexpr bool operator<(const StaticContiguousStorageIterator& lhs,
+                                  const StaticContiguousStorageIterator& rhs) noexcept
+  {
+    return (lhs.container_ == rhs.container_) && (lhs.index_ < rhs.index_);
+  }
+
+  friend constexpr bool operator>(const StaticContiguousStorageIterator& lhs,
+                                  const StaticContiguousStorageIterator& rhs) noexcept
+  {
+    return (lhs.container_ == rhs.container_) && (lhs.index_ > rhs.index_);
+  }
+
   friend constexpr StaticContiguousStorageIterator operator+(const difference_type offset,
                                                              const StaticContiguousStorageIterator& it) noexcept
   {

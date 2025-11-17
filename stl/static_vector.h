@@ -19,6 +19,8 @@ public:
   using const_pointer = typename StorageType::const_pointer;
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
+  using reverse_iterator = typename StorageType::reverse_iterator;
+  using const_reverse_iterator = typename StorageType::const_reverse_iterator;
 
   constexpr GenericStaticVector() noexcept = default;
   constexpr explicit GenericStaticVector(const size_type capacity) noexcept : storage_{capacity} {}
@@ -57,6 +59,14 @@ public:
   constexpr iterator end() noexcept { return storage_.end(); }
   constexpr const_iterator end() const noexcept { return storage_.end(); }
   constexpr const_iterator cend() const noexcept { return storage_.cend(); }
+
+  constexpr reverse_iterator rbegin() noexcept { return reverse_iterator{end()}; }
+  constexpr const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator{end()}; }
+  constexpr const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator{cend()}; }
+
+  constexpr reverse_iterator rend() noexcept { return reverse_iterator{begin()}; }
+  constexpr const_reverse_iterator rend() const noexcept { return const_reverse_iterator{begin()}; }
+  constexpr const_reverse_iterator crend() const noexcept { return const_reverse_iterator{cbegin()}; }
 
 private:
   StorageType storage_;

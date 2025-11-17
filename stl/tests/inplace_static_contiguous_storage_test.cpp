@@ -203,3 +203,36 @@ TEST(InplaceStaticContiguousStorageTest, iterators)
   EXPECT_TRUE(rtw::stl::is_memory_contiguous(expected.begin(), expected.end()));
   EXPECT_TRUE(rtw::stl::is_memory_contiguous(storage.begin(), storage.end()));
 }
+
+TEST(InplaceStaticContiguousStorageTest, reverse_iterators)
+{
+  InplaceStaticContiguousStorage storage;
+  EXPECT_EQ(storage.used_slots(), 0U);
+  EXPECT_EQ(storage.capacity(), 10U);
+  EXPECT_TRUE(storage.empty());
+
+  std::vector<AlignedObjectStorage> expected{10U};
+  for (std::size_t i = 0U; i < storage.capacity(); ++i)
+  {
+    storage.construct_at(i, static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                         static_cast<std::uint8_t>(i + 1U));
+    expected[i].construct(static_cast<float>(i + 1U), static_cast<std::int32_t>(i + 1U),
+                          static_cast<std::uint8_t>(i + 1U));
+  }
+
+  std::reverse(expected.begin(), expected.end());
+  std::reverse(storage.begin(), storage.end());
+
+  for (std::size_t i = 0U; i < storage.used_slots(); ++i)
+  {
+    EXPECT_EQ(storage[i], *expected[i]);
+  }
+
+  std::reverse(expected.rbegin(), expected.rend());
+  std::reverse(storage.rbegin(), storage.rend());
+
+  for (std::size_t i = 0U; i < storage.used_slots(); ++i)
+  {
+    EXPECT_EQ(storage[i], *expected[i]);
+  }
+}

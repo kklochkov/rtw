@@ -167,6 +167,8 @@ public:
   using const_pointer = typename storage_type::const_pointer;
   using iterator = StaticContiguousStorageIterator<reference, GenericStaticContiguousStorage>;
   using const_iterator = StaticContiguousStorageIterator<const_reference, const GenericStaticContiguousStorage>;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   constexpr size_type used_slots() const noexcept { return used_slots_; }
   constexpr size_type size() const noexcept { return used_slots_; }
@@ -232,6 +234,14 @@ public:
   constexpr iterator end() noexcept { return iterator{this, used_slots_}; }
   constexpr const_iterator end() const noexcept { return const_iterator{this, used_slots_}; }
   constexpr const_iterator cend() const noexcept { return const_iterator{this, used_slots_}; }
+
+  constexpr reverse_iterator rbegin() noexcept { return reverse_iterator{end()}; }
+  constexpr const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator{end()}; }
+  constexpr const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator{cend()}; }
+
+  constexpr reverse_iterator rend() noexcept { return reverse_iterator{begin()}; }
+  constexpr const_reverse_iterator rend() const noexcept { return const_reverse_iterator{begin()}; }
+  constexpr const_reverse_iterator crend() const noexcept { return const_reverse_iterator{cbegin()}; }
 
 private:
   constexpr explicit GenericStaticContiguousStorage(const size_t capacity) noexcept : capacity_{capacity}

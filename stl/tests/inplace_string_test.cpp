@@ -219,3 +219,12 @@ TEST(InplaceStringTest, ostream_operator)
   oss << string;
   EXPECT_EQ(oss.str(), "Hello, World!");
 }
+
+TEST(InplaceStringTest, reverse_iterator)
+{
+  rtw::stl::InplaceString string{"Hello"};
+  std::reverse(string.begin(), string.end());
+  EXPECT_EQ(string, "olleH");
+  std::reverse(string.rbegin(), string.rend());
+  EXPECT_EQ(string, "Hello");
+}

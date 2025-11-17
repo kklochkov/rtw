@@ -21,6 +21,8 @@ public:
   using const_pointer = const value_type*;
   using iterator = pointer;
   using const_iterator = const_pointer;
+  using reverse_iterator = std::reverse_iterator<iterator>;
+  using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
   constexpr size_type size() const noexcept { return size_; }
   constexpr bool empty() const noexcept { return size_ == 0U; }
@@ -118,6 +120,14 @@ public:
   constexpr iterator end() noexcept { return begin() + size_; }
   constexpr const_iterator end() const noexcept { return begin() + size_; }
   constexpr const_iterator cend() const noexcept { return cbegin() + size_; }
+
+  constexpr reverse_iterator rbegin() noexcept { return reverse_iterator{end()}; }
+  constexpr const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator{end()}; }
+  constexpr const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator{cend()}; }
+
+  constexpr reverse_iterator rend() noexcept { return reverse_iterator{begin()}; }
+  constexpr const_reverse_iterator rend() const noexcept { return const_reverse_iterator{begin()}; }
+  constexpr const_reverse_iterator crend() const noexcept { return const_reverse_iterator{cbegin()}; }
 
   constexpr pointer data() noexcept { return begin(); }
   constexpr const_pointer data() const noexcept { return cbegin(); }
@@ -402,6 +412,8 @@ public:
   using const_pointer = typename Base::const_pointer;
   using iterator = typename Base::iterator;
   using const_iterator = typename Base::const_iterator;
+  using reverse_iterator = typename Base::reverse_iterator;
+  using const_reverse_iterator = typename Base::const_reverse_iterator;
 
   constexpr InplaceString() noexcept
   {
