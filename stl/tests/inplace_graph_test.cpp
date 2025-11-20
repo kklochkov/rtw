@@ -1,5 +1,7 @@
 #include "stl/graph.h"
+#include "stl/static_string.h"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 namespace
@@ -213,4 +215,60 @@ TEST(InplaceGraphTest, has_cycle)
     EXPECT_TRUE(rtw::stl::graph::topological_sort_dfs_recursive(graph).has_value());
     EXPECT_TRUE(rtw::stl::graph::topological_sort_dfs_iterative(graph).has_value());
   }
+}
+
+TEST(InplaceGraphTest, topological_sort)
+{
+  struct VertexWithString
+  {
+    rtw::stl::InplaceStringSmall name;
+  };
+
+  // Professor Bumstead topological sort example
+  rtw::stl::graph::GenericInplaceDirectedGraph<9U, VertexWithString> graph;
+  const auto shirt = graph.add_vertex("shirt");
+  const auto tie = graph.add_vertex("tie");
+  const auto jacket = graph.add_vertex("jacket");
+  const auto belt = graph.add_vertex("belt");
+  const auto watch = graph.add_vertex("watch");
+  const auto undershorts = graph.add_vertex("undershorts");
+  const auto pants = graph.add_vertex("pants");
+  const auto shoes = graph.add_vertex("shoes");
+  const auto socks = graph.add_vertex("socks");
+
+  // The BFS and DFS topological sorts may yield different valid results,
+  // because the discovery of vertices happens differently in each algorithm:
+  // BFS explores neighbors level by level, while DFS goes deep into one branch before backtracking.
+  const std::array<rtw::stl::graph::VertexId, 9U> expected_vertex_names_bfs = {
+      shirt, watch, undershorts, socks, tie, pants, shoes, belt, jacket,
+  };
+  const std::array<rtw::stl::graph::VertexId, 9U> expected_vertex_names_dfs = {
+      socks, undershorts, pants, shoes, watch, shirt, belt, tie, jacket,
+  };
+
+  graph.add_edge(socks, shoes);
+
+  graph.add_edge(undershorts, shoes);
+  graph.add_edge(undershorts, pants);
+
+  graph.add_edge(pants, shoes);
+  graph.add_edge(pants, belt);
+
+  graph.add_edge(shirt, tie);
+  graph.add_edge(shirt, belt);
+
+  graph.add_edge(tie, jacket);
+  graph.add_edge(belt, jacket);
+
+  const auto topological_sort_bfs = rtw::stl::graph::topological_sort_bfs(graph);
+  ASSERT_TRUE(topological_sort_bfs.has_value());
+  EXPECT_THAT(*topological_sort_bfs, testing::ElementsAreArray(expected_vertex_names_bfs));
+
+  const auto topological_sort_dfs_recursive = rtw::stl::graph::topological_sort_dfs_recursive(graph);
+  ASSERT_TRUE(topological_sort_dfs_recursive.has_value());
+  EXPECT_THAT(*topological_sort_dfs_recursive, testing::ElementsAreArray(expected_vertex_names_dfs));
+
+  const auto topological_sort_dfs_iterative = rtw::stl::graph::topological_sort_dfs_iterative(graph);
+  ASSERT_TRUE(topological_sort_dfs_iterative.has_value());
+  EXPECT_THAT(*topological_sort_dfs_iterative, testing::ElementsAreArray(expected_vertex_names_dfs));
 }
