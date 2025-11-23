@@ -91,7 +91,7 @@ public:
   friend constexpr bool operator==(const StaticContiguousStorageIterator& lhs,
                                    const StaticContiguousStorageIterator& rhs) noexcept
   {
-    return lhs.container_ == rhs.container_ && lhs.index_ == rhs.index_;
+    return (lhs.container_ == rhs.container_) && (lhs.index_ == rhs.index_);
   }
 
   friend constexpr bool operator!=(const StaticContiguousStorageIterator& lhs,

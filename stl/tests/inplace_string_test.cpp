@@ -17,6 +17,7 @@ TEST(InplaceStringTest, constructor)
     EXPECT_EQ(string.capacity(), 10U);
     EXPECT_TRUE(string.empty());
     EXPECT_TRUE(string.begin() == string.end());
+    EXPECT_DEATH(string.pop_back(), ".*");
   }
   {
     // Pointer constructor
@@ -29,6 +30,7 @@ TEST(InplaceStringTest, constructor)
     EXPECT_TRUE(string.starts_with("Hello"));
     EXPECT_TRUE(string.ends_with("World!"));
     EXPECT_FALSE(string.begin() == string.end());
+    EXPECT_DEATH(string.push_back('a'), ".*");
   }
   {
     // C-string constructor
@@ -40,6 +42,7 @@ TEST(InplaceStringTest, constructor)
     EXPECT_TRUE(string.starts_with("Hello"));
     EXPECT_TRUE(string.ends_with("World!"));
     EXPECT_FALSE(string.begin() == string.end());
+    EXPECT_DEATH(string.push_back('a'), ".*");
   }
 }
 

@@ -178,6 +178,7 @@ public:
   template <typename... ArgsT>
   constexpr reference construct_at(const size_type index, ArgsT&&... args) noexcept
   {
+    assert(!is_constructed(index));
     auto& storage = get_derived().get_storage(index);
     auto& value = storage.construct(std::forward<ArgsT>(args)...);
     ++used_slots_;
@@ -186,6 +187,7 @@ public:
 
   constexpr reference construct_for_overwrite_at(const size_type index) noexcept
   {
+    assert(!is_constructed(index));
     auto& storage = get_derived().get_storage(index);
     auto& value = storage.construct_for_overwrite_at();
     ++used_slots_;
@@ -194,6 +196,7 @@ public:
 
   constexpr void destruct_at(const size_type index) noexcept
   {
+    assert(is_constructed(index));
     auto& storage = get_derived().get_storage(index);
     storage.destruct();
     --used_slots_;
@@ -201,18 +204,21 @@ public:
 
   constexpr bool is_constructed(const size_type index) const noexcept
   {
+    assert(index < capacity());
     const auto& storage = get_derived().get_storage(index);
     return storage.is_constructed();
   }
 
   constexpr reference operator[](const size_type index) noexcept
   {
+    assert(is_constructed(index));
     auto& storage = get_derived().get_storage(index);
     return storage.get_reference();
   }
 
   constexpr const_reference operator[](const size_type index) const noexcept
   {
+    assert(is_constructed(index));
     const auto& storage = get_derived().get_storage(index);
     return storage.get_reference();
   }

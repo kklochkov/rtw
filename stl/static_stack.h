@@ -26,7 +26,6 @@ public:
   template <typename... ArgsT>
   constexpr reference emplace(ArgsT&&... args) noexcept
   {
-    assert(top_ < capacity());
     const auto index = top_;
     ++top_;
     return storage_.construct_at(index, std::forward<ArgsT>(args)...);
@@ -46,25 +45,14 @@ public:
 
   constexpr void pop() noexcept
   {
-    assert(!empty());
     --top_;
     storage_.destruct_at(top_);
   }
 
-  constexpr reference top() noexcept
-  {
-    assert(!empty());
-    return storage_[top_ - 1U];
-  }
-
+  constexpr reference top() noexcept { return storage_[top_ - 1U]; }
   constexpr const_reference top() const noexcept { return top(); }
 
-  constexpr reference bottom() noexcept
-  {
-    assert(!empty());
-    return storage_[0U];
-  }
-
+  constexpr reference bottom() noexcept { return storage_[0U]; }
   constexpr const_reference bottom() const noexcept { return bottom(); }
 
   constexpr void clear()

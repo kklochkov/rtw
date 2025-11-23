@@ -36,6 +36,7 @@ public:
 
   constexpr void push_back(const value_type value) noexcept
   {
+    assert(size() < capacity());
     if (size_ < capacity_)
     {
       get_derived().value(size_) = value;
@@ -46,6 +47,7 @@ public:
 
   constexpr void pop_back() noexcept
   {
+    assert(!empty());
     if (!empty())
     {
       --size_;
@@ -79,13 +81,13 @@ public:
 
   constexpr reference operator[](const size_type index) noexcept
   {
-    assert(index < size_);
+    assert(index < size());
     return get_derived().value(index);
   }
 
   constexpr const_reference operator[](const size_type index) const noexcept
   {
-    assert(index < size_);
+    assert(index < size());
     return get_derived().value(index);
   }
 

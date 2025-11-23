@@ -96,12 +96,12 @@ public:
 
   constexpr reference operator[](const std::size_t index) noexcept
   {
-    assert(!empty());
+    assert(index < size());
     return data_[index];
   }
   constexpr const_reference operator[](const std::size_t index) const noexcept
   {
-    assert(!empty());
+    assert(index < size());
     return data_[index];
   }
 
@@ -115,20 +115,20 @@ public:
 
   constexpr Span<element_type> first(const size_type count) const noexcept
   {
-    assert(count <= size_);
+    assert(count <= size());
     return {data_, count};
   }
 
   constexpr Span<element_type> last(const size_type count) const noexcept
   {
-    assert(count <= size_);
+    assert(count <= size());
     return {data_ + size_ - count, count};
   }
 
   constexpr Span<element_type> subspan(const size_type offset,
                                        size_type count = std::numeric_limits<size_type>::max()) const noexcept
   {
-    assert(offset <= size_);
+    assert(offset <= size());
     if (count == std::numeric_limits<size_type>::max() || offset + count > size_)
     {
       count = size_ - offset;

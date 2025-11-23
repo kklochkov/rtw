@@ -26,8 +26,7 @@ public:
   template <typename... ArgsT>
   constexpr reference emplace(ArgsT&&... args) noexcept
   {
-    assert(tail_ + 1U <= capacity());
-    tail_ = empty() ? head_ : (tail_ + 1U) % capacity();
+    tail_ = empty() ? 0U : (tail_ + 1U) % capacity();
     return storage_.construct_at(tail_, std::forward<ArgsT>(args)...);
   }
 
@@ -39,31 +38,20 @@ public:
 
   constexpr void pop(T& value) noexcept
   {
-    assert(!empty());
     value = storage_[head_];
-    pop_front();
+    pop();
   }
 
   constexpr void pop() noexcept
   {
-    assert(!empty());
-    pop_front();
+    storage_.destruct_at(head_);
+    head_ = empty() ? 0U : (head_ + 1U) % capacity();
   }
 
-  constexpr reference front() noexcept
-  {
-    assert(!empty());
-    return storage_[head_];
-  }
-
+  constexpr reference front() noexcept { return storage_[head_]; }
   constexpr const_reference front() const noexcept { return front(); }
 
-  constexpr reference back() noexcept
-  {
-    assert(!empty());
-    return storage_[tail_];
-  }
-
+  constexpr reference back() noexcept { return storage_[tail_]; }
   constexpr const_reference back() const noexcept { return back(); }
 
   constexpr void clear()
@@ -74,12 +62,6 @@ public:
   }
 
 private:
-  constexpr void pop_front()
-  {
-    storage_.destruct_at(head_);
-    head_ = (head_ + 1U) % capacity();
-  }
-
   StorageType storage_;
   size_type head_{0U};
   size_type tail_{0U};

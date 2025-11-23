@@ -70,15 +70,10 @@ public:
     emplace_back(std::forward<U>(value));
   }
 
-  constexpr void pop_back() noexcept
-  {
-    assert(!empty());
-    storage_.destruct_at(size() - 1U);
-  }
+  constexpr void pop_back() noexcept { storage_.destruct_at(size() - 1U); }
 
   constexpr void remove(const size_type index) noexcept
   {
-    assert(index < size());
     const auto last_index = size() - 1U;
     std::exchange(storage_[index], storage_[last_index]);
     storage_.destruct_at(last_index);

@@ -41,11 +41,7 @@ public:
     emplace_back(std::forward<U>(value));
   }
 
-  constexpr void pop_back() noexcept
-  {
-    assert(!empty());
-    storage_.destruct_at(size() - 1U);
-  }
+  constexpr void pop_back() noexcept { storage_.destruct_at(size() - 1U); }
 
   constexpr void clear() noexcept { storage_.clear(); }
 
