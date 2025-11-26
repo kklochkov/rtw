@@ -14,6 +14,7 @@ cc_library(
         "static_contiguous_storage.h",
         "static_flat_unordered_map.h",
         "static_flat_unordered_set.h",
+        "static_priority_queue.h",
         "static_queue.h",
         "static_stack.h",
         "static_string.h",
