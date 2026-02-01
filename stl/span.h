@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <iterator>
@@ -12,6 +13,18 @@ namespace rtw::stl
 template <typename T>
 class Span
 {
+  template <typename IteratorT>
+  constexpr static bool IS_RANDOM_ACCESS_ITERATOR_V =
+      !std::is_pointer_v<IteratorT>
+      && std::is_base_of_v<std::random_access_iterator_tag,
+                           typename std::iterator_traits<IteratorT>::iterator_category>;
+
+  enum class CtorType : std::uint8_t
+  {
+    POINTER,
+    ITERATOR,
+  };
+
 public:
   using element_type = T;
   using value_type = std::remove_cv_t<T>;
@@ -32,15 +45,6 @@ public:
   {
   }
 
-  template <typename IteratorBeginT, typename IteratorEndT,
-            typename = std::enable_if_t<(std::is_convertible_v<IteratorBeginT, pointer>
-                                         || std::is_convertible_v<IteratorBeginT, const_pointer>)
-                                        && std::is_same_v<IteratorBeginT, IteratorEndT>>>
-  constexpr Span(IteratorBeginT first, IteratorEndT last) noexcept
-      : data_{first}, size_{static_cast<size_type>(last - first)}
-  {
-  }
-
   template <typename ContainerT,
             typename = std::enable_if_t<std::is_convertible_v<typename ContainerT::pointer, pointer>>>
   explicit Span(ContainerT& container) noexcept : data_{std::data(container)}, size_{std::size(container)}
@@ -53,8 +57,32 @@ public:
   {
   }
 
+  template <typename IteratorT, std::enable_if_t<std::is_convertible_v<IteratorT, pointer>
+                                                     || std::is_convertible_v<IteratorT, const_pointer>,
+                                                 CtorType> = CtorType::POINTER>
+  constexpr Span(IteratorT first, IteratorT last) noexcept : data_{first}, size_{static_cast<size_type>(last - first)}
+  {
+  }
+
+  template <typename IteratorT, std::enable_if_t<IS_RANDOM_ACCESS_ITERATOR_V<IteratorT>, CtorType> = CtorType::ITERATOR>
+  constexpr Span(IteratorT first, IteratorT last) noexcept
+      : data_{first != last ? std::addressof(*first) : nullptr},
+        size_{static_cast<size_type>(std::distance(first, last))}
+  {
+  }
+
   template <size_type N>
   explicit Span(element_type (&array)[N]) noexcept : data_{array}, size_{N}
+  {
+  }
+
+  template <typename U, size_type N>
+  explicit Span(std::array<U, N>& array) noexcept : data_{array.data()}, size_{N}
+  {
+  }
+
+  template <typename U, size_type N>
+  explicit Span(const std::array<U, N>& array) noexcept : data_{array.data()}, size_{N}
   {
   }
 
@@ -161,6 +189,18 @@ constexpr Span<T> make_span(T (&array)[N]) noexcept
 
 template <typename T, std::size_t N>
 constexpr Span<const T> make_span(const T (&array)[N]) noexcept
+{
+  return Span<const T>{array};
+}
+
+template <typename T, std::size_t N>
+constexpr Span<T> make_span(std::array<T, N>& array) noexcept
+{
+  return Span<T>{array};
+}
+
+template <typename T, std::size_t N>
+constexpr Span<const T> make_span(const std::array<T, N>& array) noexcept
 {
   return Span<const T>{array};
 }

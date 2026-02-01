@@ -93,6 +93,16 @@ TEST(SpanTest, constructors)
     EXPECT_EQ(span.data(), vec.data());
     EXPECT_FALSE(span.begin() == span.end());
   }
+
+  {
+    // Constructor with a vector begin and end iterators
+    std::vector<Struct> vec = {Struct{1.0F, 2, 3}, Struct{4.0F, 5, 6}, Struct{7.0F, 8, 9}};
+    Span span{vec.begin(), vec.end()};
+    EXPECT_EQ(span.size(), vec.size());
+    EXPECT_FALSE(span.empty());
+    EXPECT_EQ(span.data(), vec.data());
+    EXPECT_FALSE(span.begin() == span.end());
+  }
 }
 
 TEST(SpanTest, modifying_operations)
