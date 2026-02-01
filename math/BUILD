@@ -15,6 +15,7 @@ cc_library(
         "matrix_decomposition.h",
         "matrix_eigen_decomposition.h",
         "matrix_operations.h",
+        "numeric.h",
         "plane.h",
         "point.h",
         "transform2.h",

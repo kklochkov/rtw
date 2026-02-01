@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/convex_polygon.h"
+#include "math/numeric.h"
 #include "math/vector_operations.h"
 
 namespace rtw::math
@@ -38,23 +39,6 @@ constexpr WindingOrder winding_order(const Triangle2<T>& triangle) noexcept
   return winding_order(triangle[0U], triangle[1U], triangle[2U]);
 }
 /// @}
-
-/// Get the default near-zero epsilon for a given type.
-/// For fixed-point types and integral types, the epsilon is zero.
-/// @tparam T The type of the elements.
-/// @return The default near-zero epsilon for the type.
-template <typename T>
-constexpr T default_near_zero_epsilon() noexcept
-{
-  if constexpr (multiprecision::IS_FIXED_POINT_V<T>)
-  {
-    return T{0};
-  }
-  else
-  {
-    return std::numeric_limits<T>::epsilon();
-  }
-}
 
 struct PolygonInfo
 {
@@ -108,12 +92,12 @@ constexpr PolygonInfo check_polygon(const ConvexPolygon2<T, CAPACITY>& polygon,
     const auto v1 = polygon[(i + 1U) % polygon.size()];
     const auto v2 = polygon[(i + 2U) % polygon.size()];
     const auto current_orientation = triangle_orientation(v0, v1, v2);
-    if (abs(current_orientation) <= epsilon)
+    if (is_near_zero(current_orientation, epsilon))
     {
       return PolygonInfo{PolygonInfo::Property::COLLINEAR_POINTS, WindingOrder::COUNTER_CLOCKWISE};
     }
 
-    if (abs(reference_orientation) <= epsilon)
+    if (is_near_zero(reference_orientation, epsilon))
     {
       reference_orientation = current_orientation;
       winding_order = current_orientation > T{0} ? WindingOrder::COUNTER_CLOCKWISE : WindingOrder::CLOCKWISE;

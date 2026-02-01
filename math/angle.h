@@ -99,9 +99,16 @@ public:
   friend constexpr Angle operator/(const value_type lhs, const Angle& rhs) noexcept { return Angle{lhs / rhs.rad()}; }
   friend constexpr bool operator==(const Angle& lhs, const Angle& rhs) noexcept
   {
-    // TODO: Floating point comparison is hard.
-    return lhs.rad() == rhs.rad()
-        || lhs.rad() == rhs.rad() + TAU<value_type> || lhs.rad() == rhs.rad() - TAU<value_type>;
+    if constexpr (std::is_floating_point_v<value_type>)
+    {
+      return is_near_equal(lhs.rad(), rhs.rad()) || is_near_equal(lhs.rad(), rhs.rad() + TAU<value_type>)
+          || is_near_equal(lhs.rad(), rhs.rad() - TAU<value_type>);
+    }
+    else
+    {
+      return lhs.rad() == rhs.rad()
+          || lhs.rad() == rhs.rad() + TAU<value_type> || lhs.rad() == rhs.rad() - TAU<value_type>;
+    }
   }
   friend constexpr bool operator!=(const Angle& lhs, const Angle& rhs) noexcept { return !(lhs == rhs); }
   friend constexpr bool operator<(const Angle& lhs, const Angle& rhs) noexcept { return lhs.rad() < rhs.rad(); }

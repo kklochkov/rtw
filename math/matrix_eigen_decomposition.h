@@ -1,28 +1,12 @@
 #pragma once
 
 #include "math/matrix_decomposition.h"
+#include "math/numeric.h"
 
 #include <complex>
 
 namespace rtw::math::eigen_decomposition
 {
-
-/// Default tolerance for convergence in the eigenvalue algorithm.
-/// The default tolerance is set to 100 times the machine epsilon for the floating-point type T,
-/// for fixed-point types it is set to 1, since the epsilon for fixed-point types is exactly 1.
-/// @tparam T The floating-point or fixed-point type.
-/// @return The default tolerance.
-template <typename T>
-constexpr T default_tolerance() noexcept
-{
-  T tolerance_factor{100U};
-  if constexpr (multiprecision::IS_FIXED_POINT_V<T>)
-  {
-    tolerance_factor = 1U;
-  }
-
-  return tolerance_factor * std::numeric_limits<T>::epsilon();
-}
 
 namespace qr
 {
