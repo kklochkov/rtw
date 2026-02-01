@@ -1,5 +1,6 @@
 #include "math/format.h"
 #include "math/matrix.h"
+#include "math/matrix_operations.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -303,24 +304,6 @@ TYPED_TEST(Matrix2x2Test, unary_minus)
   constexpr TypeParam M1{1.0F, 2.0F, 3.0F, 4.0F};
   const auto m2 = -M1;
   EXPECT_THAT(m2, ::testing::ElementsAre(-1, -2, -3, -4));
-}
-
-TYPED_TEST(Matrix2x2Test, inverse)
-{
-  constexpr TypeParam M1{1.0F, 2.0F, 3.0F, 4.0F};
-  constexpr auto IDENTITY = TypeParam::identity();
-  {
-    const auto m2 = rtw::math::inverse(M1);
-    EXPECT_EQ(M1 * m2, IDENTITY);
-  }
-  {
-    const auto m2 = rtw::math::matrix_decomposition::qr::householder::inverse(M1);
-    const auto result = M1 * m2;
-    for (std::uint32_t i = 0U; i < result.size(); ++i)
-    {
-      EXPECT_NEAR(static_cast<double>(result[i]), static_cast<double>(IDENTITY[i]), EPSILON<TypeParam>);
-    }
-  }
 }
 //-----------------------------------------------------------------------------------------
 template <typename T>
@@ -666,24 +649,6 @@ TYPED_TEST(Matrix3x3Test, unary_minus)
   EXPECT_THAT(m2, ::testing::ElementsAre(-1, -2, -3, -4, -5, -6, -7, -8, -9));
 }
 
-TYPED_TEST(Matrix3x3Test, inverse)
-{
-  constexpr TypeParam M1{1.0F, 0.0F, 0.0F, 0.0F, 2.0F, 0.0F, 0.0F, 0.0F, 4.0F};
-  constexpr auto IDENTITY = TypeParam::identity();
-  {
-    const auto m2 = rtw::math::inverse(M1);
-    EXPECT_EQ(M1 * m2, IDENTITY);
-  }
-  {
-    const auto m2 = rtw::math::matrix_decomposition::qr::householder::inverse(M1);
-    const auto result = M1 * m2;
-    for (std::uint32_t i = 0U; i < result.size(); ++i)
-    {
-      EXPECT_NEAR(static_cast<double>(result[i]), static_cast<double>(IDENTITY[i]), EPSILON<TypeParam>);
-    }
-  }
-}
-
 TYPED_TEST(Matrix3x3Test, minor)
 {
   constexpr TypeParam M{1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F, 7.0F, 8.0F, 9.0F};
@@ -697,122 +662,6 @@ TYPED_TEST(Matrix3x3Test, minor)
   EXPECT_THAT(m, ::testing::ElementsAre(1, 2, 4, 5));
 }
 
-TYPED_TEST(Matrix3x3Test, householder_qr_decomposition)
-{
-  constexpr TypeParam EXPECTED_A{12.0F, -51.0F, 4.0F, 6.0F, 167.0F, -68.0F, -4.0F, 24.0F, -41.0F};
-  constexpr TypeParam EXPECTED_Q{-0.8571F, -0.4286F, 0.2857F, 0.3943F, -0.9029F, -0.1714F, -0.3314F, 0.0343F, -0.9429F};
-  constexpr TypeParam EXPECTED_R{-14.0F, -21.0F, 14.0F, 0.0F, -175.0F, 70.0F, 0.0F, 0.0F, 35.0F};
-
-  const auto [q, r] = rtw::math::matrix_decomposition::qr::householder::decompose(EXPECTED_A);
-  this->evaluate_decomposition(EXPECTED_A, EXPECTED_Q, EXPECTED_R, q, r);
-}
-
-TYPED_TEST(Matrix3x3Test, householder_qr_solve)
-{
-  using Vector = rtw::math::Matrix<typename TypeParam::value_type, 3, 1>;
-  constexpr TypeParam A{1.0F, 3.0F, -2.0F, 3.0F, 5.0F, 6.0F, 2.0F, 4.0F, 3.0F};
-  constexpr Vector B{5.0F, 7.0F, 8.0F};
-  constexpr Vector EXPECTED_X{-15.0F, 8.0F, 2.0F};
-
-  {
-    const auto x = rtw::math::matrix_decomposition::qr::householder::solve(A, B);
-    this->evaluate_solve(A, B, EXPECTED_X, x);
-  }
-  {
-    const auto a_inv = rtw::math::matrix_decomposition::qr::householder::inverse(A);
-    const auto x = a_inv * B;
-    this->evaluate_solve(A, B, EXPECTED_X, x);
-  }
-}
-
-TYPED_TEST(Matrix3x3Test, givens_qr_decomposition)
-{
-  constexpr TypeParam EXPECTED_A{12.0F, -51.0F, 4.0F, 6.0F, 167.0F, -68.0F, -4.0F, 24.0F, -41.0F};
-  constexpr TypeParam EXPECTED_Q{0.8571F, 0.4286F, -0.2857F, -0.3943F, 0.9029F, 0.1714F, 0.3314F, -0.0343F, 0.9429F};
-  constexpr TypeParam EXPECTED_R{14.0F, 21.0F, -14.0F, 0.0F, 175.0F, -70.0F, 0.0F, 0.0F, -35.0F};
-
-  const auto [q, r] = rtw::math::matrix_decomposition::qr::givens::decompose(EXPECTED_A);
-  this->evaluate_decomposition(EXPECTED_A, EXPECTED_Q, EXPECTED_R, q, r);
-}
-
-TYPED_TEST(Matrix3x3Test, givens_qr_solve)
-{
-  using Vector = rtw::math::Matrix<typename TypeParam::value_type, 3, 1>;
-  constexpr TypeParam A{1.0F, 3.0F, -2.0F, 3.0F, 5.0F, 6.0F, 2.0F, 4.0F, 3.0F};
-  constexpr Vector B{5.0F, 7.0F, 8.0F};
-  constexpr Vector EXPECTED_X{-15.0F, 8.0F, 2.0F};
-
-  {
-    const auto x = rtw::math::matrix_decomposition::qr::givens::solve(A, B);
-    this->evaluate_solve(A, B, EXPECTED_X, x);
-  }
-  {
-    const auto a_inv = rtw::math::matrix_decomposition::qr::givens::inverse(A);
-    const auto x = a_inv * B;
-    this->evaluate_solve(A, B, EXPECTED_X, x);
-  }
-}
-
-TYPED_TEST(Matrix3x3Test, modified_gram_schmidt_qr_decomposition)
-{
-  constexpr TypeParam EXPECTED_A{12.0F, -51.0F, 4.0F, 6.0F, 167.0F, -68.0F, -4.0F, 24.0F, -41.0F};
-  constexpr TypeParam EXPECTED_Q{0.8571F, 0.4286F, -0.2857F, -0.3943F, 0.9029F, 0.1714F, -0.3314F, 0.0343F, -0.9429F};
-  constexpr TypeParam EXPECTED_R{14.0F, 21.0F, -14.0F, 0.0F, 175.0F, -70.0F, 0.0F, 0.0F, 35.0F};
-
-  const auto [q, r] = rtw::math::matrix_decomposition::qr::modified_gram_schmidt::decompose(EXPECTED_A);
-  this->evaluate_decomposition(EXPECTED_A, EXPECTED_Q, EXPECTED_R, q, r);
-}
-
-TYPED_TEST(Matrix3x3Test, modified_gram_schmidt_qr_solve)
-{
-  using Vector = rtw::math::Matrix<typename TypeParam::value_type, 3, 1>;
-  constexpr TypeParam A{1.0F, 3.0F, -2.0F, 3.0F, 5.0F, 6.0F, 2.0F, 4.0F, 3.0F};
-  constexpr Vector B{5.0F, 7.0F, 8.0F};
-  constexpr Vector EXPECTED_X{-15.0F, 8.0F, 2.0F};
-
-  float epsilon = EPSILON<TypeParam>;
-  if constexpr (std::is_same_v<typename TypeParam::value_type, float>)
-  {
-    // On x86-64, the precision of float for the MGS algorithm is not enough to get the exact result.
-    epsilon = 0.0035F;
-  }
-
-  {
-    const auto x = rtw::math::matrix_decomposition::qr::modified_gram_schmidt::solve(A, B);
-    this->evaluate_solve(A, B, EXPECTED_X, x, epsilon);
-  }
-  {
-    const auto a_inv = rtw::math::matrix_decomposition::qr::modified_gram_schmidt::inverse(A);
-    const auto x = a_inv * B;
-    this->evaluate_solve(A, B, EXPECTED_X, x, epsilon);
-  }
-}
-
-TYPED_TEST(Matrix3x3Test, cholesky_decomposition)
-{
-  constexpr TypeParam EXPECTED_A{0.5428F, 0.6227F, 0.8200F, 0.6227F, 1.7851F, 1.0809F, 0.8200F, 1.0809F, 1.3183F};
-  const auto l = rtw::math::matrix_decomposition::cholesky::decompose(EXPECTED_A);
-  const auto lt = rtw::math::transpose(l);
-  const auto a = l * lt;
-  for (std::uint32_t i = 0U; i < a.size(); ++i)
-  {
-    EXPECT_NEAR(static_cast<double>(a[i]), static_cast<double>(EXPECTED_A[i]), EPSILON<TypeParam>);
-  }
-}
-
-TYPED_TEST(Matrix3x3Test, cholesky_solve)
-{
-  using Vector = rtw::math::Matrix<typename TypeParam::value_type, 3, 1>;
-  constexpr TypeParam A{0.5428F, 0.6227F, 0.8200F, 0.6227F, 1.7851F, 1.0809F, 0.8200F, 1.0809F, 1.3183F};
-  constexpr Vector B{1.0F, 2.0F, 3.0F};
-
-  const auto x = rtw::math::matrix_decomposition::qr::modified_gram_schmidt::solve(A, B);
-  const auto ax = A * x;
-  for (std::uint32_t i = 0U; i < ax.size(); ++i)
-  {
-    EXPECT_NEAR(static_cast<double>(ax[i]), static_cast<double>(B[i]), EPSILON<TypeParam>);
-  }
-}
 //-----------------------------------------------------------------------------------------
 template <typename T>
 class Matrix4x4Test : public ::testing::Test
@@ -1159,156 +1008,6 @@ TYPED_TEST(Matrix4x4Test, minor)
 
   m = M.minor(2, 2);
   EXPECT_THAT(m, ::testing::ElementsAre(1, 2, 4, 5, 6, 8, 13, 14, 16));
-}
-//-----------------------------------------------------------------------------------------
-using Matrix5x5F = rtw::math::Matrix<float, 5, 5>;
-using Matrix5x5D = rtw::math::Matrix<double, 5, 5>;
-using Matrix5x5Q16 = rtw::math::Matrix<rtw::multiprecision::FixedPoint16, 5, 5>;
-using Matrix5x5Q32 = rtw::math::Matrix<rtw::multiprecision::FixedPoint32, 5, 5>;
-
-template <typename T>
-class Matrix5x5Test : public ::testing::Test
-{};
-
-using Matrix5x5Types = ::testing::Types<Matrix5x5F, Matrix5x5D, Matrix5x5Q16, Matrix5x5Q32>;
-TYPED_TEST_SUITE(Matrix5x5Test, Matrix5x5Types, );
-
-TYPED_TEST(Matrix5x5Test, inverse)
-{
-  constexpr auto IDENTITY = TypeParam::identity();
-
-  constexpr TypeParam A{12.0F, -51.0F, 4.0F, 7.0F,  -2.0F, 6.0F,  167.0F, -68.0F, -3.0F, 5.0F,  -4.0F, 24.0F, -41.0F,
-                        2.0F,  9.0F,   5.0F, -6.0F, 7.0F,  14.0F, -10.0F, -2.0F,  8.0F,  -3.0F, 11.0F, 6.0F};
-
-  const auto identity_default = rtw::math::inverse(A) * A;
-  const auto identity_hoseholder = rtw::math::matrix_decomposition::qr::householder::inverse(A) * A;
-  const auto identity_givens = rtw::math::matrix_decomposition::qr::givens::inverse(A) * A;
-  const auto identity_mgs = rtw::math::matrix_decomposition::qr::modified_gram_schmidt::inverse(A) * A;
-  for (std::uint32_t i = 0U; i < IDENTITY.size(); ++i)
-  {
-    EXPECT_NEAR(static_cast<double>(identity_default[i]), static_cast<double>(IDENTITY[i]), EPSILON<TypeParam>);
-    EXPECT_NEAR(static_cast<double>(identity_hoseholder[i]), static_cast<double>(IDENTITY[i]), EPSILON<TypeParam>);
-    EXPECT_NEAR(static_cast<double>(identity_givens[i]), static_cast<double>(IDENTITY[i]), EPSILON<TypeParam>);
-    EXPECT_NEAR(static_cast<double>(identity_mgs[i]), static_cast<double>(IDENTITY[i]), EPSILON<TypeParam>);
-  }
-}
-//-----------------------------------------------------------------------------------------
-template <typename T>
-class EigenDecompositionTest : public ::testing::Test
-{
-public:
-  template <typename MatrixT>
-  void verify_eigen_decomposition(const MatrixT& a)
-  {
-    using MatrixValueType = typename MatrixT::value_type;
-    using Matrix = MatrixT;
-    using ComplexMatrix = rtw::math::Matrix<std::complex<MatrixValueType>, Matrix::NUM_ROWS, Matrix::NUM_COLS>;
-
-    // The float calculations are not very precise, so we need a larger epsilon.
-    constexpr static MatrixValueType EPSILON = std::is_same_v<MatrixValueType, float> ? 3e-3F : 1e-12;
-
-    const auto eigenvalues = rtw::math::eigenvalues(a);
-    const auto eigenvectors = rtw::math::eigenvectors(a, eigenvalues.eigenvalues);
-    const auto inv_eigenvectors = rtw::math::inverse(eigenvectors);
-    const auto diagonal = ComplexMatrix::diagonal(eigenvalues.eigenvalues);
-    const auto reconstructed = eigenvectors * diagonal * inv_eigenvectors;
-
-    for (std::uint32_t i = 0U; i < a.size(); ++i)
-    {
-      EXPECT_NEAR(a[i], reconstructed.template real<MatrixValueType>()[i], EPSILON);
-    }
-  }
-};
-
-using FloatingPointTypes = ::testing::Types<float, double>;
-TYPED_TEST_SUITE(EigenDecompositionTest, FloatingPointTypes, );
-
-TYPED_TEST(EigenDecompositionTest, matrix3x3)
-{
-  using Matrix = rtw::math::Matrix<TypeParam, 3, 3>;
-
-  constexpr Matrix A{
-      // clang-format off
-      -26.0F, -33.0F, -25.0F,
-       31.0F,  42.0F,  23.0F,
-      -11.0F, -15.0F,  -4.0F,
-      // clang-format on
-  };
-
-  this->verify_eigen_decomposition(A);
-}
-
-TYPED_TEST(EigenDecompositionTest, matrix4x4)
-{
-  using Matrix = rtw::math::Matrix<TypeParam, 4, 4>;
-
-  constexpr Matrix A{
-      // clang-format off
-       1.70239F, -3.79641F,  6.79370F, -9.67865F,
-      -3.76763F, -3.79176F, -5.38801F,  6.05051F,
-      -1.16207F,  3.42778F,  2.45114F,  9.81088F,
-       1.69093F,  1.34002F,  2.29560F, -7.88903F,
-      // clang-format on
-  };
-
-  this->verify_eigen_decomposition(A);
-}
-
-TYPED_TEST(EigenDecompositionTest, matrix5x5)
-{
-  using Matrix = rtw::math::Matrix<TypeParam, 5, 5>;
-
-  constexpr Matrix A{
-      // clang-format off
-       1.22450F, -9.32449F,  8.85567F,  6.50187F,  2.27291F,
-      -0.91175F, -2.68532F, -5.36380F,  0.08317F,  0.77245F,
-       1.12802F,  0.27313F, -2.74689F,  8.16756F, -0.42767F,
-       1.19478F,  6.22039F, -6.70452F, -4.83679F, -4.16758F,
-      -0.75779F,  3.78038F,  6.19055F,  2.58007F,  0.48941F,
-      // clang-format on
-  };
-
-  this->verify_eigen_decomposition(A);
-}
-
-TYPED_TEST(EigenDecompositionTest, matrix6x6)
-{
-  using Matrix = rtw::math::Matrix<TypeParam, 6, 6>;
-
-  constexpr Matrix A{
-      // clang-format off
-      -0.96989F,  0.82089F, -4.06725F, -5.37137F, -4.55794F, -5.10598F,
-      -4.28121F,  6.98662F, -3.26784F,  3.52817F, -4.96434F,  4.79570F,
-       1.38155F, -2.55092F,  1.76686F, -3.67601F, -1.27047F,  2.65197F,
-      -4.42689F,  9.71931F, -9.87039F, -7.82595F,  2.67180F, -2.44355F,
-       2.76872F,  2.97529F,  4.02976F, -4.26067F, -4.92890F,  3.96606F,
-      -2.52848F,  7.82574F, -0.78679F,  2.74249F, -0.02987F, -0.73763F,
-      // clang-format on
-  };
-
-  this->verify_eigen_decomposition(A);
-}
-
-TYPED_TEST(EigenDecompositionTest, matrix10x10)
-{
-  using Matrix = rtw::math::Matrix<TypeParam, 10, 10>;
-
-  constexpr Matrix A{
-      // clang-format off
-       2.38380F,  0.52448F, -9.16897F, -4.18491F,  8.08590F,  7.75736F,  7.52598F,  3.54309F, -4.34733F,  6.69285F,
-      -6.39430F,  3.75281F, -6.47701F,  7.12694F,  8.92555F, -0.04259F, -3.65707F, -8.26348F, -4.32056F,  6.41108F,
-      -1.98555F, -3.13857F,  2.38419F, -9.66639F, -5.84617F, -1.16749F,  4.71056F, -7.90592F,  0.57912F,  7.18285F,
-      -8.78852F,  6.07515F, -8.36764F,  2.12867F, -4.25011F, -9.71815F,  3.67238F,  5.01201F, -4.88431F, -3.13733F,
-       5.87131F,  6.54570F,  0.86283F, -4.99058F, -5.40110F, -3.79402F, -4.23029F,  9.67775F,  0.56833F, -6.72947F,
-       0.39243F, -7.90772F,  6.47480F,  6.22138F,  1.22480F,  9.67023F,  1.79418F, -9.88004F, -3.99513F,  0.29977F,
-      -6.98051F, -0.67262F,  7.61430F,  3.95406F,  9.86012F,  6.96295F,  8.35955F, -6.16348F,  2.90020F,  0.25019F,
-      -7.10155F, -3.06247F,  8.78803F, -2.49253F,  9.11246F, -5.04579F, -2.88409F, -0.79928F,  1.01932F, -4.83908F,
-      -5.07066F, -7.58619F,  4.66267F, -3.23968F, -5.19784F,  0.87096F,  2.86131F, -3.04916F,  5.65880F, -7.13709F,
-      -3.17953F,  3.69229F,  1.33019F,  4.40403F, -4.04221F,  4.02688F,  7.73380F, -2.80557F,  5.68021F, -0.39696F,
-      // clang-format on
-  };
-
-  this->verify_eigen_decomposition(A);
 }
 //-----------------------------------------------------------------------------------------
 TEST(Matrix, operator_stream)

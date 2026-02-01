@@ -2,6 +2,7 @@
 
 #include "math/interpolation.h"
 #include "math/point.h"
+#include "math/vector_operations.h"
 
 #include <limits>
 

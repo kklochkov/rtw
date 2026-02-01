@@ -10,6 +10,8 @@ cc_test_with_llvm_symbolizer(
         "frustum_test.cpp",
         "interpolation_test.cpp",
         "intersection_test.cpp",
+        "matrix_decomposition_test.cpp",
+        "matrix_eigen_decomposition_test.cpp",
         "matrix_test.cpp",
         "point_test.cpp",
         "transform2_test.cpp",

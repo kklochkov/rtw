@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/point.h"
+#include "math/vector_operations.h"
 
 namespace rtw::math
 {
