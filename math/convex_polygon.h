@@ -8,26 +8,26 @@ namespace rtw::math
 /// A convex polygon in 2D space.
 /// The polygon is represented by a sequence of vertices in counter-clockwise.
 /// The last vertex is implicitly connected to the first vertex.
-/// TODO: to check if the polygon is convex (no holes, no self-intersection).
 /// TODO: to check if vertices are in counter-clockwise order.
 /// TODO: to check if the polygon is simple (no self-intersection).
-/// TODO: to check if there are no duplicate vertices.
 /// @tparam T The type of the polygon's vertices.
-/// @tparam cAPACITY The maximum number of vertices the polygon can hold.
+/// @tparam CAPACITY The maximum number of vertices the polygon can hold.
 template <typename T, template <typename> typename PointT, std::size_t CAPACITY>
 class ConvexPolygon
 {
+  using StorageType = std::array<PointT<T>, CAPACITY>;
+
 public:
   static_assert(CAPACITY >= 3U, "A polygon must have at least capacity of 3.");
 
   using value_type = PointT<T>;
-  using size_type = typename std::array<value_type, CAPACITY>::size_type;
-  using iterator = typename std::array<value_type, CAPACITY>::iterator;
-  using const_iterator = typename std::array<value_type, CAPACITY>::const_iterator;
-  using pointer = typename std::array<value_type, CAPACITY>::pointer;
-  using const_pointer = typename std::array<value_type, CAPACITY>::const_pointer;
-  using reference = typename std::array<value_type, CAPACITY>::reference;
-  using const_reference = typename std::array<value_type, CAPACITY>::const_reference;
+  using size_type = typename StorageType::size_type;
+  using iterator = typename StorageType::iterator;
+  using const_iterator = typename StorageType::const_iterator;
+  using pointer = typename StorageType::pointer;
+  using const_pointer = typename StorageType::const_pointer;
+  using reference = typename StorageType::reference;
+  using const_reference = typename StorageType::const_reference;
 
   constexpr ConvexPolygon() noexcept = default;
   constexpr ConvexPolygon(std::initializer_list<value_type> vertices) noexcept
@@ -132,7 +132,7 @@ public:
 
 private:
   /// The vertices of the polygon.
-  std::array<value_type, CAPACITY> vertices_;
+  StorageType vertices_;
 
   /// The number of vertices in the polygon.
   size_type size_{};
