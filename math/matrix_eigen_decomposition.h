@@ -7,6 +7,23 @@
 namespace rtw::math::eigen_decomposition
 {
 
+/// Default tolerance for convergence in the eigenvalue algorithm.
+/// The default tolerance is set to 100 times the machine epsilon for the floating-point type T,
+/// for fixed-point types it is set to 1, since the epsilon for fixed-point types is exactly 1.
+/// @tparam T The floating-point or fixed-point type.
+/// @return The default tolerance.
+template <typename T>
+constexpr T default_tolerance() noexcept
+{
+  T tolerance_factor{100U};
+  if constexpr (multiprecision::IS_FIXED_POINT_V<T>)
+  {
+    tolerance_factor = 1U;
+  }
+
+  return tolerance_factor * std::numeric_limits<T>::epsilon();
+}
+
 namespace qr
 {
 
@@ -285,24 +302,43 @@ constexpr Matrix<ComplexT, ROWS, 1U> extract_eigenvalues(const Matrix<T, ROWS, C
   return result;
 }
 
-} // namespace details
-
-/// Default tolerance for convergence in the eigenvalue algorithm.
-/// The default tolerance is set to 100 times the machine epsilon for the floating-point type T,
-/// for fixed-point types it is set to 1, since the epsilon for fixed-point types is exactly 1.
-/// @tparam T The floating-point or fixed-point type.
-/// @return The default tolerance.
-template <typename T>
-constexpr T default_tolerance() noexcept
+/// Check if a matrix is a diagonal matrix.
+/// @param[in] matrix The matrix to check.
+/// @param[in] tolerance The tolerance for determining if an element is zero.
+/// @return True if the matrix is diagonal, false otherwise.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr bool is_diagonal(const Matrix<T, ROWS, COLS>& matrix, const T tolerance) noexcept
 {
-  std::uint16_t tolerance_factor = 100U;
-  if constexpr (multiprecision::IS_FIXED_POINT_V<T>)
-  {
-    tolerance_factor = 1;
-  }
+  using multiprecision::math::abs;
+  using std::abs;
 
-  return tolerance_factor * std::numeric_limits<T>::epsilon();
+  for (std::uint16_t row = 0U; row < ROWS; ++row)
+  {
+    for (std::uint16_t col = 0U; col < COLS; ++col)
+    {
+      if (row != col)
+      {
+        if constexpr (multiprecision::IS_COMPLEX_V<T>)
+        {
+          if (abs(matrix(row, col)) > tolerance.real())
+          {
+            return false;
+          }
+        }
+        else
+        {
+          if (abs(matrix(row, col)) > tolerance)
+          {
+            return false;
+          }
+        }
+      }
+    }
+  }
+  return true;
 }
+
+} // namespace details
 
 template <typename T, std::size_t ROWS, typename ComplexT = std::complex<T>>
 struct EigenvaluesResult
@@ -382,17 +418,32 @@ constexpr EigenvaluesResult<T, ROWS> eigenvalues(const Matrix<T, ROWS, COLS>& ma
 /// Compute the eigenvectors of a matrix given its eigenvalues using the Householder QR decomposition.
 /// The algorithm solves the equation (A - λI)v = 0 for each eigenvalue λ to find the corresponding eigenvector v.
 /// The eigenvectors are normalized to have unit length.
+/// If the matrix is diagonal, the eigenvectors are the standard basis vectors.
 /// @param[in] matrix The matrix.
 /// @param[in] eigenvalues The eigenvalues of the matrix.
 /// @return The eigenvectors of the matrix.
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
 constexpr Matrix<T, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix,
-                                             const Matrix<T, ROWS, 1U>& eigenvalues) noexcept
+                                             const Matrix<T, ROWS, 1U>& eigenvalues,
+                                             const T tolerance = default_tolerance<T>()) noexcept
 {
   using namespace matrix_decomposition::qr;
 
   const Matrix<T, ROWS, COLS> identity{math::IDENTITY};
   Matrix<T, ROWS, COLS> result{math::UNINITIALIZED};
+
+  if (details::is_diagonal(matrix, tolerance))
+  {
+    // If the matrix is diagonal, the eigenvectors are the standard basis vectors.
+    for (std::uint16_t col = 0U; col < COLS; ++col)
+    {
+      for (std::uint16_t row = 0U; row < ROWS; ++row)
+      {
+        result(row, col) = (row == col) ? T{1} : T{0};
+      }
+    }
+    return result;
+  }
 
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {
@@ -417,24 +468,26 @@ constexpr Matrix<T, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
 constexpr eigen_decomposition::qr::EigenvaluesResult<T, ROWS>
 eigenvalues(const Matrix<T, ROWS, COLS>& matrix, const std::uint16_t max_iterations = 1'000U,
-            const T tolerance = eigen_decomposition::qr::default_tolerance<T>()) noexcept
+            const T tolerance = default_tolerance<T>()) noexcept
 {
   return eigen_decomposition::qr::eigenvalues(matrix, max_iterations, tolerance);
 }
 
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
 constexpr Matrix<T, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix,
-                                             const Matrix<T, ROWS, 1U>& eigenvalues) noexcept
+                                             const Matrix<T, ROWS, 1U>& eigenvalues,
+                                             const T tolerance = default_tolerance<T>()) noexcept
 {
-  return eigen_decomposition::qr::eigenvectors(matrix, eigenvalues);
+  return eigen_decomposition::qr::eigenvectors(matrix, eigenvalues, tolerance);
 }
 
 template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename ComplexT = std::complex<T>,
           typename = std::enable_if_t<(ROWS >= COLS)>>
 constexpr Matrix<ComplexT, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix,
-                                                    const Matrix<ComplexT, ROWS, 1U>& eigenvalues) noexcept
+                                                    const Matrix<ComplexT, ROWS, 1U>& eigenvalues,
+                                                    const ComplexT tolerance = default_tolerance<ComplexT>()) noexcept
 {
-  return eigen_decomposition::qr::eigenvectors(matrix.template cast<ComplexT>(), eigenvalues);
+  return eigen_decomposition::qr::eigenvectors(matrix.template cast<ComplexT>(), eigenvalues, tolerance);
 }
 
 } // namespace rtw::math::eigen_decomposition

@@ -41,15 +41,30 @@ TYPED_TEST(EigenDecompositionTest, matrix3x3)
 {
   using Matrix = rtw::math::Matrix<TypeParam, 3, 3>;
 
-  constexpr Matrix A{
-      // clang-format off
+  {
+    constexpr Matrix A{
+        // clang-format off
       -26.0F, -33.0F, -25.0F,
        31.0F,  42.0F,  23.0F,
       -11.0F, -15.0F,  -4.0F,
-      // clang-format on
-  };
+        // clang-format on
+    };
 
-  this->verify_eigen_decomposition(A);
+    this->verify_eigen_decomposition(A);
+  }
+
+  {
+    // Diagonal matrix
+    constexpr Matrix A{
+        // clang-format off
+       4.0F, 0.0F, 0.0F,
+       0.0F, 5.0F, 0.0F,
+       0.0F, 0.0F, 6.0F,
+        // clang-format on
+    };
+
+    this->verify_eigen_decomposition(A);
+  }
 }
 
 TYPED_TEST(EigenDecompositionTest, matrix4x4)
