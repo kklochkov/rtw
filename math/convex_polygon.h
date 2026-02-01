@@ -8,8 +8,6 @@ namespace rtw::math
 /// A convex polygon in 2D space.
 /// The polygon is represented by a sequence of vertices in counter-clockwise.
 /// The last vertex is implicitly connected to the first vertex.
-/// TODO: to check if vertices are in counter-clockwise order.
-/// TODO: to check if the polygon is simple (no self-intersection).
 /// @tparam T The type of the polygon's vertices.
 /// @tparam CAPACITY The maximum number of vertices the polygon can hold.
 template <typename T, template <typename> typename PointT, std::size_t CAPACITY>
@@ -128,7 +126,7 @@ public:
   constexpr const_iterator end() const noexcept { return vertices_.begin() + size_; }
   constexpr const_iterator cend() const noexcept { return vertices_.cbegin() + size_; }
 
-  constexpr bool valid() const noexcept { return size_ >= 3U; }
+  constexpr bool is_valid() const noexcept { return size_ >= 3U; }
 
 private:
   /// The vertices of the polygon.

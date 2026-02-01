@@ -19,11 +19,13 @@ constexpr T triangle_orientation(const Point2<T>& v0, const Point2<T>& v1, const
 }
 
 /// Check the winding order of a triangle.
+/// @note Doesn't handle collinear points. Use check_polygon for robust checks.
 /// @tparam T The type of the elements.
 /// @param[in] v0 The first vertex of the triangle.
 /// @param[in] v1 The second vertex of the triangle.
 /// @param[in] v2 The third vertex of the triangle.
 /// @return The winding order of the triangle.
+/// @{
 template <typename T>
 constexpr WindingOrder winding_order(const Point2<T>& v0, const Point2<T>& v1, const Point2<T>& v2) noexcept
 {
@@ -35,6 +37,7 @@ constexpr WindingOrder winding_order(const Triangle2<T>& triangle) noexcept
 {
   return winding_order(triangle[0U], triangle[1U], triangle[2U]);
 }
+/// @}
 
 /// Get the default near-zero epsilon for a given type.
 /// For fixed-point types and integral types, the epsilon is zero.
@@ -53,33 +56,51 @@ constexpr T default_near_zero_epsilon() noexcept
   }
 }
 
-enum class ConvexityCheckResult : std::uint8_t
+struct PolygonInfo
 {
-  CONVEX,
-  CONCAVE,
-  INVALID_POLYGON,
-  COLLINEAR_POINTS
+  enum class Property : std::uint8_t
+  {
+    CONVEX,
+    CONCAVE,
+    INVALID_POLYGON,
+    COLLINEAR_POINTS
+  };
+
+  constexpr explicit PolygonInfo(const Property property = Property::CONVEX,
+                                 const WindingOrder winding_order = WindingOrder::COUNTER_CLOCKWISE) noexcept
+      : property{property}, winding_order{winding_order}
+  {
+  }
+
+  constexpr bool is_convex() const noexcept { return property == Property::CONVEX; }
+  constexpr bool is_concave() const noexcept { return property == Property::CONCAVE; }
+  constexpr bool is_invalid() const noexcept { return property == Property::INVALID_POLYGON; }
+  constexpr bool has_collinear_points() const noexcept { return property == Property::COLLINEAR_POINTS; }
+
+  Property property{Property::CONVEX};
+  WindingOrder winding_order{WindingOrder::COUNTER_CLOCKWISE};
 };
 
-/// Check if a convex polygon is indeed convex.
+/// Check the properties of a given polygon.
 /// @tparam T The type of the elements.
 /// @tparam CAPACITY The capacity of the polygon.
-/// @param[in] polygon The convex polygon to check.
+/// @param[in] polygon The polygon to check.
 /// @param[in] epsilon The near-zero epsilon to use for floating-point comparisons.
-/// @return The result of the convexity check.
+/// @return The result of the polygon check.
 template <typename T, std::size_t CAPACITY>
-constexpr ConvexityCheckResult is_convex(const ConvexPolygon2<T, CAPACITY>& polygon,
-                                         const T epsilon = default_near_zero_epsilon<T>()) noexcept
+constexpr PolygonInfo check_polygon(const ConvexPolygon2<T, CAPACITY>& polygon,
+                                    const T epsilon = default_near_zero_epsilon<T>()) noexcept
 {
-  if (!polygon.valid())
+  if (!polygon.is_valid())
   {
-    return ConvexityCheckResult::INVALID_POLYGON;
+    return PolygonInfo{PolygonInfo::Property::INVALID_POLYGON};
   }
 
   using multiprecision::math::abs;
   using std::abs;
 
   T reference_orientation{0};
+  WindingOrder winding_order{WindingOrder::COUNTER_CLOCKWISE};
 
   for (std::size_t i = 0U; i < polygon.size(); ++i)
   {
@@ -89,20 +110,47 @@ constexpr ConvexityCheckResult is_convex(const ConvexPolygon2<T, CAPACITY>& poly
     const auto current_orientation = triangle_orientation(v0, v1, v2);
     if (abs(current_orientation) <= epsilon)
     {
-      return ConvexityCheckResult::COLLINEAR_POINTS;
+      return PolygonInfo{PolygonInfo::Property::COLLINEAR_POINTS, WindingOrder::COUNTER_CLOCKWISE};
     }
 
     if (abs(reference_orientation) <= epsilon)
     {
       reference_orientation = current_orientation;
+      winding_order = current_orientation > T{0} ? WindingOrder::COUNTER_CLOCKWISE : WindingOrder::CLOCKWISE;
     }
     else if ((reference_orientation > epsilon) != (current_orientation > epsilon))
     {
-      return ConvexityCheckResult::CONCAVE;
+      return PolygonInfo{PolygonInfo::Property::CONCAVE, winding_order};
     }
   }
 
-  return ConvexityCheckResult::CONVEX;
+  return PolygonInfo{PolygonInfo::Property::CONVEX, winding_order};
+}
+
+/// Check if a convex polygon is indeed convex.
+/// @tparam T The type of the elements.
+/// @tparam CAPACITY The capacity of the polygon.
+/// @param[in] polygon The convex polygon to check.
+/// @param[in] epsilon The near-zero epsilon to use for floating-point comparisons.
+/// @return True if the polygon is convex, false otherwise.
+template <typename T, std::size_t CAPACITY>
+constexpr bool is_convex(const ConvexPolygon2<T, CAPACITY>& polygon,
+                         const T epsilon = default_near_zero_epsilon<T>()) noexcept
+{
+  return check_polygon(polygon, epsilon).is_convex();
+}
+
+/// Get the winding order of a convex polygon.
+/// @tparam T The type of the elements.
+/// @tparam CAPACITY The capacity of the polygon.
+/// @param[in] polygon The convex polygon.
+/// @param[in] epsilon The near-zero epsilon to use for floating-point comparisons.
+/// @return The winding order of the polygon.
+template <typename T, std::size_t CAPACITY, typename = std::enable_if_t<(CAPACITY > 3U)>>
+constexpr WindingOrder winding_order(const ConvexPolygon2<T, CAPACITY>& polygon,
+                                     const T epsilon = default_near_zero_epsilon<T>()) noexcept
+{
+  return check_polygon(polygon, epsilon).winding_order;
 }
 
 } // namespace rtw::math

@@ -98,7 +98,7 @@ constexpr TriangulationResult<T, CAPACITY> triangulate(const ConvexPolygonVertex
 {
   TriangulationResult<T, CAPACITY> result;
 
-  if (polygon.valid())
+  if (polygon.is_valid())
   {
     result.triangle_count = polygon.size() - 2U;
     for (std::size_t i = 0U; i < result.triangle_count; ++i)

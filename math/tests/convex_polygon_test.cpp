@@ -59,13 +59,13 @@ TEST(ConvexPolygonTest, begin_end)
 TEST(ConvexPolygonTest, valid)
 {
   rtw::math::ConvexPolygon2I<3U> polygon;
-  EXPECT_FALSE(polygon.valid());
+  EXPECT_FALSE(polygon.is_valid());
   polygon.push_back(rtw::math::Point2I{1, 2});
-  EXPECT_FALSE(polygon.valid());
+  EXPECT_FALSE(polygon.is_valid());
   polygon.push_back(rtw::math::Point2I{3, 4});
-  EXPECT_FALSE(polygon.valid());
+  EXPECT_FALSE(polygon.is_valid());
   polygon.push_back(rtw::math::Point2I{5, 6});
-  EXPECT_TRUE(polygon.valid());
+  EXPECT_TRUE(polygon.is_valid());
 }
 
 TEST(ConvexPolygonTest, index_operator)
@@ -84,7 +84,7 @@ TEST(ConvexPolygonTest, index_operator_out_of_bounds)
   EXPECT_DEATH(POLYGON[3], "");
 }
 
-TEST(ConvexPolygonTest, winding_order)
+TEST(ConvexPolygonTest, triangle_winding_order)
 {
   const rtw::math::Point2F v0{0.0F, 0.0F};
   const rtw::math::Point2F v1{1.0F, 0.0F};
@@ -113,7 +113,7 @@ TEST(ConvexPolygonTest, is_convex)
         rtw::math::Point2F{1.0F, 0.0F},
         rtw::math::Point2F{0.5F, 1.0F},
     };
-    ASSERT_EQ(rtw::math::is_convex(triangle), rtw::math::ConvexityCheckResult::CONVEX);
+    ASSERT_TRUE(rtw::math::is_convex(triangle));
   }
 
   {
@@ -122,7 +122,7 @@ TEST(ConvexPolygonTest, is_convex)
     cw_polygon.push_back(rtw::math::Point2F{0.0F, 1.0F});
     cw_polygon.push_back(rtw::math::Point2F{1.0F, 1.0F});
     cw_polygon.push_back(rtw::math::Point2F{1.0F, 0.0F});
-    ASSERT_EQ(rtw::math::is_convex(cw_polygon), rtw::math::ConvexityCheckResult::CONVEX);
+    ASSERT_TRUE(rtw::math::is_convex(cw_polygon));
   }
 
   {
@@ -131,7 +131,7 @@ TEST(ConvexPolygonTest, is_convex)
     convex_polygon.push_back(rtw::math::Point2F{1.0F, 0.0F});
     convex_polygon.push_back(rtw::math::Point2F{1.0F, 1.0F});
     convex_polygon.push_back(rtw::math::Point2F{0.0F, 1.0F});
-    ASSERT_EQ(rtw::math::is_convex(convex_polygon), rtw::math::ConvexityCheckResult::CONVEX);
+    ASSERT_TRUE(rtw::math::is_convex(convex_polygon));
   }
 
   {
@@ -141,7 +141,7 @@ TEST(ConvexPolygonTest, is_convex)
     pentagon.push_back(rtw::math::Point2F{2.5F, 1.5F});
     pentagon.push_back(rtw::math::Point2F{1.0F, 2.5F});
     pentagon.push_back(rtw::math::Point2F{-0.5F, 1.5F});
-    ASSERT_EQ(rtw::math::is_convex(pentagon), rtw::math::ConvexityCheckResult::CONVEX);
+    ASSERT_TRUE(rtw::math::is_convex(pentagon));
   }
 
   {
@@ -150,7 +150,7 @@ TEST(ConvexPolygonTest, is_convex)
     int_polygon.push_back(rtw::math::Point2I{10, 0});
     int_polygon.push_back(rtw::math::Point2I{10, 10});
     int_polygon.push_back(rtw::math::Point2I{0, 10});
-    ASSERT_EQ(rtw::math::is_convex(int_polygon), rtw::math::ConvexityCheckResult::CONVEX);
+    ASSERT_TRUE(rtw::math::is_convex(int_polygon));
   }
 
   {
@@ -163,9 +163,10 @@ TEST(ConvexPolygonTest, is_convex)
     near_collinear.push_back(rtw::math::Point2F{1.0F, 2.0F});
 
     // With default epsilon, should be CONVEX (0.0001 > epsilon)
-    ASSERT_EQ(rtw::math::is_convex(near_collinear), rtw::math::ConvexityCheckResult::CONVEX);
+    ASSERT_TRUE(rtw::math::is_convex(near_collinear));
     // With larger epsilon, should detect as COLLINEAR_POINTS
-    ASSERT_EQ(rtw::math::is_convex(near_collinear, 0.001F), rtw::math::ConvexityCheckResult::COLLINEAR_POINTS);
+    const auto result = rtw::math::check_polygon(near_collinear, 0.001F);
+    ASSERT_TRUE(result.has_collinear_points());
   }
 
   {
@@ -175,21 +176,25 @@ TEST(ConvexPolygonTest, is_convex)
     concave_polygon.push_back(rtw::math::Point2F{1.0F, 1.0F});
     concave_polygon.push_back(rtw::math::Point2F{2.0F, 2.0F});
     concave_polygon.push_back(rtw::math::Point2F{0.0F, 2.0F});
-    ASSERT_EQ(rtw::math::is_convex(concave_polygon), rtw::math::ConvexityCheckResult::CONCAVE);
+    const auto result = rtw::math::check_polygon(concave_polygon);
+    ASSERT_TRUE(result.is_concave());
   }
 
   {
     const rtw::math::ConvexPolygon2F<4U> empty_polygon;
-    ASSERT_EQ(rtw::math::is_convex(empty_polygon), rtw::math::ConvexityCheckResult::INVALID_POLYGON);
+    auto result = rtw::math::check_polygon(empty_polygon);
+    ASSERT_TRUE(result.is_invalid());
 
     rtw::math::ConvexPolygon2F<4U> one_vertex;
     one_vertex.push_back(rtw::math::Point2F{0.0F, 0.0F});
-    ASSERT_EQ(rtw::math::is_convex(one_vertex), rtw::math::ConvexityCheckResult::INVALID_POLYGON);
+    result = rtw::math::check_polygon(one_vertex);
+    ASSERT_TRUE(result.is_invalid());
 
     rtw::math::ConvexPolygon2F<4U> two_vertices;
     two_vertices.push_back(rtw::math::Point2F{0.0F, 0.0F});
     two_vertices.push_back(rtw::math::Point2F{1.0F, 0.0F});
-    ASSERT_EQ(rtw::math::is_convex(two_vertices), rtw::math::ConvexityCheckResult::INVALID_POLYGON);
+    result = rtw::math::check_polygon(two_vertices);
+    ASSERT_TRUE(result.is_invalid());
   }
 
   {
@@ -200,7 +205,8 @@ TEST(ConvexPolygonTest, is_convex)
     polygon_with_collinear.push_back(rtw::math::Point2F{2.0F, 0.0F}); // Collinear with previous two
     polygon_with_collinear.push_back(rtw::math::Point2F{2.0F, 1.0F});
     polygon_with_collinear.push_back(rtw::math::Point2F{0.0F, 1.0F});
-    ASSERT_EQ(rtw::math::is_convex(polygon_with_collinear), rtw::math::ConvexityCheckResult::COLLINEAR_POINTS);
+    const auto result = rtw::math::check_polygon(polygon_with_collinear);
+    ASSERT_TRUE(result.has_collinear_points());
   }
 
   {
@@ -210,7 +216,8 @@ TEST(ConvexPolygonTest, is_convex)
     degenerate_polygon.push_back(rtw::math::Point2F{1.0F, 0.0F});
     degenerate_polygon.push_back(rtw::math::Point2F{2.0F, 0.0F});
     degenerate_polygon.push_back(rtw::math::Point2F{3.0F, 0.0F});
-    ASSERT_EQ(rtw::math::is_convex(degenerate_polygon), rtw::math::ConvexityCheckResult::COLLINEAR_POINTS);
+    const auto result = rtw::math::check_polygon(degenerate_polygon);
+    ASSERT_TRUE(result.has_collinear_points());
   }
 
   {
@@ -220,7 +227,8 @@ TEST(ConvexPolygonTest, is_convex)
     degenerate_polygon.push_back(rtw::math::Point2F{1.0F, 0.0F});
     degenerate_polygon.push_back(rtw::math::Point2F{1.0F, 1.0F});
     degenerate_polygon.push_back(rtw::math::Point2F{1.0F, 0.0F});
-    ASSERT_EQ(rtw::math::is_convex(degenerate_polygon), rtw::math::ConvexityCheckResult::COLLINEAR_POINTS);
+    const auto result = rtw::math::check_polygon(degenerate_polygon);
+    ASSERT_TRUE(result.has_collinear_points());
   }
 
   {
@@ -231,6 +239,37 @@ TEST(ConvexPolygonTest, is_convex)
     degenerate_polygon.push_back(rtw::math::Point2F{2.5F, 1.5F});
     degenerate_polygon.push_back(rtw::math::Point2F{2.0F, 1.5F});
     degenerate_polygon.push_back(rtw::math::Point2F{-0.5F, 1.5F});
-    ASSERT_EQ(rtw::math::is_convex(degenerate_polygon), rtw::math::ConvexityCheckResult::COLLINEAR_POINTS);
+    const auto result = rtw::math::check_polygon(degenerate_polygon);
+    ASSERT_TRUE(result.has_collinear_points());
+  }
+}
+
+TEST(ConvexPolygonTest, winding_order)
+{
+  {
+    const rtw::math::Triangle2F triangle{
+        rtw::math::Point2F{0.0F, 0.0F},
+        rtw::math::Point2F{1.0F, 0.0F},
+        rtw::math::Point2F{0.5F, 1.0F},
+    };
+    ASSERT_EQ(rtw::math::winding_order(triangle), rtw::math::WindingOrder::COUNTER_CLOCKWISE);
+  }
+
+  {
+    rtw::math::ConvexPolygon2F<4U> cw_polygon;
+    cw_polygon.push_back(rtw::math::Point2F{0.0F, 0.0F});
+    cw_polygon.push_back(rtw::math::Point2F{0.0F, 1.0F});
+    cw_polygon.push_back(rtw::math::Point2F{1.0F, 1.0F});
+    cw_polygon.push_back(rtw::math::Point2F{1.0F, 0.0F});
+    ASSERT_EQ(rtw::math::winding_order(cw_polygon), rtw::math::WindingOrder::CLOCKWISE);
+  }
+
+  {
+    rtw::math::ConvexPolygon2F<4U> ccw_polygon;
+    ccw_polygon.push_back(rtw::math::Point2F{0.0F, 0.0F});
+    ccw_polygon.push_back(rtw::math::Point2F{1.0F, 0.0F});
+    ccw_polygon.push_back(rtw::math::Point2F{1.0F, 1.0F});
+    ccw_polygon.push_back(rtw::math::Point2F{0.0F, 1.0F});
+    ASSERT_EQ(rtw::math::winding_order(ccw_polygon), rtw::math::WindingOrder::COUNTER_CLOCKWISE);
   }
 }
