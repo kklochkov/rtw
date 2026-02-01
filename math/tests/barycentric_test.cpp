@@ -1,4 +1,5 @@
 #include "math/barycentric.h"
+#include "math/barycentric_operations.h"
 #include "math/format.h"
 
 #include <gmock/gmock.h>

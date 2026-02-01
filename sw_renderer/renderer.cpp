@@ -5,7 +5,11 @@
 
 #include "math/angle.h"
 #include "math/barycentric.h"
+#include "math/barycentric_operations.h"
 #include "math/convex_polygon.h"
+#include "math/convex_polygon_operations.h"
+#include "math/matrix_operations.h"
+#include "math/vector_operations.h"
 
 namespace rtw::sw_renderer
 {

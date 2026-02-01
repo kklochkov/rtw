@@ -2,7 +2,9 @@
 
 #include "math/angle.h"
 #include "math/matrix.h"
+#include "math/matrix_operations.h"
 #include "math/vector.h"
+#include "math/vector_operations.h"
 #include "multiprecision/math.h"
 
 namespace rtw::math::transform3

@@ -5,7 +5,9 @@ cc_library(
     hdrs = [
         "angle.h",
         "barycentric.h",
+        "barycentric_operations.h",
         "convex_polygon.h",
+        "convex_polygon_operations.h",
         "frustum.h",
         "interpolation.h",
         "intersection.h",

@@ -1,5 +1,6 @@
 #include "math/format.h"
 #include "math/vector.h"
+#include "math/vector_operations.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

@@ -1,4 +1,5 @@
 #include "math/convex_polygon.h"
+#include "math/convex_polygon_operations.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

@@ -4,6 +4,7 @@
 
 #include "math/angle.h"
 #include "math/point.h"
+#include "math/vector_operations.h"
 
 namespace rtw::sw_renderer
 {

@@ -3,6 +3,7 @@
 #include "math/convex_polygon.h"
 #include "math/frustum.h"
 #include "math/plane.h"
+#include "math/vector_operations.h"
 
 #include "sw_renderer/vertex.h"
 

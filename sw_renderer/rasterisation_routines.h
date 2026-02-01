@@ -1,5 +1,9 @@
 #pragma once
 
+#include "math/point.h"
+#include "math/vector.h"
+#include "math/vector_operations.h"
+
 #include "sw_renderer/types.h"
 #include "sw_renderer/vertex.h"
 
