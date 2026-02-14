@@ -212,6 +212,24 @@ struct EulerAngles
   Angle<T> roll;
 };
 
+enum class RotationConvention : std::uint8_t
+{
+  XYZ = 0U, // regular Euler angles
+  // Tait-Bryan angles
+  YZX = 1U, // common in game engines
+  ZXY = 2U,
+  XZY = 3U,
+  ZYX = 4U, // common in aerospace and robotics
+  YXZ = 5U,
+  // Aliases
+  ROLL_PITCH_YAW = XYZ,
+  PITCH_YAW_ROLL = YZX,
+  YAW_ROLL_PITCH = ZXY,
+  ROLL_YAW_PITCH = XZY,
+  YAW_PITCH_ROLL = ZYX,
+  PITCH_ROLL_YAW = YXZ
+};
+
 using EulerAnglesF = EulerAngles<float>;
 using EulerAnglesD = EulerAngles<double>;
 using EulerAnglesQ16 = EulerAngles<multiprecision::FixedPoint16>;

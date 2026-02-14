@@ -154,6 +154,58 @@ constexpr Matrix3x3<T> make_so3_z(const Angle<T> yaw) noexcept
   return make_rotation_z(yaw);
 }
 
+/// A 3D rotation matrix around given axes in right-handed coordinate system.
+/// The order of the rotations is determined by the rotation convention.
+/// @tparam T The type of the elements.
+/// @tparam CONVENTION The rotation convention to use for the order of the rotations.
+/// @param[in] roll The angle of the rotation around the x-axis.
+/// @param[in] pitch The angle of the rotation around the y-axis.
+/// @param[in] yaw The angle of the rotation around the z-axis.
+/// @return The 3D rotation matrix.
+template <typename T, RotationConvention CONVENTION>
+constexpr Matrix3x3<T> make_rotation(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw) noexcept
+{
+  if constexpr ((CONVENTION == RotationConvention::XYZ) || (CONVENTION == RotationConvention::ROLL_PITCH_YAW))
+  {
+    return make_rotation_z(yaw) * make_rotation_y(pitch) * make_rotation_x(roll);
+  }
+
+  if constexpr ((CONVENTION == RotationConvention::YZX) || (CONVENTION == RotationConvention::PITCH_YAW_ROLL))
+  {
+    return make_rotation_x(roll) * make_rotation_z(yaw) * make_rotation_y(pitch);
+  }
+
+  if constexpr ((CONVENTION == RotationConvention::ZXY) || (CONVENTION == RotationConvention::YAW_ROLL_PITCH))
+  {
+    return make_rotation_y(pitch) * make_rotation_x(roll) * make_rotation_z(yaw);
+  }
+
+  if constexpr ((CONVENTION == RotationConvention::XZY) || (CONVENTION == RotationConvention::ROLL_YAW_PITCH))
+  {
+    return make_rotation_y(pitch) * make_rotation_z(yaw) * make_rotation_x(roll);
+  }
+
+  if constexpr ((CONVENTION == RotationConvention::ZYX) || (CONVENTION == RotationConvention::YAW_PITCH_ROLL))
+  {
+    return make_rotation_x(roll) * make_rotation_y(pitch) * make_rotation_z(yaw);
+  }
+
+  // (CONVENTION == RotationConvention::YXZ) || (CONVENTION == RotationConvention::PITCH_ROLL_YAW)
+  return make_rotation_z(yaw) * make_rotation_x(roll) * make_rotation_y(pitch);
+}
+
+/// A 3D rotation matrix around given Euler angles in right-handed coordinate system.
+/// The order of the rotations is determined by the rotation convention.
+/// @tparam T The type of the elements.
+/// @tparam CONVENTION The rotation convention to use for the order of the rotations.
+/// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
+/// @return The 3D rotation matrix.
+template <typename T, RotationConvention CONVENTION>
+constexpr Matrix3x3<T> make_rotation(const EulerAngles<T>& angles) noexcept
+{
+  return make_rotation<T, CONVENTION>(angles.roll, angles.pitch, angles.yaw);
+}
+
 /// A 3D rotation matrix around the x-, y- and z-axis in right-handed coordinate system.
 /// @tparam T The type of the elements.
 /// @param[in] roll The angle of the rotation around the x-axis.
@@ -163,7 +215,7 @@ constexpr Matrix3x3<T> make_so3_z(const Angle<T> yaw) noexcept
 template <typename T>
 constexpr Matrix3x3<T> make_rotation(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw) noexcept
 {
-  return make_rotation_z(yaw) * make_rotation_y(pitch) * make_rotation_x(roll);
+  return make_rotation<T, RotationConvention::ROLL_PITCH_YAW>(roll, pitch, yaw);
 }
 
 /// A 3D rotation matrix around the x-, y- and z-axis in right-handed coordinate system.
@@ -267,6 +319,24 @@ constexpr Matrix4x4<T> make_se3(const Matrix3x3<T>& rotation, const Vector3<T>& 
 
 /// A 3D transformation matrix.
 /// The matrix includes a rotation (around x-, y- and z-axis) and a translation in homogeneous coordinates.
+/// The order of the rotations is determined by the rotation convention.
+/// @tparam T The type of the elements.
+/// @tparam CONVENTION The rotation convention to use for the order of the rotations.
+/// @param[in] scale The scaling matrix.
+/// @param[in] roll The angle of the rotation around the x-axis.
+/// @param[in] pitch The angle of the rotation around the y-axis.
+/// @param[in] translation The translation vector.
+/// @return The 3D rigid motion.
+template <typename T, RotationConvention CONVENTION>
+constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const Angle<T> roll, const Angle<T> pitch,
+                                      const Angle<T> yaw, const Vector3<T>& translation) noexcept
+{
+  const auto rotation = make_rotation<T, CONVENTION>(roll, pitch, yaw);
+  return make_transform(make_scale(scale), rotation, make_translation(translation));
+}
+
+/// A 3D transformation matrix.
+/// The matrix includes a rotation (around x-, y- and z-axis) and a translation in homogeneous coordinates.
 /// @tparam T The type of the elements.
 /// @param[in] scale The scaling matrix.
 /// @param[in] roll The angle of the rotation around the x-axis.
@@ -278,9 +348,7 @@ template <typename T>
 constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const Angle<T> roll, const Angle<T> pitch,
                                       const Angle<T> yaw, const Vector3<T>& translation) noexcept
 {
-  // TODO: provide enum-based interface for rotation order. (e.g. XYZ, ZYX, etc.)
-  const auto rotation = make_rotation_z(yaw) * make_rotation_y(pitch) * make_rotation_x(roll);
-  return make_transform(make_scale(scale), rotation, make_translation(translation));
+  return make_transform<T, RotationConvention::ROLL_PITCH_YAW>(scale, roll, pitch, yaw, translation);
 }
 
 /// A 3D transformation matrix.
