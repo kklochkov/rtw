@@ -102,8 +102,8 @@ bool Application::init(const std::string_view window_title, const std::int32_t w
   }
 
   {
-    event_bus_.subscribe<QuitEvent>(*this, &Application::handle_quit_event);
-    event_bus_.subscribe<KeyPressEvent>(*this, &Application::handle_key_press_event);
+    event_bus_.add_subscription<QuitEvent>(&Application::handle_quit_event, this);
+    event_bus_.add_subscription<KeyPressEvent>(&Application::handle_key_press_event, this);
   }
 
   return true;
