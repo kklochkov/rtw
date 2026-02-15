@@ -202,7 +202,43 @@ void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF
       });
 }
 
-void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
+void Renderer::transform_face_vertices(VertexF& v0, VertexF& v1, VertexF& v2, const Mesh& mesh, const Face& face,
+                                       const Matrix4x4F& model_view_matrix)
+{
+  // Transform vertices to world space.
+  v0.point = model_view_matrix * mesh.vertices[face.vertex_indices[0]];
+  v1.point = model_view_matrix * mesh.vertices[face.vertex_indices[1]];
+  v2.point = model_view_matrix * mesh.vertices[face.vertex_indices[2]];
+
+  if (face.texture_indices.has_value() && !mesh.textures.empty())
+  {
+    v0.tex_coord = mesh.tex_coords[(*face.texture_indices)[0]];
+    v1.tex_coord = mesh.tex_coords[(*face.texture_indices)[1]];
+    v2.tex_coord = mesh.tex_coords[(*face.texture_indices)[2]];
+  }
+}
+
+void Renderer::setup_normals(VertexF& v0, VertexF& v1, VertexF& v2, const Mesh& mesh, const Face& face,
+                             const Matrix4x4F& model_view_matrix)
+{
+  if (face.normal_indices.has_value() && !mesh.normals.empty())
+  {
+    // Transform normals to world space.
+    v0.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[0]]).xyz();
+    v1.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[1]]).xyz();
+    v2.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[2]]).xyz();
+  }
+  else
+  {
+    // Calculate face normal.
+    // We are in right-handed coordinate system, so we need to use counter-clockwise winding order.
+    v0.normal = math::normalize(math::cross((v1.point - v0.point).xyz(), (v2.point - v0.point).xyz()));
+    v1.normal = v1.normal;
+    v2.normal = v1.normal;
+  }
+}
+
+float Renderer::calculate_light_intensity(const Vector3F& light_direction, const Vector3F& normal)
 {
   using multiprecision::math::clamp;
   using std::clamp;
@@ -210,49 +246,68 @@ void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
   constexpr single_precision ZERO{0.0F};
   constexpr single_precision ONE{1.0F};
 
+  // We are in right-handed coordinate system, so we need to take the negative z axis.
+  return static_cast<float>(clamp(-math::dot(normal, light_direction), ZERO, ONE));
+}
+
+void Renderer::project_to_screen(VertexF& vertex, const Matrix4x4F& projection_matrix,
+                                 const Matrix4x4F& screen_space_matrix)
+{
+  constexpr single_precision ONE{1.0F};
+
+  // Transform to screen space.
+  vertex.point = projection_matrix * vertex.point;
+
+  // Store original w before perspective divide for depth buffer and perspective correct interpolation.
+  const auto vertex_w = vertex.point.w();
+
+  // Perspective divide.
+  vertex.point /= vertex_w;
+
+  // Transform to screen space.
+  vertex.point = ndc_to_screen_space(vertex.point, screen_space_matrix);
+
+  // Pre-compute reciprocal w for each vertex to avoid division in the loop.
+  vertex.point.w() = ONE / vertex_w;
+
+  // Flip v coordinate because the texture is upside down.
+  vertex.tex_coord.v() = ONE - vertex.tex_coord.v();
+
+  // Perspective correct texture mapping.
+  // Pre-divide by w to avoid division in the loop.
+  vertex.tex_coord /= vertex_w;
+}
+
+void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
+{
+  RenderStats frame_stats{};
   for (const auto& face : mesh.faces)
   {
-    // Transform vertices to world space.
-    VertexF v0{model_view_matrix * mesh.vertices[face.vertex_indices[0]]};
-    VertexF v1{model_view_matrix * mesh.vertices[face.vertex_indices[1]]};
-    VertexF v2{model_view_matrix * mesh.vertices[face.vertex_indices[2]]};
+    const auto& material = mesh.material(face.material);
 
-    if (face.texture_indices.has_value() && !mesh.textures.empty())
-    {
-      v0.tex_coord = mesh.tex_coords[(*face.texture_indices)[0]];
-      v1.tex_coord = mesh.tex_coords[(*face.texture_indices)[1]];
-      v2.tex_coord = mesh.tex_coords[(*face.texture_indices)[2]];
-    }
-
-    if (face.normal_indices.has_value() && !mesh.normals.empty())
-    {
-      // Transform normals to world space.
-      v0.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[0]]).xyz();
-      v1.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[1]]).xyz();
-      v2.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[2]]).xyz();
-    }
-    else
-    {
-      // Calculate face normal.
-      // We are in right-handed coordinate system, so we need to use counter-clockwise winding order.
-      v0.normal = math::normalize(math::cross((v1.point - v0.point).xyz(), (v2.point - v0.point).xyz()));
-      v1.normal = v1.normal;
-      v2.normal = v1.normal;
-    }
+    VertexF v0;
+    VertexF v1;
+    VertexF v2;
+    transform_face_vertices(v0, v1, v2, mesh, face, model_view_matrix);
+    setup_normals(v0, v1, v2, mesh, face, model_view_matrix);
 
     // Lighting.
-    const Material material = mesh.material(face.material);
     float light_intensity = 1.0F;
     if (light_enabled())
     {
-      // We are in right-handed coordinate system, so we need to take the negative z axis.
-      const auto normal = v0.normal;
-      light_intensity = static_cast<float>(clamp(-math::dot(normal, light_direction_), ZERO, ONE));
+      light_intensity = calculate_light_intensity(light_direction_, v0.normal);
     }
 
     // Frustum clipping.
     const auto polygon = clip(v0, v1, v2, frustum_);
     const auto triangles = triangulate(polygon);
+
+    {
+      ++frame_stats.triangles_submitted;
+      frame_stats.triangles_clipped += static_cast<std::size_t>(triangles.triangle_count > 0U);
+    }
+
+    // Back-face culling, rasterisation and shading.
     for (std::size_t i = 0U; i < triangles.triangle_count; ++i)
     {
       const auto& triangle = triangles.triangles[i]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -261,37 +316,20 @@ void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
       v1 = triangle[1U];
       v2 = triangle[2U];
 
-      // Transform to screen space.
-      v0.point = projection_matrix_ * v0.point;
-      v1.point = projection_matrix_ * v1.point;
-      v2.point = projection_matrix_ * v2.point;
-
-      const auto v0_w = v0.point.w();
-      const auto v1_w = v1.point.w();
-      const auto v2_w = v2.point.w();
-
-      // Perspective divide.
-      v0.point /= v0_w;
-      v1.point /= v1_w;
-      v2.point /= v2_w;
-
-      // Transform to screen space.
-      v0.point = ndc_to_screen_space(v0.point, screen_space_matrix_);
-      v1.point = ndc_to_screen_space(v1.point, screen_space_matrix_);
-      v2.point = ndc_to_screen_space(v2.point, screen_space_matrix_);
-
-      // Pre-compute reciprocal w for each vertex to avoid division in the loop.
-      v0.point.w() = ONE / v0_w;
-      v1.point.w() = ONE / v1_w;
-      v2.point.w() = ONE / v2_w;
+      project_to_screen(v0, projection_matrix_, screen_space_matrix_);
+      project_to_screen(v1, projection_matrix_, screen_space_matrix_);
+      project_to_screen(v2, projection_matrix_, screen_space_matrix_);
 
       if (face_culling_enabled())
       {
         if (math::winding_order(v0.point.xy(), v1.point.xy(), v2.point.xy()) == math::WindingOrder::CLOCKWISE)
         {
+          ++frame_stats.triangles_culled;
           continue;
         }
       }
+
+      ++frame_stats.triangles_rendered;
 
       if (shading_enabled())
       {
@@ -300,17 +338,6 @@ void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
 
       if (texture_enabled() && !mesh.textures.empty())
       {
-        // Flip v coordinate because the texture is upside down.
-        v0.tex_coord.v() = ONE - v0.tex_coord.v();
-        v1.tex_coord.v() = ONE - v1.tex_coord.v();
-        v2.tex_coord.v() = ONE - v2.tex_coord.v();
-
-        // Perspective correct texture mapping.
-        // Pre-divide by w to avoid division in the loop.
-        v0.tex_coord /= v0_w;
-        v1.tex_coord /= v1_w;
-        v2.tex_coord /= v2_w;
-
         const auto& texture = mesh.texture(material.diffuse_texture);
         fill_triangle_bbox(v0, v1, v2, texture, light_intensity);
       }
@@ -328,6 +355,11 @@ void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
         draw_pixel(v2.point.xy().cast<std::int32_t>(), Color{0xFF'00'00'FF}, 5);
       }
     }
+  }
+
+  if (render_stats_enabled())
+  {
+    stats_ = frame_stats;
   }
 
 #ifdef RTW_DEBUG_DRAWING

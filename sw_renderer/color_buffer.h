@@ -2,11 +2,20 @@
 
 #include "sw_renderer/color.h"
 
+#include <cassert>
 #include <vector>
 
 namespace rtw::sw_renderer
 {
 
+/// A 2D buffer for storing RGBA pixel colors.
+/// Used as the framebuffer for rendering.
+///
+/// The buffer is stored in row-major order with the origin at the top-left.
+/// Pixel format is RGBA8888 (32 bits per pixel).
+///
+/// @note Access is not bounds-checked in release builds for performance.
+/// Use asserts to catch out-of-bounds access in debug builds.
 class ColorBuffer
 {
 public:
@@ -25,9 +34,17 @@ public:
 
   void set_pixel(const std::size_t x, const std::size_t y, const Color color)
   {
+    assert(x < width_ && "x coordinate out of bounds");
+    assert(y < height_ && "y coordinate out of bounds");
     buffer_[(y * width_) + x] = color.rgba;
   }
-  Color pixel(const std::size_t x, const std::size_t y) const { return Color{buffer_[(y * width_) + x]}; }
+
+  Color pixel(const std::size_t x, const std::size_t y) const
+  {
+    assert(x < width_ && "x coordinate out of bounds");
+    assert(y < height_ && "y coordinate out of bounds");
+    return Color{buffer_[(y * width_) + x]};
+  }
 
   void clear(const Color color) { std::fill(buffer_.begin(), buffer_.end(), color.rgba); }
 

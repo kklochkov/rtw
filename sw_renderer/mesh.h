@@ -45,16 +45,20 @@ struct Material
 
 struct Mesh
 {
-  Material material(const std::string& name) const
+  bool has_material(const std::string& name) const { return materials.find(name) != materials.end(); }
+
+  const Material& material(const std::string& name) const
   {
     const auto it = materials.find(name);
-    return it != materials.end() ? it->second : Material{};
+    return it->second;
   }
 
-  Texture texture(const std::string& name) const
+  bool has_texture(const std::string& name) const { return textures.find(name) != textures.end(); }
+
+  const Texture& texture(const std::string& name) const
   {
     const auto it = textures.find(name);
-    return it != textures.end() ? it->second : Texture{};
+    return it->second;
   }
 
   std::vector<Point3F> vertices;

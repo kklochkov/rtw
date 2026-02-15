@@ -19,10 +19,28 @@ enum class RenderMode : std::uint8_t
   VERTEX_DRAWING = 1U << 3U,
   LIGHT = 1U << 4U,
   NORMAL_DRAW = 1U << 5U,
-  TEXTURE = 1U << 6U
+  TEXTURE = 1U << 6U,
+  STATS = 1U << 7U
 };
 
 using RenderModeFlags = stl::Flags<RenderMode>;
+
+/// Statistics collected during rendering.
+struct RenderStats
+{
+  std::size_t triangles_submitted{0}; ///< Triangles before clipping
+  std::size_t triangles_clipped{0};   ///< Triangles fully outside frustum
+  std::size_t triangles_culled{0};    ///< Triangles removed by face culling
+  std::size_t triangles_rendered{0};  ///< Triangles actually drawn
+
+  void reset() noexcept
+  {
+    triangles_submitted = 0;
+    triangles_clipped = 0;
+    triangles_culled = 0;
+    triangles_rendered = 0;
+  }
+};
 
 class Renderer
 {
@@ -39,6 +57,7 @@ public:
   {
     color_buffer_.clear(color);
     depth_buffer_.clear();
+    stats_.reset();
   }
 
   void set_render_mode(const RenderModeFlags mode) { render_mode_ = mode; }
@@ -58,9 +77,13 @@ public:
   bool normal_draw_enabled() const { return render_mode_.test(RenderMode::NORMAL_DRAW); }
   void set_texture_enabled(const bool enabled) { render_mode_.set(RenderMode::TEXTURE, enabled); }
   bool texture_enabled() const { return render_mode_.test(RenderMode::TEXTURE); }
+  void set_render_stats_enabled(const bool enabled) { render_mode_.set(RenderMode::STATS, enabled); }
+  bool render_stats_enabled() const { return render_mode_.test(RenderMode::STATS); }
 
   void set_depth(const std::size_t x, const std::size_t y, const float depth) { depth_buffer_.set_depth(x, y, depth); }
   float depth(const std::size_t x, const std::size_t y) const { return depth_buffer_.depth(x, y); }
+
+  const RenderStats& stats() const noexcept { return stats_; }
 
   void draw_pixel(const Point2I& point, const Color color);
   void draw_pixel(const Point2I& point, const Color color, const std::uint16_t size);
@@ -86,14 +109,30 @@ public:
   void draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix);
 
 private:
+  /// Transform face vertices from model space to world space
+  static void transform_face_vertices(VertexF& v0, VertexF& v1, VertexF& v2, const Mesh& mesh, const Face& face,
+                                      const Matrix4x4F& model_view_matrix);
+
+  /// Set up vertex normals (from mesh or calculate face normal)
+  static void setup_normals(VertexF& v0, VertexF& v1, VertexF& v2, const Mesh& mesh, const Face& face,
+                            const Matrix4x4F& model_view_matrix);
+
+  /// Calculate light intensity for a face
+  static float calculate_light_intensity(const Vector3F& light_direction, const Vector3F& normal);
+
+  /// Transform vertex from clip space to screen space
+  static void project_to_screen(VertexF& vertex, const Matrix4x4F& projection_matrix,
+                                const Matrix4x4F& screen_space_matrix);
+
   ColorBuffer color_buffer_;
   DepthBuffer depth_buffer_;
   Frustum3F frustum_;
   Matrix4x4F projection_matrix_;
   Matrix4x4F screen_space_matrix_;
   Vector3F light_direction_;
+  RenderStats stats_;
   RenderModeFlags render_mode_{RenderMode::FACE_CULLING | RenderMode::WIREFRAME | RenderMode::SHADING
-                               | RenderMode::LIGHT};
+                               | RenderMode::LIGHT | RenderMode::STATS};
 };
 
 } // namespace rtw::sw_renderer
