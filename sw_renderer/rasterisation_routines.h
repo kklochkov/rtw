@@ -49,6 +49,11 @@ void draw_line_dda(const Point2I& p0, const Point2I& p1, RasteriseCallbackT rast
   const auto steps = static_cast<std::int32_t>(std::max(abs(delta.x()), abs(delta.y())));
 
   assert(steps > 0);
+  if (steps == 0)
+  {
+    rasterise(p0);
+    return;
+  }
 
   delta /= static_cast<single_precision>(steps);
 

@@ -49,7 +49,7 @@ struct IdentityTag
 constexpr inline IdentityTag IDENTITY{IdentityTag::Tag::TAG};
 
 /// A matrix that is statically sized.
-/// The matrix is stored in column-major order.
+/// The matrix is stored in row-major order.
 /// @tparam T The type of the elements.
 /// @tparam ROWS The number of rows.
 /// @tparam COLS The number of columns.
@@ -428,7 +428,7 @@ public:
   friend constexpr Matrix<value_type, ROWS, OTHER_COLS> operator*(const Matrix<value_type, ROWS, COLS>& lhs,
                                                                   const Matrix& rhs) noexcept
   {
-    return rhs * lhs;
+    return lhs * rhs;
   }
 
   friend constexpr Matrix operator-(const Matrix& rhs) noexcept

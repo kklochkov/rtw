@@ -54,9 +54,9 @@ public:
   constexpr bool insert(const key_type& value) noexcept { return emplace(value); }
   constexpr bool insert(key_type&& value) noexcept { return emplace(std::move(value)); }
 
-  constexpr bool erase(const key_type& key) noexcept
+  constexpr bool erase(const key_type& key) noexcept { return erase(find(key)); }
+  constexpr bool erase(const const_iterator& it) noexcept
   {
-    const auto it = find(key);
     if (it != end())
     {
       keys_storage_.destruct_at(it.get_index());
@@ -64,17 +64,6 @@ public:
     }
 
     return false;
-  }
-
-  constexpr bool erase(const const_iterator& it) noexcept
-  {
-    if (it != end())
-    {
-      keys_storage_.destruct_at(it.get_index());
-      return false;
-    }
-
-    return true;
   }
 
   constexpr void clear() noexcept { keys_storage_.clear(); }

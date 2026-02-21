@@ -111,12 +111,6 @@ public:
     return (static_cast<F>(hi_) * POW_2_64) + static_cast<F>(lo_);
   }
 
-  template <typename U = T, typename = std::enable_if_t<std::is_signed_v<U>>>
-  constexpr Int operator-() const noexcept
-  {
-    return Int{-hi_, -lo_};
-  }
-
   constexpr Int& operator<<=(const std::uint32_t shift) noexcept
   {
     if (shift >= LO_BITS)

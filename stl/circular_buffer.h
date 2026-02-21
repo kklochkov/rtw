@@ -75,10 +75,10 @@ public:
   }
 
   constexpr reference front() noexcept { return storage_[head_]; }
-  constexpr const_reference front() const noexcept { return front(); }
+  constexpr const_reference front() const noexcept { return storage_[head_]; }
 
   constexpr reference back() noexcept { return storage_[get_back_index()]; }
-  constexpr const_reference back() const noexcept { return back(); }
+  constexpr const_reference back() const noexcept { return storage_[get_back_index()]; }
 
   constexpr reference operator[](const size_type index) noexcept { return storage_[get_index(index)]; }
   constexpr const_reference operator[](const size_type index) const noexcept { return storage_[get_index(index)]; }

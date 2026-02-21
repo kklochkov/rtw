@@ -135,9 +135,9 @@ public:
 
     Subscription(const Subscription&) noexcept = delete;
     Subscription& operator=(const Subscription&) noexcept = delete;
-    Subscription(Subscription&& ohter) noexcept
-        : event_bus_{std::exchange(ohter.event_bus_, nullptr)},
-          handler_type_index_{std::exchange(ohter.handler_type_index_, VOID_TYPE_INDEX)}
+    Subscription(Subscription&& other) noexcept
+        : event_bus_{std::exchange(other.event_bus_, nullptr)},
+          handler_type_index_{std::exchange(other.handler_type_index_, VOID_TYPE_INDEX)}
     {
     }
     Subscription& operator=(Subscription&& other) noexcept
@@ -302,9 +302,9 @@ private:
     {
     }
 
-    bool operator==(const Subscription& subscription) const noexcept
+    bool operator==(const Subscription& other) const noexcept
     {
-      return handler_type_index == subscription.get_handler_type_index();
+      return handler_type_index == other.get_handler_type_index();
     }
 
     std::type_index handler_type_index;
@@ -313,7 +313,7 @@ private:
   };
 
   template <typename EventT, typename CallableT, typename... ArgsT>
-  SubscriptionContext& subscribe_unsafe(CallableT&& callable, ArgsT&&... args) noexcept
+  SubscriptionContext& subscribe_unsafe(CallableT&& callable, ArgsT&&... args)
   {
     using HandlerWrapper = EventHandler<EventT, CallableT, ArgsT...>;
     const std::type_index handler_type_index{typeid(HandlerWrapper)};

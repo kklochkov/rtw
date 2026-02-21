@@ -233,8 +233,8 @@ void Renderer::setup_normals(VertexF& v0, VertexF& v1, VertexF& v2, const Mesh& 
     // Calculate face normal.
     // We are in right-handed coordinate system, so we need to use counter-clockwise winding order.
     v0.normal = math::normalize(math::cross((v1.point - v0.point).xyz(), (v2.point - v0.point).xyz()));
-    v1.normal = v1.normal;
-    v2.normal = v1.normal;
+    v1.normal = v0.normal;
+    v2.normal = v0.normal;
   }
 }
 

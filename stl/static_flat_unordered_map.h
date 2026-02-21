@@ -71,9 +71,9 @@ public:
     return emplace(std::move(key), std::move(mapped_value));
   }
 
-  constexpr bool erase(const key_type& key) noexcept
+  constexpr bool erase(const key_type& key) noexcept { return erase(find(key)); }
+  constexpr bool erase(const iterator& it) noexcept
   {
-    const auto it = find(key);
     if (it != end())
     {
       keys_storage_.destruct_at(it.get_index());
@@ -82,18 +82,6 @@ public:
     }
 
     return false;
-  }
-
-  constexpr bool erase(const iterator& it) noexcept
-  {
-    if (it != end())
-    {
-      keys_storage_.destruct_at(it.get_index());
-      values_storage_.destruct_at(it.get_index());
-      return false;
-    }
-
-    return true;
   }
 
   constexpr void clear() noexcept

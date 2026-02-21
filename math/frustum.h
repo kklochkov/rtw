@@ -143,7 +143,7 @@ constexpr Frustum3<T> make_frustum(const FrustumParameters<T> params) noexcept
 }
 
 /// Extracts the frustum from a projection matrix.
-/// The projection matrix must be in column-major order.
+/// The projection matrix must be in row-major order.
 /// The exact frustum extraction algorithm is described in the following article:
 /// https://www.gamedevs.org/uploads/fast-extraction-viewing-frustum-planes-from-world-view-projection-matrix.pdf
 /// @tparam T The type of the matrix elements.

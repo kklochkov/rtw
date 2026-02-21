@@ -50,6 +50,7 @@ struct Mesh
   const Material& material(const std::string& name) const
   {
     const auto it = materials.find(name);
+    assert(it != materials.end());
     return it->second;
   }
 
@@ -58,6 +59,7 @@ struct Mesh
   const Texture& texture(const std::string& name) const
   {
     const auto it = textures.find(name);
+    assert(it != textures.end());
     return it->second;
   }
 
