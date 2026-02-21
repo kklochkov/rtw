@@ -394,7 +394,6 @@ public:
     {
       auto& e = entities_[entity.id.index];
       ++e.id.generation; // Increment generation to invalidate existing references
-      e.signature = {};  // Clear signature to remove component associations
 
       free_ids_.push(e.id);
     }

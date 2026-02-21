@@ -525,3 +525,276 @@ TEST(EcsTest, tagging_and_groupping)
   ecs_manager.untag_entity(entity);
   EXPECT_FALSE(ecs_manager.is_entity_tagged(entity, "Player"));
 }
+
+TEST(EcsTest, generation_counter_validity)
+{
+  // Use a small entity pool to ensure index reuse
+  constexpr std::size_t SMALL_POOL = 2U;
+  rtw::ecs::ECSManager<ComponentType, MAX_NUMBER_OF_ENTITIES_PER_GROUP, Transform, Rigidbody, Collider, Sprite, Mesh,
+                       Debug, Health, Damage>
+      ecs_manager{SMALL_POOL, MAX_NUMBER_OF_SYSTEMS};
+
+  // Create first entity (uses index 0 from free list)
+  const auto entity1 = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  ecs_manager.emplace_component<Transform>(entity1, 100U);
+  EXPECT_TRUE(ecs_manager.is_entity_valid(entity1));
+  EXPECT_EQ(entity1.id.index, 0U);
+  EXPECT_EQ(entity1.id.generation, 0U);
+
+  // Create second entity (uses index 1 from free list, exhausting the pool)
+  const auto entity2 = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  EXPECT_EQ(entity2.id.index, 1U);
+  EXPECT_EQ(entity2.id.generation, 0U);
+
+  // Destroy first entity - its index goes to back of free list with incremented generation
+  ecs_manager.destroy_entity(entity1);
+  EXPECT_FALSE(ecs_manager.is_entity_valid(entity1));
+
+  // Create third entity with DIFFERENT signature - should reuse index 0 with generation 1
+  constexpr rtw::ecs::EntitySignature<ComponentType> MINIMAL_SIGNATURE{ComponentType::TRANSFORM | ComponentType::NONE};
+  const auto entity3 = ecs_manager.create_entity(MINIMAL_SIGNATURE);
+  EXPECT_EQ(entity3.id.index, 0U);
+  EXPECT_EQ(entity3.id.generation, 1U);
+
+  // Original entity1 handle should still be invalid (different generation)
+  EXPECT_FALSE(ecs_manager.is_entity_valid(entity1));
+  EXPECT_TRUE(ecs_manager.is_entity_valid(entity3));
+
+  // They have the same index but different generations
+  EXPECT_EQ(entity1.id.index, entity3.id.index);
+  EXPECT_NE(entity1.id.generation, entity3.id.generation);
+
+  // Verify signature was properly reset - entity3 should have minimal signature, not entity1's old signature
+  EXPECT_EQ(entity3.signature, MINIMAL_SIGNATURE);
+  EXPECT_NE(entity3.signature, DEFAULT_ENTITY_SIGNATURE);
+}
+
+TEST(EcsTest, edge_cases_double_destroy_and_double_add)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  // Create entity with a component
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  ecs_manager.emplace_component<Transform>(entity, 42U);
+  EXPECT_EQ(ecs_manager.get_component<Transform>(entity).data, 42U);
+
+  // Double add should preserve original value (silent no-op)
+  ecs_manager.emplace_component<Transform>(entity, 999U);
+  EXPECT_EQ(ecs_manager.get_component<Transform>(entity).data, 42U);
+
+  // Destroy the entity
+  ecs_manager.destroy_entity(entity);
+  EXPECT_FALSE(ecs_manager.is_entity_valid(entity));
+  EXPECT_EQ(ecs_manager.get_number_of_entities(), 0U);
+
+  // Double destroy should be safe (no-op, no crash)
+  ecs_manager.destroy_entity(entity);
+  EXPECT_FALSE(ecs_manager.is_entity_valid(entity));
+  EXPECT_EQ(ecs_manager.get_number_of_entities(), 0U);
+}
+
+TEST(EcsTest, remove_component)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  ecs_manager.emplace_component<Transform>(entity, 42U);
+  ecs_manager.emplace_component<Rigidbody>(entity, 43U);
+
+  EXPECT_TRUE(ecs_manager.has_component<Transform>(entity));
+  EXPECT_TRUE(ecs_manager.has_component<Rigidbody>(entity));
+  EXPECT_EQ(ecs_manager.get_number_of_components<Transform>(), 1U);
+  EXPECT_EQ(ecs_manager.get_number_of_components<Rigidbody>(), 1U);
+
+  // Remove one component
+  ecs_manager.remove_component<Transform>(entity);
+  EXPECT_FALSE(ecs_manager.has_component<Transform>(entity));
+  EXPECT_TRUE(ecs_manager.has_component<Rigidbody>(entity));
+  EXPECT_EQ(ecs_manager.get_number_of_components<Transform>(), 0U);
+  EXPECT_EQ(ecs_manager.get_number_of_components<Rigidbody>(), 1U);
+
+  // Remove should be idempotent (removing again shouldn't crash)
+  ecs_manager.remove_component<Transform>(entity);
+  EXPECT_FALSE(ecs_manager.has_component<Transform>(entity));
+}
+
+TEST(EcsTest, has_component)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+
+  // Initially no components
+  EXPECT_FALSE(ecs_manager.has_component<Transform>(entity));
+  EXPECT_FALSE(ecs_manager.has_component<Rigidbody>(entity));
+
+  // Add one component
+  ecs_manager.emplace_component<Transform>(entity, 42U);
+  EXPECT_TRUE(ecs_manager.has_component<Transform>(entity));
+  EXPECT_FALSE(ecs_manager.has_component<Rigidbody>(entity));
+
+  // Add another component
+  ecs_manager.emplace_component<Rigidbody>(entity, 43U);
+  EXPECT_TRUE(ecs_manager.has_component<Transform>(entity));
+  EXPECT_TRUE(ecs_manager.has_component<Rigidbody>(entity));
+}
+
+TEST(EcsTest, create_system_returns_reference)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  // create_system should return a reference to the created system
+  auto& system = ecs_manager.create_system<DefaultSystem>();
+  EXPECT_EQ(system.get_signature(), DEFAULT_SYSTEM_SIGNATURE);
+  EXPECT_EQ(system.size(), 0U);
+
+  // Add an entity and verify through the returned reference
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  ecs_manager.emplace_component<Transform>(entity, 42U);
+  ecs_manager.emplace_component<Rigidbody>(entity, 43U);
+  ecs_manager.emplace_component<Collider>(entity, 44U);
+  ecs_manager.emplace_component<Sprite>(entity, 45U);
+  ecs_manager.emplace_component<Mesh>(entity, 46U);
+  ecs_manager.emplace_component<Debug>(entity, 47U);
+  ecs_manager.emplace_component<Health>(entity, 48U);
+  ecs_manager.emplace_component<Damage>(entity, 49U);
+
+  EXPECT_EQ(system.size(), 1U);
+
+  // Verify it's the same system as get_system returns
+  auto& retrieved_system = ecs_manager.get_system<DefaultSystem>();
+  EXPECT_EQ(&system, &retrieved_system);
+}
+
+TEST(EcsTest, destroy_cleans_up_tags_and_groups)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+
+  // Tag and group the entity
+  ecs_manager.tag_entity(entity, "Player");
+  ecs_manager.add_entity_to_group(entity, "Enemies");
+
+  EXPECT_TRUE(ecs_manager.is_entity_tagged(entity, "Player"));
+  EXPECT_TRUE(ecs_manager.is_entity_in_group(entity, "Enemies"));
+
+  // Destroy should clean up both tag and group
+  ecs_manager.destroy_entity(entity);
+
+  // Verify the entity is no longer tagged or in a group
+  // (we can't directly check after destroy, but we can verify no crash occurs
+  // and that creating a new entity with the same tag/group works)
+  const auto new_entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  ecs_manager.tag_entity(new_entity, "Player");
+  ecs_manager.add_entity_to_group(new_entity, "Enemies");
+
+  EXPECT_TRUE(ecs_manager.is_entity_tagged(new_entity, "Player"));
+  EXPECT_TRUE(ecs_manager.is_entity_in_group(new_entity, "Enemies"));
+}
+
+TEST(EcsTest, for_each_entity_in_group)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  // Create entities and add to groups
+  const auto entity1 = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  const auto entity2 = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  const auto entity3 = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+
+  ecs_manager.emplace_component<Transform>(entity1, 1U);
+  ecs_manager.emplace_component<Transform>(entity2, 2U);
+  ecs_manager.emplace_component<Transform>(entity3, 3U);
+
+  ecs_manager.add_entity_to_group(entity1, "GroupA");
+  ecs_manager.add_entity_to_group(entity2, "GroupA");
+  ecs_manager.add_entity_to_group(entity3, "GroupB");
+
+  // Count entities in GroupA
+  std::size_t count_a = 0U;
+  std::uint32_t sum_a = 0U;
+  ecs_manager.for_each_entity_in_group("GroupA",
+                                       [&](const Entity& entity)
+                                       {
+                                         ++count_a;
+                                         sum_a += ecs_manager.get_component<Transform>(entity).data;
+                                       });
+
+  EXPECT_EQ(count_a, 2U);
+  EXPECT_EQ(sum_a, 3U); // 1 + 2
+
+  // Count entities in GroupB
+  std::size_t count_b = 0U;
+  ecs_manager.for_each_entity_in_group("GroupB",
+                                       [&](const Entity& entity)
+                                       {
+                                         ++count_b;
+                                         (void)entity;
+                                       });
+
+  EXPECT_EQ(count_b, 1U);
+
+  // Non-existent group should iterate zero times
+  std::size_t count_none = 0U;
+  ecs_manager.for_each_entity_in_group("NonExistent",
+                                       [&](const Entity& entity)
+                                       {
+                                         ++count_none;
+                                         (void)entity;
+                                       });
+
+  EXPECT_EQ(count_none, 0U);
+}
+
+TEST(EcsTest, get_entity_by_tag)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  // Initially no entity with tag
+  EXPECT_FALSE(ecs_manager.get_entity_by_tag("Player").has_value());
+
+  // Create and tag an entity
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  ecs_manager.emplace_component<Transform>(entity, 42U);
+  ecs_manager.tag_entity(entity, "Player");
+
+  // Should find the entity
+  auto found = ecs_manager.get_entity_by_tag("Player");
+  EXPECT_TRUE(found.has_value());
+  EXPECT_EQ(found->id, entity.id);
+  EXPECT_EQ(ecs_manager.get_component<Transform>(*found).data, 42U);
+
+  // Different tag should not find it
+  EXPECT_FALSE(ecs_manager.get_entity_by_tag("Enemy").has_value());
+
+  // After untagging, should not find it
+  ecs_manager.untag_entity(entity);
+  EXPECT_FALSE(ecs_manager.get_entity_by_tag("Player").has_value());
+}
+
+TEST(EcsTest, for_each_entity_with_tag)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  ecs_manager.emplace_component<Transform>(entity, 100U);
+  ecs_manager.tag_entity(entity, "Player");
+
+  // Should iterate exactly once for the tagged entity
+  std::size_t count = 0U;
+  std::uint32_t data = 0U;
+  ecs_manager.for_each_entity_with_tag("Player",
+                                       [&](const Entity& e)
+                                       {
+                                         ++count;
+                                         data = ecs_manager.get_component<Transform>(e).data;
+                                       });
+
+  EXPECT_EQ(count, 1U);
+  EXPECT_EQ(data, 100U);
+
+  // Non-existent tag should iterate zero times
+  std::size_t count_none = 0U;
+  ecs_manager.for_each_entity_with_tag("NonExistent", [&](const Entity&) { ++count_none; });
+  EXPECT_EQ(count_none, 0U);
+}
