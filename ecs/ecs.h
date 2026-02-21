@@ -123,6 +123,8 @@ struct std::hash<rtw::ecs::Component<EnumT, VALUE>>
 namespace rtw::ecs
 {
 
+/// Abstract base class for type-erased component storage.
+/// Enables storing different component types in a homogeneous container.
 class IComponentStorage
 {
 public:
@@ -134,6 +136,9 @@ public:
   virtual ~IComponentStorage() = default;
 };
 
+/// Stores components of a specific type in a packed array for cache efficiency.
+/// Maps EntityIds to component indices for O(1) lookup.
+/// Uses swap-and-pop removal to maintain contiguous storage.
 template <typename EnumT, typename ComponentT>
 class ComponentStorage final : public IComponentStorage
 {
@@ -224,6 +229,9 @@ private:
   stl::StaticFlatUnorderedMap<std::size_t, EntityId> index_to_entity_id_;
 };
 
+/// Manages all component storage for registered component types.
+/// Provides type-safe access to components via template methods.
+/// Enforces a maximum of 64 component types (bitmask-based signatures).
 template <typename EnumT, typename... ComponentsT>
 class ComponentManager
 {
@@ -326,6 +334,9 @@ private:
   ComponentsStorage components_storage_{};
 };
 
+/// Manages entity lifecycle, tags, and groups.
+/// Uses generational indices to detect stale entity references.
+/// Tags provide unique 1:1 entity naming; groups provide 1:N categorization.
 template <typename EnumT, std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP>
 class EntityManager
 {
@@ -379,12 +390,11 @@ public:
     remove_from_group(entity);
 
     {
-      auto id = entities_[entity.id.index].id;
-      ++id.generation;
+      auto& e = entities_[entity.id.index];
+      ++e.id.generation; // Increment generation to invalidate existing references
+      e.signature = {};  // Clear signature to remove component associations
 
-      entities_[id.index] = Entity{};
-
-      free_ids_.push(id);
+      free_ids_.push(e.id);
     }
   }
 
@@ -481,6 +491,8 @@ private:
 template <typename EnumT>
 class System;
 
+/// Abstract base class for systems that process entities.
+/// Tracks entities whose signatures match the system's requirements.
 class ISystem
 {
 public:
@@ -528,6 +540,8 @@ private:
   stl::StaticFlatUnorderedSet<EntityId> entities_;
 };
 
+/// Base class for user-defined systems.
+/// Derive from this class and implement update logic to process entities.
 template <typename EnumT>
 class System : public ISystem
 {
@@ -548,6 +562,8 @@ private:
   SystemSignature signature_;
 };
 
+/// Manages system registration and entity distribution.
+/// Automatically notifies all systems when entities are added or removed.
 template <typename EnumT>
 class SystemManager
 {
@@ -622,6 +638,16 @@ private:
   stl::StaticFlatUnorderedMap<std::type_index, std::unique_ptr<ISystem>> systems_;
 };
 
+/// High-level facade coordinating entities, components, and systems.
+///
+/// Provides a unified API for all ECS operations, including entity lifecycle management,
+/// component attachment/removal, system registration, and entity tagging/grouping. This is
+/// the primary interface users should interact with rather than using the underlying managers
+/// directly.
+///
+/// @tparam EnumT                        Power-of-2 enum for component type bitmask (max 64 types).
+/// @tparam MAX_NUMBER_OF_ENTITIES_PER_GROUP  Maximum entities allowed per group.
+/// @tparam ComponentsT                  List of component types to register.
 template <typename EnumT, std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP, typename... ComponentsT>
 class ECSManager
 {
