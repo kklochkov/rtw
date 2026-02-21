@@ -11,6 +11,8 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
+#include <optional>
 #include <type_traits>
 #include <typeindex>
 
@@ -709,6 +711,11 @@ public:
   bool is_entity_tagged(const Entity& entity, const stl::InplaceStringSmall& tag) const noexcept
   {
     return entity_manager_.is_tagged(entity, tag);
+  }
+
+  std::optional<Entity> get_entity_by_tag(const stl::InplaceStringSmall& tag) const noexcept
+  {
+    return entity_manager_.get_entity_by_tag(tag);
   }
 
   template <typename FuncT>
