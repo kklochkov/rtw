@@ -5,7 +5,8 @@
 namespace
 {
 
-enum class ComponentType : std::uint8_t
+// NOLINTNEXTLINE(performance-enum-size): Just to illustrate that ECS supports up to 64 components.
+enum class ComponentType : std::uint64_t
 {
   NONE = 0U,
   TRANSFORM = 1U << 0U,

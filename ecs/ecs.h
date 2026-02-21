@@ -22,8 +22,25 @@ namespace details
 constexpr std::uint8_t log2(const std::uint64_t n) noexcept { return n > 1U ? 1U + log2(n / 2U) : 0U; }
 } // namespace details
 
-struct EntityId : stl::Id
-{};
+/// Entity identifier consisting of an ID and a generation to prevent dangling references.
+///
+/// The ID is a unique identifier for the entity, while the generation is incremented each time an entity with the same
+/// ID is destroyed and recreated.
+struct EntityId
+{
+  using INDEX_TYPE = std::uint32_t;
+  using GENERATION_TYPE = std::uint32_t;
+
+  constexpr bool operator==(const EntityId& other) const noexcept
+  {
+    return (index == other.index) && (generation == other.generation);
+  }
+
+  constexpr bool operator!=(const EntityId& other) const noexcept { return !(*this == other); }
+
+  INDEX_TYPE index{};
+  GENERATION_TYPE generation{};
+};
 
 template <typename EnumT>
 struct EntitySignature : stl::Flags<EnumT>
@@ -76,7 +93,9 @@ struct std::hash<rtw::ecs::EntityId>
 {
   std::size_t operator()(const rtw::ecs::EntityId& id) const noexcept
   {
-    return std::hash<rtw::ecs::EntityId::ID_TYPE>{}(id.id);
+    const auto index_hash = std::hash<rtw::ecs::EntityId::INDEX_TYPE>{}(id.index);
+    const auto generation_hash = std::hash<rtw::ecs::EntityId::GENERATION_TYPE>{}(id.generation);
+    return index_hash ^ (generation_hash << 1U);
   }
 };
 
@@ -135,6 +154,11 @@ public:
   template <typename... ArgsT>
   void emplace(const Entity& entity, ArgsT&&... args) noexcept
   {
+    if (contains(entity))
+    {
+      return;
+    }
+
     const auto index = components_.size();
     components_.push_back(std::forward<ArgsT>(args)...);
     entity_id_to_index_[entity.id] = index;
@@ -212,6 +236,7 @@ public:
   static_assert(stl::details::IS_SCOPED_ENUM_V<EnumT>, "EnumT must be an enum type.");
   static_assert((std::is_same_v<ComponentType, typename ComponentsT::ComponentType> && ...),
                 "All components must have the same enum type.");
+  static_assert(sizeof...(ComponentsT) <= 64U, "Number of registered components must be less than or equal to 64.");
 
   explicit ComponentManager(const std::size_t max_number_of_entities) noexcept
   {
@@ -250,6 +275,12 @@ public:
     return get_storage<ComponentT>()[entity];
   }
 
+  template <typename ComponentT>
+  void remove(const Entity& entity) noexcept
+  {
+    get_storage<ComponentT>().remove(entity);
+  }
+
   void remove(const Entity& entity) noexcept { (remove<ComponentsT>(entity), ...); }
 
 private:
@@ -269,7 +300,7 @@ private:
     static_assert((std::is_same_v<ComponentT, ComponentsT> || ...),
                   "ComponentT must be one of the component types defined in ComponentsT.");
     static_assert(ComponentT::COMPONENT_ID < NUMBER_OF_REGISTERED_COMPONENTS,
-                  "Component ID exceeds  number of registered components.");
+                  "Component ID exceeds the number of registered components.");
     return ComponentT::COMPONENT_ID;
   }
 
@@ -291,12 +322,6 @@ private:
     return static_cast<const ComponentStorage<ComponentT>&>(*component_storage.get());
   }
 
-  template <typename ComponentT>
-  void remove(const Entity& entity) noexcept
-  {
-    get_storage<ComponentT>().remove(entity);
-  }
-
   using ComponentsStorage = std::array<std::unique_ptr<IComponentStorage>, NUMBER_OF_REGISTERED_COMPONENTS>;
   ComponentsStorage components_storage_{};
 };
@@ -316,9 +341,9 @@ public:
         entity_id_to_tag_{max_number_of_entities}, group_to_entity_ids_{max_number_of_entities},
         entity_id_to_group_{max_number_of_entities}
   {
-    for (EntityId::ID_TYPE id = 0U; id < max_number_of_entities; ++id)
+    for (EntityId::INDEX_TYPE id = 0U; id < max_number_of_entities; ++id)
     {
-      free_ids_.emplace(id);
+      free_ids_.emplace(id, 0U);
     }
   }
 
@@ -326,7 +351,7 @@ public:
   {
     assert(!free_ids_.empty());
 
-    auto& entity = entities_[free_ids_.front()];
+    auto& entity = entities_[free_ids_.front().index];
     entity.id = free_ids_.front();
     entity.signature = std::move(signature);
 
@@ -335,11 +360,32 @@ public:
     return entity;
   }
 
+  bool is_valid(const Entity& entity) const noexcept
+  {
+    const auto index = entity.id.index;
+    return (index < entities_.size()) && (entities_[index].id.generation == entity.id.generation);
+  }
+
   void destroy(const Entity& entity) noexcept
   {
-    assert(entity.id < entities_.size());
-    entities_[entity.id] = Entity{};
-    free_ids_.push(entity.id);
+    assert(entity.id.index < entities_.size());
+
+    if (!is_valid(entity))
+    {
+      return;
+    }
+
+    untag(entity);
+    remove_from_group(entity);
+
+    {
+      auto id = entities_[entity.id.index].id;
+      ++id.generation;
+
+      entities_[id.index] = Entity{};
+
+      free_ids_.push(id);
+    }
   }
 
   std::size_t size() const noexcept { return entities_.size() - free_ids_.size(); }
@@ -366,6 +412,25 @@ public:
     return (it != tag_to_entity_id_.end()) && (it->second == entity.id);
   }
 
+  std::optional<Entity> get_entity_by_tag(const stl::InplaceStringSmall& tag) const noexcept
+  {
+    const auto it = tag_to_entity_id_.find(tag);
+    if (it == tag_to_entity_id_.end())
+    {
+      return std::nullopt;
+    }
+    return entities_[it->second.index];
+  }
+
+  template <typename FuncT>
+  void for_each_entity_with_tag(const stl::InplaceStringSmall& tag, FuncT&& func) const noexcept
+  {
+    if (auto it = tag_to_entity_id_.find(tag); it != tag_to_entity_id_.end())
+    {
+      std::invoke(std::forward<FuncT>(func), entities_[it->second.index]);
+    }
+  }
+
   void add_to_group(const Entity& entity, const stl::InplaceStringSmall& group) noexcept
   {
     remove_from_group(entity);
@@ -388,6 +453,18 @@ public:
   {
     const auto it = entity_id_to_group_.find(entity.id);
     return (it != entity_id_to_group_.end()) && (it->second == group);
+  }
+
+  template <typename FuncT>
+  void for_each_entity_in_group(const stl::InplaceStringSmall& group, FuncT&& func) const noexcept
+  {
+    if (auto it = group_to_entity_ids_.find(group); it != group_to_entity_ids_.end())
+    {
+      for (const auto& entity_id : it->second)
+      {
+        std::invoke(std::forward<FuncT>(func), entities_[entity_id.index]);
+      }
+    }
   }
 
 private:
@@ -414,12 +491,23 @@ public:
   ISystem& operator=(ISystem&&) noexcept = default;
   virtual ~ISystem() = default;
 
-  // Method template with CRTP touch: casting to derived class System<EnumT> to access get_signature().
-  // I haven't seen such usage before, just regular CRTP on classes, but not on methods. Have someone done this already?
+  /// Adds the entity to the system if its signature matches the system's signature.
+  ///
+  /// @note The method uses static_cast to downcast to System<EnumT> to access the system's signature.
+  /// This is type-safe because:
+  /// - The SystemManager ensures that only systems of type System<EnumT> are created and stored.
+  /// - EnumT is bounded by the Entity<EnumT> param and ensures the system's signature matches the entity's signature.
+  /// - Mismatched types cause compile-time errors (missing get_signature() method or incorrect return type).
+  ///
+  /// Direct ISystem* usage with wrong EnumT is undefined behavior,
+  /// but this is prevented by the design of SystemManager.
   template <typename EnumT>
   void add_entity(const Entity<EnumT>& entity) noexcept
   {
     const auto system_signature = static_cast<const System<EnumT>*>(this)->get_signature();
+    using SystemSignatureType = std::remove_cv_t<std::remove_reference_t<decltype(system_signature)>>;
+    static_assert(std::is_same_v<SystemSignatureType, SystemSignature<EnumT>>,
+                  "System<EnumT>::get_signature() must return SystemSignature<EnumT>");
     if ((entity.signature & system_signature) == system_signature)
     {
       entities_.insert(entity.id);
@@ -550,9 +638,9 @@ public:
   }
 
   template <typename SystemT, typename... ArgsT>
-  void create_system(ArgsT&&... args) noexcept
+  SystemT& create_system(ArgsT&&... args) noexcept
   {
-    system_manager_.template create<SystemT>(std::forward<ArgsT>(args)...);
+    return system_manager_.template create<SystemT>(std::forward<ArgsT>(args)...);
   }
 
   template <typename SystemT>
@@ -573,6 +661,8 @@ public:
     system_manager_.add_entity(entity);
     return entity;
   }
+
+  bool is_entity_valid(const Entity& entity) const noexcept { return entity_manager_.is_valid(entity); }
 
   void destroy_entity(const Entity& entity) noexcept
   {
@@ -595,6 +685,12 @@ public:
     return entity_manager_.is_tagged(entity, tag);
   }
 
+  template <typename FuncT>
+  void for_each_entity_with_tag(const stl::InplaceStringSmall& tag, FuncT&& func) const noexcept
+  {
+    entity_manager_.for_each_entity_with_tag(tag, std::forward<FuncT>(func));
+  }
+
   void add_entity_to_group(const Entity& entity, const stl::InplaceStringSmall& group) noexcept
   {
     entity_manager_.add_to_group(entity, group);
@@ -607,10 +703,22 @@ public:
     return entity_manager_.is_in_group(entity, group);
   }
 
+  template <typename FuncT>
+  void for_each_entity_in_group(const stl::InplaceStringSmall& group, FuncT&& func) const noexcept
+  {
+    entity_manager_.for_each_entity_in_group(group, std::forward<FuncT>(func));
+  }
+
   template <typename ComponentT, typename... ArgsT>
   void emplace_component(const Entity& entity, ArgsT&&... args) noexcept
   {
     component_manager_.template emplace<ComponentT>(entity, std::forward<ArgsT>(args)...);
+  }
+
+  template <typename ComponentT>
+  bool has_component(const Entity& entity) const noexcept
+  {
+    return component_manager_.template has<ComponentT>(entity);
   }
 
   template <typename ComponentT>
@@ -623,6 +731,12 @@ public:
   const ComponentT& get_component(const Entity& entity) const noexcept
   {
     return component_manager_.template get<ComponentT>(entity);
+  }
+
+  template <typename ComponentT>
+  void remove_component(const Entity& entity) noexcept
+  {
+    component_manager_.template remove<ComponentT>(entity);
   }
 
   template <typename ComponentT>
