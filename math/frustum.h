@@ -9,6 +9,23 @@
 namespace rtw::math
 {
 
+/// Frustum utilities for 3D perspective projection.
+///
+/// Coordinate System Convention:
+/// - Right-handed coordinate system (OpenGL convention)
+/// - +X points right, +Y points up, +Z points out of the screen (towards viewer)
+/// - Camera looks down -Z axis
+/// - Near plane is at z = -near (positive near value)
+/// - Far plane is at z = -far (positive far value)
+///
+/// Frustum planes:
+/// - Plane normals point INWARD (towards the inside of the frustum)
+/// - A point is inside the frustum if it's on the positive side of all 6 planes
+///
+/// NDC (Normalized Device Coordinates):
+/// - After perspective divide: x, y, z ∈ [-1, 1]
+/// - Near plane maps to z = -1, far plane maps to z = 1
+
 /// A frustum in 3D space.
 /// The normals of the planes are pointing towards the positive half-space, i.e. the inside of the frustum.
 /// @tparam T The type of the frustum elements.

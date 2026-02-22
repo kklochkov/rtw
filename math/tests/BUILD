@@ -14,6 +14,7 @@ cc_test_with_llvm_symbolizer(
         "matrix_eigen_decomposition_test.cpp",
         "matrix_storage_order_test.cpp",
         "matrix_test.cpp",
+        "numeric_test.cpp",
         "point_test.cpp",
         "transform2_test.cpp",
         "transform3_test.cpp",
