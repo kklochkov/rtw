@@ -141,8 +141,9 @@ public:
   friend std::ostream& operator<< <T, N>(std::ostream& os, const Point& point) noexcept;
 };
 
-template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, typename = std::enable_if_t<(P <= M)>>
-constexpr Point<T, N> operator*(const Matrix<T, N, M>& lhs, const Point<T, P>& rhs) noexcept
+template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(P <= M)>>
+constexpr Point<T, N> operator*(const Matrix<T, N, M, MEMORY_ORDER>& lhs, const Point<T, P>& rhs) noexcept
 {
   if constexpr (M == P)
   {

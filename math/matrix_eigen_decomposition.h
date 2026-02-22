@@ -14,23 +14,26 @@ namespace qr
 namespace details
 {
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
 struct HessenbergResult
 {
-  Matrix<T, ROWS, COLS> h{math::UNINITIALIZED};
-  Matrix<T, ROWS, COLS> q{math::UNINITIALIZED};
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> h{math::UNINITIALIZED};
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> q{math::UNINITIALIZED};
 };
 
 /// Compute the Hessenberg form of a matrix using Householder reflections.
 /// https://en.wikipedia.org/wiki/Hessenberg_matrix#Reduction_to_Hessenberg_matrix
 /// @param[in] matrix The matrix.
 /// @return The Hessenberg form of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr HessenbergResult<T, ROWS, COLS> hessenberg(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr HessenbergResult<T, ROWS, COLS, MEMORY_ORDER>
+hessenberg(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   using namespace matrix_decomposition::qr;
 
-  HessenbergResult<T, ROWS, COLS> result{matrix, Matrix<T, ROWS, COLS>{math::IDENTITY}};
+  HessenbergResult<T, ROWS, COLS, MEMORY_ORDER> result{matrix, Matrix<T, ROWS, COLS, MEMORY_ORDER>{math::IDENTITY}};
 
   for (std::uint16_t col = 0U; col < COLS - 2U; ++col)
   {
@@ -68,8 +71,9 @@ struct TraceResult
 /// @param[in] matrix The matrix.
 /// @param[in] diagonal_index The index of the diagonal element to start from.
 /// @return The trace and determinant of the 2x2 sub-matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr TraceResult<T> trace_determinant_2x2(const Matrix<T, ROWS, COLS>& matrix,
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr TraceResult<T> trace_determinant_2x2(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
                                                const std::size_t diagonal_index) noexcept
 {
   TraceResult<T> result;
@@ -82,8 +86,8 @@ constexpr TraceResult<T> trace_determinant_2x2(const Matrix<T, ROWS, COLS>& matr
   return result;
 }
 
-template <typename T, std::uint16_t ROWS>
-constexpr T partial_norm(const Matrix<T, ROWS, 1U>& v, const std::uint16_t rows) noexcept
+template <typename T, std::uint16_t ROWS, MemoryOrder MEMORY_ORDER>
+constexpr T partial_norm(const Matrix<T, ROWS, 1U, MEMORY_ORDER>& v, const std::uint16_t rows) noexcept
 {
   // Create a MatrixView or VectorView and implement some methods there?
   using multiprecision::math::sqrt;
@@ -97,8 +101,8 @@ constexpr T partial_norm(const Matrix<T, ROWS, 1U>& v, const std::uint16_t rows)
   return sqrt(norm);
 }
 
-template <typename T, std::uint16_t ROWS>
-constexpr void inplace_partial_normalize(Matrix<T, ROWS, 1U>& v, const std::uint16_t rows) noexcept
+template <typename T, std::uint16_t ROWS, MemoryOrder MEMORY_ORDER>
+constexpr void inplace_partial_normalize(Matrix<T, ROWS, 1U, MEMORY_ORDER>& v, const std::uint16_t rows) noexcept
 {
   // Create a MatrixView or VectorView and implement some methods there?
   auto norm = partial_norm(v, rows);
@@ -114,8 +118,9 @@ constexpr void inplace_partial_normalize(Matrix<T, ROWS, 1U>& v, const std::uint
   }
 }
 
-template <typename T, std::uint16_t ROWS>
-constexpr void inplace_normalize_householder_vector(Matrix<T, ROWS, 1U>& v, const std::uint16_t rows) noexcept
+template <typename T, std::uint16_t ROWS, MemoryOrder MEMORY_ORDER>
+constexpr void inplace_normalize_householder_vector(Matrix<T, ROWS, 1U, MEMORY_ORDER>& v,
+                                                    const std::uint16_t rows) noexcept
 {
   const std::uint16_t start_row = 0U;
   const auto sign = multiprecision::sign(v[start_row] < 0);
@@ -133,9 +138,10 @@ constexpr void inplace_normalize_householder_vector(Matrix<T, ROWS, 1U>& v, cons
 /// @param[in] start_col The starting column of the sub-matrix to apply the transformation to.
 /// @param[in] end_col The ending column of the sub-matrix to apply the transformation to.
 /// @param[in] sub_rows The number of rows in the Householder vector to use.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, std::uint16_t V_ROWS,
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, std::uint16_t V_ROWS, MemoryOrder MEMORY_ORDER,
           typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr void inplace_apply_householder_vector_left(Matrix<T, ROWS, COLS>& matrix, const Matrix<T, V_ROWS, 1U>& v,
+constexpr void inplace_apply_householder_vector_left(Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+                                                     const Matrix<T, V_ROWS, 1U, MEMORY_ORDER>& v,
                                                      const std::uint16_t start_row, const std::uint16_t start_col,
                                                      const std::uint16_t end_col, const std::uint16_t sub_rows) noexcept
 {
@@ -161,9 +167,10 @@ constexpr void inplace_apply_householder_vector_left(Matrix<T, ROWS, COLS>& matr
 /// @param[in] start_row The starting row of the sub-matrix to apply the transformation to.
 /// @param[in] end_row The ending row of the sub-matrix to apply the transformation to.
 /// @param[in] sub_cols The number of columns in the Householder vector to use.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, std::uint16_t V_ROWS,
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, std::uint16_t V_ROWS, MemoryOrder MEMORY_ORDER,
           typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr void inplace_apply_householder_vector_right(Matrix<T, ROWS, COLS>& matrix, const Matrix<T, V_ROWS, 1U>& v,
+constexpr void inplace_apply_householder_vector_right(Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+                                                      const Matrix<T, V_ROWS, 1U, MEMORY_ORDER>& v,
                                                       const std::uint16_t start_col, const std::uint16_t start_row,
                                                       const std::uint16_t end_row,
                                                       const std::uint16_t sub_cols) noexcept
@@ -188,14 +195,15 @@ constexpr void inplace_apply_householder_vector_right(Matrix<T, ROWS, COLS>& mat
 /// @param[in,out] matrix The Hessenberg matrix to perform the Francis step on.
 /// @param[in] n The size of the matrix (number of rows or columns).
 /// Note: The matrix must be at least 3x3.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr void inplace_francis_step(Matrix<T, ROWS, COLS>& matrix, const std::uint16_t n) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr void inplace_francis_step(Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix, const std::uint16_t n) noexcept
 {
   // 1. Compute trace and determinant of the 2x2 block (Wilkinson polynomial).
   const auto td = trace_determinant_2x2(matrix, n - 2U);
 
   // 2. Build Francois 3-element vector.
-  Matrix<T, 3U, 1U> francis_v{math::UNINITIALIZED};
+  Matrix<T, 3U, 1U, MEMORY_ORDER> francis_v{math::UNINITIALIZED};
   francis_v[0U] =
       matrix(0U, 0U) * matrix(0U, 0U) + matrix(0U, 1U) * matrix(1U, 0U) - td.trace * matrix(0U, 0U) + td.determinant;
   francis_v[1U] = matrix(1U, 0U) * (matrix(0U, 0U) + matrix(1U, 1U) - td.trace);
@@ -237,17 +245,17 @@ constexpr void inplace_francis_step(Matrix<T, ROWS, COLS>& matrix, const std::ui
 /// @param[in] matrix The quasi-upper triangular matrix.
 /// @param[in] tolerance The tolerance for determining if an element is zero.
 /// @return The eigenvalues of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename ComplexT = std::complex<T>,
-          typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<ComplexT, ROWS, 1U> extract_eigenvalues(const Matrix<T, ROWS, COLS>& matrix,
-                                                         const T tolerance) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename ComplexT = std::complex<T>, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<ComplexT, ROWS, 1U, MEMORY_ORDER>
+extract_eigenvalues(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix, const T tolerance) noexcept
 {
   using multiprecision::math::abs;
   using multiprecision::math::sqrt;
   using std::abs;
   using std::sqrt;
 
-  Matrix<ComplexT, ROWS, 1U> result{math::ZERO};
+  Matrix<ComplexT, ROWS, 1U, MEMORY_ORDER> result{math::ZERO};
 
   for (std::uint16_t row = 0U; row < ROWS;)
   {
@@ -290,8 +298,9 @@ constexpr Matrix<ComplexT, ROWS, 1U> extract_eigenvalues(const Matrix<T, ROWS, C
 /// @param[in] matrix The matrix to check.
 /// @param[in] tolerance The tolerance for determining if an element is zero.
 /// @return True if the matrix is diagonal, false otherwise.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr bool is_diagonal(const Matrix<T, ROWS, COLS>& matrix, const T tolerance) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr bool is_diagonal(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix, const T tolerance) noexcept
 {
   using multiprecision::math::abs;
   using std::abs;
@@ -324,10 +333,10 @@ constexpr bool is_diagonal(const Matrix<T, ROWS, COLS>& matrix, const T toleranc
 
 } // namespace details
 
-template <typename T, std::size_t ROWS, typename ComplexT = std::complex<T>>
+template <typename T, std::size_t ROWS, MemoryOrder MEMORY_ORDER, typename ComplexT = std::complex<T>>
 struct EigenvaluesResult
 {
-  Matrix<ComplexT, ROWS, 1U> eigenvalues{math::ZERO};
+  Matrix<ComplexT, ROWS, 1U, MEMORY_ORDER> eigenvalues{math::ZERO};
   std::size_t iterations{0U};
 };
 
@@ -338,10 +347,11 @@ struct EigenvaluesResult
 /// @param[in] max_iterations The maximum number of iterations to perform.
 /// @param[in] tolerance The tolerance for convergence.
 /// @return The eigenvalues of the matrix and the number of iterations performed.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr EigenvaluesResult<T, ROWS> eigenvalues(const Matrix<T, ROWS, COLS>& matrix,
-                                                 const std::uint16_t max_iterations = 1'000U,
-                                                 const T tolerance = default_tolerance<T>()) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr EigenvaluesResult<T, ROWS, MEMORY_ORDER> eigenvalues(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+                                                               const std::uint16_t max_iterations = 1'000U,
+                                                               const T tolerance = default_tolerance<T>()) noexcept
 {
   using multiprecision::math::abs;
   using std::abs;
@@ -349,7 +359,7 @@ constexpr EigenvaluesResult<T, ROWS> eigenvalues(const Matrix<T, ROWS, COLS>& ma
   auto hessenberg = details::hessenberg(matrix);
   auto& h = hessenberg.h;
 
-  EigenvaluesResult<T, ROWS> result{};
+  EigenvaluesResult<T, ROWS, MEMORY_ORDER> result{};
 
   std::uint16_t n = ROWS;
   for (result.iterations = 0U; result.iterations < max_iterations; ++result.iterations)
@@ -406,15 +416,16 @@ constexpr EigenvaluesResult<T, ROWS> eigenvalues(const Matrix<T, ROWS, COLS>& ma
 /// @param[in] matrix The matrix.
 /// @param[in] eigenvalues The eigenvalues of the matrix.
 /// @return The eigenvectors of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix,
-                                             const Matrix<T, ROWS, 1U>& eigenvalues,
-                                             const T tolerance = default_tolerance<T>()) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> eigenvectors(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+                                                           const Matrix<T, ROWS, 1U, MEMORY_ORDER>& eigenvalues,
+                                                           const T tolerance = default_tolerance<T>()) noexcept
 {
   using namespace matrix_decomposition::qr;
 
-  const Matrix<T, ROWS, COLS> identity{math::IDENTITY};
-  Matrix<T, ROWS, COLS> result{math::UNINITIALIZED};
+  const Matrix<T, ROWS, COLS, MEMORY_ORDER> identity{math::IDENTITY};
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
 
   if (details::is_diagonal(matrix, tolerance))
   {
@@ -432,7 +443,7 @@ constexpr Matrix<T, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {
     const auto a_minus_lambda_i = matrix - (eigenvalues[col] * identity);
-    Matrix<T, ROWS, 1U> unit_vector{math::ZERO};
+    Matrix<T, ROWS, 1U, MEMORY_ORDER> unit_vector{math::ZERO};
     unit_vector[col] = T{1};
 
     auto nullspace_vector = householder::solve(a_minus_lambda_i, unit_vector);
@@ -449,27 +460,30 @@ constexpr Matrix<T, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix
 
 } // namespace qr
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr eigen_decomposition::qr::EigenvaluesResult<T, ROWS>
-eigenvalues(const Matrix<T, ROWS, COLS>& matrix, const std::uint16_t max_iterations = 1'000U,
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr eigen_decomposition::qr::EigenvaluesResult<T, ROWS, MEMORY_ORDER>
+eigenvalues(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix, const std::uint16_t max_iterations = 1'000U,
             const T tolerance = default_tolerance<T>()) noexcept
 {
   return eigen_decomposition::qr::eigenvalues(matrix, max_iterations, tolerance);
 }
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix,
-                                             const Matrix<T, ROWS, 1U>& eigenvalues,
-                                             const T tolerance = default_tolerance<T>()) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> eigenvectors(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+                                                           const Matrix<T, ROWS, 1U, MEMORY_ORDER>& eigenvalues,
+                                                           const T tolerance = default_tolerance<T>()) noexcept
 {
   return eigen_decomposition::qr::eigenvectors(matrix, eigenvalues, tolerance);
 }
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename ComplexT = std::complex<T>,
-          typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<ComplexT, ROWS, COLS> eigenvectors(const Matrix<T, ROWS, COLS>& matrix,
-                                                    const Matrix<ComplexT, ROWS, 1U>& eigenvalues,
-                                                    const ComplexT tolerance = default_tolerance<ComplexT>()) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename ComplexT = std::complex<T>, typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<ComplexT, ROWS, COLS, MEMORY_ORDER>
+eigenvectors(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+             const Matrix<ComplexT, ROWS, 1U, MEMORY_ORDER>& eigenvalues,
+             const ComplexT tolerance = default_tolerance<ComplexT>()) noexcept
 {
   return eigen_decomposition::qr::eigenvectors(matrix.template cast<ComplexT>(), eigenvalues, tolerance);
 }

@@ -9,10 +9,10 @@ namespace rtw::math
 /// Compute the transpose of a matrix.
 /// @param[in] matrix The matrix.
 /// @return The transpose of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
-constexpr Matrix<T, COLS, ROWS> transpose(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, COLS, ROWS, MEMORY_ORDER> transpose(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
-  Matrix<T, COLS, ROWS> result{math::UNINITIALIZED};
+  Matrix<T, COLS, ROWS, MEMORY_ORDER> result{math::UNINITIALIZED};
   for (std::uint16_t row = 0U; row < ROWS; ++row)
   {
     for (std::uint16_t col = 0U; col < COLS; ++col)
@@ -27,8 +27,8 @@ constexpr Matrix<T, COLS, ROWS> transpose(const Matrix<T, ROWS, COLS>& matrix) n
 /// https://en.m.wikipedia.org/wiki/Determinant
 /// @param[in] matrix The matrix.
 /// @return The determinant of the matrix.
-template <typename T>
-constexpr T determinant(const Matrix2x2<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr T determinant(const Matrix2x2<T, MEMORY_ORDER>& matrix) noexcept
 {
   const auto a = matrix(0, 0);
   const auto b = matrix(0, 1);
@@ -41,8 +41,8 @@ constexpr T determinant(const Matrix2x2<T>& matrix) noexcept
 /// https://en.m.wikipedia.org/wiki/Determinant
 /// @param[in] matrix The matrix.
 /// @return The determinant of the matrix.
-template <typename T>
-constexpr T determinant(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr T determinant(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   const auto a = matrix(0, 0);
   const auto b = matrix(0, 1);
@@ -56,8 +56,9 @@ constexpr T determinant(const Matrix3x3<T>& matrix) noexcept
   return (a * e * i) + (b * f * g) + (c * d * h) - (c * e * g) - (b * d * i) - (a * f * h);
 }
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS == COLS) && (ROWS > 3)>>
-constexpr T determinant(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS == COLS) && (ROWS > 3)>>
+constexpr T determinant(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   T det{0};
   for (std::uint16_t col = 0U; col < COLS; ++col)
@@ -72,8 +73,8 @@ constexpr T determinant(const Matrix<T, ROWS, COLS>& matrix) noexcept
 /// https://en.m.wikipedia.org/wiki/Invertible_matrix#Inversion_of_2_%C3%97_2_matrices
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix2x2<T> inverse(const Matrix2x2<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix2x2<T, MEMORY_ORDER> inverse(const Matrix2x2<T, MEMORY_ORDER>& matrix) noexcept
 {
   const auto a = matrix(0, 0);
   const auto b = matrix(0, 1);
@@ -82,15 +83,20 @@ constexpr Matrix2x2<T> inverse(const Matrix2x2<T>& matrix) noexcept
   const auto det = determinant(matrix);
   assert(det != T{0});
   const auto inv_det = T{1} / det;
-  return inv_det * Matrix2x2<T>{d, -b, -c, a};
+  // clang-format off
+  return inv_det * Matrix2x2<T, MEMORY_ORDER>{FROM_ROW_MAJOR,
+    d, -b,
+    -c, a,
+  };
+  // clang-format on
 }
 
 /// Compute the inverse of a square, 3 by 3 matrix.
 /// https://en.m.wikipedia.org/wiki/Invertible_matrix#Inversion_of_3_%C3%97_3_matrices
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix3x3<T> inverse(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> inverse(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   const auto a = matrix(0, 0);
   const auto b = matrix(0, 1);
@@ -113,11 +119,17 @@ constexpr Matrix3x3<T> inverse(const Matrix3x3<T>& matrix) noexcept
   const auto det = determinant(matrix);
   assert(det != T{0});
   const auto inv_det = T{1} / det;
-  return inv_det * Matrix3x3<T>{res_a, res_d, res_g, res_b, res_e, res_h, res_c, res_f, res_i};
+  // clang-format off
+  return inv_det * Matrix3x3<T, MEMORY_ORDER>{FROM_ROW_MAJOR,
+    res_a, res_d, res_g,
+    res_b, res_e, res_h,
+    res_c, res_f, res_i,
+  };
+  // clang-format on
 }
 
-template <typename T, std::uint16_t ROWS>
-constexpr T dot(const Matrix<T, ROWS, 1>& lhs, const Matrix<T, ROWS, 1>& rhs) noexcept
+template <typename T, std::uint16_t ROWS, MemoryOrder MEMORY_ORDER>
+constexpr T dot(const Matrix<T, ROWS, 1, MEMORY_ORDER>& lhs, const Matrix<T, ROWS, 1, MEMORY_ORDER>& rhs) noexcept
 {
   T result{0};
   for (std::uint16_t row = 0U; row < ROWS; ++row)
@@ -127,30 +139,31 @@ constexpr T dot(const Matrix<T, ROWS, 1>& lhs, const Matrix<T, ROWS, 1>& rhs) no
   return result;
 }
 
-template <typename T, std::uint16_t ROWS>
-constexpr T norm2(const Matrix<T, ROWS, 1>& vector) noexcept
+template <typename T, std::uint16_t ROWS, MemoryOrder MEMORY_ORDER>
+constexpr T norm2(const Matrix<T, ROWS, 1, MEMORY_ORDER>& vector) noexcept
 {
   return dot(vector, vector);
 }
 
-template <typename T, std::uint16_t ROWS>
-constexpr T norm(const Matrix<T, ROWS, 1>& vector) noexcept
+template <typename T, std::uint16_t ROWS, MemoryOrder MEMORY_ORDER>
+constexpr T norm(const Matrix<T, ROWS, 1, MEMORY_ORDER>& vector) noexcept
 {
   using multiprecision::math::sqrt;
   using std::sqrt;
   return sqrt(norm2(vector));
 }
 
-template <typename T, std::uint16_t ROWS>
-constexpr Matrix<T, ROWS, 1> normalize(const Matrix<T, ROWS, 1>& vector) noexcept
+template <typename T, std::uint16_t ROWS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> normalize(const Matrix<T, ROWS, 1, MEMORY_ORDER>& vector) noexcept
 {
   const auto n = norm(vector);
   assert(n != T{0});
   return vector / n;
 }
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS) && (ROWS > 3)>>
-constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS) && (ROWS > 3)>>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> inverse(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   return matrix_decomposition::qr::householder::inverse(matrix);
 }

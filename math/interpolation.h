@@ -22,10 +22,11 @@ constexpr T lerp(const T a, const T b, const T t) noexcept
 /// @param b The second matrix.
 /// @param t The interpolation factor.
 /// @return The interpolated matrix.
-template <typename T, std::uint16_t N, std::uint16_t M>
-constexpr Matrix<T, N, M> lerp(const Matrix<T, N, M>& a, const Matrix<T, N, M>& b, const T t) noexcept
+template <typename T, std::uint16_t N, std::uint16_t M, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, N, M, MEMORY_ORDER> lerp(const Matrix<T, N, M, MEMORY_ORDER>& a,
+                                             const Matrix<T, N, M, MEMORY_ORDER>& b, const T t) noexcept
 {
-  Matrix<T, N, M> result{math::UNINITIALIZED};
+  Matrix<T, N, M, MEMORY_ORDER> result{math::UNINITIALIZED};
   for (std::uint32_t i = 0U; i < a.size(); ++i)
   {
     result[i] = lerp(a[i], b[i], t);

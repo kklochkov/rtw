@@ -9,15 +9,25 @@
 namespace rtw::math::transform2
 {
 
+/// @brief 2D transformation matrix utilities.
+///
+/// Transformation Convention:
+/// This library uses column vectors with pre-multiplication (OpenGL/GLSL convention):
+///   transformed = matrix * point
+///   combined = second_transform * first_transform  (applied right-to-left)
+///
+/// Vector types (Vector, Point, etc.) are Nx1 column vectors.
+/// Translation components are stored in the last column of transformation matrices.
+
 /// Make a homogeneous 2D matrix from a 2D matrix.
 /// @tparam T The type of the elements.
 /// @param[in] matrix The 2D matrix.
 /// @return The homogeneous 2D matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_homogeneous(const Matrix2x2<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_homogeneous(const Matrix2x2<T, MEMORY_ORDER>& matrix) noexcept
 {
   // clang-format off
-  return Matrix3x3<T>{
+  return Matrix3x3<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     matrix(0, 0), matrix(0, 1), T{0},
     matrix(1, 0), matrix(1, 1), T{0},
             T{0},         T{0}, T{1},
@@ -30,11 +40,11 @@ constexpr Matrix3x3<T> make_homogeneous(const Matrix2x2<T>& matrix) noexcept
 /// @param[in] sx The scaling factor in the x direction.
 /// @param[in] sy The scaling factor in the y direction.
 /// @return The 2D scaling matrix.
-template <typename T>
-constexpr Matrix2x2<T> make_scale(const T sx, const T sy) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix2x2<T, MEMORY_ORDER> make_scale(const T sx, const T sy) noexcept
 {
   // clang-format off
-    return Matrix2x2<T>{
+    return Matrix2x2<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
       sx, T{0},
     T{0},   sy,
     };
@@ -45,8 +55,8 @@ constexpr Matrix2x2<T> make_scale(const T sx, const T sy) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] scale The scaling vector.
 /// @return The 2D scaling matrix.
-template <typename T>
-constexpr Matrix2x2<T> make_scale(const Vector2<T>& scale) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix2x2<T, MEMORY_ORDER> make_scale(const Vector2<T>& scale) noexcept
 {
   return make_scale(scale.x(), scale.y());
 }
@@ -55,13 +65,13 @@ constexpr Matrix2x2<T> make_scale(const Vector2<T>& scale) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] angle The angle of the rotation.
 /// @return The 2D rotation matrix.
-template <typename T>
-constexpr Matrix2x2<T> make_rotation(const Angle<T> angle) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix2x2<T, MEMORY_ORDER> make_rotation(const Angle<T> angle) noexcept
 {
   const auto c = std::cos(angle);
   const auto s = std::sin(angle);
   // clang-format off
-  return Matrix2x2<T>{
+  return Matrix2x2<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     c, -s,
     s,  c,
   };
@@ -72,8 +82,8 @@ constexpr Matrix2x2<T> make_rotation(const Angle<T> angle) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] angle The angle of the rotation.
 /// @return The SO(2) rotation.
-template <typename T>
-constexpr Matrix2x2<T> make_so2(const Angle<T> angle) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix2x2<T, MEMORY_ORDER> make_so2(const Angle<T> angle) noexcept
 {
   return make_rotation(angle);
 }
@@ -83,11 +93,11 @@ constexpr Matrix2x2<T> make_so2(const Angle<T> angle) noexcept
 /// @param[in] tx The translation in the x direction.
 /// @param[in] ty The translation in the y direction.
 /// @return The 2D translation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_translation(const T tx, const T ty) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_translation(const T tx, const T ty) noexcept
 {
   // clang-format off
-  return Matrix3x3<T>{
+  return Matrix3x3<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     T{1}, T{0},   tx,
     T{0}, T{1},   ty,
     T{0}, T{0}, T{1},
@@ -99,8 +109,8 @@ constexpr Matrix3x3<T> make_translation(const T tx, const T ty) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] translation The translation vector.
 /// @return The 2D translation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_translation(const Vector2<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_translation(const Vector2<T>& translation) noexcept
 {
   return make_translation(translation.x(), translation.y());
 }
@@ -112,9 +122,10 @@ constexpr Matrix3x3<T> make_translation(const Vector2<T>& translation) noexcept
 /// @param[in] rotation The rotation matrix.
 /// @param[in] translation The translation matrix.
 /// @return The 2D rigid motion.
-template <typename T>
-constexpr Matrix3x3<T> make_transform(const Matrix2x2<T>& scale, const Matrix2x2<T>& rotation,
-                                      const Matrix3x3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_transform(const Matrix2x2<T, MEMORY_ORDER>& scale,
+                                                    const Matrix2x2<T, MEMORY_ORDER>& rotation,
+                                                    const Matrix3x3<T, MEMORY_ORDER>& translation) noexcept
 {
   return translation * make_homogeneous(rotation * scale);
 }
@@ -125,10 +136,11 @@ constexpr Matrix3x3<T> make_transform(const Matrix2x2<T>& scale, const Matrix2x2
 /// @param[in] rotation The rotation matrix.
 /// @param[in] translation The translation vector.
 /// @return The 2D rigid motion.
-template <typename T>
-constexpr Matrix3x3<T> make_transform(const Matrix2x2<T>& rotation, const Matrix3x3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_transform(const Matrix2x2<T, MEMORY_ORDER>& rotation,
+                                                    const Matrix3x3<T, MEMORY_ORDER>& translation) noexcept
 {
-  return make_transform(Matrix2x2<T>::identity(), rotation, translation);
+  return make_transform(Matrix2x2<T, MEMORY_ORDER>::identity(), rotation, translation);
 }
 
 /// A 2D transformation matrix.
@@ -137,8 +149,9 @@ constexpr Matrix3x3<T> make_transform(const Matrix2x2<T>& rotation, const Matrix
 /// @param[in] rotation The rotation matrix.
 /// @param[in] translation The translation vector.
 /// @return The 2D rigid motion.
-template <typename T>
-constexpr Matrix3x3<T> make_transform(const Matrix2x2<T>& rotation, const Vector2<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_transform(const Matrix2x2<T, MEMORY_ORDER>& rotation,
+                                                    const Vector2<T>& translation) noexcept
 {
   return make_transform(rotation, make_translation(translation));
 }
@@ -149,10 +162,10 @@ constexpr Matrix3x3<T> make_transform(const Matrix2x2<T>& rotation, const Vector
 /// @param[in] scale The scaling vector.
 /// @param[in] translation The translation vector.
 /// @return The 2D rigid motion.
-template <typename T>
-constexpr Matrix3x3<T> make_transform(const Vector2<T>& scale, const Vector2<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_transform(const Vector2<T>& scale, const Vector2<T>& translation) noexcept
 {
-  return make_transform(make_scale(scale), Matrix2x2<T>::identity(), make_translation(translation));
+  return make_transform(make_scale(scale), Matrix2x2<T, MEMORY_ORDER>::identity(), make_translation(translation));
 }
 
 /// A 2D transformation matrix.
@@ -161,8 +174,8 @@ constexpr Matrix3x3<T> make_transform(const Vector2<T>& scale, const Vector2<T>&
 /// @param[in] angle The angle of the rotation.
 /// @param[in] translation The translation vector.
 /// @return The 2D rigid motion.
-template <typename T>
-constexpr Matrix3x3<T> make_transform(const Angle<T> angle, const Vector2<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_transform(const Angle<T> angle, const Vector2<T>& translation) noexcept
 {
   return make_transform(make_rotation(angle), translation);
 }
@@ -173,8 +186,8 @@ constexpr Matrix3x3<T> make_transform(const Angle<T> angle, const Vector2<T>& tr
 /// @param[in] angle The angle of the rotation.
 /// @param[in] translation The translation vector.
 /// @return The SE(2) transformation.
-template <typename T>
-constexpr Matrix3x3<T> make_se2(const Angle<T> angle, const Vector2<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_se2(const Angle<T> angle, const Vector2<T>& translation) noexcept
 {
   return make_transform(angle, translation);
 }
@@ -183,11 +196,11 @@ constexpr Matrix3x3<T> make_se2(const Angle<T> angle, const Vector2<T>& translat
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The translation vector.
-template <typename T>
-constexpr Matrix2x2<T> rotation(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix2x2<T, MEMORY_ORDER> rotation(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   // clang-format off
-  return Matrix2x2<T>{
+  return Matrix2x2<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     matrix(0, 0), matrix(0, 1),
     matrix(1, 0), matrix(1, 1),
   };
@@ -198,8 +211,8 @@ constexpr Matrix2x2<T> rotation(const Matrix3x3<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The translation vector.
-template <typename T>
-constexpr Vector2<T> translation(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Vector2<T> translation(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   return Vector2<T>{matrix(0, 2), matrix(1, 2)};
 }
@@ -209,8 +222,8 @@ constexpr Vector2<T> translation(const Matrix3x3<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix2x2<T> inverse_rotation(const Matrix2x2<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix2x2<T, MEMORY_ORDER> inverse_rotation(const Matrix2x2<T, MEMORY_ORDER>& matrix) noexcept
 {
   return transpose(matrix);
 }
@@ -220,8 +233,8 @@ constexpr Matrix2x2<T> inverse_rotation(const Matrix2x2<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix2x2<T> inverse_so2(const Matrix2x2<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix2x2<T, MEMORY_ORDER> inverse_so2(const Matrix2x2<T, MEMORY_ORDER>& matrix) noexcept
 {
   return inverse_rotation(matrix);
 }
@@ -236,8 +249,8 @@ constexpr Matrix2x2<T> inverse_so2(const Matrix2x2<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix3x3<T> inverse_transform(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> inverse_transform(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   const auto inv_rotation = inverse_rotation(rotation(matrix));
   const auto inv_translation = -inv_rotation * translation(matrix);
@@ -254,8 +267,8 @@ constexpr Matrix3x3<T> inverse_transform(const Matrix3x3<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix3x3<T> inverse_se2(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> inverse_se2(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   return inverse_transform(matrix);
 }

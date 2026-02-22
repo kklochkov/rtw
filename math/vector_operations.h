@@ -6,8 +6,9 @@
 namespace rtw::math
 {
 
-template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, typename = std::enable_if_t<(P <= M)>>
-constexpr Vector<T, N> operator*(const Matrix<T, N, M>& lhs, const Vector<T, P>& rhs) noexcept
+template <typename T, std::uint16_t N, std::uint16_t M, std::uint16_t P, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(P <= M)>>
+constexpr Vector<T, N> operator*(const Matrix<T, N, M, MEMORY_ORDER>& lhs, const Vector<T, P>& rhs) noexcept
 {
   if constexpr (M == P)
   {
@@ -37,10 +38,15 @@ constexpr T norm(const Vector<T, N>& vector) noexcept
   return norm(vector.as_matrix());
 }
 
-template <typename T>
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
 constexpr T cross(const Vector2<T>& lhs, const Vector2<T>& rhs) noexcept
 {
-  return determinant(Matrix2x2<T>{lhs.x(), lhs.y(), rhs.x(), rhs.y()});
+  // clang-format off
+  return determinant(Matrix2x2<T, MEMORY_ORDER>{FROM_ROW_MAJOR,
+      lhs.x(), lhs.y(),
+      rhs.x(), rhs.y(),
+  });
+  // clang-format on
 }
 
 template <typename T>

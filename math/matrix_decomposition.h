@@ -10,10 +10,12 @@ namespace rtw::math::matrix_decomposition
 /// https://en.wikipedia.org/wiki/Triangular_matrix#Inversion
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, COLS> inverse_upper_triangular(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER>
+inverse_upper_triangular(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
-  Matrix<T, ROWS, COLS> result{math::IDENTITY};
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::IDENTITY};
   for (std::uint16_t row = 0U; row < ROWS; ++row)
   {
     for (std::uint16_t col = 0U; col < COLS; ++col)
@@ -34,11 +36,12 @@ constexpr Matrix<T, ROWS, COLS> inverse_upper_triangular(const Matrix<T, ROWS, C
 /// @param[in] matrix The matrix. The matrix must be upper triangular.
 /// @param[in] vector The vector.
 /// @return The solution to the system of linear equations.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, 1> back_substitution(const Matrix<T, ROWS, COLS>& matrix,
-                                               const Matrix<T, ROWS, 1>& vector) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> back_substitution(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+                                                             const Matrix<T, ROWS, 1, MEMORY_ORDER>& vector) noexcept
 {
-  Matrix<T, ROWS, 1> result{math::UNINITIALIZED};
+  Matrix<T, ROWS, 1, MEMORY_ORDER> result{math::UNINITIALIZED};
   for (std::uint16_t row = ROWS; row-- > 0U;)
   {
     result[row] = vector[row];
@@ -57,11 +60,12 @@ constexpr Matrix<T, ROWS, 1> back_substitution(const Matrix<T, ROWS, COLS>& matr
 /// @param[in] matrix The matrix. The matrix must be lower triangular.
 /// @param[in] vector The vector.
 /// @return The solution to the system of linear equations.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, 1> forward_substitution(const Matrix<T, ROWS, COLS>& matrix,
-                                                  const Matrix<T, ROWS, 1>& vector) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> forward_substitution(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+                                                                const Matrix<T, ROWS, 1, MEMORY_ORDER>& vector) noexcept
 {
-  Matrix<T, ROWS, 1> result{math::UNINITIALIZED};
+  Matrix<T, ROWS, 1, MEMORY_ORDER> result{math::UNINITIALIZED};
   for (std::uint16_t row = 0U; row < ROWS; ++row)
   {
     result[row] = vector[row];
@@ -78,11 +82,11 @@ constexpr Matrix<T, ROWS, 1> forward_substitution(const Matrix<T, ROWS, COLS>& m
 namespace qr
 {
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
 struct Decomposition
 {
-  Matrix<T, ROWS, ROWS> q{math::UNINITIALIZED};
-  Matrix<T, ROWS, COLS> r{math::UNINITIALIZED};
+  Matrix<T, ROWS, ROWS, MEMORY_ORDER> q{math::UNINITIALIZED};
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> r{math::UNINITIALIZED};
 };
 
 namespace householder
@@ -99,11 +103,13 @@ namespace details
 /// @param[in] start_row The starting row of the Householder vector.
 /// @param[in] end_row The ending row of the Householder vector.
 /// @return The Householder vector.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>& matrix, const std::uint16_t matrix_col,
-                                                    const std::uint16_t start_row) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> get_householder_vector(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix,
+                                                                  const std::uint16_t matrix_col,
+                                                                  const std::uint16_t start_row) noexcept
 {
-  Matrix<T, ROWS, 1U> v{math::ZERO};
+  Matrix<T, ROWS, 1U, MEMORY_ORDER> v{math::ZERO};
   for (std::uint16_t row = start_row; row < ROWS; ++row)
   {
     v[row] = matrix(row, matrix_col);
@@ -151,19 +157,20 @@ constexpr Matrix<T, ROWS, 1> get_householder_vector(const Matrix<T, ROWS, COLS>&
 /// @param[in] matrix_col The column of the matrix.
 /// @param[in] start_row The starting row of the Householder vector.
 /// @return The Householder matrix, or std::nullopt if the denominator is zero.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr std::optional<Matrix<T, ROWS, COLS>> get_householder_matrix(const Matrix<T, ROWS, COLS>& matrix,
-                                                                      const std::uint16_t matrix_col,
-                                                                      const std::uint16_t start_row) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr std::optional<Matrix<T, ROWS, COLS, MEMORY_ORDER>>
+get_householder_matrix(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix, const std::uint16_t matrix_col,
+                       const std::uint16_t start_row) noexcept
 {
   const auto v = get_householder_vector(matrix, matrix_col, start_row);
   const auto vt = transpose(v);
-  const Matrix<T, 1U, 1U> denominator = vt * v;
+  const Matrix<T, 1U, 1U, MEMORY_ORDER> denominator = vt * v;
 
   if (denominator[0U] != T{0})
   {
     const auto beta = T{2} / denominator[0U];
-    return Matrix<T, ROWS, COLS>{math::IDENTITY} - (beta * v * vt);
+    return Matrix<T, ROWS, COLS, MEMORY_ORDER>{math::IDENTITY} - (beta * v * vt);
   }
 
   return std::nullopt;
@@ -175,10 +182,12 @@ constexpr std::optional<Matrix<T, ROWS, COLS>> get_householder_matrix(const Matr
 /// https://en.wikipedia.org/wiki/QR_decomposition#Using_Householder_reflections
 /// @param[in] matrix The matrix.
 /// @return The QR decomposition of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Decomposition<T, ROWS, COLS, MEMORY_ORDER>
+decompose(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
-  Decomposition<T, ROWS, COLS> result{Matrix<T, ROWS, COLS>{math::IDENTITY}, matrix};
+  Decomposition<T, ROWS, COLS, MEMORY_ORDER> result{Matrix<T, ROWS, COLS, MEMORY_ORDER>{math::IDENTITY}, matrix};
 
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {
@@ -200,8 +209,9 @@ constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& ma
 /// Compute the inverse of a matrix using the Householder QR decomposition.
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> inverse(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   const auto [q, r] = decompose(matrix);
   const auto r_inv = inverse_upper_triangular(r);
@@ -213,8 +223,10 @@ constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noe
 /// @param[in] a The matrix.
 /// @param[in] b The vector.
 /// @return The solution to the system of linear equations.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> solve(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& a,
+                                                 const Matrix<T, ROWS, 1, MEMORY_ORDER>& b) noexcept
 {
   const auto [q, r] = decompose(a);
   return back_substitution(r, q * b);
@@ -242,10 +254,12 @@ constexpr T hypot(const T a, const T b) noexcept
 /// https://en.wikipedia.org/wiki/QR_decomposition#Using_Givens_rotations
 /// @param[in] matrix The matrix.
 /// @return The QR decomposition of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Decomposition<T, ROWS, COLS, MEMORY_ORDER>
+decompose(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
-  Decomposition<T, ROWS, COLS> result{Matrix<T, ROWS, ROWS>{math::IDENTITY}, matrix};
+  Decomposition<T, ROWS, COLS, MEMORY_ORDER> result{Matrix<T, ROWS, ROWS, MEMORY_ORDER>{math::IDENTITY}, matrix};
 
   for (std::uint16_t col = 0U; col < COLS - 1U; ++col)
   {
@@ -260,7 +274,7 @@ constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& ma
       const auto c = a / r;
       const auto s = -b / r;
 
-      Matrix<T, ROWS, ROWS> g{math::IDENTITY};
+      Matrix<T, ROWS, ROWS, MEMORY_ORDER> g{math::IDENTITY};
       g(col, col) = c;
       g(row, row) = c;
       g(col, row) = -s;
@@ -278,8 +292,9 @@ constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& ma
 /// Compute the inverse of a matrix using the Givens QR decomposition.
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> inverse(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   const auto [q, r] = decompose(matrix);
   const auto r_inv = inverse_upper_triangular(r);
@@ -291,8 +306,10 @@ constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noe
 /// @param[in] a The matrix.
 /// @param[in] b The vector.
 /// @return The solution to the system of linear equations.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> solve(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& a,
+                                                 const Matrix<T, ROWS, 1, MEMORY_ORDER>& b) noexcept
 {
   const auto [q, r] = decompose(a);
   return back_substitution(r, q * b);
@@ -308,14 +325,17 @@ namespace modified_gram_schmidt
 /// https://en.wikipedia.org/wiki/Gram%E2%80%93Schmidt_process#Numerical_stability
 /// @param[in] matrix The matrix.
 /// @return The QR decomposition of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Decomposition<T, ROWS, COLS, MEMORY_ORDER>
+decompose(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
-  Decomposition<T, ROWS, COLS> result{Matrix<T, ROWS, ROWS>{math::ZERO}, Matrix<T, ROWS, ROWS>{math::ZERO}};
+  Decomposition<T, ROWS, COLS, MEMORY_ORDER> result{Matrix<T, ROWS, ROWS, MEMORY_ORDER>{math::ZERO},
+                                                    Matrix<T, ROWS, ROWS, MEMORY_ORDER>{math::ZERO}};
 
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {
-    Matrix<T, ROWS, 1> v = matrix.column(col);
+    Matrix<T, ROWS, 1, MEMORY_ORDER> v = matrix.column(col);
 
     // Orthogonalisation step
     {
@@ -355,8 +375,9 @@ constexpr Decomposition<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& ma
 /// decomposition.
 /// @param[in] matrix The matrix.
 /// @return The inverse of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> inverse(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   const auto [q, r] = decompose(matrix);
   const auto r_inv = inverse_upper_triangular(r);
@@ -368,8 +389,10 @@ constexpr Matrix<T, ROWS, COLS> inverse(const Matrix<T, ROWS, COLS>& matrix) noe
 /// @param[in] a The matrix.
 /// @param[in] b The vector.
 /// @return The solution to the system of linear equations.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> solve(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& a,
+                                                 const Matrix<T, ROWS, 1, MEMORY_ORDER>& b) noexcept
 {
   const auto [q, r] = decompose(a);
   return back_substitution(r, q * b);
@@ -385,13 +408,14 @@ namespace cholesky
 /// https://en.wikipedia.org/wiki/Cholesky_decomposition
 /// @param[in] matrix The matrix.
 /// @return The Cholesky decomposition of the matrix.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> decompose(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   using multiprecision::math::sqrt;
   using std::sqrt;
 
-  Matrix<T, ROWS, COLS> result{math::ZERO};
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::ZERO};
 
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {
@@ -425,8 +449,10 @@ constexpr Matrix<T, ROWS, COLS> decompose(const Matrix<T, ROWS, COLS>& matrix) n
 /// @param[in] a The matrix.
 /// @param[in] b The vector.
 /// @return The solution to the system of linear equations.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS, typename = std::enable_if_t<(ROWS >= COLS)>>
-constexpr Matrix<T, ROWS, 1> solve(const Matrix<T, ROWS, COLS>& a, const Matrix<T, ROWS, 1>& b) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER,
+          typename = std::enable_if_t<(ROWS >= COLS)>>
+constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> solve(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& a,
+                                                 const Matrix<T, ROWS, 1, MEMORY_ORDER>& b) noexcept
 {
   const auto l = decompose(a);
   const auto y = forward_substitution(l, b);

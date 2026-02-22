@@ -23,8 +23,8 @@ enum class FormatType : std::uint8_t
   VECTOR,
 };
 
-template <FormatType FORMAT, typename T, std::uint16_t ROWS, std::uint16_t COLS>
-std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <FormatType FORMAT, typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   const auto temp_format = os.flags();
 
@@ -68,8 +68,8 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) 
 
 } // namespace details
 
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
-std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS>& matrix) noexcept
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+std::ostream& operator<<(std::ostream& os, const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
   os << "Matrix" << ROWS << "x" << COLS;
   return details::operator<< <details::FormatType::MATRIX>(os, matrix);
@@ -102,8 +102,8 @@ std::ostream& operator<<(std::ostream& os, const Barycentric<T>& coord) noexcept
 namespace fmt
 {
 
-template <typename T, std::uint16_t N, std::uint16_t M>
-struct formatter<rtw::math::Matrix<T, N, M>> : ostream_formatter
+template <typename T, std::uint16_t N, std::uint16_t M, rtw::math::MemoryOrder MEMORY_ORDER>
+struct formatter<rtw::math::Matrix<T, N, M, MEMORY_ORDER>> : ostream_formatter
 {};
 
 template <typename T, std::uint16_t N>

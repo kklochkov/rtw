@@ -48,12 +48,50 @@ struct IdentityTag
 };
 constexpr inline IdentityTag IDENTITY{IdentityTag::Tag::TAG};
 
-/// A matrix that is statically sized.
-/// The matrix is stored in row-major order.
+struct FromRowMajorTag
+{
+  // clang-format off
+  enum class Tag : std::uint8_t { TAG };
+  // clang-format on
+  constexpr explicit FromRowMajorTag(Tag /*tag*/) noexcept {}
+};
+constexpr inline FromRowMajorTag FROM_ROW_MAJOR{FromRowMajorTag::Tag::TAG};
+
+struct FromColumnMajorTag
+{
+  // clang-format off
+  enum class Tag : std::uint8_t { TAG };
+  // clang-format on
+  constexpr explicit FromColumnMajorTag(Tag /*tag*/) noexcept {}
+};
+constexpr inline FromColumnMajorTag FROM_COLUMN_MAJOR{FromColumnMajorTag::Tag::TAG};
+
+/// Storage memory order for matrix elements in memory.
+enum class MemoryOrder : std::uint8_t
+{
+  ROW_MAJOR,   ///< Elements stored row-by-row (C/C++, DirectX)
+  COLUMN_MAJOR ///< Elements stored column-by-column (OpenGL, BLAS)
+};
+constexpr inline MemoryOrder DEFAULT_MEMORY_ORDER = MemoryOrder::ROW_MAJOR;
+
+/// A matrix that is statically sized with configurable memory order.
+///
+/// Memory Order:
+/// - ROW_MAJOR (default): Elements stored row-by-row. Compatible with C/C++ arrays, DirectX.
+///   Memory layout for 2x3: [r0c0, r0c1, r0c2, r1c0, r1c1, r1c2]
+/// - COLUMN_MAJOR: Elements stored column-by-column. Compatible with OpenGL, BLAS, LAPACK.
+///   Memory layout for 2x3: [r0c0, r1c0, r0c1, r1c1, r0c2, r1c2]
+///
+/// Initialization:
+/// - Variadic constructor: Elements in the matrix's native memory order (for direct BLAS interop)
+/// - FROM_ROW_MAJOR tag: Elements specified row-by-row (visually intuitive in code)
+/// - FROM_COLUMN_MAJOR tag: Elements specified column-by-column
+///
 /// @tparam T The type of the elements.
 /// @tparam ROWS The number of rows.
 /// @tparam COLS The number of columns.
-template <typename T, std::uint16_t ROWS, std::uint16_t COLS>
+/// @tparam MEMORY_ORDER The storage memory order (default: ROW_MAJOR).
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
 class Matrix
 {
   constexpr static std::uint32_t SIZE = ROWS * COLS;
@@ -71,7 +109,7 @@ class Matrix
   constexpr static std::uint16_t W_INDEX = (ROW_COUNT > 3 ? 3 : 2);
 
   template <typename U = T, std::uint16_t OTHER_ROWS, std::uint16_t OTHER_COLS, std::uint16_t... INDEX>
-  constexpr static std::array<T, SIZE> from_matrix(const Matrix<U, OTHER_ROWS, OTHER_COLS>& matrix,
+  constexpr static std::array<T, SIZE> from_matrix(const Matrix<U, OTHER_ROWS, OTHER_COLS, MEMORY_ORDER>& matrix,
                                                    std::integer_sequence<std::uint16_t, INDEX...> /*index*/) noexcept
   {
     static_assert((OTHER_ROWS * OTHER_COLS) <= SIZE, "Too many elements");
@@ -82,7 +120,14 @@ class Matrix
   constexpr static std::array<T, SIZE> make_with_diagonal(std::integer_sequence<std::uint16_t, INDEX...> /*index*/,
                                                           const T value) noexcept
   {
-    return std::array<T, SIZE>{(INDEX % (ROWS + 1) == 0 ? value : T{0})...};
+    if constexpr (MEMORY_ORDER == MemoryOrder::ROW_MAJOR)
+    {
+      return std::array<T, SIZE>{(INDEX % (COLS + 1) == 0 ? value : T{0})...};
+    }
+    else
+    {
+      return std::array<T, SIZE>{(INDEX % (ROWS + 1) == 0 ? value : T{0})...};
+    }
   }
 
   template <std::uint16_t... INDEX>
@@ -97,6 +142,54 @@ class Matrix
         }())...};
   }
 
+  constexpr static std::size_t get_storage_index(const std::uint16_t row, const std::uint16_t col) noexcept
+  {
+    if constexpr (MEMORY_ORDER == MemoryOrder::ROW_MAJOR)
+    {
+      return (row * COLS) + col;
+    }
+    else
+    {
+      return (col * ROWS) + row;
+    }
+  }
+
+  template <std::uint16_t... INDEX>
+  constexpr static std::array<T, SIZE> from_row_major_data(std::integer_sequence<std::uint16_t, INDEX...> /*index*/,
+                                                           const std::array<T, SIZE>& data) noexcept
+  {
+    return std::array<T, SIZE>{data[((INDEX % ROWS) * COLS) + (INDEX / ROWS)]...};
+  }
+
+  template <typename... ArgsT>
+  constexpr static std::array<T, SIZE> from_row_major(ArgsT&&... args) noexcept
+  {
+    std::array<T, SIZE> result{std::forward<ArgsT>(args)...};
+    if constexpr (MEMORY_ORDER == MemoryOrder::COLUMN_MAJOR)
+    {
+      result = from_row_major_data(std::make_integer_sequence<std::uint16_t, SIZE>{}, result);
+    }
+    return result;
+  }
+
+  template <std::uint16_t... INDEX>
+  constexpr static std::array<T, SIZE> from_column_major_data(std::integer_sequence<std::uint16_t, INDEX...> /*index*/,
+                                                              const std::array<T, SIZE>& data) noexcept
+  {
+    return std::array<T, SIZE>{data[((INDEX % COLS) * ROWS) + (INDEX / COLS)]...};
+  }
+
+  template <typename... ArgsT>
+  constexpr static std::array<T, SIZE> from_column_major(ArgsT&&... args) noexcept
+  {
+    std::array<T, SIZE> result{std::forward<ArgsT>(args)...};
+    if constexpr (MEMORY_ORDER == MemoryOrder::ROW_MAJOR)
+    {
+      result = from_row_major_data(std::make_integer_sequence<std::uint16_t, SIZE>{}, result);
+    }
+    return result;
+  }
+
 public:
   using value_type = T;
   using iterator = typename std::array<value_type, SIZE>::iterator;
@@ -107,6 +200,8 @@ public:
 
   constexpr static std::uint16_t NUM_ROWS = ROWS;
   constexpr static std::uint16_t NUM_COLS = COLS;
+  constexpr static bool IS_ROW_MAJOR = (MEMORY_ORDER == MemoryOrder::ROW_MAJOR);
+  constexpr static bool IS_COLUMN_MAJOR = (MEMORY_ORDER == MemoryOrder::COLUMN_MAJOR);
 
   static_assert(ROWS > 0, "ROWS must be greater than 0");
   static_assert(COLS > 0, "COLS must be greater than 0");
@@ -132,10 +227,28 @@ public:
   {
   }
 
+  template <typename... ArgsT,
+            typename = std::enable_if_t<
+                (sizeof...(ArgsT) <= SIZE)
+                && (multiprecision::IS_ARITHMETIC_V<std::remove_cv_t<std::remove_reference_t<ArgsT>>> && ...)>>
+  constexpr explicit Matrix(FromRowMajorTag /*tag*/, ArgsT&&... args) noexcept
+      : data_{from_row_major(std::forward<ArgsT>(args)...)}
+  {
+  }
+
+  template <typename... ArgsT,
+            typename = std::enable_if_t<
+                (sizeof...(ArgsT) <= SIZE)
+                && (multiprecision::IS_ARITHMETIC_V<std::remove_cv_t<std::remove_reference_t<ArgsT>>> && ...)>>
+  constexpr explicit Matrix(FromColumnMajorTag /*tag*/, ArgsT&&... args) noexcept
+      : data_{from_column_major(std::forward<ArgsT>(args)...)}
+  {
+  }
+
   template <
       typename U = value_type, std::uint16_t OTHER_ROWS, std::uint16_t OTHER_COLS,
       typename = std::enable_if_t<std::is_convertible_v<U, value_type> && (OTHER_ROWS <= ROWS) && (OTHER_COLS <= COLS)>>
-  constexpr explicit Matrix(const Matrix<U, OTHER_ROWS, OTHER_COLS>& matrix) noexcept
+  constexpr explicit Matrix(const Matrix<U, OTHER_ROWS, OTHER_COLS, MEMORY_ORDER>& matrix) noexcept
       : data_{from_matrix(matrix, std::make_integer_sequence<std::uint16_t, OTHER_ROWS * OTHER_COLS>{})}
   {
   }
@@ -145,9 +258,9 @@ public:
   constexpr std::uint32_t size() const noexcept { return SIZE; }
 
   template <typename U = value_type, typename = std::enable_if_t<multiprecision::IS_ARITHMETIC_V<U>>>
-  constexpr Matrix<U, ROWS, COLS> cast() const noexcept
+  constexpr Matrix<U, ROWS, COLS, MEMORY_ORDER> cast() const noexcept
   {
-    Matrix<U, ROWS, COLS> result{math::UNINITIALIZED};
+    Matrix<U, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = static_cast<U>(data_[i]);
@@ -155,11 +268,25 @@ public:
     return result;
   }
 
+  template <MemoryOrder OTHER_MEMORY_ORDER>
+  constexpr Matrix<T, ROWS, COLS, OTHER_MEMORY_ORDER> cast() const noexcept
+  {
+    Matrix<T, ROWS, COLS, OTHER_MEMORY_ORDER> result{math::UNINITIALIZED};
+    for (std::size_t row = 0U; row < ROWS; ++row)
+    {
+      for (std::size_t col = 0U; col < COLS; ++col)
+      {
+        result(row, col) = (*this)(row, col);
+      }
+    }
+    return result;
+  }
+
   template <typename U = value_type,
             typename = std::enable_if_t<multiprecision::IS_ARITHMETIC_V<U> && multiprecision::IS_COMPLEX_V<T>>>
-  constexpr Matrix<U, ROWS, COLS> real() const noexcept
+  constexpr Matrix<U, ROWS, COLS, MEMORY_ORDER> real() const noexcept
   {
-    Matrix<U, ROWS, COLS> result{math::UNINITIALIZED};
+    Matrix<U, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
       result[i] = static_cast<U>(data_[i].real());
@@ -171,13 +298,13 @@ public:
   {
     assert(row < ROWS);
     assert(col < COLS);
-    return data_[(row * COLS) + col];
+    return data_[get_storage_index(row, col)];
   }
   constexpr value_type operator()(const std::uint16_t row, const std::uint16_t col) const noexcept
   {
     assert(row < ROWS);
     assert(col < COLS);
-    return data_[(row * COLS) + col];
+    return data_[get_storage_index(row, col)];
   }
 
   constexpr reference operator[](const std::uint32_t index) noexcept
@@ -282,22 +409,22 @@ public:
   /// Swizzle operators.
   /// @{
   template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<(ROW_COUNT > 2)>>
-  constexpr Matrix<value_type, 2, 1> xy() const noexcept
+  constexpr Matrix<value_type, 2, 1, MEMORY_ORDER> xy() const noexcept
   {
-    return Matrix<value_type, 2, 1>{x(), y()};
+    return Matrix<value_type, 2, 1, MEMORY_ORDER>{x(), y()};
   }
 
   template <std::uint16_t ROW_COUNT = ROWS, typename = std::enable_if_t<(ROW_COUNT > 3)>>
-  constexpr Matrix<value_type, 3, 1> xyz() const noexcept
+  constexpr Matrix<value_type, 3, 1, MEMORY_ORDER> xyz() const noexcept
   {
-    return Matrix<value_type, 3, 1>{x(), y(), z()};
+    return Matrix<value_type, 3, 1, MEMORY_ORDER>{x(), y(), z()};
   }
   /// @}
 
-  constexpr Matrix<T, ROWS, 1> column(const std::uint16_t col) const noexcept
+  constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> column(const std::uint16_t col) const noexcept
   {
     assert(col < COLS);
-    Matrix<T, ROWS, 1> result{math::UNINITIALIZED};
+    Matrix<T, ROWS, 1, MEMORY_ORDER> result{math::UNINITIALIZED};
     for (std::uint16_t row = 0U; row < ROWS; ++row)
     {
       result[row] = (*this)(row, col);
@@ -305,10 +432,10 @@ public:
     return result;
   }
 
-  constexpr Matrix<T, COLS, 1> row(const std::uint16_t row) const noexcept
+  constexpr Matrix<T, COLS, 1, MEMORY_ORDER> row(const std::uint16_t row) const noexcept
   {
     assert(row < ROWS);
-    Matrix<T, COLS, 1> result{math::UNINITIALIZED};
+    Matrix<T, COLS, 1, MEMORY_ORDER> result{math::UNINITIALIZED};
     for (std::uint16_t col = 0U; col < COLS; ++col)
     {
       result[col] = (*this)(row, col);
@@ -318,12 +445,12 @@ public:
 
   template <std::uint16_t ROW_COUNT = ROWS, std::uint16_t COL_COUNT = COLS,
             typename = std::enable_if_t<(ROW_COUNT == COL_COUNT) && (ROW_COUNT > 2) && (COL_COUNT > 2)>>
-  constexpr Matrix<T, ROW_COUNT - 1, COL_COUNT - 1> minor(const std::uint16_t row,
-                                                          const std::uint16_t col) const noexcept
+  constexpr Matrix<T, ROW_COUNT - 1, COL_COUNT - 1, MEMORY_ORDER> minor(const std::uint16_t row,
+                                                                        const std::uint16_t col) const noexcept
   {
     assert(row < ROW_COUNT);
     assert(col < COL_COUNT);
-    Matrix<T, ROW_COUNT - 1, COL_COUNT - 1> result{math::UNINITIALIZED};
+    Matrix<T, ROW_COUNT - 1, COL_COUNT - 1, MEMORY_ORDER> result{math::UNINITIALIZED};
     for (std::uint16_t r = 0U; r < ROW_COUNT - 1; ++r)
     {
       const std::uint16_t rr = r < row ? r : r + 1;
@@ -349,7 +476,7 @@ public:
 
   constexpr static Matrix identity() noexcept { return Matrix{math::IDENTITY}; }
   constexpr static Matrix zero() noexcept { return Matrix{math::ZERO}; }
-  constexpr static Matrix diagonal(const Matrix<T, ROWS, 1>& diag) noexcept
+  constexpr static Matrix diagonal(const Matrix<T, ROWS, 1, MEMORY_ORDER>& diag) noexcept
   {
     Matrix result{math::ZERO};
     for (std::uint16_t i = 0U; i < ROWS; ++i)
@@ -405,19 +532,36 @@ public:
   }
 
   template <std::uint16_t OTHER_COLS>
-  friend constexpr Matrix<value_type, ROWS, OTHER_COLS>
-  operator*(const Matrix& lhs, const Matrix<value_type, COLS, OTHER_COLS>& rhs) noexcept
+  friend constexpr Matrix<value_type, ROWS, OTHER_COLS, MEMORY_ORDER>
+  operator*(const Matrix& lhs, const Matrix<value_type, COLS, OTHER_COLS, MEMORY_ORDER>& rhs) noexcept
   {
-    // Blocking multiplication might be implemented in the future, but it only makes sense for large matrices.
-    Matrix<value_type, ROWS, OTHER_COLS> result{math::ZERO};
-    for (std::uint16_t row = 0U; row < ROWS; ++row)
+    // Block matrix multiplication might be implemented in the future, but it only makes sense for large matrices.
+    Matrix<value_type, ROWS, OTHER_COLS, MEMORY_ORDER> result{math::ZERO};
+    if constexpr (MEMORY_ORDER == MemoryOrder::ROW_MAJOR)
     {
-      for (std::uint16_t col = 0U; col < COLS; ++col)
+      for (std::uint16_t row = 0U; row < ROWS; ++row)
       {
-        const auto lhs_val = lhs(row, col);
-        for (std::uint16_t other_col = 0U; other_col < OTHER_COLS; ++other_col)
+        for (std::uint16_t col = 0U; col < COLS; ++col)
         {
-          result(row, other_col) += lhs_val * rhs(col, other_col);
+          const auto lhs_val = lhs(row, col);
+          for (std::uint16_t other_col = 0U; other_col < OTHER_COLS; ++other_col)
+          {
+            result(row, other_col) += lhs_val * rhs(col, other_col);
+          }
+        }
+      }
+    }
+    else
+    {
+      for (std::uint16_t other_col = 0U; other_col < OTHER_COLS; ++other_col)
+      {
+        for (std::uint16_t col = 0U; col < COLS; ++col)
+        {
+          const auto rhs_val = rhs(col, other_col);
+          for (std::uint16_t row = 0U; row < ROWS; ++row)
+          {
+            result(row, other_col) += lhs(row, col) * rhs_val;
+          }
         }
       }
     }
@@ -425,8 +569,8 @@ public:
   }
 
   template <std::uint16_t OTHER_COLS>
-  friend constexpr Matrix<value_type, ROWS, OTHER_COLS> operator*(const Matrix<value_type, ROWS, COLS>& lhs,
-                                                                  const Matrix& rhs) noexcept
+  friend constexpr Matrix<value_type, ROWS, OTHER_COLS, MEMORY_ORDER>
+  operator*(const Matrix<value_type, ROWS, COLS, MEMORY_ORDER>& lhs, const Matrix& rhs) noexcept
   {
     return lhs * rhs;
   }
@@ -460,22 +604,22 @@ private:
   std::array<value_type, SIZE> data_;
 };
 
-template <typename T>
-using Matrix2x2 = Matrix<T, 2, 2>;
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+using Matrix2x2 = Matrix<T, 2, 2, MEMORY_ORDER>;
 using Matrix2x2F = Matrix2x2<float>;
 using Matrix2x2D = Matrix2x2<double>;
 using Matrix2x2Q16 = Matrix2x2<multiprecision::FixedPoint16>;
 using Matrix2x2Q32 = Matrix2x2<multiprecision::FixedPoint32>;
 
-template <typename T>
-using Matrix3x3 = Matrix<T, 3, 3>;
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+using Matrix3x3 = Matrix<T, 3, 3, MEMORY_ORDER>;
 using Matrix3x3F = Matrix3x3<float>;
 using Matrix3x3D = Matrix3x3<double>;
 using Matrix3x3Q16 = Matrix3x3<multiprecision::FixedPoint16>;
 using Matrix3x3Q32 = Matrix3x3<multiprecision::FixedPoint32>;
 
-template <typename T>
-using Matrix4x4 = Matrix<T, 4, 4>;
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+using Matrix4x4 = Matrix<T, 4, 4, MEMORY_ORDER>;
 using Matrix4x4F = Matrix4x4<float>;
 using Matrix4x4D = Matrix4x4<double>;
 using Matrix4x4Q16 = Matrix4x4<multiprecision::FixedPoint16>;

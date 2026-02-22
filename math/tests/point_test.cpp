@@ -18,7 +18,7 @@ TEST(Point, init_list_ctor)
 
 TEST(Point, conversion_ctor_from_matrix)
 {
-  constexpr rtw::math::Matrix<int, 2, 1> M{1, 2};
+  constexpr rtw::math::Matrix<int, 2, 1, rtw::math::DEFAULT_MEMORY_ORDER> M{1, 2};
   constexpr rtw::math::Point2I P{M};
   EXPECT_THAT(P, ::testing::ElementsAre(1, 2));
 }

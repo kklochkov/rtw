@@ -70,8 +70,8 @@ constexpr FrustumParameters<T> make_perspective_parameters(const Angle<T> fov_y,
 /// @tparam T The type of the matrix elements.
 /// @param params The parameters of the perspective projection.
 /// @return The perspective projection matrix.
-template <typename T>
-constexpr Matrix4x4<T> make_perspective_projection_matrix(const FrustumParameters<T> params) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_perspective_projection_matrix(const FrustumParameters<T> params) noexcept
 {
   using multiprecision::math::abs;
   using std::abs;
@@ -93,7 +93,7 @@ constexpr Matrix4x4<T> make_perspective_projection_matrix(const FrustumParameter
   const auto w = T{-1}; // z is flipped in NDC in right-handed coordinate system
 
   // clang-format off
-  return Matrix4x4<T> {
+  return Matrix4x4<T, MEMORY_ORDER> {math::FROM_ROW_MAJOR,
        sx, T{0}, a13, T{0},
      T{0},   sy, a23, T{0},
      T{0}, T{0},  sz,   tz,
@@ -149,8 +149,8 @@ constexpr Frustum3<T> make_frustum(const FrustumParameters<T> params) noexcept
 /// @tparam T The type of the matrix elements.
 /// @param matrix The projection matrix.
 /// @return The frustum.
-template <typename T>
-constexpr Frustum3<T> extract_frustum(const Matrix4x4<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Frustum3<T> extract_frustum(const Matrix4x4<T, MEMORY_ORDER>& matrix) noexcept
 {
   const Vector4<T> column0{matrix.column(0)};
   const Vector4<T> column1{matrix.column(1)};

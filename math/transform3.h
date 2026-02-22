@@ -10,15 +10,25 @@
 namespace rtw::math::transform3
 {
 
+/// @brief 3D transformation matrix utilities.
+///
+/// Transformation Convention:
+/// This library uses column vectors with pre-multiplication (OpenGL/GLSL convention):
+///   transformed = matrix * point
+///   combined = second_transform * first_transform  (applied right-to-left)
+///
+/// Vector types (Vector, Point, etc.) are Nx1 column vectors.
+/// Translation components are stored in the last column of transformation matrices.
+
 /// Make a homogeneous 3D matrix from a 3D matrix.
 /// @tparam T The type of the elements.
 /// @param[in] matrix The 3D matrix.
 /// @return The homogeneous 3D matrix.
-template <typename T>
-constexpr Matrix4x4<T> make_homogeneous(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_homogeneous(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   // clang-format off
-  return Matrix4x4<T>{
+  return Matrix4x4<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     matrix(0, 0), matrix(0, 1), matrix(0, 2), T{0},
     matrix(1, 0), matrix(1, 1), matrix(1, 2), T{0},
     matrix(2, 0), matrix(2, 1), matrix(2, 2), T{0},
@@ -33,11 +43,11 @@ constexpr Matrix4x4<T> make_homogeneous(const Matrix3x3<T>& matrix) noexcept
 /// @param[in] sy The scaling factor in the y direction.
 /// @param[in] sz The scaling factor in the z direction.
 /// @return The 3D scaling matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_scale(const T sx, const T sy, const T sz) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_scale(const T sx, const T sy, const T sz) noexcept
 {
   // clang-format off
-  return Matrix3x3<T>{
+  return Matrix3x3<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
        sx, T{0}, T{0},
      T{0},   sy, T{0},
      T{0}, T{0},   sz,
@@ -49,8 +59,8 @@ constexpr Matrix3x3<T> make_scale(const T sx, const T sy, const T sz) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] scale The scaling vector.
 /// @return The 3D scaling matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_scale(const Vector3<T>& scale) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_scale(const Vector3<T>& scale) noexcept
 {
   return make_scale(scale.x(), scale.y(), scale.z());
 }
@@ -59,8 +69,8 @@ constexpr Matrix3x3<T> make_scale(const Vector3<T>& scale) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] roll The angle of the rotation.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_rotation_x(const Angle<T> roll) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_rotation_x(const Angle<T> roll) noexcept
 {
   using rtw::multiprecision::math::cos;
   using rtw::multiprecision::math::sin;
@@ -70,7 +80,7 @@ constexpr Matrix3x3<T> make_rotation_x(const Angle<T> roll) noexcept
   const auto c = cos(static_cast<T>(roll));
   const auto s = sin(static_cast<T>(roll));
   // clang-format off
-  return Matrix3x3<T>{
+  return Matrix3x3<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     T{1}, T{0}, T{0},
     T{0},    c,   -s,
     T{0},    s,    c,
@@ -82,8 +92,8 @@ constexpr Matrix3x3<T> make_rotation_x(const Angle<T> roll) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] roll The angle of the rotation.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_so3_x(const Angle<T> roll) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_so3_x(const Angle<T> roll) noexcept
 {
   return make_rotation_x(roll);
 }
@@ -92,8 +102,8 @@ constexpr Matrix3x3<T> make_so3_x(const Angle<T> roll) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] pitch The angle of the rotation.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_rotation_y(const Angle<T> pitch) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_rotation_y(const Angle<T> pitch) noexcept
 {
   using rtw::multiprecision::math::cos;
   using rtw::multiprecision::math::sin;
@@ -103,7 +113,7 @@ constexpr Matrix3x3<T> make_rotation_y(const Angle<T> pitch) noexcept
   const auto c = cos(static_cast<T>(pitch));
   const auto s = sin(static_cast<T>(pitch));
   // clang-format off
-  return Matrix3x3<T>{
+  return Matrix3x3<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
      c, T{0},    s,
   T{0}, T{1}, T{0},
     -s, T{0},    c,
@@ -115,8 +125,8 @@ constexpr Matrix3x3<T> make_rotation_y(const Angle<T> pitch) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] pitch The angle of the rotation.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_so3_y(const Angle<T> pitch) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_so3_y(const Angle<T> pitch) noexcept
 {
   return make_rotation_y(pitch);
 }
@@ -125,8 +135,8 @@ constexpr Matrix3x3<T> make_so3_y(const Angle<T> pitch) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] yaw The angle of the rotation.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_rotation_z(const Angle<T> yaw) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_rotation_z(const Angle<T> yaw) noexcept
 {
   using rtw::multiprecision::math::cos;
   using rtw::multiprecision::math::sin;
@@ -136,7 +146,7 @@ constexpr Matrix3x3<T> make_rotation_z(const Angle<T> yaw) noexcept
   const auto c = cos(static_cast<T>(yaw));
   const auto s = sin(static_cast<T>(yaw));
   // clang-format off
-  return Matrix3x3<T>{
+  return Matrix3x3<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
          c,   -s, T{0},
          s,    c, T{0},
       T{0}, T{0}, T{1},
@@ -148,8 +158,8 @@ constexpr Matrix3x3<T> make_rotation_z(const Angle<T> yaw) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] yaw The angle of the rotation.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_so3_z(const Angle<T> yaw) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_so3_z(const Angle<T> yaw) noexcept
 {
   return make_rotation_z(yaw);
 }
@@ -162,8 +172,9 @@ constexpr Matrix3x3<T> make_so3_z(const Angle<T> yaw) noexcept
 /// @param[in] pitch The angle of the rotation around the y-axis.
 /// @param[in] yaw The angle of the rotation around the z-axis.
 /// @return The 3D rotation matrix.
-template <typename T, RotationConvention CONVENTION>
-constexpr Matrix3x3<T> make_rotation(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw) noexcept
+template <typename T, RotationConvention CONVENTION, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_rotation(const Angle<T> roll, const Angle<T> pitch,
+                                                   const Angle<T> yaw) noexcept
 {
   if constexpr ((CONVENTION == RotationConvention::XYZ) || (CONVENTION == RotationConvention::ROLL_PITCH_YAW))
   {
@@ -200,10 +211,10 @@ constexpr Matrix3x3<T> make_rotation(const Angle<T> roll, const Angle<T> pitch, 
 /// @tparam CONVENTION The rotation convention to use for the order of the rotations.
 /// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
 /// @return The 3D rotation matrix.
-template <typename T, RotationConvention CONVENTION>
-constexpr Matrix3x3<T> make_rotation(const EulerAngles<T>& angles) noexcept
+template <typename T, RotationConvention CONVENTION, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_rotation(const EulerAngles<T>& angles) noexcept
 {
-  return make_rotation<T, CONVENTION>(angles.roll, angles.pitch, angles.yaw);
+  return make_rotation<T, CONVENTION, MEMORY_ORDER>(angles.roll, angles.pitch, angles.yaw);
 }
 
 /// A 3D rotation matrix around the x-, y- and z-axis in right-handed coordinate system.
@@ -212,20 +223,21 @@ constexpr Matrix3x3<T> make_rotation(const EulerAngles<T>& angles) noexcept
 /// @param[in] pitch The angle of the rotation around the y-axis.
 /// @param[in] yaw The angle of the rotation around the z-axis.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_rotation(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_rotation(const Angle<T> roll, const Angle<T> pitch,
+                                                   const Angle<T> yaw) noexcept
 {
-  return make_rotation<T, RotationConvention::ROLL_PITCH_YAW>(roll, pitch, yaw);
+  return make_rotation<T, RotationConvention::ROLL_PITCH_YAW, MEMORY_ORDER>(roll, pitch, yaw);
 }
 
 /// A 3D rotation matrix around the x-, y- and z-axis in right-handed coordinate system.
 /// @tparam T The type of the elements.
 /// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_rotation(const EulerAngles<T>& angles) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_rotation(const EulerAngles<T>& angles) noexcept
 {
-  return make_rotation(angles.roll, angles.pitch, angles.yaw);
+  return make_rotation<T, MEMORY_ORDER>(angles.roll, angles.pitch, angles.yaw);
 }
 
 /// An SO(3) rotation around the x-, y- and z-axis in right-handed 3D coordinate system.
@@ -234,20 +246,20 @@ constexpr Matrix3x3<T> make_rotation(const EulerAngles<T>& angles) noexcept
 /// @param[in] pitch The angle of the rotation around the y-axis.
 /// @param[in] yaw The angle of the rotation around the z-axis.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_so3(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_so3(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw) noexcept
 {
-  return make_rotation(roll, pitch, yaw);
+  return make_rotation<T, MEMORY_ORDER>(roll, pitch, yaw);
 }
 
 /// An SO(3) rotation around the x-, y- and z-axis in right-handed 3D coordinate system.
 /// @tparam T The type of the elements.
 /// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
 /// @return The 3D rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> make_so3(const EulerAngles<T>& angles) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> make_so3(const EulerAngles<T>& angles) noexcept
 {
-  return make_rotation(angles);
+  return make_rotation<T, MEMORY_ORDER>(angles);
 }
 
 /// A 3D translation matrix.
@@ -256,11 +268,11 @@ constexpr Matrix3x3<T> make_so3(const EulerAngles<T>& angles) noexcept
 /// @param[in] ty The translation in the y direction.
 /// @param[in] tz The translation in the z direction.
 /// @return The 3D translation matrix.
-template <typename T>
-constexpr Matrix4x4<T> make_translation(const T tx, const T ty, const T tz) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_translation(const T tx, const T ty, const T tz) noexcept
 {
   // clang-format off
-  return Matrix4x4<T>{
+  return Matrix4x4<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     T{1}, T{0}, T{0},   tx,
     T{0}, T{1}, T{0},   ty,
     T{0}, T{0}, T{1},   tz,
@@ -273,10 +285,10 @@ constexpr Matrix4x4<T> make_translation(const T tx, const T ty, const T tz) noex
 /// @tparam T The type of the elements.
 /// @param[in] translation The translation vector.
 /// @return The 3D translation matrix.
-template <typename T>
-constexpr Matrix4x4<T> make_translation(const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_translation(const Vector3<T>& translation) noexcept
 {
-  return make_translation(translation.x(), translation.y(), translation.z());
+  return make_translation<T, MEMORY_ORDER>(translation.x(), translation.y(), translation.z());
 }
 
 /// A 3D, scale, rotation and translation matrix.
@@ -286,9 +298,10 @@ constexpr Matrix4x4<T> make_translation(const Vector3<T>& translation) noexcept
 /// @param[in] rotation The rotation matrix.
 /// @param[in] translation The translation matrix.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& scale, const Matrix3x3<T>& rotation,
-                                      const Matrix4x4<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_transform(const Matrix3x3<T, MEMORY_ORDER>& scale,
+                                                    const Matrix3x3<T, MEMORY_ORDER>& rotation,
+                                                    const Matrix4x4<T, MEMORY_ORDER>& translation) noexcept
 {
   return translation * make_homogeneous(rotation * scale);
 }
@@ -299,10 +312,11 @@ constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& scale, const Matrix3x3
 /// @param[in] rotation The rotation matrix.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& rotation, const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_transform(const Matrix3x3<T, MEMORY_ORDER>& rotation,
+                                                    const Vector3<T>& translation) noexcept
 {
-  return make_transform(Matrix3x3<T>::identity(), rotation, make_translation(translation));
+  return make_transform(Matrix3x3<T, MEMORY_ORDER>::identity(), rotation, make_translation(translation));
 }
 
 /// An SE(3) transformation matrix.
@@ -311,8 +325,9 @@ constexpr Matrix4x4<T> make_transform(const Matrix3x3<T>& rotation, const Vector
 /// @param[in] rotation The rotation matrix.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_se3(const Matrix3x3<T>& rotation, const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_se3(const Matrix3x3<T, MEMORY_ORDER>& rotation,
+                                              const Vector3<T>& translation) noexcept
 {
   return make_transform(rotation, translation);
 }
@@ -327,11 +342,11 @@ constexpr Matrix4x4<T> make_se3(const Matrix3x3<T>& rotation, const Vector3<T>& 
 /// @param[in] pitch The angle of the rotation around the y-axis.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T, RotationConvention CONVENTION>
-constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const Angle<T> roll, const Angle<T> pitch,
-                                      const Angle<T> yaw, const Vector3<T>& translation) noexcept
+template <typename T, RotationConvention CONVENTION, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_transform(const Vector3<T>& scale, const Angle<T> roll, const Angle<T> pitch,
+                                                    const Angle<T> yaw, const Vector3<T>& translation) noexcept
 {
-  const auto rotation = make_rotation<T, CONVENTION>(roll, pitch, yaw);
+  const auto rotation = make_rotation<T, CONVENTION, MEMORY_ORDER>(roll, pitch, yaw);
   return make_transform(make_scale(scale), rotation, make_translation(translation));
 }
 
@@ -344,11 +359,11 @@ constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const Angle<T> ro
 /// @param[in] yaw The angle of the rotation around the z-axis.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const Angle<T> roll, const Angle<T> pitch,
-                                      const Angle<T> yaw, const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_transform(const Vector3<T>& scale, const Angle<T> roll, const Angle<T> pitch,
+                                                    const Angle<T> yaw, const Vector3<T>& translation) noexcept
 {
-  return make_transform<T, RotationConvention::ROLL_PITCH_YAW>(scale, roll, pitch, yaw, translation);
+  return make_transform<T, RotationConvention::ROLL_PITCH_YAW, MEMORY_ORDER>(scale, roll, pitch, yaw, translation);
 }
 
 /// A 3D transformation matrix.
@@ -358,11 +373,11 @@ constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const Angle<T> ro
 /// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const EulerAngles<T>& angles,
-                                      const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_transform(const Vector3<T>& scale, const EulerAngles<T>& angles,
+                                                    const Vector3<T>& translation) noexcept
 {
-  return make_transform(scale, angles.roll, angles.pitch, angles.yaw, translation);
+  return make_transform<T, MEMORY_ORDER>(scale, angles.roll, angles.pitch, angles.yaw, translation);
 }
 
 /// A 3D transformation matrix.
@@ -373,11 +388,11 @@ constexpr Matrix4x4<T> make_transform(const Vector3<T>& scale, const EulerAngles
 /// @param[in] yaw The angle of the rotation around the z-axis.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_transform(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw,
-                                      const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_transform(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw,
+                                                    const Vector3<T>& translation) noexcept
 {
-  return make_transform(Vector3<T>{T{1}, T{1}, T{1}}, roll, pitch, yaw, translation);
+  return make_transform<T, MEMORY_ORDER>(Vector3<T>{T{1}, T{1}, T{1}}, roll, pitch, yaw, translation);
 }
 
 /// A 3D transformation matrix.
@@ -386,10 +401,11 @@ constexpr Matrix4x4<T> make_transform(const Angle<T> roll, const Angle<T> pitch,
 /// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_transform(const EulerAngles<T>& angles, const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_transform(const EulerAngles<T>& angles,
+                                                    const Vector3<T>& translation) noexcept
 {
-  return make_transform(angles.roll, angles.pitch, angles.yaw, translation);
+  return make_transform<T, MEMORY_ORDER>(angles.roll, angles.pitch, angles.yaw, translation);
 }
 
 /// An SE(3) transformation matrix.
@@ -400,11 +416,11 @@ constexpr Matrix4x4<T> make_transform(const EulerAngles<T>& angles, const Vector
 /// @param[in] yaw The angle of the rotation around the z-axis.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_se3(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw,
-                                const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_se3(const Angle<T> roll, const Angle<T> pitch, const Angle<T> yaw,
+                                              const Vector3<T>& translation) noexcept
 {
-  return make_transform(roll, pitch, yaw, translation);
+  return make_transform<T, MEMORY_ORDER>(roll, pitch, yaw, translation);
 }
 
 /// An SE(3) transformation matrix.
@@ -413,21 +429,21 @@ constexpr Matrix4x4<T> make_se3(const Angle<T> roll, const Angle<T> pitch, const
 /// @param[in] angles The angles of the rotation around the x-, y- and z-axis.
 /// @param[in] translation The translation vector.
 /// @return The 3D rigid motion.
-template <typename T>
-constexpr Matrix4x4<T> make_se3(const EulerAngles<T>& angles, const Vector3<T>& translation) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> make_se3(const EulerAngles<T>& angles, const Vector3<T>& translation) noexcept
 {
-  return make_transform(angles, translation);
+  return make_transform<T, MEMORY_ORDER>(angles, translation);
 }
 
 /// Extract the rotation matrix from a 3D transformation matrix.
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The rotation matrix.
-template <typename T>
-constexpr Matrix3x3<T> rotation(const Matrix4x4<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> rotation(const Matrix4x4<T, MEMORY_ORDER>& matrix) noexcept
 {
   // clang-format off
-  return Matrix3x3<T>{
+  return Matrix3x3<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     matrix(0, 0), matrix(0, 1), matrix(0, 2),
     matrix(1, 0), matrix(1, 1), matrix(1, 2),
     matrix(2, 0), matrix(2, 1), matrix(2, 2),
@@ -439,8 +455,8 @@ constexpr Matrix3x3<T> rotation(const Matrix4x4<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The translation vector.
-template <typename T>
-constexpr Vector3<T> translation(const Matrix4x4<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Vector3<T> translation(const Matrix4x4<T, MEMORY_ORDER>& matrix) noexcept
 {
   return Vector3<T>{matrix(0, 3), matrix(1, 3), matrix(2, 3)};
 }
@@ -450,8 +466,8 @@ constexpr Vector3<T> translation(const Matrix4x4<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix3x3<T> inverse_rotation(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> inverse_rotation(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   return transpose(matrix);
 }
@@ -461,8 +477,8 @@ constexpr Matrix3x3<T> inverse_rotation(const Matrix3x3<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix3x3<T> inverse_so3(const Matrix3x3<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix3x3<T, MEMORY_ORDER> inverse_so3(const Matrix3x3<T, MEMORY_ORDER>& matrix) noexcept
 {
   return inverse_rotation(matrix);
 }
@@ -477,8 +493,8 @@ constexpr Matrix3x3<T> inverse_so3(const Matrix3x3<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix4x4<T> inverse_transform(const Matrix4x4<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> inverse_transform(const Matrix4x4<T, MEMORY_ORDER>& matrix) noexcept
 {
   const auto inv_rotation = inverse_rotation(rotation(matrix));
   const auto inv_translation = -inv_rotation * translation(matrix);
@@ -495,8 +511,8 @@ constexpr Matrix4x4<T> inverse_transform(const Matrix4x4<T>& matrix) noexcept
 /// @tparam T The type of the elements.
 /// @param[in] matrix The transformation matrix.
 /// @return The inverse of the matrix.
-template <typename T>
-constexpr Matrix4x4<T> inverse_se3(const Matrix4x4<T>& matrix) noexcept
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> inverse_se3(const Matrix4x4<T, MEMORY_ORDER>& matrix) noexcept
 {
   return inverse_transform(matrix);
 }
