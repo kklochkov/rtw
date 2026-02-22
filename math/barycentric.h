@@ -35,7 +35,11 @@ public:
 
   constexpr Barycentric(const T w0, const T w1, const T w2) noexcept : Matrix(w0, w1, w2) {}
 
-  constexpr explicit Barycentric(const Matrix& matrix) noexcept : Matrix(matrix) {}
+  template <MemoryOrder MEMORY_ORDER>
+  constexpr explicit Barycentric(const math::Matrix<T, 3, 1, MEMORY_ORDER>& matrix) noexcept
+      : Matrix(matrix.template cast<Matrix::STORAGE_MEMORY_ORDER>())
+  {
+  }
   constexpr explicit Barycentric(const Vector& vector) noexcept : Matrix(vector.as_matrix()) {}
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }

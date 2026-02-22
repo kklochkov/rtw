@@ -67,7 +67,11 @@ public:
     operator[](M) = U{1}; // Set the last element to 1 to represent a position.
   }
 
-  constexpr explicit Point(const Matrix& matrix) noexcept : Matrix(matrix) {}
+  template <MemoryOrder MEMORY_ORDER>
+  constexpr explicit Point(const math::Matrix<T, N, 1, MEMORY_ORDER>& matrix) noexcept
+      : Matrix(matrix.template cast<Matrix::STORAGE_MEMORY_ORDER>())
+  {
+  }
   constexpr explicit Point(const Vector& vector) noexcept : Matrix(vector.as_matrix()) {}
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }

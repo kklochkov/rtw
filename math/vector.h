@@ -66,7 +66,11 @@ public:
     operator[](M) = U{0}; // Set the last element to 0 to represent a direction.
   }
 
-  constexpr explicit Vector(const Matrix& matrix) noexcept : Matrix(matrix) {}
+  template <MemoryOrder MEMORY_ORDER>
+  constexpr explicit Vector(const math::Matrix<T, N, 1, MEMORY_ORDER>& matrix) noexcept
+      : Matrix(matrix.template cast<Matrix::STORAGE_MEMORY_ORDER>())
+  {
+  }
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
   constexpr const Matrix& as_matrix() const noexcept { return static_cast<const Matrix&>(*this); }

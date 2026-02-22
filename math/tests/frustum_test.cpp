@@ -151,9 +151,52 @@ TEST(Frustum, extract_frustum_from_identity_matrix)
   EXPECT_NEAR(rtw::math::norm(frustum.far.normal), 1.0F, EPSILON);
 }
 
-// Note: Testing extract_frustum with COLUMN_MAJOR matrices is currently not supported
-// due to a template mismatch in frustum.h where Vector4 construction from column()
-// fails when the matrix has COLUMN_MAJOR memory order. This is tracked for future fix.
+TEST(Frustum, extract_frustum_from_column_major_matrix)
+{
+  using namespace rtw::math::angle_literals;
+
+  // Create perspective projection with ROW_MAJOR (default)
+  const auto params = rtw::math::make_perspective_parameters(90.0_degF, 1.0F, 0.1F, 100.0F);
+  const auto projection_row_major = rtw::math::make_perspective_projection_matrix(params);
+
+  // Convert to COLUMN_MAJOR
+  const auto projection_col_major = projection_row_major.cast<rtw::math::MemoryOrder::COLUMN_MAJOR>();
+
+  // Extract frustum from both - should produce identical results
+  const auto frustum_rm = rtw::math::extract_frustum(projection_row_major);
+  const auto frustum_cm = rtw::math::extract_frustum(projection_col_major);
+
+  // Verify plane normals match between ROW_MAJOR and COLUMN_MAJOR extraction
+  EXPECT_NEAR(frustum_cm.left.normal.x(), frustum_rm.left.normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.left.normal.y(), frustum_rm.left.normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.left.normal.z(), frustum_rm.left.normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.left.distance, frustum_rm.left.distance, EPSILON);
+
+  EXPECT_NEAR(frustum_cm.right.normal.x(), frustum_rm.right.normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.right.normal.y(), frustum_rm.right.normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.right.normal.z(), frustum_rm.right.normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.right.distance, frustum_rm.right.distance, EPSILON);
+
+  EXPECT_NEAR(frustum_cm.near.normal.x(), frustum_rm.near.normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.near.normal.y(), frustum_rm.near.normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.near.normal.z(), frustum_rm.near.normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.near.distance, frustum_rm.near.distance, EPSILON);
+
+  EXPECT_NEAR(frustum_cm.far.normal.x(), frustum_rm.far.normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.far.normal.y(), frustum_rm.far.normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.far.normal.z(), frustum_rm.far.normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.far.distance, frustum_rm.far.distance, EPSILON);
+
+  EXPECT_NEAR(frustum_cm.top.normal.x(), frustum_rm.top.normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.top.normal.y(), frustum_rm.top.normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.top.normal.z(), frustum_rm.top.normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.top.distance, frustum_rm.top.distance, EPSILON);
+
+  EXPECT_NEAR(frustum_cm.bottom.normal.x(), frustum_rm.bottom.normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.bottom.normal.y(), frustum_rm.bottom.normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.bottom.normal.z(), frustum_rm.bottom.normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.bottom.distance, frustum_rm.bottom.distance, EPSILON);
+}
 
 TEST(Frustum, make_perspective_parameters_and_projection_roundtrip)
 {

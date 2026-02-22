@@ -200,6 +200,7 @@ public:
 
   constexpr static std::uint16_t NUM_ROWS = ROWS;
   constexpr static std::uint16_t NUM_COLS = COLS;
+  constexpr static MemoryOrder STORAGE_MEMORY_ORDER = MEMORY_ORDER;
   constexpr static bool IS_ROW_MAJOR = (MEMORY_ORDER == MemoryOrder::ROW_MAJOR);
   constexpr static bool IS_COLUMN_MAJOR = (MEMORY_ORDER == MemoryOrder::COLUMN_MAJOR);
 
@@ -271,15 +272,22 @@ public:
   template <MemoryOrder OTHER_MEMORY_ORDER>
   constexpr Matrix<T, ROWS, COLS, OTHER_MEMORY_ORDER> cast() const noexcept
   {
-    Matrix<T, ROWS, COLS, OTHER_MEMORY_ORDER> result{math::UNINITIALIZED};
-    for (std::size_t row = 0U; row < ROWS; ++row)
+    if constexpr (MEMORY_ORDER == OTHER_MEMORY_ORDER)
     {
-      for (std::size_t col = 0U; col < COLS; ++col)
-      {
-        result(row, col) = (*this)(row, col);
-      }
+      return *this;
     }
-    return result;
+    else
+    {
+      Matrix<T, ROWS, COLS, OTHER_MEMORY_ORDER> result{math::UNINITIALIZED};
+      for (std::size_t row = 0U; row < ROWS; ++row)
+      {
+        for (std::size_t col = 0U; col < COLS; ++col)
+        {
+          result(row, col) = (*this)(row, col);
+        }
+      }
+      return result;
+    }
   }
 
   template <typename U = value_type,

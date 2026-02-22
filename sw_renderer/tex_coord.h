@@ -35,7 +35,11 @@ public:
 
   constexpr TexCoord(const T u, const T v) noexcept : Matrix(u, v) {}
 
-  constexpr explicit TexCoord(const Matrix& matrix) noexcept : Matrix(matrix) {}
+  template <math::MemoryOrder MEMORY_ORDER>
+  constexpr explicit TexCoord(const math::Matrix<T, 2, 1, MEMORY_ORDER>& matrix) noexcept
+      : Matrix(matrix.template cast<Matrix::STORAGE_MEMORY_ORDER>())
+  {
+  }
   constexpr explicit TexCoord(const Vector& vector) noexcept : Matrix(vector.as_matrix()) {}
 
   constexpr Matrix& as_matrix() noexcept { return static_cast<Matrix&>(*this); }
