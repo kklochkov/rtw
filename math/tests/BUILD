@@ -12,6 +12,7 @@ cc_test_with_llvm_symbolizer(
         "intersection_test.cpp",
         "matrix_decomposition_test.cpp",
         "matrix_eigen_decomposition_test.cpp",
+        "matrix_storage_order_test.cpp",
         "matrix_test.cpp",
         "point_test.cpp",
         "transform2_test.cpp",
