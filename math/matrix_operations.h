@@ -128,6 +128,66 @@ constexpr Matrix3x3<T, MEMORY_ORDER> inverse(const Matrix3x3<T, MEMORY_ORDER>& m
   // clang-format on
 }
 
+/// Compute the inverse of a square, 4x4 matrix using Cramer's rule.
+/// This is more efficient than QR decomposition for 4x4 matrices.
+/// https://en.wikipedia.org/wiki/Invertible_matrix#Analytic_solution
+/// @param[in] matrix The matrix.
+/// @return The inverse of the matrix.
+template <typename T, MemoryOrder MEMORY_ORDER>
+constexpr Matrix4x4<T, MEMORY_ORDER> inverse(const Matrix4x4<T, MEMORY_ORDER>& matrix) noexcept
+{
+  const auto m00 = matrix(0, 0);
+  const auto m01 = matrix(0, 1);
+  const auto m02 = matrix(0, 2);
+  const auto m03 = matrix(0, 3);
+  const auto m10 = matrix(1, 0);
+  const auto m11 = matrix(1, 1);
+  const auto m12 = matrix(1, 2);
+  const auto m13 = matrix(1, 3);
+  const auto m20 = matrix(2, 0);
+  const auto m21 = matrix(2, 1);
+  const auto m22 = matrix(2, 2);
+  const auto m23 = matrix(2, 3);
+  const auto m30 = matrix(3, 0);
+  const auto m31 = matrix(3, 1);
+  const auto m32 = matrix(3, 2);
+  const auto m33 = matrix(3, 3);
+
+  // Compute 2x2 sub-determinants
+  const auto s0 = (m00 * m11) - (m10 * m01);
+  const auto s1 = (m00 * m12) - (m10 * m02);
+  const auto s2 = (m00 * m13) - (m10 * m03);
+  const auto s3 = (m01 * m12) - (m11 * m02);
+  const auto s4 = (m01 * m13) - (m11 * m03);
+  const auto s5 = (m02 * m13) - (m12 * m03);
+  const auto c5 = (m22 * m33) - (m32 * m23);
+  const auto c4 = (m21 * m33) - (m31 * m23);
+  const auto c3 = (m21 * m32) - (m31 * m22);
+  const auto c2 = (m20 * m33) - (m30 * m23);
+  const auto c1 = (m20 * m32) - (m30 * m22);
+  const auto c0 = (m20 * m31) - (m30 * m21);
+
+  // Compute determinant
+  const auto det = (s0 * c5) - (s1 * c4) + (s2 * c3) + (s3 * c2) - (s4 * c1) + (s5 * c0);
+  assert(det != T{0});
+  const auto inv_det = T{1} / det;
+  // clang-format off
+  return inv_det * Matrix4x4<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
+    ( m11 * c5) - (m12 * c4) + (m13 * c3), (-m01 * c5) + (m02 * c4) - (m03 * c3),
+    ( m31 * s5) - (m32 * s4) + (m33 * s3), (-m21 * s5) + (m22 * s4) - (m23 * s3),
+
+    (-m10 * c5) + (m12 * c2) - (m13 * c1), ( m00 * c5) - (m02 * c2) + (m03 * c1),
+    (-m30 * s5) + (m32 * s2) - (m33 * s1), ( m20 * s5) - (m22 * s2) + (m23 * s1),
+
+    ( m10 * c4) - (m11 * c2) + (m13 * c0), (-m00 * c4) + (m01 * c2) - (m03 * c0),
+    ( m30 * s4) - (m31 * s2) + (m33 * s0), (-m20 * s4) + (m21 * s2) - (m23 * s0),
+
+    (-m10 * c3) + (m11 * c1) - (m12 * c0), ( m00 * c3) - (m01 * c1) + (m02 * c0),
+    (-m30 * s3) + (m31 * s1) - (m32 * s0), ( m20 * s3) - (m21 * s1) + (m22 * s0),
+  };
+  // clang-format on
+}
+
 template <typename T, std::uint16_t ROWS, MemoryOrder MEMORY_ORDER>
 constexpr T dot(const Matrix<T, ROWS, 1, MEMORY_ORDER>& lhs, const Matrix<T, ROWS, 1, MEMORY_ORDER>& rhs) noexcept
 {
