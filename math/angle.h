@@ -1,6 +1,7 @@
 #pragma once
 
 #include "constants/math_constants.h"
+#include "math/numeric.h"
 #include "multiprecision/fixed_point.h"
 
 #include <cmath>
@@ -175,7 +176,7 @@ constexpr AngleQ32 operator""_radQ32(const long double value) noexcept
 
 /// A set of not proper (classic) Euler angles.
 /// The order of the rotations is yaw-pitch-roll.
-/// The cooridate system is right-handed.
+/// The coordinate system is right-handed.
 /// @tparam T The type of the elements.
 template <typename T>
 struct EulerAngles

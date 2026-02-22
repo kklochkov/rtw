@@ -185,7 +185,7 @@ class Matrix
     std::array<T, SIZE> result{std::forward<ArgsT>(args)...};
     if constexpr (MEMORY_ORDER == MemoryOrder::ROW_MAJOR)
     {
-      result = from_row_major_data(std::make_integer_sequence<std::uint16_t, SIZE>{}, result);
+      result = from_column_major_data(std::make_integer_sequence<std::uint16_t, SIZE>{}, result);
     }
     return result;
   }

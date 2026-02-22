@@ -10,7 +10,7 @@ namespace rtw::math
 
 /// Make a barycentric coordinate from a point and a triangle.
 /// The winding order is counter-clockwise.
-/// The cooridate system is right-handed.
+/// The coordinate system is right-handed.
 /// @tparam T The type of the elements.
 /// @param[in] v0 The first vertex of the triangle.
 /// @param[in] v1 The second vertex of the triangle.
@@ -42,7 +42,7 @@ constexpr Barycentric<T> make_barycentric(const Triangle2<T>& triangle, const Po
 
 /// Check if a point is inside or on the edge of a triangle.
 /// The winding order is counter-clockwise.
-/// The cooridate system is right-handed.
+/// The coordinate system is right-handed.
 /// @tparam T The type of the elements.
 /// @param[in] b The barycentric coordinate.
 /// @return True if the point is inside the triangle, false otherwise.
@@ -54,7 +54,7 @@ constexpr bool contains(const Barycentric<T>& b) noexcept
 
 /// Check if a point is inside or on the edge of a triangle.
 /// The winding order is counter-clockwise.
-/// The cooridate system is right-handed.
+/// The coordinate system is right-handed.
 /// @tparam T The type of the elements.
 /// @param[in] v0 The first vertex of the triangle.
 /// @param[in] v1 The second vertex of the triangle.

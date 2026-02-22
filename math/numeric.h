@@ -1,7 +1,7 @@
 #pragma once
 
-#include "multiprecision//math.h"
 #include "multiprecision/fixed_point.h"
+#include "multiprecision/math.h"
 
 namespace rtw::math
 {
