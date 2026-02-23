@@ -1,5 +1,6 @@
 #include "math/format.h"
 #include "math/point.h"
+#include "math/point_operations.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -259,5 +260,49 @@ TEST(Point, swizzle)
     constexpr rtw::math::Point4F V1{1.0F, 2.0F, 3.0F, 4.0F};
     constexpr auto V2 = V1.xyz();
     EXPECT_THAT(V2, ::testing::ElementsAre(1.0F, 2.0F, 3.0F));
+  }
+}
+
+TEST(Point, distance)
+{
+  {
+    const rtw::math::Point2F p1{1.0F, 2.0F};
+    const rtw::math::Point2F p2{4.0F, 6.0F};
+    const auto dist = rtw::math::distance(p1, p2);
+    EXPECT_FLOAT_EQ(dist, 5.0F);
+  }
+  {
+    const rtw::math::Point2F p1{1.0F, 2.0F};
+    const auto dist = rtw::math::distance(p1, p1);
+    EXPECT_FLOAT_EQ(dist, 0.0F);
+  }
+  {
+    const rtw::math::Point2F p1{1.0F, 2.0F};
+    const rtw::math::Point2F p2{4.0F, 6.0F};
+    const auto dist = rtw::math::distance_squared(p1, p2);
+    EXPECT_FLOAT_EQ(dist, 25.0F);
+  }
+  {
+    const rtw::math::Point2F p1{1.0F, 2.0F};
+    const auto dist = rtw::math::distance_squared(p1, p1);
+    EXPECT_FLOAT_EQ(dist, 0.0F);
+  }
+  {
+    const rtw::math::Point3F p{1.0F, 2.0F, 3.0F};
+    const rtw::math::Plane3F plane{rtw::math::Vector3F{0.0F, 1.0F, 0.0F}, -2.0F};
+    const auto dist = rtw::math::signed_distance(p, plane);
+    EXPECT_FLOAT_EQ(dist, 0.0F);
+  }
+  {
+    const rtw::math::Point3F p{1.0F, 3.0F, 1.0F};
+    const rtw::math::Plane3F plane{rtw::math::Vector3F{0.0F, 1.0F, 0.0F}, -2.0F};
+    const auto dist = rtw::math::signed_distance(p, plane);
+    EXPECT_FLOAT_EQ(dist, 1.0F);
+  }
+  {
+    const rtw::math::Point3F p{1.0F, 1.0F, 1.0F};
+    const rtw::math::Plane3F plane{rtw::math::Vector3F{0.0F, 1.0F, 0.0F}, -2.0F};
+    const auto dist = rtw::math::signed_distance(p, plane);
+    EXPECT_FLOAT_EQ(dist, -1.0F);
   }
 }

@@ -18,6 +18,7 @@ cc_library(
         "numeric.h",
         "plane.h",
         "point.h",
+        "point_operations.h",
         "transform2.h",
         "transform3.h",
         "vector.h",
