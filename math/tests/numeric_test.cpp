@@ -149,3 +149,15 @@ TEST(Numeric, is_near_equal_fixed_point_with_custom_epsilon)
   EXPECT_FALSE(rtw::math::is_near_equal(Q16{1.0F}, Q16{3.0F}, Q16{1.0F}));
   EXPECT_FALSE(rtw::math::is_near_equal(Q32{1.0F}, Q32{3.0F}, Q32{1.0F}));
 }
+
+TEST(Numeric, saturate)
+{
+  using rtw::math::saturate;
+
+  EXPECT_EQ(saturate(0.5F), 0.5F);
+  EXPECT_EQ(saturate(1.5F), 1.0F);
+  EXPECT_EQ(saturate(-0.5F), 0.0F);
+  EXPECT_EQ(saturate(0.5), 0.5);
+  EXPECT_EQ(saturate(1.5), 1.0);
+  EXPECT_EQ(saturate(-0.5), 0.0);
+}

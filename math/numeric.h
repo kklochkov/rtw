@@ -68,4 +68,16 @@ constexpr bool is_near_equal(const T lhs, const T rhs, const T epsilon = default
   return abs(lhs - rhs) <= epsilon;
 }
 
+/// Clamp a value to the range [0, 1].
+/// @tparam T The type of the elements.
+/// @param[in] value The value to clamp.
+/// @return The clamped value.
+template <typename T>
+constexpr T saturate(const T value) noexcept
+{
+  using multiprecision::math::clamp;
+  using std::clamp;
+  return clamp(value, T{0}, T{1});
+}
+
 } // namespace rtw::math
