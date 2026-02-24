@@ -181,6 +181,12 @@ constexpr Span<const T> make_span(const ContainerT& container) noexcept
   return Span<const T>{container};
 }
 
+template <typename ContainerT, typename T = typename ContainerT::value_type>
+constexpr Span<T> make_span(ContainerT&&) noexcept = delete;
+
+template <typename T>
+constexpr Span<T> make_span(std::initializer_list<T>&&) noexcept = delete;
+
 template <typename T, std::size_t N>
 constexpr Span<T> make_span(T (&array)[N]) noexcept
 {
