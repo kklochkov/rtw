@@ -1,0 +1,41 @@
+#pragma once
+
+#include "math/ostream.h"
+#include "sw_renderer/color.h"
+#include "sw_renderer/tex_coord.h"
+
+#include <iostream>
+#include <ostream>
+
+namespace rtw::sw_renderer
+{
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const TexCoord<T>& coord) noexcept
+{
+  os << "TexCoord";
+  return math::details::operator<< <math::details::FormatType::VECTOR>(os, coord.as_matrix());
+}
+
+inline std::ostream& operator<<(std::ostream& os, const Color color) noexcept
+{
+  const auto temp_format = os.flags();
+  os << "Color(";
+  os << std::hex << std::uppercase;
+  os << "rgba: 0x" << color.rgba;
+  os << std::dec;
+  os << ", r: " << static_cast<int>(color.r());
+  os << ", g: " << static_cast<int>(color.g());
+  os << ", b: " << static_cast<int>(color.b());
+  os << ", a: " << static_cast<int>(color.a());
+  os << std::fixed << std::setprecision(4);
+  os << ", rf: " << color.rf();
+  os << ", gf: " << color.gf();
+  os << ", bf: " << color.bf();
+  os << ", af: " << color.af();
+  os << ')';
+  os.flags(temp_format);
+  return os;
+}
+
+} // namespace rtw::sw_renderer

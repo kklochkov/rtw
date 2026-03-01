@@ -14,6 +14,7 @@ cc_library(
         "depth_buffer.h",
         "mesh.h",
         "obj_loader.h",
+        "ostream.h",
         "precision.h",
         "projection.h",
         "rasterisation_routines.h",

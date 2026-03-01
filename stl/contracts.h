@@ -2,7 +2,9 @@
 
 #include "stl/source_location.h"
 
+#include <cstdint>
 #include <exception>
+#include <tuple>
 
 namespace rtw::stl::contracts
 {
@@ -33,16 +35,16 @@ namespace details
 {
 
 void handle_contract_violation(const EvaluationSemantic semantic, const DetectionMode detection_mode,
-                               const StringView comment, const AssertionKind assertation_kind,
+                               const StringView comment, const AssertionKind assertion_kind,
                                const SourceLocation source_location) noexcept;
 
 template <EvaluationSemantic SEMANTIC>
 struct ContractViolationHandler
 {
   static void handle_violation(const DetectionMode detection_mode, const StringView comment,
-                               const AssertionKind assertation_kind, const SourceLocation source_location) noexcept
+                               const AssertionKind assertion_kind, const SourceLocation source_location) noexcept
   {
-    handle_contract_violation(SEMANTIC, detection_mode, comment, assertation_kind, source_location);
+    handle_contract_violation(SEMANTIC, detection_mode, comment, assertion_kind, source_location);
   }
 };
 
@@ -50,11 +52,11 @@ template <>
 struct ContractViolationHandler<EvaluationSemantic::QUICK_ENFORCE>
 {
   static void handle_violation(const DetectionMode detection_mode, const StringView comment,
-                               const AssertionKind assertation_kind, const SourceLocation source_location) noexcept
+                               const AssertionKind assertion_kind, const SourceLocation source_location) noexcept
   {
     std::ignore = detection_mode;
     std::ignore = comment;
-    std::ignore = assertation_kind;
+    std::ignore = assertion_kind;
     std::ignore = source_location;
     std::abort();
   }
@@ -65,14 +67,14 @@ struct ContractViolationHandler<EvaluationSemantic::QUICK_ENFORCE>
 class ContractViolation
 {
   friend void details::handle_contract_violation(const EvaluationSemantic semantic, const DetectionMode detection_mode,
-                                                 const StringView comment, const AssertionKind assertation_kind,
+                                                 const StringView comment, const AssertionKind assertion_kind,
                                                  const SourceLocation source_location) noexcept;
 
   ContractViolation(const StringView comment, const SourceLocation& source_location,
-                    const std::exception_ptr& evaluation_exception, const AssertionKind assertation_kind,
+                    const std::exception_ptr& evaluation_exception, const AssertionKind assertion_kind,
                     const EvaluationSemantic evaluation_semantic, const DetectionMode detection_mode) noexcept
       : comment_{comment}, source_location_{source_location}, evaluation_exception_{evaluation_exception},
-        assertation_kind_{assertation_kind}, evaluation_semantic_{evaluation_semantic}, detection_mode_{detection_mode}
+        assertion_kind_{assertion_kind}, evaluation_semantic_{evaluation_semantic}, detection_mode_{detection_mode}
   {
   }
 
@@ -80,7 +82,7 @@ public:
   StringView comment() const noexcept { return comment_; }
   SourceLocation source_location() const noexcept { return source_location_; }
   std::exception_ptr evaluation_exception() const noexcept { return evaluation_exception_; }
-  AssertionKind assertation_kind() const noexcept { return assertation_kind_; }
+  AssertionKind assertion_kind() const noexcept { return assertion_kind_; }
   EvaluationSemantic evaluation_semantic() const noexcept { return evaluation_semantic_; }
   DetectionMode detection_mode() const noexcept { return detection_mode_; }
   bool is_terminating() const noexcept
@@ -93,7 +95,7 @@ private:
   StringView comment_;
   SourceLocation source_location_;
   std::exception_ptr evaluation_exception_;
-  AssertionKind assertation_kind_;
+  AssertionKind assertion_kind_;
   EvaluationSemantic evaluation_semantic_;
   DetectionMode detection_mode_;
 };
@@ -116,7 +118,7 @@ void handle_contract_violation(const ContractViolation& violation) noexcept;
 void invoke_default_contract_violation_handler(const ContractViolation& violation) noexcept;
 
 template <typename PredicateT>
-void check_predicate(const PredicateT& predicate, const StringView comment, const AssertionKind assertation_kind,
+void check_predicate(const PredicateT& predicate, const StringView comment, const AssertionKind assertion_kind,
                      const SourceLocation source_location) noexcept
 {
   constexpr auto SEMANTIC = current_semantic();
@@ -124,7 +126,7 @@ void check_predicate(const PredicateT& predicate, const StringView comment, cons
   {
     std::ignore = predicate;
     std::ignore = comment;
-    std::ignore = assertation_kind;
+    std::ignore = assertion_kind;
     std::ignore = source_location;
   }
   else if constexpr ((SEMANTIC == EvaluationSemantic::OBSERVE) || (SEMANTIC == EvaluationSemantic::ENFORCE)
@@ -140,14 +142,14 @@ void check_predicate(const PredicateT& predicate, const StringView comment, cons
     {
       violated = true;
       details::ContractViolationHandler<SEMANTIC>::handle_violation(DetectionMode::EVALUATION_EXCEPTION, comment,
-                                                                    assertation_kind, source_location);
+                                                                    assertion_kind, source_location);
       handled = true;
     }
 
     if (violated && !handled)
     {
       details::ContractViolationHandler<SEMANTIC>::handle_violation(DetectionMode::PREDICATE_FALSE, comment,
-                                                                    assertation_kind, source_location);
+                                                                    assertion_kind, source_location);
     }
   }
 }

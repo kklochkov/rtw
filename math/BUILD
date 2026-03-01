@@ -16,6 +16,7 @@ cc_library(
         "matrix_eigen_decomposition.h",
         "matrix_operations.h",
         "numeric.h",
+        "ostream.h",
         "plane.h",
         "point.h",
         "point_operations.h",

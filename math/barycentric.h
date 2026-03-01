@@ -7,12 +7,6 @@ namespace rtw::math
 {
 
 template <typename T>
-class Barycentric;
-
-template <typename T>
-std::ostream& operator<<(std::ostream& os, const Barycentric<T>& coord) noexcept;
-
-template <typename T>
 class Barycentric : Matrix<T, 3, 1>
 {
 public:
@@ -84,8 +78,6 @@ public:
 
   friend constexpr bool operator!=(const Barycentric& lhs, const Barycentric& rhs) noexcept { return !(lhs == rhs); }
   /// @}
-
-  friend std::ostream& operator<< <T>(std::ostream& os, const Barycentric& coord) noexcept;
 };
 
 using BarycentricF = Barycentric<float>;

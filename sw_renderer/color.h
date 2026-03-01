@@ -77,8 +77,6 @@ struct Color
                  static_cast<std::uint8_t>(b() + other.b()), a()};
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const Color color) noexcept;
-
   std::uint32_t rgba{0x00'00'00'FF};
 };
 

@@ -1,4 +1,5 @@
 #include "stl/contracts.h"
+#include "stl/ostream.h"
 
 #include <iostream>
 
@@ -8,9 +9,9 @@ namespace rtw::stl::contracts
 namespace
 {
 
-constexpr StringView to_string_view(const AssertionKind assertation_kind) noexcept
+constexpr StringView to_string_view(const AssertionKind assertion_kind) noexcept
 {
-  switch (assertation_kind)
+  switch (assertion_kind)
   {
   case AssertionKind::PRE:
     return "[pre]";
@@ -59,13 +60,13 @@ namespace details
 {
 
 void handle_contract_violation(const EvaluationSemantic semantic, const DetectionMode detection_mode,
-                               const StringView comment, const AssertionKind assertation_kind,
+                               const StringView comment, const AssertionKind assertion_kind,
                                const SourceLocation source_location) noexcept
 {
   const auto evaluation_exception =
       detection_mode == DetectionMode::EVALUATION_EXCEPTION ? std::current_exception() : nullptr;
-  const ContractViolation violation{comment,          source_location, evaluation_exception,
-                                    assertation_kind, semantic,        detection_mode};
+  const ContractViolation violation{comment,        source_location, evaluation_exception,
+                                    assertion_kind, semantic,        detection_mode};
   rtw::stl::contracts::handle_contract_violation(violation);
 }
 
@@ -80,12 +81,11 @@ void invoke_default_contract_violation_handler(const ContractViolation& violatio
     std::cerr << "  Comment: " << violation.comment().data() << '\n';
   }
 
-  std::cerr << "  Source: " << violation.source_location().file_name().data() << ':'
-            << violation.source_location().line() << " in function "
-            << violation.source_location().function_name().data() << '\n'
-            << "  Assertion Kind: " << to_string_view(violation.assertation_kind()).data() << '\n'
-            << "  Evaluation Semantic: " << to_string_view(violation.evaluation_semantic()).data() << '\n'
-            << "  Detection Mode: " << to_string_view(violation.detection_mode()).data() << '\n';
+  std::cerr << "  Source: " << violation.source_location().file_name() << ':' << violation.source_location().line()
+            << " in function " << violation.source_location().function_name() << '\n'
+            << "  Assertion Kind: " << to_string_view(violation.assertion_kind()) << '\n'
+            << "  Evaluation Semantic: " << to_string_view(violation.evaluation_semantic()) << '\n'
+            << "  Detection Mode: " << to_string_view(violation.detection_mode()) << '\n';
 
   if (violation.evaluation_exception())
   {

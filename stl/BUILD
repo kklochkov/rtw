@@ -11,6 +11,7 @@ cc_library(
         "heap_array.h",
         "id.h",
         "iterator.h",
+        "ostream.h",
         "packed_buffer.h",
         "source_location.h",
         "span.h",
