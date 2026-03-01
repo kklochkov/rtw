@@ -61,12 +61,11 @@ TEST(StringViewTest, size_and_empty)
   EXPECT_TRUE(empty_view.empty());
 }
 
-TEST(StringViewTest, data_and_c_str)
+TEST(StringViewTest, data)
 {
   const char* str = "Hello, World!";
   rtw::stl::StringView view{str};
   EXPECT_EQ(view.data(), str);
-  EXPECT_EQ(view.c_str(), str);
 }
 
 TEST(StringViewTest, front_and_back)

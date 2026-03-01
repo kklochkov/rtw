@@ -33,7 +33,6 @@ public:
   constexpr bool empty() const noexcept { return storage_.empty(); }
 
   constexpr const_pointer data() const noexcept { return storage_.data(); }
-  constexpr const_pointer c_str() const noexcept { return storage_.data(); }
   constexpr const_reference operator[](const size_type index) const noexcept { return storage_[index]; }
 
   constexpr const_reference front() const noexcept { return storage_.front(); }
