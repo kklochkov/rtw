@@ -2,14 +2,17 @@ load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
     name = "stl",
+    srcs = ["contracts.cpp"],
     hdrs = [
         "circular_buffer.h",
+        "contracts.h",
         "flags.h",
         "graph.h",
         "heap_array.h",
         "id.h",
         "iterator.h",
         "packed_buffer.h",
+        "source_location.h",
         "span.h",
         "static_contiguous_storage.h",
         "static_flat_unordered_map.h",
