@@ -394,4 +394,32 @@ TEST(EventBusTest, add_subscription_no_crash_on_destruction)
   EXPECT_EQ(call_count, 2U);
 }
 
+TEST(EventBusTest, subscription_outlives_event_bus)
+{
+  // This test verifies that a Subscription object can safely outlive the EventBus.
+  EventBus::Subscription subscription;
+  {
+    EventBus event_bus;
+    std::uint32_t call_count = 0U;
+    subscription = event_bus.subscribe<TestEvent42>(
+        [&call_count](const TestEvent42& event)
+        {
+          EXPECT_EQ(event.name, "TestEvent42");
+          EXPECT_EQ(event.value, 42);
+          ++call_count;
+        });
+    EXPECT_TRUE(subscription);
+    event_bus.publish(TestEvent42{});
+    EXPECT_EQ(call_count, 1U);
+    // EventBus goes out of scope here, but subscription survives
+  }
+  // After EventBus is destroyed:
+  // 1. subscription.unsubscribe() should be safe (no-op)
+  // 2. subscription destructor should be safe (no-op)
+
+  subscription.unsubscribe(); // Should not crash or cause UB
+
+  // Subscription destructor runs here - should also be safe
+}
+
 } // namespace rtw::event_bus

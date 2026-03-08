@@ -54,6 +54,14 @@ private:
   std::mutex mutex_;
 };
 
+enum class EventBusState : std::uint8_t
+{
+  ALIVE,    ///< The event bus is alive and can be subscribed to and published.
+  DESTROYED ///< The event bus has been destroyed.
+};
+
+using EventBusStateToken = std::shared_ptr<std::atomic<EventBusState>>;
+
 } // namespace details
 
 /// An event bus implementation that supports subscribing to and publishing events of arbitrary types.
@@ -123,9 +131,10 @@ public:
   {
     friend class GenericEventBus;
 
-    Subscription(GenericEventBus* event_bus, const std::type_index& handler_type_index,
-                 IEventHandler* event_handler) noexcept
-        : event_bus_{event_bus}, handler_type_index_{handler_type_index}, event_handler_{event_handler}
+    Subscription(GenericEventBus* event_bus, const std::type_index& handler_type_index, IEventHandler* event_handler,
+                 details::EventBusStateToken event_bus_state_token) noexcept
+        : event_bus_{event_bus}, handler_type_index_{handler_type_index}, event_handler_{event_handler},
+          event_bus_state_token_{std::move(event_bus_state_token)}
     {
     }
 
@@ -139,7 +148,8 @@ public:
     Subscription(Subscription&& other) noexcept
         : event_bus_{std::exchange(other.event_bus_, nullptr)},
           handler_type_index_{std::exchange(other.handler_type_index_, VOID_TYPE_INDEX)},
-          event_handler_{std::exchange(other.event_handler_, nullptr)}
+          event_handler_{std::exchange(other.event_handler_, nullptr)},
+          event_bus_state_token_{std::exchange(other.event_bus_state_token_, nullptr)}
     {
     }
     Subscription& operator=(Subscription&& other) noexcept
@@ -151,6 +161,7 @@ public:
         event_bus_ = other.event_bus_;
         handler_type_index_ = other.handler_type_index_;
         event_handler_ = other.event_handler_;
+        event_bus_state_token_ = std::move(other.event_bus_state_token_);
 
         other.release();
       }
@@ -160,11 +171,12 @@ public:
 
     void unsubscribe() noexcept
     {
-      if (event_bus_)
+      if (event_bus_state_token_ && (event_bus_state_token_->load() == details::EventBusState::ALIVE))
       {
         event_bus_->unsubscribe(*this);
-        release();
       }
+
+      release();
     }
 
     void release() noexcept
@@ -172,6 +184,7 @@ public:
       event_bus_ = nullptr;
       handler_type_index_ = VOID_TYPE_INDEX;
       event_handler_ = nullptr;
+      event_bus_state_token_ = nullptr;
     }
 
     bool operator==(const Subscription& other) const noexcept
@@ -187,21 +200,33 @@ public:
     GenericEventBus* event_bus_{nullptr};
     std::type_index handler_type_index_{VOID_TYPE_INDEX};
     IEventHandler* event_handler_{nullptr};
+    details::EventBusStateToken event_bus_state_token_{nullptr};
   };
 
+  GenericEventBus()
+      : state_token_{std::make_shared<details::EventBusStateToken::element_type>(details::EventBusState::ALIVE)}
+  {
+  }
+
+  GenericEventBus(const GenericEventBus&) = delete;
+  GenericEventBus& operator=(const GenericEventBus&) = delete;
+  GenericEventBus(GenericEventBus&& other) noexcept = delete;
+  GenericEventBus& operator=(GenericEventBus&& other) noexcept = delete;
+  ~GenericEventBus() { *state_token_ = details::EventBusState::DESTROYED; }
+
   template <typename EventT, typename CallableT, typename... ArgsT>
-  void add_subscription(CallableT&& callable, ArgsT&&... args) noexcept
+  void add_subscription(CallableT&& callable, ArgsT&&... args)
   {
     [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
     subscribe_unsafe<EventT>(std::forward<CallableT>(callable), std::forward<ArgsT>(args)...);
   }
 
   template <typename EventT, typename CallableT, typename... ArgsT>
-  [[nodiscard]] Subscription subscribe(CallableT&& callable, ArgsT&&... args) noexcept
+  [[nodiscard]] Subscription subscribe(CallableT&& callable, ArgsT&&... args)
   {
     [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
     auto& context = subscribe_unsafe<EventT>(std::forward<CallableT>(callable), std::forward<ArgsT>(args)...);
-    return Subscription{this, context.handler_type_index, context.event_handler.get()};
+    return Subscription{this, context.handler_type_index, context.event_handler.get(), state_token_};
   }
 
   void unsubscribe(const Subscription& subscription) noexcept
@@ -330,6 +355,7 @@ private:
   using EventHandlers = std::unordered_map<std::type_index, std::vector<SubscriptionContext>>;
   EventHandlers event_handlers_;
 
+  details::EventBusStateToken state_token_;
   details::SynchronizationPolicy<POLICY> synchronization_policy_;
 
   std::size_t total_subscribers_{0U};
