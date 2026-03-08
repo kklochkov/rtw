@@ -204,8 +204,8 @@ bool Application::load_textures(const std::filesystem::path& resources_folder, r
 
 void Application::process_events(bool& is_running, const rtw::time_constants::Seconds& delta_time)
 {
-  const auto speed = 0.2F * delta_time.count();             // m/s
-  const auto angular_speed = 0.6_degF * delta_time.count(); // deg/s -> rad/s
+  const auto speed = 2.0F * delta_time.count();              // m/s
+  const auto angular_speed = 15.0_degF * delta_time.count(); // deg/s -> rad/s
 
   SDL_Event event;
   while (SDL_PollEvent(&event))

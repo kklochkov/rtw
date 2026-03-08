@@ -123,8 +123,9 @@ public:
   {
     friend class GenericEventBus;
 
-    Subscription(GenericEventBus* event_bus, const std::type_index& handler_type_index) noexcept
-        : event_bus_{event_bus}, handler_type_index_{handler_type_index}
+    Subscription(GenericEventBus* event_bus, const std::type_index& handler_type_index,
+                 IEventHandler* event_handler) noexcept
+        : event_bus_{event_bus}, handler_type_index_{handler_type_index}, event_handler_{event_handler}
     {
     }
 
@@ -137,7 +138,8 @@ public:
     Subscription& operator=(const Subscription&) noexcept = delete;
     Subscription(Subscription&& other) noexcept
         : event_bus_{std::exchange(other.event_bus_, nullptr)},
-          handler_type_index_{std::exchange(other.handler_type_index_, VOID_TYPE_INDEX)}
+          handler_type_index_{std::exchange(other.handler_type_index_, VOID_TYPE_INDEX)},
+          event_handler_{std::exchange(other.event_handler_, nullptr)}
     {
     }
     Subscription& operator=(Subscription&& other) noexcept
@@ -148,6 +150,7 @@ public:
 
         event_bus_ = other.event_bus_;
         handler_type_index_ = other.handler_type_index_;
+        event_handler_ = other.event_handler_;
 
         other.release();
       }
@@ -168,22 +171,22 @@ public:
     {
       event_bus_ = nullptr;
       handler_type_index_ = VOID_TYPE_INDEX;
+      event_handler_ = nullptr;
     }
 
     bool operator==(const Subscription& other) const noexcept
     {
-      return handler_type_index_ == other.handler_type_index_;
+      return (handler_type_index_ == other.handler_type_index_) && (event_handler_ == other.event_handler_);
     }
 
     explicit operator bool() const noexcept { return event_bus_ != nullptr; }
-
-    std::type_index get_handler_type_index() const noexcept { return handler_type_index_; }
 
   private:
     GenericEventBus* get_event_bus() const noexcept { return event_bus_; }
 
     GenericEventBus* event_bus_{nullptr};
     std::type_index handler_type_index_{VOID_TYPE_INDEX};
+    IEventHandler* event_handler_{nullptr};
   };
 
   template <typename EventT, typename CallableT, typename... ArgsT>
@@ -198,7 +201,7 @@ public:
   {
     [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
     auto& context = subscribe_unsafe<EventT>(std::forward<CallableT>(callable), std::forward<ArgsT>(args)...);
-    return std::exchange(context.subscription, Subscription{});
+    return Subscription{this, context.handler_type_index, context.event_handler.get()};
   }
 
   void unsubscribe(const Subscription& subscription) noexcept
@@ -214,7 +217,8 @@ public:
     {
       for (auto sub_it = subscriptions.begin(); sub_it != subscriptions.end();)
       {
-        if (*sub_it == subscription)
+        if ((sub_it->handler_type_index == subscription.handler_type_index_)
+            && (sub_it->event_handler.get() == subscription.event_handler_))
         {
           --total_subscribers_;
           sub_it = subscriptions.erase(sub_it);
@@ -302,14 +306,8 @@ private:
     {
     }
 
-    bool operator==(const Subscription& other) const noexcept
-    {
-      return handler_type_index == other.get_handler_type_index();
-    }
-
     std::type_index handler_type_index;
     std::unique_ptr<IEventHandler> event_handler;
-    Subscription subscription;
   };
 
   template <typename EventT, typename CallableT, typename... ArgsT>
@@ -323,7 +321,6 @@ private:
 
     const auto type_index = get_event_type_index<EventT>();
     auto& context = event_handlers_[type_index].emplace_back(handler_type_index, std::move(event_handler));
-    context.subscription = Subscription{this, handler_type_index};
 
     ++total_subscribers_;
 

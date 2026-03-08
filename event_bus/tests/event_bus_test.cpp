@@ -354,4 +354,44 @@ TEST(EventBusTest, subscription)
   }
 }
 
+TEST(EventBusTest, add_subscription_no_crash_on_destruction)
+{
+  // This test verifies that using add_subscription (which doesn't return a Subscription)
+  // doesn't cause a crash when the EventBus is destroyed without explicit unsubscribe.
+
+  std::uint32_t call_count = 0U;
+
+  {
+    EventBus event_bus;
+
+    event_bus.add_subscription<TestEvent42>(
+        [&call_count](const TestEvent42& event)
+        {
+          EXPECT_EQ(event.name, "TestEvent42");
+          EXPECT_EQ(event.value, 42);
+          ++call_count;
+        });
+
+    event_bus.add_subscription<TestEvent43>(
+        [&call_count](const TestEvent43& event)
+        {
+          EXPECT_EQ(event.name, "TestEvent43");
+          EXPECT_EQ(event.value, 43);
+          ++call_count;
+        });
+
+    EXPECT_EQ(event_bus.get_total_number_of_subscribers(), 2U);
+
+    event_bus.publish(TestEvent42{});
+    event_bus.publish(TestEvent43{});
+
+    EXPECT_EQ(call_count, 2U);
+
+    // Event bus goes out of scope here WITHOUT calling unsubscribe.
+    // This should NOT crash.
+  }
+
+  EXPECT_EQ(call_count, 2U);
+}
+
 } // namespace rtw::event_bus
