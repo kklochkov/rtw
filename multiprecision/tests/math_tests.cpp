@@ -25,6 +25,26 @@ public:
     }
   }
 
+  // asin/acos have higher error near domain boundaries (±1) due to steep slope
+  constexpr static double get_trigonometric_asin_acos_abs_error(double value) noexcept
+  {
+    if constexpr (std::is_same_v<T, rtw::multiprecision::FixedPoint8>)
+    {
+      // Near boundaries (|value| > 0.9), allow larger error for low-precision types
+      return std::abs(value) > 0.9 ? 0.05 : 0.03;
+    }
+    else if constexpr ((std::is_same_v<T, rtw::multiprecision::FixedPoint16>)
+                       || (std::is_same_v<T, rtw::multiprecision::FixedPoint32>))
+    {
+      return 0.0003;
+    }
+    else
+    {
+      static_assert(sizeof(T) == 0,
+                    "Unsupported type"); // workaround before CWG2518/P2593R1
+    }
+  }
+
   constexpr static double get_trigonometric_tan_abs_error(const std::int16_t deg) noexcept
   {
     if constexpr (std::is_same_v<T, rtw::multiprecision::FixedPoint8>)
@@ -152,6 +172,26 @@ TYPED_TEST(SignedFixedPointMathTest, sin_cos)
   }
 }
 
+TYPED_TEST(SignedFixedPointMathTest, asin_acos)
+{
+  for (double value = -1.0; value <= 1.0; value += 0.01)
+  {
+    const auto result_asin = rtw::multiprecision::math::asin(TypeParam(value));
+    const auto expected_asin = std::asin(value);
+    EXPECT_NEAR(static_cast<double>(result_asin), expected_asin, this->get_trigonometric_asin_acos_abs_error(value));
+
+    const auto result_acos = rtw::multiprecision::math::acos(TypeParam(value));
+    const auto expected_acos = std::acos(value);
+    EXPECT_NEAR(static_cast<double>(result_acos), expected_acos, this->get_trigonometric_asin_acos_abs_error(value));
+  }
+  {
+    EXPECT_DEATH(rtw::multiprecision::math::asin(TypeParam(1.1)), "");
+    EXPECT_DEATH(rtw::multiprecision::math::asin(TypeParam(-1.1)), "");
+    EXPECT_DEATH(rtw::multiprecision::math::acos(TypeParam(1.1)), "");
+    EXPECT_DEATH(rtw::multiprecision::math::acos(TypeParam(-1.1)), "");
+  }
+}
+
 TYPED_TEST(SignedFixedPointMathTest, tan)
 {
   for (std::int16_t deg = -this->get_tan_angle_range_deg(); deg <= this->get_tan_angle_range_deg(); ++deg)
@@ -164,6 +204,32 @@ TYPED_TEST(SignedFixedPointMathTest, tan)
   {
     EXPECT_DEATH(rtw::multiprecision::math::tan(TypeParam::pi_2()), "");
     EXPECT_DEATH(rtw::multiprecision::math::tan(-TypeParam::pi_2()), "");
+  }
+}
+
+TYPED_TEST(SignedFixedPointMathTest, atan)
+{
+  for (double value = -1.0; value <= 1.0; value += 0.01)
+  {
+    const auto result_atan = rtw::multiprecision::math::atan(TypeParam(value));
+    const auto expected_atan = std::atan(value);
+    EXPECT_NEAR(static_cast<double>(result_atan), expected_atan, this->get_trigonometric_sin_cos_abs_error());
+  }
+}
+
+TYPED_TEST(SignedFixedPointMathTest, atan2)
+{
+  for (double y = -1.0; y <= 1.0; y += 0.01)
+  {
+    for (double x = -1.0; x <= 1.0; x += 0.01)
+    {
+      const TypeParam fp_y(y);
+      const TypeParam fp_x(x);
+      const auto result_atan2 = rtw::multiprecision::math::atan2(fp_y, fp_x);
+      // Compare against std::atan2 using the same (possibly quantized) values
+      const auto expected_atan2 = std::atan2(static_cast<double>(fp_y), static_cast<double>(fp_x));
+      EXPECT_NEAR(static_cast<double>(result_atan2), expected_atan2, this->get_trigonometric_sin_cos_abs_error());
+    }
   }
 }
 //  -----------------------------------------------------------------------------------------------
