@@ -51,8 +51,22 @@ template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> round(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
-  // Clear the fractional part and round to the nearest integer
-  return FixedPoint(RAW_VALUE_CONSTRUCT, (value.raw_value() + FixedPoint::HALF) & FixedPoint::INTEGER_MASK);
+  // Round half away from zero (matching std::round behavior)
+  if constexpr (std::is_signed_v<T>)
+  {
+    const auto raw = value.raw_value();
+    if (raw >= 0)
+    {
+      return FixedPoint(RAW_VALUE_CONSTRUCT, (raw + FixedPoint::HALF) & FixedPoint::INTEGER_MASK);
+    }
+    // For negative: negate, round as positive, negate back
+    const auto pos_rounded = (-raw + FixedPoint::HALF) & FixedPoint::INTEGER_MASK;
+    return FixedPoint(RAW_VALUE_CONSTRUCT, -pos_rounded);
+  }
+  else
+  {
+    return FixedPoint(RAW_VALUE_CONSTRUCT, (value.raw_value() + FixedPoint::HALF) & FixedPoint::INTEGER_MASK);
+  }
 }
 
 /// Calculate the square root of a fixed-point number using the Heron's (Babylonian) method.

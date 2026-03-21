@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
 #include <type_traits>
 
 namespace rtw::multiprecision
@@ -56,7 +57,15 @@ constexpr F round_to_nearest_integer(const F value) noexcept
 template <typename F, typename = std::enable_if_t<std::is_floating_point_v<F>>>
 constexpr F fmod(const F dividend, const F divisor) noexcept
 {
-  return dividend - (divisor * static_cast<F>(static_cast<std::int64_t>(dividend / divisor)));
+  const auto quotient = dividend / divisor;
+  // For values within int64 range, use the cast method for truncation
+  // For larger values, floating-point can't represent fractions anyway
+  if ((quotient >= static_cast<F>(std::numeric_limits<std::int64_t>::min()))
+      && (quotient <= static_cast<F>(std::numeric_limits<std::int64_t>::max())))
+  {
+    return dividend - (divisor * static_cast<F>(static_cast<std::int64_t>(quotient)));
+  }
+  return dividend - (divisor * quotient);
 }
 
 } // namespace rtw::multiprecision

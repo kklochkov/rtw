@@ -339,7 +339,7 @@ struct numeric_limits<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>
   constexpr static FixedPoint lowest() noexcept { return FixedPoint::min(); }
   constexpr static FixedPoint min() noexcept { return FixedPoint::min(); }
   constexpr static FixedPoint max() noexcept { return FixedPoint::max(); }
-  constexpr static FixedPoint epsilon() noexcept { return FixedPoint{1}; }
+  constexpr static FixedPoint epsilon() noexcept { return FixedPoint(rtw::multiprecision::RAW_VALUE_CONSTRUCT, 1); }
   constexpr static FixedPoint round_error() noexcept { return FixedPoint{1} >> 1; }
   constexpr static FixedPoint infinity() noexcept { return FixedPoint{0}; }
   constexpr static FixedPoint quiet_NaN() noexcept { return FixedPoint{0}; }

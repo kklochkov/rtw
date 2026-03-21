@@ -124,10 +124,15 @@ TYPED_TEST(SignedFixedPointMathTest, ceil)
 
 TYPED_TEST(SignedFixedPointMathTest, round)
 {
+  // Round half away from zero (matching std::round behavior)
   EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(1.23)), 1.0);
   EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(1.5)), 2.0);
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(1.6)), 2.0);
   EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-1.23)), -1.0);
-  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-1.5)), -1.0);
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-1.5)), -2.0);
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-1.6)), -2.0);
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(2.5)), 3.0);
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-2.5)), -3.0);
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -169,6 +174,49 @@ TYPED_TEST(SignedFixedPointMathTest, sin_cos)
     const auto result_cos = rtw::multiprecision::math::cos(TypeParam(rad));
     const auto expected_cos = std::cos(rad);
     EXPECT_NEAR(static_cast<double>(result_cos), expected_cos, this->get_trigonometric_sin_cos_abs_error());
+  }
+
+  // Edge cases: exact multiples of PI and PI/2
+  {
+    // sin(0) = 0, cos(0) = 1
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::sin(TypeParam(0))), 0.0,
+                this->get_trigonometric_sin_cos_abs_error());
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::cos(TypeParam(0))), 1.0,
+                this->get_trigonometric_sin_cos_abs_error());
+
+    // sin(PI/2) = 1, cos(PI/2) = 0
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::sin(TypeParam::pi_2())), 1.0,
+                this->get_trigonometric_sin_cos_abs_error());
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::cos(TypeParam::pi_2())), 0.0,
+                this->get_trigonometric_sin_cos_abs_error());
+
+    // sin(PI) = 0, cos(PI) = -1
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::sin(TypeParam::pi())), 0.0,
+                this->get_trigonometric_sin_cos_abs_error());
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::cos(TypeParam::pi())), -1.0,
+                this->get_trigonometric_sin_cos_abs_error());
+
+    // sin(2*PI) = 0, cos(2*PI) = 1
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::sin(TypeParam::two_pi())), 0.0,
+                this->get_trigonometric_sin_cos_abs_error());
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::cos(TypeParam::two_pi())), 1.0,
+                this->get_trigonometric_sin_cos_abs_error());
+
+    // Negative angles
+    // sin(-PI/2) = -1, cos(-PI/2) = 0
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::sin(-TypeParam::pi_2())), -1.0,
+                this->get_trigonometric_sin_cos_abs_error());
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::cos(-TypeParam::pi_2())), 0.0,
+                this->get_trigonometric_sin_cos_abs_error());
+  }
+
+  // Large angles (multiple rotations)
+  {
+    const auto large_angle = TypeParam(10.0) * TypeParam::two_pi(); // 10 full rotations
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::sin(large_angle)), std::sin(10.0 * 2.0 * M_PI),
+                this->get_trigonometric_sin_cos_abs_error());
+    EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::cos(large_angle)), std::cos(10.0 * 2.0 * M_PI),
+                this->get_trigonometric_sin_cos_abs_error());
   }
 }
 

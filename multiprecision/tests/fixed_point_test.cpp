@@ -406,6 +406,30 @@ TYPED_TEST(SignedFixedPointTest, arithmetic_saturate)
     const TypeParam b(0.0);
     EXPECT_DEATH(a / b, "");
   }
+  // Constructor saturation from out-of-range values
+  {
+    // Value larger than max should saturate to max
+    const double large_value = static_cast<double>(TypeParam::max()) * 2.0;
+    const TypeParam a(large_value);
+    EXPECT_EQ(a, TypeParam::max());
+  }
+  {
+    // Value smaller than min should saturate to min
+    const double small_value = static_cast<double>(TypeParam::min()) * 2.0;
+    const TypeParam a(small_value);
+    EXPECT_EQ(a, TypeParam::min());
+  }
+  // Increment/decrement at boundaries
+  {
+    TypeParam a = TypeParam::max();
+    ++a;
+    EXPECT_EQ(a, TypeParam::max());
+  }
+  {
+    TypeParam a = TypeParam::min();
+    --a;
+    EXPECT_EQ(a, TypeParam::min());
+  }
 }
 // -----------------------------------------------------------------------------------------------
 template <typename T>
