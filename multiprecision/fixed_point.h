@@ -331,8 +331,10 @@ struct numeric_limits<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>
   constexpr static int min_exponent = -static_cast<int>(FixedPoint::FRACTIONAL_BITS) + std::is_signed_v<T>;
   constexpr static int max_exponent = static_cast<int>(FixedPoint::INTEGER_BITS);
   constexpr static int min_exponent10 =
-      -static_cast<int>(FixedPoint::FRACTIONAL_BITS) * std::log10(2) + std::is_signed_v<T>;
-  constexpr static int max_exponent10 = static_cast<int>(FixedPoint::INTEGER_BITS * std::log10(2));
+      static_cast<int>(-static_cast<int>(FixedPoint::FRACTIONAL_BITS) * rtw::math_constants::LOG10_2<double>)
+      + std::is_signed_v<T>;
+  constexpr static int max_exponent10 =
+      static_cast<int>(FixedPoint::INTEGER_BITS * rtw::math_constants::LOG10_2<double>);
   constexpr static bool traps = numeric_limits<T>::traps;
   constexpr static bool tinyness_before = false;
 
@@ -340,7 +342,10 @@ struct numeric_limits<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>
   constexpr static FixedPoint min() noexcept { return FixedPoint::min(); }
   constexpr static FixedPoint max() noexcept { return FixedPoint::max(); }
   constexpr static FixedPoint epsilon() noexcept { return FixedPoint(rtw::multiprecision::RAW_VALUE_CONSTRUCT, 1); }
-  constexpr static FixedPoint round_error() noexcept { return FixedPoint{1} >> 1; }
+  constexpr static FixedPoint round_error() noexcept
+  {
+    return FixedPoint(rtw::multiprecision::RAW_VALUE_CONSTRUCT, FixedPoint::HALF);
+  }
   constexpr static FixedPoint infinity() noexcept { return FixedPoint{0}; }
   constexpr static FixedPoint quiet_NaN() noexcept { return FixedPoint{0}; }
   constexpr static FixedPoint signaling_NaN() noexcept { return FixedPoint{0}; }

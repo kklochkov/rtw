@@ -668,3 +668,77 @@ TEST(fixed_point, operator_stream)
     EXPECT_EQ(ss.str(), "ufp32.32(123)");
   }
 }
+// -----------------------------------------------------------------------------------------------
+TEST(NumericLimits, epsilon)
+{
+  // epsilon() should return the smallest representable positive value (ULP)
+  {
+    using FP = rtw::multiprecision::FixedPoint8;
+    constexpr auto EPS = std::numeric_limits<FP>::epsilon();
+    static_assert(EPS.raw_value() == 1);
+    EXPECT_DOUBLE_EQ(static_cast<double>(EPS), FP::RESOLUTION);
+  }
+  {
+    using FP = rtw::multiprecision::FixedPoint16;
+    constexpr auto EPS = std::numeric_limits<FP>::epsilon();
+    static_assert(EPS.raw_value() == 1);
+    EXPECT_DOUBLE_EQ(static_cast<double>(EPS), FP::RESOLUTION);
+  }
+  {
+    using FP = rtw::multiprecision::FixedPoint32;
+    constexpr auto EPS = std::numeric_limits<FP>::epsilon();
+    static_assert(EPS.raw_value() == 1);
+    EXPECT_DOUBLE_EQ(static_cast<double>(EPS), FP::RESOLUTION);
+  }
+}
+
+TEST(NumericLimits, round_error)
+{
+  // round_error() should return 0.5 (half of the ULP for round-to-nearest)
+  {
+    using FP = rtw::multiprecision::FixedPoint8;
+    constexpr auto ERR = std::numeric_limits<FP>::round_error();
+    static_assert(ERR.raw_value() == FP::HALF);
+    EXPECT_DOUBLE_EQ(static_cast<double>(ERR), 0.5);
+  }
+  {
+    using FP = rtw::multiprecision::FixedPoint16;
+    constexpr auto ERR = std::numeric_limits<FP>::round_error();
+    static_assert(ERR.raw_value() == FP::HALF);
+    EXPECT_DOUBLE_EQ(static_cast<double>(ERR), 0.5);
+  }
+  {
+    using FP = rtw::multiprecision::FixedPoint32;
+    constexpr auto ERR = std::numeric_limits<FP>::round_error();
+    static_assert(ERR.raw_value() == FP::HALF);
+    EXPECT_DOUBLE_EQ(static_cast<double>(ERR), 0.5);
+  }
+}
+
+TEST(NumericLimits, exponent10_is_constexpr)
+{
+  // Verify min_exponent10 and max_exponent10 are constexpr (previously used non-constexpr std::log10)
+  {
+    using FP = rtw::multiprecision::FixedPoint8;
+    constexpr int MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
+    constexpr int MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
+    // min_exponent10 should be negative (fractional bits give sub-1 resolution)
+    EXPECT_LT(MIN_EXP10, 0);
+    // max_exponent10 should be positive (integer bits give values > 1)
+    EXPECT_GT(MAX_EXP10, 0);
+  }
+  {
+    using FP = rtw::multiprecision::FixedPoint16;
+    constexpr int MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
+    constexpr int MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
+    EXPECT_LT(MIN_EXP10, 0);
+    EXPECT_GT(MAX_EXP10, 0);
+  }
+  {
+    using FP = rtw::multiprecision::FixedPoint32;
+    constexpr int MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
+    constexpr int MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
+    EXPECT_LT(MIN_EXP10, 0);
+    EXPECT_GT(MAX_EXP10, 0);
+  }
+}
