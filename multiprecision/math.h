@@ -9,14 +9,14 @@
 namespace rtw::multiprecision::math
 {
 
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT, typename = std::enable_if_t<std::is_signed_v<T>>>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
   return FixedPoint(RAW_VALUE_CONSTRUCT, std::abs(value.raw_value()));
 }
 
-template <typename T>
+template <typename T, typename = std::enable_if_t<std::is_signed_v<T>>>
 constexpr Int<T> abs(const Int<T> value) noexcept
 {
   return sign(value < Int<T>{0}) * value;

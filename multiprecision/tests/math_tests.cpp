@@ -209,11 +209,47 @@ TYPED_TEST(SignedFixedPointMathTest, tan)
 
 TYPED_TEST(SignedFixedPointMathTest, atan)
 {
+  // Test |x| <= 1 (uses Taylor series directly or PI/4 reduction)
   for (double value = -1.0; value <= 1.0; value += 0.01)
   {
     const auto result_atan = rtw::multiprecision::math::atan(TypeParam(value));
     const auto expected_atan = std::atan(value);
     EXPECT_NEAR(static_cast<double>(result_atan), expected_atan, this->get_trigonometric_sin_cos_abs_error());
+  }
+
+  // Test |x| > 1 (uses PI/2 reduction: atan(x) = sign(x) * (PI/2 - atan(1/|x|)))
+  // This exercises the range reduction code paths for large values
+  for (double value = 1.1; value <= 10.0; value += 0.1)
+  {
+    // Positive values
+    {
+      const auto result_atan = rtw::multiprecision::math::atan(TypeParam(value));
+      const auto expected_atan = std::atan(value);
+      EXPECT_NEAR(static_cast<double>(result_atan), expected_atan, this->get_trigonometric_sin_cos_abs_error());
+    }
+    // Negative values
+    {
+      const auto result_atan = rtw::multiprecision::math::atan(TypeParam(-value));
+      const auto expected_atan = std::atan(-value);
+      EXPECT_NEAR(static_cast<double>(result_atan), expected_atan, this->get_trigonometric_sin_cos_abs_error());
+    }
+  }
+
+  // Test specific boundary values where reciprocal 1/|x| falls in different ranges
+  // When |x| = 2, 1/|x| = 0.5 (boundary between Taylor and PI/4 reduction for reciprocal)
+  {
+    const auto result_pos = rtw::multiprecision::math::atan(TypeParam(2.0));
+    const auto result_neg = rtw::multiprecision::math::atan(TypeParam(-2.0));
+    EXPECT_NEAR(static_cast<double>(result_pos), std::atan(2.0), this->get_trigonometric_sin_cos_abs_error());
+    EXPECT_NEAR(static_cast<double>(result_neg), std::atan(-2.0), this->get_trigonometric_sin_cos_abs_error());
+  }
+
+  // When |x| is very large, atan(x) approaches PI/2
+  {
+    const auto result_pos = rtw::multiprecision::math::atan(TypeParam(100.0));
+    const auto result_neg = rtw::multiprecision::math::atan(TypeParam(-100.0));
+    EXPECT_NEAR(static_cast<double>(result_pos), std::atan(100.0), this->get_trigonometric_sin_cos_abs_error());
+    EXPECT_NEAR(static_cast<double>(result_neg), std::atan(-100.0), this->get_trigonometric_sin_cos_abs_error());
   }
 }
 
