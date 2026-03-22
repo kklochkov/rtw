@@ -4,8 +4,7 @@
 #include "math/matrix.h"
 #include "math/matrix_operations.h"
 #include "math/vector.h"
-#include "math/vector_operations.h"
-#include "multiprecision/math.h"
+#include "math/vector_operations.h" // IWYU pragma: keep
 
 namespace rtw::math::transform3
 {

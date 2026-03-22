@@ -1,4 +1,4 @@
-#include "multiprecision/format.h"
+#include "multiprecision/format.h" // IWYU pragma: keep
 #include "multiprecision/int128.h"
 
 #include <gtest/gtest.h>
@@ -111,7 +111,7 @@ void check_conversion_ctor(const ContainerT& test_case)
   {
     const CustomIntT result{expected};
     const auto result_t = pack_hi_lo<ResultT>(result.hi(), result.lo());
-    const IntT expected_hi = -rtw::multiprecision::signbit(expected); // The sign is in the hi part
+    const IntT expected_hi = -rtw::multiprecision::math::signbit(expected); // The sign is in the hi part
     const auto expected_lo =
         static_cast<typename CustomIntT::lo_type>(expected); // The lo part is the same as the input
     EXPECT_EQ(result_t, expected);
@@ -703,12 +703,14 @@ TEST(operators, count_leading_zero_16)
     std::uint16_t expected = 0xFFFF;
     for (std::uint32_t i = 0; i <= rtw::multiprecision::Int16U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+                rtw::multiprecision::math::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int16U::BITS);
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int16U::BITS);
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+              rtw::multiprecision::math::count_leading_zero(expected));
   }
   // Shift right
   {
@@ -716,12 +718,14 @@ TEST(operators, count_leading_zero_16)
     std::uint16_t expected = 1;
     for (std::uint32_t i = 0; i <= rtw::multiprecision::Int16U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+                rtw::multiprecision::math::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int16U::BITS); // a == 0
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int16U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+              rtw::multiprecision::math::count_leading_zero(expected));
   }
 }
 
@@ -733,13 +737,15 @@ TEST(operators, count_leading_zero_32)
     std::uint32_t expected = 0xFF'FF'FF'FF;
     for (std::uint32_t i = 0; i <= rtw::multiprecision::Int32U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), i);
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), i);
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+                rtw::multiprecision::math::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int32U::BITS);
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int32U::BITS);
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+              rtw::multiprecision::math::count_leading_zero(expected));
   }
   // Shift right
   {
@@ -747,12 +753,14 @@ TEST(operators, count_leading_zero_32)
     std::uint32_t expected = 1;
     for (std::uint32_t i = 0; i <= rtw::multiprecision::Int32U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+                rtw::multiprecision::math::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int32U::BITS); // a == 0
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int32U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+              rtw::multiprecision::math::count_leading_zero(expected));
   }
 }
 
@@ -764,13 +772,15 @@ TEST(operators, count_leading_zero_64)
     std::uint64_t expected = 0xFF'FF'FF'FF'FF'FF'FF'FF;
     for (std::uint32_t i = 0; i <= rtw::multiprecision::Int64U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), i);
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), i);
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+                rtw::multiprecision::math::count_leading_zero(expected));
       a >>= 1;
       expected >>= 1U;
     }
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int64U::BITS);
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int64U::BITS);
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+              rtw::multiprecision::math::count_leading_zero(expected));
   }
   // Shift right
   {
@@ -778,12 +788,14 @@ TEST(operators, count_leading_zero_64)
     std::uint64_t expected = 1;
     for (std::uint64_t i = 0; i <= rtw::multiprecision::Int64U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+                rtw::multiprecision::math::count_leading_zero(expected));
       a <<= 1;
       expected <<= 1U;
     }
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int64U::BITS); // a == 0
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::count_leading_zero(expected));
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int64U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a),
+              rtw::multiprecision::math::count_leading_zero(expected));
   }
 }
 
@@ -794,21 +806,21 @@ TEST(operators, count_leading_zero_128)
     rtw::multiprecision::Int128U a = {0xFF'FF'FF'FF'FF'FF'FF'FF, 0xFF'FF'FF'FF'FF'FF'FF'FF};
     for (std::uint32_t i = 0; i <= rtw::multiprecision::Int128U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), i);
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), i);
       a >>= 1;
     }
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int128U::BITS);
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int128U::BITS);
   }
   // Shift right
   {
     rtw::multiprecision::Int128U a = 1;
     for (std::uint64_t i = 0; i < rtw::multiprecision::Int128U::BITS; ++i)
     {
-      EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int128U::BITS - i - 1);
+      EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int128U::BITS - i - 1);
       a <<= 1;
     }
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int128U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int128U::BITS); // a == 0
     a <<= 1;
-    EXPECT_EQ(rtw::multiprecision::count_leading_zero(a), rtw::multiprecision::Int128U::BITS); // a == 0
+    EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int128U::BITS); // a == 0
   }
 }

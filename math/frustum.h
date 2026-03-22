@@ -4,7 +4,7 @@
 #include "math/matrix.h"
 #include "math/plane.h"
 #include "math/vector.h"
-#include "multiprecision/math.h"
+#include "multiprecision/fixed_point_math.h"
 
 namespace rtw::math
 {

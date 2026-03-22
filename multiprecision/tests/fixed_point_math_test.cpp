@@ -1,4 +1,4 @@
-#include "multiprecision/math.h"
+#include "multiprecision/fixed_point_math.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

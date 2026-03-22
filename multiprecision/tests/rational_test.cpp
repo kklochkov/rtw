@@ -1,6 +1,5 @@
 #include "multiprecision/format.h" // IWYU pragma: keep
-#include "multiprecision/math.h"
-#include "multiprecision/rational.h"
+#include "multiprecision/rational_math.h"
 
 #include <gtest/gtest.h>
 

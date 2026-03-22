@@ -1,5 +1,5 @@
 #include "multiprecision/fixed_point.h"
-#include "multiprecision/format.h"
+#include "multiprecision/format.h" // IWYU pragma: keep
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

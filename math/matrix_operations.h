@@ -63,7 +63,7 @@ constexpr T determinant(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexc
   T det{0};
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {
-    const auto sign = multiprecision::sign(col % 2);
+    const auto sign = multiprecision::math::sign(col % 2);
     det += sign * matrix(0, col) * determinant(matrix.minor(0, col));
   }
   return det;

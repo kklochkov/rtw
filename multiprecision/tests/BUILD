@@ -4,10 +4,10 @@ cc_test_with_llvm_symbolizer(
     name = "multiprecision_test",
     size = "small",
     srcs = [
+        "fixed_point_math_test.cpp",
         "fixed_point_test.cpp",
         "int128_test.cpp",
-        "math_tests.cpp",
-        "operations_test.cpp",
+        "math_test.cpp",
         "rational_test.cpp",
     ],
     tags = ["no-clang-tidy"],

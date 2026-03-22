@@ -123,7 +123,7 @@ constexpr void inplace_normalize_householder_vector(Matrix<T, ROWS, 1U, MEMORY_O
                                                     const std::uint16_t rows) noexcept
 {
   const std::uint16_t start_row = 0U;
-  const auto sign = multiprecision::sign(v[start_row] < 0);
+  const auto sign = multiprecision::math::sign(v[start_row] < 0);
   const auto norm = partial_norm(v, rows);
   const auto alpha = sign * norm; // Adjust the sign of norm to prevent numerical instability.
   v[start_row] += alpha;          // v[start_row] = v[start_row] + sign(v[start_row]) * ||v||
@@ -275,7 +275,7 @@ extract_eigenvalues(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix, const T t
       else
       {
         // Real eigenvalues
-        const auto sign = multiprecision::sign(half_trace < 0);
+        const auto sign = multiprecision::math::sign(half_trace < 0);
         const auto eigenvalue1 = half_trace + (sign * sqrt_discriminant);
         const auto eigenvalue2 = trace_det.determinant / eigenvalue1;
         result[row] = ComplexT{eigenvalue1, T{0}};

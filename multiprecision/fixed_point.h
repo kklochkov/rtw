@@ -1,8 +1,7 @@
 #pragma once
 
 #include "constants/math_constants.h"
-#include "multiprecision/int128.h"
-#include "multiprecision/operations.h"
+#include "multiprecision/int128_math.h"
 
 #include <algorithm>
 #include <complex>
@@ -62,10 +61,10 @@ public:
   constexpr static T MIN_INTEGER = std::numeric_limits<T>::min();
   constexpr static T FRACTION_MASK = ONE - 1U;
   constexpr static T INTEGER_MASK = ~FRACTION_MASK;
-  constexpr static T PI_INTEGER = round_to_nearest_integer(math_constants::PI<double> * ONE);
-  constexpr static T PI_2_INTEGER = round_to_nearest_integer(math_constants::PI_2<double> * ONE);
-  constexpr static T PI_4_INTEGER = round_to_nearest_integer(math_constants::PI_4<double> * ONE);
-  constexpr static T TWO_PI_INTEGER = round_to_nearest_integer(math_constants::TWO_PI<double> * ONE);
+  constexpr static T PI_INTEGER = math::round_to_nearest_integer(math_constants::PI<double> * ONE);
+  constexpr static T PI_2_INTEGER = math::round_to_nearest_integer(math_constants::PI_2<double> * ONE);
+  constexpr static T PI_4_INTEGER = math::round_to_nearest_integer(math_constants::PI_4<double> * ONE);
+  constexpr static T TWO_PI_INTEGER = math::round_to_nearest_integer(math_constants::TWO_PI<double> * ONE);
 
   static_assert(FRACTIONAL_BITS < BITS, "The number of fractional bits must be less than the total bits");
   static_assert(std::is_integral_v<T>, "The underlying type must be an integral type");
@@ -88,7 +87,7 @@ public:
   template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
   constexpr FixedPoint(const F value) noexcept
   {
-    const auto result = static_cast<SaturationT>(round_to_nearest_integer(value * ONE));
+    const auto result = static_cast<SaturationT>(math::round_to_nearest_integer(value * ONE));
     value_ = saturate_and_cast(result);
   }
   // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
@@ -166,7 +165,7 @@ public:
     // Rounding to the nearest.
     // If signs are same, add rhs_value/2 to the result, otherwise subtract rhs_value/2.
     // This is to ensure that the result is rounded up for positive numbers and rounded down for negative numbers.
-    const auto same_sign = signbit(result) == signbit(rhs_value);
+    const auto same_sign = math::signbit(result) == math::signbit(rhs_value);
     const auto half = rhs_value >> 1U;
     const SaturationT halfs[] = {-half, half}; // NOLINT(cppcoreguidelines-avoid-c-arrays)
     result += halfs[same_sign];
@@ -297,18 +296,6 @@ constexpr inline bool IS_SIGNED_FIXED_POINT_V = IsFixedPointSigned<T>::value;
 template <typename T>
 constexpr inline bool IS_ARITHMETIC_V =
     std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T> || IS_COMPLEX_V<T>;
-
-namespace math
-{
-
-template <typename T, std::uint8_t FRAC_BITS, typename SaturationT, typename = std::enable_if_t<std::is_signed_v<T>>>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
-{
-  using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
-  return FixedPoint(RAW_VALUE_CONSTRUCT, std::abs(value.raw_value()));
-}
-
-} // namespace math
 
 } // namespace rtw::multiprecision
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants/math_constants.h"
-#include "multiprecision/operations.h"
+#include "multiprecision/math.h"
 
 #include <cassert>
 #include <cstdint>
@@ -44,7 +44,8 @@ public:
 
   // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
-  constexpr Int(const I value) noexcept : hi_{static_cast<hi_type>(-signbit(value))}, lo_{static_cast<lo_type>(value)}
+  constexpr Int(const I value) noexcept
+      : hi_{static_cast<hi_type>(-math::signbit(value))}, lo_{static_cast<lo_type>(value)}
   {
   }
 
@@ -56,7 +57,7 @@ public:
     {
       if constexpr (std::is_signed_v<hi_type>)
       {
-        lo_ = static_cast<lo_type>(fmod(-value, POW_2_64));
+        lo_ = static_cast<lo_type>(math::fmod(-value, POW_2_64));
         hi_ = static_cast<hi_type>(-value / POW_2_64);
 
         lo_ = ~lo_ + 1U;
@@ -70,7 +71,7 @@ public:
     }
     else
     {
-      lo_ = static_cast<lo_type>(fmod(value, POW_2_64));
+      lo_ = static_cast<lo_type>(math::fmod(value, POW_2_64));
       hi_ = static_cast<hi_type>(value / POW_2_64);
     }
   }
@@ -337,7 +338,8 @@ private:
     DivResult<U> result;
     result.remainder = dividend;
 
-    const std::int32_t shift = count_leading_zero(divisor) - count_leading_zero(dividend);
+    const std::int32_t shift = math::count_leading_zero(divisor.hi(), divisor.lo(), Int<U>::HI_BITS)
+                             - math::count_leading_zero(dividend.hi(), dividend.lo(), Int<U>::HI_BITS);
     divisor <<= shift;
 
     for (std::int32_t i = 0; i <= shift; ++i)
@@ -361,8 +363,8 @@ private:
     using UInt = Int<std::make_unsigned_t<U>>;
     using Int = Int<U>;
 
-    const auto dividend_sign = signbit(dividend.hi());
-    const auto divisor_sign = signbit(divisor.hi());
+    const auto dividend_sign = math::signbit(dividend.hi());
+    const auto divisor_sign = math::signbit(divisor.hi());
 
     if (dividend_sign)
     {
@@ -416,19 +418,6 @@ using Int128U = Int<std::uint64_t>;
 
 // ----------------------------------------------------------------------------
 
-template <typename T, typename = std::enable_if_t<std::is_unsigned_v<T>>>
-constexpr std::int32_t count_leading_zero(const Int<T> value)
-{
-  const auto hi_count = count_leading_zero(value.hi());
-  return hi_count + (static_cast<std::uint32_t>(hi_count == Int<T>::HI_BITS) * count_leading_zero(value.lo()));
-}
-
-template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
-constexpr bool signbit(const Int<T> value) noexcept
-{
-  return signbit(value.hi());
-}
-
 template <typename T>
 struct IsBigInt : std::false_type
 {};
@@ -450,17 +439,6 @@ struct IsSignedBigInt<Int<T>> : std::bool_constant<std::is_signed_v<T>>
 
 template <typename T>
 constexpr inline bool IS_SIGNED_BIG_INT_V = IsSignedBigInt<T>::value;
-
-namespace math
-{
-
-template <typename T, typename = std::enable_if_t<std::is_signed_v<T>>>
-constexpr Int<T> abs(const Int<T> value) noexcept
-{
-  return sign(value < Int<T>{0}) * value;
-}
-
-} // namespace math
 
 } // namespace rtw::multiprecision
 
