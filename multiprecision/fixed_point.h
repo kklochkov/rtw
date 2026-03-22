@@ -339,7 +339,7 @@ struct numeric_limits<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>
   constexpr static bool tinyness_before = false;
 
   constexpr static FixedPoint lowest() noexcept { return FixedPoint::min(); }
-  constexpr static FixedPoint min() noexcept { return FixedPoint::min(); }
+  constexpr static FixedPoint min() noexcept { return epsilon(); }
   constexpr static FixedPoint max() noexcept { return FixedPoint::max(); }
   constexpr static FixedPoint epsilon() noexcept { return FixedPoint(rtw::multiprecision::RAW_VALUE_CONSTRUCT, 1); }
   constexpr static FixedPoint round_error() noexcept
@@ -349,7 +349,7 @@ struct numeric_limits<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>
   constexpr static FixedPoint infinity() noexcept { return FixedPoint{0}; }
   constexpr static FixedPoint quiet_NaN() noexcept { return FixedPoint{0}; }
   constexpr static FixedPoint signaling_NaN() noexcept { return FixedPoint{0}; }
-  constexpr static FixedPoint denorm_min() noexcept { return min(); }
+  constexpr static FixedPoint denorm_min() noexcept { return epsilon(); }
 };
 // NOLINTEND(readability-identifier-naming)
 

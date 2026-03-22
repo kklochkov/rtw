@@ -199,7 +199,7 @@ public:
 
   constexpr Int& operator%=(const Int rhs) noexcept
   {
-    *this = div(*this, rhs).reminder;
+    *this = div(*this, rhs).remainder;
     return *this;
   }
 
@@ -311,7 +311,7 @@ private:
   struct DivResult
   {
     Int<U> quotient{};
-    Int<U> reminder{};
+    Int<U> remainder{};
   };
 
   /// Shift-and-subtract division algorithm. Adjusted version of the algorithm from: Hacker's Delight, 2nd Edition
@@ -335,7 +335,7 @@ private:
     }
 
     DivResult<U> result;
-    result.reminder = dividend;
+    result.remainder = dividend;
 
     const std::int32_t shift = count_leading_zero(divisor) - count_leading_zero(dividend);
     divisor <<= shift;
@@ -343,9 +343,9 @@ private:
     for (std::int32_t i = 0; i <= shift; ++i)
     {
       result.quotient <<= 1U;
-      if (result.reminder >= divisor)
+      if (result.remainder >= divisor)
       {
-        result.reminder -= divisor;
+        result.remainder -= divisor;
         result.quotient |= 1U;
       }
       divisor >>= 1U;
@@ -384,13 +384,13 @@ private:
       quotient = -quotient;
     }
 
-    auto reminder = static_cast<Int>(div_result.reminder);
+    auto remainder = static_cast<Int>(div_result.remainder);
     if (dividend_sign)
     {
-      reminder = -reminder;
+      remainder = -remainder;
     }
 
-    return DivResult<U>{quotient, reminder};
+    return DivResult<U>{quotient, remainder};
   }
 
   constexpr static DivResult<T> div(Int dividend, Int divisor) noexcept
