@@ -9,10 +9,10 @@ namespace rtw::multiprecision
 
 /// Sign bit of an integer.
 /// @tparam T The type of the integer.
-/// @param value The integer value.
+/// @param[in] value The integer value.
 /// @return For signed integers, it returns the sign bit, otherwise it returns false.
 template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
-constexpr bool sign_bit(const T value) noexcept
+constexpr bool signbit(const T value) noexcept
 {
   if constexpr (std::is_signed_v<T>)
   {
@@ -33,6 +33,10 @@ constexpr std::int8_t sign(const bool is_negative) noexcept
 template <typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
 constexpr std::int32_t count_leading_zero(const T value) noexcept
 {
+  // Instead of the loop, compiler (GCC/Clang) intrinsics can be used:
+  // - `__builtin_clz(value)` for 32-bit unsigned integers
+  // - `__builtin_clzll(value)` for 64-bit unsigned integers
+
   constexpr std::uint32_t WORD_SIZE = sizeof(T) * 8U;
 
   std::int32_t count = 0U;

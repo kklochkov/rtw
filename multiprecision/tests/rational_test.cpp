@@ -1,4 +1,5 @@
 #include "multiprecision/format.h" // IWYU pragma: keep
+#include "multiprecision/math.h"
 #include "multiprecision/rational.h"
 
 #include <gtest/gtest.h>
@@ -262,4 +263,85 @@ TYPED_TEST(RationalTest, format)
     const auto str = fmt::format("{}", r);
     EXPECT_EQ(str, "0");
   }
+}
+
+TYPED_TEST(RationalTest, abs)
+{
+  EXPECT_EQ(rtw::multiprecision::math::abs(TypeParam(3, 4)), TypeParam(3, 4));
+  EXPECT_EQ(rtw::multiprecision::math::abs(TypeParam(-3, 4)), TypeParam(3, 4));
+  EXPECT_EQ(rtw::multiprecision::math::abs(TypeParam(3, -4)), TypeParam(3, 4));
+  EXPECT_EQ(rtw::multiprecision::math::abs(TypeParam(0)), TypeParam(0));
+}
+
+TYPED_TEST(RationalTest, floor)
+{
+  EXPECT_EQ(rtw::multiprecision::math::floor(TypeParam(7, 4)), TypeParam(1)); // 1.75 -> 1
+  EXPECT_EQ(rtw::multiprecision::math::floor(TypeParam(8, 4)), TypeParam(2)); // 2.0 -> 2
+  EXPECT_EQ(rtw::multiprecision::math::floor(TypeParam(1, 4)), TypeParam(0)); // 0.25 -> 0
+
+  EXPECT_EQ(rtw::multiprecision::math::floor(TypeParam(-7, 4)), TypeParam(-2)); // -1.75 -> -2
+  EXPECT_EQ(rtw::multiprecision::math::floor(TypeParam(-8, 4)), TypeParam(-2)); // -2.0 -> -2
+  EXPECT_EQ(rtw::multiprecision::math::floor(TypeParam(-1, 4)), TypeParam(-1)); // -0.25 -> -1
+
+  EXPECT_EQ(rtw::multiprecision::math::floor(TypeParam(0)), TypeParam(0));
+}
+
+TYPED_TEST(RationalTest, ceil)
+{
+  EXPECT_EQ(rtw::multiprecision::math::ceil(TypeParam(7, 4)), TypeParam(2)); // 1.75 -> 2
+  EXPECT_EQ(rtw::multiprecision::math::ceil(TypeParam(8, 4)), TypeParam(2)); // 2.0 -> 2
+  EXPECT_EQ(rtw::multiprecision::math::ceil(TypeParam(1, 4)), TypeParam(1)); // 0.25 -> 1
+
+  EXPECT_EQ(rtw::multiprecision::math::ceil(TypeParam(-7, 4)), TypeParam(-1)); // -1.75 -> -1
+  EXPECT_EQ(rtw::multiprecision::math::ceil(TypeParam(-8, 4)), TypeParam(-2)); // -2.0 -> -2
+  EXPECT_EQ(rtw::multiprecision::math::ceil(TypeParam(-1, 4)), TypeParam(0));  // -0.25 -> 0
+
+  EXPECT_EQ(rtw::multiprecision::math::ceil(TypeParam(0)), TypeParam(0));
+}
+
+TYPED_TEST(RationalTest, round)
+{
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(7, 4)), TypeParam(2)); // 1.75 -> 2
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(5, 4)), TypeParam(1)); // 1.25 -> 1
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(3, 2)), TypeParam(2)); // 1.5 -> 2 (half away from zero)
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(1, 4)), TypeParam(0)); // 0.25 -> 0
+
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-7, 4)), TypeParam(-2)); // -1.75 -> -2
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-5, 4)), TypeParam(-1)); // -1.25 -> -1
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-3, 2)), TypeParam(-2)); // -1.5 -> -2 (half away from zero)
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-1, 4)), TypeParam(0));  // -0.25 -> 0
+
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(5)), TypeParam(5));
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(-5)), TypeParam(-5));
+  EXPECT_EQ(rtw::multiprecision::math::round(TypeParam(0)), TypeParam(0));
+}
+
+TYPED_TEST(RationalTest, trunc)
+{
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(7, 4)), TypeParam(1)); // 1.75 -> 1
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(8, 4)), TypeParam(2)); // 2.0 -> 2
+
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(-7, 4)), TypeParam(-1)); // -1.75 -> -1
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(-8, 4)), TypeParam(-2)); // -2.0 -> -2
+
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(0)), TypeParam(0));
+}
+
+TYPED_TEST(RationalTest, pow)
+{
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(2, 3), 0), TypeParam(1));
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(0), 0), TypeParam(1)); // 0^0 = 1 by convention
+
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(2, 3), 1), TypeParam(2, 3));
+
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(2, 3), 2), TypeParam(4, 9));  // (2/3)^2 = 4/9
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(2, 3), 3), TypeParam(8, 27)); // (2/3)^3 = 8/27
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(3), 3), TypeParam(27));       // 3^3 = 27
+
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(2, 3), -1), TypeParam(3, 2)); // (2/3)^-1 = 3/2
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(2, 3), -2), TypeParam(9, 4)); // (2/3)^-2 = 9/4
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(2), -3), TypeParam(1, 8));    // 2^-3 = 1/8
+
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(-2, 3), 2), TypeParam(4, 9));   // (-2/3)^2 = 4/9
+  EXPECT_EQ(rtw::multiprecision::math::pow(TypeParam(-2, 3), 3), TypeParam(-8, 27)); // (-2/3)^3 = -8/27
 }

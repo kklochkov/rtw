@@ -14,6 +14,7 @@
 # -readability-magic-numbers - same as cppcoreguidelines-avoid-magic-numbers
 # -readability-identifier-length - in math and physics libs, single letter variables are common, so disabled
 # -readability-avoid-const-params-in-decls - personal choice, I like to use const for all parameters
+# -readability-math-missing-parentheses - the order of maths operations is well known
 # -hicpp-avoid-c-arrays - same as modernize-avoid-c-arrays and cppcoreguidelines-avoid-c-arrays
 
 UseColor: true
@@ -41,6 +42,7 @@ Checks: >
   -readability-magic-numbers,
   -readability-identifier-length,
   -readability-avoid-const-params-in-decls,
+  -readability-math-missing-parentheses,
   -hicpp-avoid-c-arrays,
 
 WarningsAsErrors: >

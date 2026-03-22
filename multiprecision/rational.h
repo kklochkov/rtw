@@ -1,7 +1,6 @@
 #pragma once
 
 #include "multiprecision/int128.h"
-#include "multiprecision/math.h"
 
 #include <cmath>
 #include <type_traits>
@@ -203,5 +202,16 @@ private:
 
 using Rational32 = Rational<std::int32_t>;
 using Rational64 = Rational<std::int64_t>;
+
+namespace math
+{
+
+template <typename T, typename = std::enable_if_t<std::is_signed_v<T>>>
+constexpr Rational<T> abs(const Rational<T> value) noexcept
+{
+  return Rational<T>(std::abs(value.numerator()), value.denominator());
+}
+
+} // namespace math
 
 } // namespace rtw::multiprecision

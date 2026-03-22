@@ -166,7 +166,7 @@ public:
     // Rounding to the nearest.
     // If signs are same, add rhs_value/2 to the result, otherwise subtract rhs_value/2.
     // This is to ensure that the result is rounded up for positive numbers and rounded down for negative numbers.
-    const auto same_sign = sign_bit(result) == sign_bit(rhs_value);
+    const auto same_sign = signbit(result) == signbit(rhs_value);
     const auto half = rhs_value >> 1U;
     const SaturationT halfs[] = {-half, half}; // NOLINT(cppcoreguidelines-avoid-c-arrays)
     result += halfs[same_sign];
@@ -297,6 +297,18 @@ constexpr inline bool IS_SIGNED_FIXED_POINT_V = IsFixedPointSigned<T>::value;
 template <typename T>
 constexpr inline bool IS_ARITHMETIC_V =
     std::is_arithmetic_v<T> || IS_FIXED_POINT_V<T> || IS_BIG_INT_V<T> || IS_COMPLEX_V<T>;
+
+namespace math
+{
+
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT, typename = std::enable_if_t<std::is_signed_v<T>>>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
+{
+  using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
+  return FixedPoint(RAW_VALUE_CONSTRUCT, std::abs(value.raw_value()));
+}
+
+} // namespace math
 
 } // namespace rtw::multiprecision
 

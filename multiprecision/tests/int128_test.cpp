@@ -111,7 +111,7 @@ void check_conversion_ctor(const ContainerT& test_case)
   {
     const CustomIntT result{expected};
     const auto result_t = pack_hi_lo<ResultT>(result.hi(), result.lo());
-    const IntT expected_hi = -rtw::multiprecision::sign_bit(expected); // The sign is in the hi part
+    const IntT expected_hi = -rtw::multiprecision::signbit(expected); // The sign is in the hi part
     const auto expected_lo =
         static_cast<typename CustomIntT::lo_type>(expected); // The lo part is the same as the input
     EXPECT_EQ(result_t, expected);

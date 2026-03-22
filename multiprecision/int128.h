@@ -44,7 +44,7 @@ public:
 
   // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
-  constexpr Int(const I value) noexcept : hi_{static_cast<hi_type>(-sign_bit(value))}, lo_{static_cast<lo_type>(value)}
+  constexpr Int(const I value) noexcept : hi_{static_cast<hi_type>(-signbit(value))}, lo_{static_cast<lo_type>(value)}
   {
   }
 
@@ -361,8 +361,8 @@ private:
     using UInt = Int<std::make_unsigned_t<U>>;
     using Int = Int<U>;
 
-    const auto dividend_sign = sign_bit(dividend.hi());
-    const auto divisor_sign = sign_bit(divisor.hi());
+    const auto dividend_sign = signbit(dividend.hi());
+    const auto divisor_sign = signbit(divisor.hi());
 
     if (dividend_sign)
     {
@@ -424,9 +424,9 @@ constexpr std::int32_t count_leading_zero(const Int<T> value)
 }
 
 template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
-constexpr bool sign_bit(const Int<T> value) noexcept
+constexpr bool signbit(const Int<T> value) noexcept
 {
-  return sign_bit(value.hi());
+  return signbit(value.hi());
 }
 
 template <typename T>
@@ -450,6 +450,17 @@ struct IsSignedBigInt<Int<T>> : std::bool_constant<std::is_signed_v<T>>
 
 template <typename T>
 constexpr inline bool IS_SIGNED_BIG_INT_V = IsSignedBigInt<T>::value;
+
+namespace math
+{
+
+template <typename T, typename = std::enable_if_t<std::is_signed_v<T>>>
+constexpr Int<T> abs(const Int<T> value) noexcept
+{
+  return sign(value < Int<T>{0}) * value;
+}
+
+} // namespace math
 
 } // namespace rtw::multiprecision
 

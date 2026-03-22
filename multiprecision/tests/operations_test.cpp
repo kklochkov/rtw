@@ -2,55 +2,55 @@
 
 #include <gtest/gtest.h>
 
-TEST(operations, sign_bit)
+TEST(operations, signbit)
 {
   {
     constexpr std::int8_t A = 0;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 0);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 0);
   }
   {
     constexpr std::int8_t A = -1;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 1);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 1);
   }
   {
     constexpr std::int16_t A = 0;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 0);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 0);
   }
   {
     constexpr std::int16_t A = -1;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 1);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 1);
   }
   {
     constexpr std::int32_t A = 0;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 0);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 0);
   }
   {
     constexpr std::int32_t A = -1;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 1);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 1);
   }
   {
     constexpr std::int64_t A = 0;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 0);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 0);
   }
   {
     constexpr std::int64_t A = -1;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 1);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 1);
   }
   {
     constexpr std::uint8_t A = 0;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 0);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 0);
   }
   {
     constexpr std::uint16_t A = 0;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 0);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 0);
   }
   {
     constexpr std::uint32_t A = 0;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 0);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 0);
   }
   {
     constexpr std::uint64_t A = 0;
-    EXPECT_EQ(rtw::multiprecision::sign_bit(A), 0);
+    EXPECT_EQ(rtw::multiprecision::signbit(A), 0);
   }
 }
 

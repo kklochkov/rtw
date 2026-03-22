@@ -316,7 +316,7 @@ TYPED_TEST(SignedFixedPointMathTest, atan2)
     }
   }
 }
-//  -----------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 template <typename T>
 class UnsignedFixedPointMathTest : public ::testing::Test
 {};
@@ -372,4 +372,231 @@ TYPED_TEST(UnsignedFixedPointMathTest, sqrt)
   EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::sqrt(TypeParam(72.0))), std::sqrt(72.0),
               TypeParam::RESOLUTION);
   EXPECT_EQ(rtw::multiprecision::math::sqrt(TypeParam(0.0)), std::sqrt(0.0));
+}
+
+TYPED_TEST(SignedFixedPointMathTest, trunc)
+{
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(1.23)), 1.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(1.9)), 1.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(2.0)), 2.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(-1.23)), -1.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(-1.9)), -1.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(-2.0)), -2.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(0.0)), 0.0);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, copysign)
+{
+  EXPECT_EQ(rtw::multiprecision::math::copysign(TypeParam(5.0), TypeParam(1.0)), 5.0);
+  EXPECT_EQ(rtw::multiprecision::math::copysign(TypeParam(-5.0), TypeParam(1.0)), 5.0);
+  EXPECT_EQ(rtw::multiprecision::math::copysign(TypeParam(5.0), TypeParam(-1.0)), -5.0);
+  EXPECT_EQ(rtw::multiprecision::math::copysign(TypeParam(-5.0), TypeParam(-1.0)), -5.0);
+  EXPECT_EQ(rtw::multiprecision::math::copysign(TypeParam(0.0), TypeParam(1.0)), 0.0);
+  EXPECT_EQ(rtw::multiprecision::math::copysign(TypeParam(0.0), TypeParam(-1.0)), 0.0);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, signbit)
+{
+  EXPECT_FALSE(rtw::multiprecision::math::signbit(TypeParam(5.0)));
+  EXPECT_FALSE(rtw::multiprecision::math::signbit(TypeParam(0.0)));
+  EXPECT_TRUE(rtw::multiprecision::math::signbit(TypeParam(-5.0)));
+  EXPECT_TRUE(rtw::multiprecision::math::signbit(TypeParam(-1.0)));
+}
+
+TYPED_TEST(SignedFixedPointMathTest, fdim)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fdim(TypeParam(5.0), TypeParam(3.0))), 2.0,
+              TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fdim(TypeParam(3.0), TypeParam(-2.0))), 5.0,
+              TypeParam::RESOLUTION);
+  EXPECT_EQ(rtw::multiprecision::math::fdim(TypeParam(3.0), TypeParam(5.0)), 0.0);
+  EXPECT_EQ(rtw::multiprecision::math::fdim(TypeParam(3.0), TypeParam(3.0)), 0.0);
+  EXPECT_EQ(rtw::multiprecision::math::fdim(TypeParam(-5.0), TypeParam(-3.0)), 0.0);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, trunc)
+{
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(1.23)), 1.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(1.9)), 1.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(2.0)), 2.0);
+  EXPECT_EQ(rtw::multiprecision::math::trunc(TypeParam(0.0)), 0.0);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, fdim)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fdim(TypeParam(5.0), TypeParam(3.0))), 2.0,
+              TypeParam::RESOLUTION);
+  EXPECT_EQ(rtw::multiprecision::math::fdim(TypeParam(3.0), TypeParam(5.0)), 0.0);
+  EXPECT_EQ(rtw::multiprecision::math::fdim(TypeParam(3.0), TypeParam(3.0)), 0.0);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, exp)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(0.0))), 1.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(1.0))), std::exp(1.0), 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(-1.0))), std::exp(-1.0), 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(0.5))), std::exp(0.5), 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(-0.5))), std::exp(-0.5), 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(2.0))), std::exp(2.0), 0.1);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, log)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(1.0))), 0.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(2.718281828))), 1.0, 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(2.0))), std::log(2.0), 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(10.0))), std::log(10.0), 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(0.5))), std::log(0.5), 0.01);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, log2)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log2(TypeParam(1.0))), 0.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log2(TypeParam(2.0))), 1.0, 0.02);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log2(TypeParam(4.0))), 2.0, 0.02);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log2(TypeParam(8.0))), 3.0, 0.02);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log2(TypeParam(0.5))), -1.0, 0.02);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, log10)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log10(TypeParam(1.0))), 0.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log10(TypeParam(10.0))), 1.0, 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log10(TypeParam(100.0))), 2.0, 0.02);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log10(TypeParam(2.0))), std::log10(2.0), 0.01);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, pow)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(5.0), TypeParam(0.0))), 1.0,
+              TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(5.0), TypeParam(1.0))), 5.0, 0.02);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(0.0), TypeParam(5.0))), 0.0,
+              TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(1.0), TypeParam(5.0))), 1.0,
+              TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(2.0), TypeParam(2.0))), 4.0, 0.1);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(2.0), TypeParam(0.5))), std::sqrt(2.0),
+              0.05);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(4.0), TypeParam(0.5))), 2.0, 0.05);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, exp)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(0.0))), 1.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(1.0))), std::exp(1.0), 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::exp(TypeParam(0.5))), std::exp(0.5), 0.01);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, log)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(1.0))), 0.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(2.0))), std::log(2.0), 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(10.0))), std::log(10.0), 0.01);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, pow)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(5.0), TypeParam(0.0))), 1.0,
+              TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(2.0), TypeParam(2.0))), 4.0, 0.1);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(4.0), TypeParam(0.5))), 2.0, 0.05);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, sqrt_edge_cases)
+{
+  EXPECT_EQ(rtw::multiprecision::math::sqrt(TypeParam(0.0)).raw_value(), 0);
+
+  const auto epsilon = std::numeric_limits<TypeParam>::epsilon();
+  const auto sqrt_epsilon = rtw::multiprecision::math::sqrt(epsilon);
+  EXPECT_GE(sqrt_epsilon.raw_value(), 0);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, pow_edge_cases)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(0.0), TypeParam(0.0))), 1.0,
+              TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(100.0), TypeParam(0.0))), 1.0,
+              TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(0.0), TypeParam(5.0))), 0.0,
+              TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::pow(TypeParam(1.0), TypeParam(100.0))), 1.0,
+              TypeParam::RESOLUTION);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, log_edge_cases)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::log(TypeParam(1.0))), 0.0, TypeParam::RESOLUTION);
+
+  // log of very small positive value (approaching but not reaching limit)
+  const auto small_value = TypeParam(0.01);
+  const auto log_small = rtw::multiprecision::math::log(small_value);
+  EXPECT_LT(static_cast<double>(log_small), 0.0); // log of value < 1 should be negative
+}
+
+TYPED_TEST(SignedFixedPointMathTest, hypot)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::hypot(TypeParam(0.0), TypeParam(0.0))), 0.0,
+              TypeParam::RESOLUTION);
+
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::hypot(TypeParam(3.0), TypeParam(4.0))), 5.0, 0.05);
+
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::hypot(TypeParam(1.0), TypeParam(0.0))), 1.0,
+              TypeParam::RESOLUTION);
+
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::hypot(TypeParam(0.0), TypeParam(1.0))), 1.0,
+              TypeParam::RESOLUTION);
+
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::hypot(TypeParam(-3.0), TypeParam(4.0))), 5.0, 0.05);
+
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::hypot(TypeParam(1.0), TypeParam(1.0))), std::sqrt(2.0),
+              0.01);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, hypot)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::hypot(TypeParam(3.0), TypeParam(4.0))), 5.0, 0.05);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, fmod)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fmod(TypeParam(5.5), TypeParam(2.0))), 1.5, 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fmod(TypeParam(5.0), TypeParam(2.0))), 1.0, 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fmod(TypeParam(-5.5), TypeParam(2.0))), -1.5, 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fmod(TypeParam(5.5), TypeParam(-2.0))), 1.5, 0.01);
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fmod(TypeParam(0.0), TypeParam(2.0))), 0.0,
+              TypeParam::RESOLUTION);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, fmod)
+{
+  EXPECT_NEAR(static_cast<double>(rtw::multiprecision::math::fmod(TypeParam(5.5), TypeParam(2.0))), 1.5, 0.01);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, classification)
+{
+  const TypeParam value{1.0};
+  const TypeParam zero{0.0};
+
+  EXPECT_TRUE(rtw::multiprecision::math::isfinite(value));
+  EXPECT_TRUE(rtw::multiprecision::math::isfinite(zero));
+
+  EXPECT_FALSE(rtw::multiprecision::math::isinf(value));
+  EXPECT_FALSE(rtw::multiprecision::math::isinf(zero));
+
+  EXPECT_FALSE(rtw::multiprecision::math::isnan(value));
+  EXPECT_FALSE(rtw::multiprecision::math::isnan(zero));
+
+  EXPECT_TRUE(rtw::multiprecision::math::isnormal(value));
+  EXPECT_FALSE(rtw::multiprecision::math::isnormal(zero));
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, classification)
+{
+  const TypeParam value{1.0};
+
+  EXPECT_TRUE(rtw::multiprecision::math::isfinite(value));
+  EXPECT_FALSE(rtw::multiprecision::math::isinf(value));
+  EXPECT_FALSE(rtw::multiprecision::math::isnan(value));
+  EXPECT_TRUE(rtw::multiprecision::math::isnormal(value));
 }
