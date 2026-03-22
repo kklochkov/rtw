@@ -64,4 +64,20 @@ constexpr Vector<T, N> normalize(const Vector<T, N>& vector) noexcept
   return Vector<T, N>{normalize(vector.as_matrix())};
 }
 
+template <typename T, std::uint16_t N>
+constexpr T scalar_projection(const Vector<T, N>& vector, const Vector<T, N>& onto) noexcept
+{
+  const auto onto_norm = norm(onto);
+  assert(onto_norm != T{0});
+  return dot(vector, onto) / onto_norm;
+}
+
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> vector_projection(const Vector<T, N>& vector, const Vector<T, N>& onto) noexcept
+{
+  const auto onto_norm2 = norm2(onto);
+  assert(onto_norm2 != T{0});
+  return (dot(vector, onto) / onto_norm2) * onto;
+}
+
 } // namespace rtw::math

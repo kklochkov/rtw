@@ -1,4 +1,4 @@
-#include "math/format.h"
+#include "math/format.h" // IWYU pragma: keep
 #include "math/vector.h"
 #include "math/vector_operations.h"
 
@@ -307,5 +307,106 @@ TEST(Vector, swizzle)
     constexpr rtw::math::Vector4F V1{1.0F, 2.0F, 3.0F, 4.0F};
     constexpr auto V2 = V1.xyz();
     EXPECT_THAT(V2, ::testing::ElementsAre(1.0F, 2.0F, 3.0F));
+  }
+}
+
+TEST(Vector, scalar_projection)
+{
+  {
+    constexpr rtw::math::Vector2F V{3.0F, 4.0F};
+    constexpr rtw::math::Vector2F ONTO{1.0F, 0.0F};
+    EXPECT_FLOAT_EQ(rtw::math::scalar_projection(V, ONTO), 3.0F);
+  }
+  {
+    constexpr rtw::math::Vector2F V{3.0F, 4.0F};
+    constexpr rtw::math::Vector2F ONTO{0.0F, 1.0F};
+    EXPECT_FLOAT_EQ(rtw::math::scalar_projection(V, ONTO), 4.0F);
+  }
+  {
+    constexpr rtw::math::Vector2F V{1.0F, 1.0F};
+    constexpr rtw::math::Vector2F ONTO{1.0F, 0.0F};
+    EXPECT_FLOAT_EQ(rtw::math::scalar_projection(V, ONTO), 1.0F);
+  }
+  {
+    constexpr rtw::math::Vector2F V{6.0F, 0.0F};
+    constexpr rtw::math::Vector2F ONTO{2.0F, 0.0F};
+    EXPECT_FLOAT_EQ(rtw::math::scalar_projection(V, ONTO), 6.0F);
+  }
+  {
+    constexpr rtw::math::Vector2F V{1.0F, 0.0F};
+    constexpr rtw::math::Vector2F ONTO{-1.0F, 0.0F};
+    EXPECT_FLOAT_EQ(rtw::math::scalar_projection(V, ONTO), -1.0F);
+  }
+  {
+    constexpr rtw::math::Vector3F V{1.0F, 2.0F, 3.0F};
+    constexpr rtw::math::Vector3F ONTO{1.0F, 0.0F, 0.0F};
+    EXPECT_FLOAT_EQ(rtw::math::scalar_projection(V, ONTO), 1.0F);
+  }
+  {
+    constexpr rtw::math::Vector2F V{3.0F, 3.0F};
+    constexpr rtw::math::Vector2F ONTO{1.0F, 1.0F};
+    EXPECT_FLOAT_EQ(rtw::math::scalar_projection(V, ONTO), 3.0F * std::sqrt(2.0F));
+  }
+  {
+    constexpr rtw::math::Vector2F V{1.0F, 1.0F};
+    constexpr rtw::math::Vector2F ONTO{0.0F, 0.0F};
+    EXPECT_DEATH(rtw::math::scalar_projection(V, ONTO), "");
+  }
+}
+
+TEST(Vector, vector_projection)
+{
+  {
+    constexpr rtw::math::Vector2F V{3.0F, 4.0F};
+    constexpr rtw::math::Vector2F ONTO{1.0F, 0.0F};
+    const auto result = rtw::math::vector_projection(V, ONTO);
+    EXPECT_THAT(result, ::testing::ElementsAre(3.0F, 0.0F));
+  }
+  {
+    constexpr rtw::math::Vector2F V{3.0F, 4.0F};
+    constexpr rtw::math::Vector2F ONTO{0.0F, 1.0F};
+    const auto result = rtw::math::vector_projection(V, ONTO);
+    EXPECT_THAT(result, ::testing::ElementsAre(0.0F, 4.0F));
+  }
+  {
+    constexpr rtw::math::Vector2F V{6.0F, 8.0F};
+    constexpr rtw::math::Vector2F ONTO{3.0F, 0.0F};
+    const auto result = rtw::math::vector_projection(V, ONTO);
+    EXPECT_THAT(result, ::testing::ElementsAre(6.0F, 0.0F));
+  }
+  {
+    constexpr rtw::math::Vector2F V{4.0F, 0.0F};
+    constexpr rtw::math::Vector2F ONTO{1.0F, 1.0F};
+    const auto result = rtw::math::vector_projection(V, ONTO);
+    EXPECT_THAT(result, ::testing::ElementsAre(2.0F, 2.0F));
+  }
+  {
+    constexpr rtw::math::Vector2F V{3.0F, 4.0F};
+    const auto result = rtw::math::vector_projection(V, V);
+    EXPECT_FLOAT_EQ(result.x(), 3.0F);
+    EXPECT_FLOAT_EQ(result.y(), 4.0F);
+  }
+  {
+    constexpr rtw::math::Vector3F V{1.0F, 2.0F, 3.0F};
+    constexpr rtw::math::Vector3F ONTO{1.0F, 0.0F, 0.0F};
+    const auto result = rtw::math::vector_projection(V, ONTO);
+    EXPECT_THAT(result, ::testing::ElementsAre(1.0F, 0.0F, 0.0F));
+  }
+  {
+    constexpr rtw::math::Vector2F V{0.0F, 1.0F};
+    constexpr rtw::math::Vector2F ONTO{1.0F, 0.0F};
+    const auto result = rtw::math::vector_projection(V, ONTO);
+    EXPECT_THAT(result, ::testing::ElementsAre(0.0F, 0.0F));
+  }
+  {
+    constexpr rtw::math::Vector2F V{2.0F, 0.0F};
+    constexpr rtw::math::Vector2F ONTO{-1.0F, 0.0F};
+    const auto result = rtw::math::vector_projection(V, ONTO);
+    EXPECT_THAT(result, ::testing::ElementsAre(2.0F, 0.0F));
+  }
+  {
+    constexpr rtw::math::Vector2F V{1.0F, 1.0F};
+    constexpr rtw::math::Vector2F ONTO{0.0F, 0.0F};
+    EXPECT_DEATH(rtw::math::vector_projection(V, ONTO), "");
   }
 }
