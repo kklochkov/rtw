@@ -20,6 +20,8 @@ cc_library(
         "plane.h",
         "point.h",
         "point_operations.h",
+        "quaternion.h",
+        "quaternion_operations.h",
         "transform2.h",
         "transform3.h",
         "vector.h",

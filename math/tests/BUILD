@@ -16,6 +16,7 @@ cc_test_with_llvm_symbolizer(
         "matrix_test.cpp",
         "numeric_test.cpp",
         "point_test.cpp",
+        "quaternion_test.cpp",
         "transform2_test.cpp",
         "transform3_test.cpp",
         "vector_test.cpp",
