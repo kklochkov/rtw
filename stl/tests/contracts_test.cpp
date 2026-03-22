@@ -1,7 +1,11 @@
 #include "stl/contracts.h"
 
+#include <fmt/format.h>
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <string>
 
 TEST(ContractsEnforceTest, current_semantic)
 {
@@ -10,18 +14,21 @@ TEST(ContractsEnforceTest, current_semantic)
 
 TEST(ContractsEnforceTest, simple)
 {
+  const auto location = rtw::stl::SourceLocation::current();
+  const std::string file_name(location.file_name().data());
+
   EXPECT_NO_FATAL_FAILURE(RTW_PRE(true, "This precondition should pass"));
-  EXPECT_DEATH(RTW_PRE(false), ::testing::StartsWith("Contract violation detected:\n"));
+  EXPECT_DEATH(RTW_PRE(false), ::testing::ContainsRegex(fmt::format("  Source: {}:{}", file_name, 21)));
   EXPECT_DEATH(RTW_PRE(false, "This precondition should fail"),
                ::testing::StartsWith("Contract violation detected:\n"));
 
   EXPECT_NO_FATAL_FAILURE(RTW_ASSERT(true, "This precondition should pass"));
-  EXPECT_DEATH(RTW_ASSERT(false), ::testing::StartsWith("Contract violation detected:\n"));
+  EXPECT_DEATH(RTW_PRE(false), ::testing::ContainsRegex(fmt::format("  Source: {}:{}", file_name, 26)));
   EXPECT_DEATH(RTW_ASSERT(false, "This precondition should fail"),
                ::testing::StartsWith("Contract violation detected:\n"));
 
   EXPECT_NO_FATAL_FAILURE(RTW_POST(true, "This precondition should pass"));
-  EXPECT_DEATH(RTW_POST(false), ::testing::StartsWith("Contract violation detected:\n"));
+  EXPECT_DEATH(RTW_PRE(false), ::testing::ContainsRegex(fmt::format("  Source: {}:{}", file_name, 31)));
   EXPECT_DEATH(RTW_POST(false, "This precondition should fail"),
                ::testing::StartsWith("Contract violation detected:\n"));
 
