@@ -1,6 +1,7 @@
 #include "stl/circular_buffer.h"
 
 #include <gtest/gtest.h>
+#include <iterator>
 
 namespace
 {
@@ -267,7 +268,48 @@ TEST(CircularBufferTest, iterators)
     ++index;
   }
 
+  EXPECT_EQ(index, buffer.size());
+  EXPECT_EQ(std::distance(buffer.begin(), buffer.end()), static_cast<std::ptrdiff_t>(buffer.size()));
+
+  const auto begin = buffer.begin();
+  const auto end = buffer.end();
+  EXPECT_EQ(end - begin, static_cast<std::ptrdiff_t>(buffer.size()));
+  EXPECT_EQ(begin[3], buffer[3]);
+  EXPECT_EQ(*(begin + 4), buffer[4]);
+
+  std::size_t reverse_index = buffer.size();
+  for (auto it = buffer.rbegin(); it != buffer.rend(); ++it)
+  {
+    --reverse_index;
+    EXPECT_EQ(*it, buffer[reverse_index]);
+  }
+
   buffer.pop_back();
   buffer.pop_back();
   buffer.pop_back();
+
+  EXPECT_EQ(std::distance(buffer.begin(), buffer.end()), static_cast<std::ptrdiff_t>(buffer.size()));
+
+  buffer.pop_front();
+  buffer.pop_front();
+  buffer.emplace_back(11.0F, 11, static_cast<std::uint8_t>(11));
+  buffer.emplace_back(12.0F, 12, static_cast<std::uint8_t>(12));
+
+  const Struct expected[] = {
+      {3.0F, 3, 3U},
+      {4.0F, 4, 4U},
+      {5.0F, 5, 5U},
+      {6.0F, 6, 6U},
+      {7.0F, 7, 7U},
+      {11.0F, 11, static_cast<std::uint8_t>(11)},
+      {12.0F, 12, static_cast<std::uint8_t>(12)},
+  };
+
+  ASSERT_EQ(buffer.size(), std::size(expected));
+  index = 0U;
+  for (const auto& value : buffer)
+  {
+    EXPECT_EQ(value, expected[index]);
+    ++index;
+  }
 }

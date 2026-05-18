@@ -48,6 +48,10 @@ TEST(QueueTest, push_pop)
   EXPECT_EQ(queue.front(), (Struct{1.0F, 1, 1U}));
   EXPECT_EQ(queue.back(), (Struct{10.0F, 10, 10U}));
 
+  const auto& const_queue = queue;
+  EXPECT_EQ(const_queue.front(), (Struct{1.0F, 1, 1U}));
+  EXPECT_EQ(const_queue.back(), (Struct{10.0F, 10, 10U}));
+
   EXPECT_DEATH(queue.push(Struct{11.0F, 11, static_cast<uint8_t>(11)}), ".*");
 
   std::size_t i = 0U;
@@ -84,6 +88,10 @@ TEST(QueueTest, emplace_pop)
   EXPECT_EQ(queue.size(), queue.capacity());
   EXPECT_EQ(queue.front(), (Struct{1.0F, 1, 1U}));
   EXPECT_EQ(queue.back(), (Struct{10.0F, 10, 10U}));
+
+  const auto& const_queue = queue;
+  EXPECT_EQ(const_queue.front(), (Struct{1.0F, 1, 1U}));
+  EXPECT_EQ(const_queue.back(), (Struct{10.0F, 10, 10U}));
 
   EXPECT_DEATH(queue.emplace(11.0F, 11, static_cast<uint8_t>(11)), ".*");
 

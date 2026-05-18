@@ -48,6 +48,10 @@ TEST(StaticStackTest, push_pop)
   EXPECT_EQ(stack.top(), (Struct{10.0F, 10, 10U}));
   EXPECT_EQ(stack.bottom(), (Struct{1.0F, 1, 1U}));
 
+  const auto& const_stack = stack;
+  EXPECT_EQ(const_stack.top(), (Struct{10.0F, 10, 10U}));
+  EXPECT_EQ(const_stack.bottom(), (Struct{1.0F, 1, 1U}));
+
   EXPECT_DEATH(stack.push(Struct{11.0F, 11, static_cast<uint8_t>(11)}), ".*");
 
   std::size_t i = stack.capacity() + 1U;
@@ -84,6 +88,10 @@ TEST(StaticStackTest, emplace_pop)
   EXPECT_EQ(stack.size(), stack.capacity());
   EXPECT_EQ(stack.top(), (Struct{10.0F, 10, 10U}));
   EXPECT_EQ(stack.bottom(), (Struct{1.0F, 1, 1U}));
+
+  const auto& const_stack = stack;
+  EXPECT_EQ(const_stack.top(), (Struct{10.0F, 10, 10U}));
+  EXPECT_EQ(const_stack.bottom(), (Struct{1.0F, 1, 1U}));
 
   EXPECT_DEATH(stack.emplace(11.0F, 11, static_cast<uint8_t>(11)), ".*");
 

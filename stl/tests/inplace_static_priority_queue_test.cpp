@@ -56,6 +56,9 @@ TEST(InplaceStaticPriorityQueueTest, push_pop)
   EXPECT_EQ(queue.size(), queue.capacity());
   EXPECT_EQ(queue.top(), (Struct{10.0F, 10, 10U}));
 
+  const auto& const_queue = queue;
+  EXPECT_EQ(const_queue.top(), (Struct{10.0F, 10, 10U}));
+
   EXPECT_DEATH(queue.push(Struct{11.0F, 11, static_cast<uint8_t>(11)}), ".*");
 
   std::size_t i = queue.size();
@@ -90,6 +93,9 @@ TEST(InplaceStaticPriorityQueueTest, emplace_pop)
 
   EXPECT_EQ(queue.size(), queue.capacity());
   EXPECT_EQ(queue.top(), (Struct{10.0F, 10, 10U}));
+
+  const auto& const_queue = queue;
+  EXPECT_EQ(const_queue.top(), (Struct{10.0F, 10, 10U}));
 
   EXPECT_DEATH(queue.emplace(11.0F, 11, static_cast<uint8_t>(11)), ".*");
 
