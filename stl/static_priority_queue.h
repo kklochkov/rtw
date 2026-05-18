@@ -54,7 +54,7 @@ public:
   }
 
   constexpr reference top() noexcept { return storage_[0U]; }
-  constexpr const_reference top() const noexcept { return top(); }
+  constexpr const_reference top() const noexcept { return storage_[0U]; }
 
   constexpr void clear() { storage_.clear(); }
 

@@ -2,7 +2,7 @@
 
 #include "stl/span.h"
 
-#include <string>
+#include <string> // IWYU pragma: keep, for std::char_traits
 
 namespace rtw::stl
 {
@@ -22,6 +22,8 @@ public:
   using const_reference = typename StorageType::const_reference;
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
+
+  constexpr static size_type npos = static_cast<size_type>(-1);
 
   constexpr StringView() noexcept = default;
   constexpr StringView(const_pointer str, const size_type size) noexcept : storage_{str, size} {}
@@ -65,7 +67,7 @@ public:
     return length;
   }
 
-  constexpr StringView substr(const size_type pos = 0U, const size_type count = std::string::npos) const noexcept
+  constexpr StringView substr(const size_type pos = 0U, const size_type count = npos) const noexcept
   {
     const size_type length = std::min(count, size() - pos);
     return StringView{storage_.data() + pos, length};
@@ -123,7 +125,7 @@ public:
   {
     if (pos >= size() || str.empty() || size() < str.size())
     {
-      return std::string::npos;
+      return npos;
     }
 
     for (size_type i = pos; i <= size() - str.size(); ++i)
@@ -134,7 +136,7 @@ public:
       }
     }
 
-    return std::string::npos;
+    return npos;
   }
 
   constexpr size_type find(const_pointer s, const size_type pos = 0U) const noexcept
@@ -146,7 +148,7 @@ public:
   {
     if (pos >= size())
     {
-      return std::string::npos;
+      return npos;
     }
 
     for (size_type i = pos; i < size(); ++i)
@@ -157,12 +159,12 @@ public:
       }
     }
 
-    return std::string::npos;
+    return npos;
   }
 
-  constexpr bool contains(const StringView str) const noexcept { return find(str) != std::string::npos; }
-  constexpr bool contains(const_pointer str) const noexcept { return find(str) != std::string::npos; }
-  constexpr bool contains(const value_type c) const noexcept { return find(c) != std::string::npos; }
+  constexpr bool contains(const StringView str) const noexcept { return find(str) != npos; }
+  constexpr bool contains(const_pointer str) const noexcept { return find(str) != npos; }
+  constexpr bool contains(const value_type c) const noexcept { return find(c) != npos; }
 
   friend constexpr bool operator==(const StringView lhs, const StringView rhs) noexcept
   {

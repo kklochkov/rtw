@@ -50,10 +50,10 @@ public:
   }
 
   constexpr reference top() noexcept { return storage_[top_ - 1U]; }
-  constexpr const_reference top() const noexcept { return top(); }
+  constexpr const_reference top() const noexcept { return storage_[top_ - 1U]; }
 
   constexpr reference bottom() noexcept { return storage_[0U]; }
-  constexpr const_reference bottom() const noexcept { return bottom(); }
+  constexpr const_reference bottom() const noexcept { return storage_[0U]; }
 
   constexpr void clear()
   {

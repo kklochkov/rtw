@@ -49,10 +49,10 @@ public:
   }
 
   constexpr reference front() noexcept { return storage_[head_]; }
-  constexpr const_reference front() const noexcept { return front(); }
+  constexpr const_reference front() const noexcept { return storage_[head_]; }
 
   constexpr reference back() noexcept { return storage_[tail_]; }
-  constexpr const_reference back() const noexcept { return back(); }
+  constexpr const_reference back() const noexcept { return storage_[tail_]; }
 
   constexpr void clear()
   {

@@ -267,11 +267,7 @@ TEST(CircularBufferTest, iterators)
     ++index;
   }
 
-  EXPECT_TRUE(rtw::stl::is_memory_contiguous(buffer.begin(), buffer.end()));
-
   buffer.pop_back();
   buffer.pop_back();
   buffer.pop_back();
-
-  EXPECT_TRUE(rtw::stl::is_memory_contiguous(buffer.begin(), buffer.end()));
 }

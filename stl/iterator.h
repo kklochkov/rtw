@@ -51,10 +51,7 @@ public:
     return *this;
   }
 
-  constexpr reference& operator[](const difference_type offset) const noexcept
-  {
-    return (*container_)[index_ + offset];
-  }
+  constexpr reference operator[](const difference_type offset) const noexcept { return (*container_)[index_ + offset]; }
 
   constexpr StaticContiguousStorageIterator operator++(int) noexcept
   {

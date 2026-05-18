@@ -338,7 +338,7 @@ constexpr bool is_memory_contiguous(IteratorT begin, IteratorT end) noexcept
   bool contiguous = true;
 
   const auto size = std::distance(begin, end);
-  for (std::ptrdiff_t i = 0U; i < size; ++i)
+  for (std::ptrdiff_t i = 0; i < size; ++i)
   {
     if constexpr (std::is_same_v<typename IteratorT::iterator_category, details::StaticContiguousStorageIteratorTag>)
     {
