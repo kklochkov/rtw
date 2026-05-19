@@ -220,11 +220,25 @@ public:
     --used_slots_;
   }
 
+  constexpr bool is_uninitialized(const size_type index) const noexcept
+  {
+    assert(index < capacity());
+    const auto& storage = get_derived().get_storage(index);
+    return storage.is_uninitialized();
+  }
+
   constexpr bool is_constructed(const size_type index) const noexcept
   {
     assert(index < capacity());
     const auto& storage = get_derived().get_storage(index);
     return storage.is_constructed();
+  }
+
+  constexpr bool is_destructed(const size_type index) const noexcept
+  {
+    assert(index < capacity());
+    const auto& storage = get_derived().get_storage(index);
+    return storage.is_destructed();
   }
 
   constexpr reference operator[](const size_type index) noexcept

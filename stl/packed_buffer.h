@@ -75,7 +75,10 @@ public:
   constexpr void remove(const size_type index) noexcept
   {
     const auto last_index = size() - 1U;
-    storage_[index] = std::move(storage_[last_index]);
+    if (index != last_index)
+    {
+      storage_[index] = std::move(storage_[last_index]);
+    }
     storage_.destruct_at(last_index);
   }
 

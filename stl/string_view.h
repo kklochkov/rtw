@@ -23,7 +23,7 @@ public:
   using iterator = typename StorageType::iterator;
   using const_iterator = typename StorageType::const_iterator;
 
-  constexpr static size_type npos = static_cast<size_type>(-1);
+  constexpr static size_type NPOS = static_cast<size_type>(-1);
 
   constexpr StringView() noexcept = default;
   constexpr StringView(const_pointer str, const size_type size) noexcept : storage_{str, size} {}
@@ -67,7 +67,7 @@ public:
     return length;
   }
 
-  constexpr StringView substr(const size_type pos = 0U, const size_type count = npos) const noexcept
+  constexpr StringView substr(const size_type pos = 0U, const size_type count = NPOS) const noexcept
   {
     const size_type length = std::min(count, size() - pos);
     return StringView{storage_.data() + pos, length};
@@ -125,7 +125,7 @@ public:
   {
     if (pos >= size() || str.empty() || size() < str.size())
     {
-      return npos;
+      return NPOS;
     }
 
     for (size_type i = pos; i <= size() - str.size(); ++i)
@@ -136,7 +136,7 @@ public:
       }
     }
 
-    return npos;
+    return NPOS;
   }
 
   constexpr size_type find(const_pointer s, const size_type pos = 0U) const noexcept
@@ -148,7 +148,7 @@ public:
   {
     if (pos >= size())
     {
-      return npos;
+      return NPOS;
     }
 
     for (size_type i = pos; i < size(); ++i)
@@ -159,12 +159,12 @@ public:
       }
     }
 
-    return npos;
+    return NPOS;
   }
 
-  constexpr bool contains(const StringView str) const noexcept { return find(str) != npos; }
-  constexpr bool contains(const_pointer str) const noexcept { return find(str) != npos; }
-  constexpr bool contains(const value_type c) const noexcept { return find(c) != npos; }
+  constexpr bool contains(const StringView str) const noexcept { return find(str) != NPOS; }
+  constexpr bool contains(const_pointer str) const noexcept { return find(str) != NPOS; }
+  constexpr bool contains(const value_type c) const noexcept { return find(c) != NPOS; }
 
   friend constexpr bool operator==(const StringView lhs, const StringView rhs) noexcept
   {

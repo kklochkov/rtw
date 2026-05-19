@@ -110,8 +110,8 @@ public:
       }
     }
 
-    // This is treated by the Storage.
-    return end()->second;
+    assert(false && "StaticFlatUnorderedMap is full. Cannot insert new key.");
+    __builtin_unreachable();
   }
 
   constexpr const mapped_type& operator[](const key_type& key) const noexcept { return find(key)->second; }
