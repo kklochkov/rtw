@@ -11,9 +11,18 @@ namespace rtw::stl
 
 namespace details
 {
+
 template <typename T>
 constexpr inline bool IS_TRIVIAL_V =
     std::is_standard_layout_v<T> && std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
+
+enum class ObjectStorageState : std::uint8_t
+{
+  UNINITIALIZED = 0U,
+  CONSTRUCTED,
+  DESTRUCTED
+};
+
 } // namespace details
 
 template <typename T, bool IS_TRIVIAL>
@@ -30,9 +39,11 @@ public:
   using pointer = value_type*;
   using const_pointer = const value_type*;
 
-  constexpr AlignedObjectStorage() noexcept : constructed_{false} {}
+  constexpr AlignedObjectStorage() noexcept : state_{details::ObjectStorageState::UNINITIALIZED} {}
 
-  constexpr bool is_constructed() const noexcept { return constructed_; }
+  constexpr bool is_uninitialized() const noexcept { return state_ == details::ObjectStorageState::UNINITIALIZED; }
+  constexpr bool is_constructed() const noexcept { return state_ == details::ObjectStorageState::CONSTRUCTED; }
+  constexpr bool is_destructed() const noexcept { return state_ == details::ObjectStorageState::DESTRUCTED; }
 
   template <typename... ArgsT>
   constexpr reference construct(ArgsT&&... args) noexcept
@@ -40,7 +51,7 @@ public:
     assert(!is_constructed());
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-owning-memory)
     auto* value = ::new (reinterpret_cast<void*>(data_.data())) T{std::forward<ArgsT>(args)...};
-    constructed_ = true;
+    state_ = details::ObjectStorageState::CONSTRUCTED;
     return *value;
   }
 
@@ -49,7 +60,7 @@ public:
     assert(!is_constructed());
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast, cppcoreguidelines-owning-memory)
     auto* value = ::new (reinterpret_cast<void*>(data_.data())) T;
-    constructed_ = true;
+    state_ = details::ObjectStorageState::CONSTRUCTED;
     return *value;
   }
 
@@ -58,7 +69,7 @@ public:
     if (is_constructed())
     {
       // For trivially destructible types explicitly calling destruct is not necessary.
-      constructed_ = false;
+      state_ = details::ObjectStorageState::DESTRUCTED;
     }
   }
 
@@ -85,12 +96,17 @@ public:
 
 private:
   alignas(alignof(T)) std::array<std::byte, sizeof(T)> data_{};
-  bool constructed_ : 1;
+  details::ObjectStorageState state_ : 2;
 };
 
+/// @brief Specialization for non-trivial, default constructible types exists to make the storage constexpr
+/// in C++17, because placement new is not constexpr in C++17.
 template <typename T>
 class AlignedObjectStorage<T, false>
 {
+  static_assert(std::is_default_constructible_v<T>,
+                "AlignedObjectStorage requires non-trivial types to be default constructible.");
+
 public:
   using is_trivial = std::false_type;
   using value_type = T;
@@ -99,16 +115,18 @@ public:
   using pointer = value_type*;
   using const_pointer = const value_type*;
 
-  constexpr AlignedObjectStorage() noexcept : constructed_{false} {}
+  constexpr AlignedObjectStorage() noexcept : state_{details::ObjectStorageState::UNINITIALIZED} {}
 
-  constexpr bool is_constructed() const noexcept { return constructed_; }
+  constexpr bool is_uninitialized() const noexcept { return state_ == details::ObjectStorageState::UNINITIALIZED; }
+  constexpr bool is_constructed() const noexcept { return state_ == details::ObjectStorageState::CONSTRUCTED; }
+  constexpr bool is_destructed() const noexcept { return state_ == details::ObjectStorageState::DESTRUCTED; }
 
   template <typename... ArgsT>
   constexpr reference construct(ArgsT&&... args) noexcept
   {
     assert(!is_constructed());
     data_ = T{std::forward<ArgsT>(args)...};
-    constructed_ = true;
+    state_ = details::ObjectStorageState::CONSTRUCTED;
     return data_;
   }
 
@@ -116,7 +134,7 @@ public:
   {
     assert(!is_constructed());
     data_ = T{};
-    constructed_ = true;
+    state_ = details::ObjectStorageState::CONSTRUCTED;
     return data_;
   }
 
@@ -126,7 +144,7 @@ public:
     {
       // No need to explicitly call the destructor, base it will be called either during new value assignment or when
       // during destruction of the storage.
-      constructed_ = false;
+      state_ = details::ObjectStorageState::DESTRUCTED;
     }
   }
 
@@ -145,7 +163,7 @@ public:
 
 private:
   T data_;
-  bool constructed_ : 1;
+  details::ObjectStorageState state_ : 2;
 };
 
 template <typename T, typename DerivedT>
