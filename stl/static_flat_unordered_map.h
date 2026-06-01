@@ -38,19 +38,33 @@ public:
   constexpr bool empty() const noexcept { return keys_storage_.empty(); }
   constexpr size_type capacity() const noexcept { return keys_storage_.capacity(); }
 
+  /// @note If the key already exists, the mapped value is overwritten and the function returns true.
+  /// Returns false only if the map is full and the key is not present.
+  /// Tombstone (destructed) slots are reused for insertion.
   template <typename KT = key_type, typename... ArgsT>
   constexpr bool emplace(KT&& key, ArgsT&&... args) noexcept
   {
     const auto hash_id = hasher_(key);
+    size_type first_available_index = keys_storage_.capacity();
     for (size_type i = 0U; i < keys_storage_.capacity(); ++i)
     {
       const size_type index = get_index_quadratic(hash_id, i);
 
-      if (!keys_storage_.is_constructed(index))
+      if (keys_storage_.is_uninitialized(index))
       {
-        keys_storage_.construct_at(index, std::forward<KT>(key));
-        values_storage_.construct_at(index, std::forward<ArgsT>(args)...);
+        const auto insert_index = (first_available_index < keys_storage_.capacity()) ? first_available_index : index;
+        keys_storage_.construct_at(insert_index, std::forward<KT>(key));
+        values_storage_.construct_at(insert_index, std::forward<ArgsT>(args)...);
         return true;
+      }
+
+      if (keys_storage_.is_destructed(index))
+      {
+        if (first_available_index == keys_storage_.capacity())
+        {
+          first_available_index = index;
+        }
+        continue;
       }
 
       if (key_equal_(keys_storage_[index], key))
@@ -58,6 +72,13 @@ public:
         values_storage_[index] = T{std::forward<ArgsT>(args)...};
         return true;
       }
+    }
+
+    if (first_available_index < keys_storage_.capacity())
+    {
+      keys_storage_.construct_at(first_available_index, std::forward<KT>(key));
+      values_storage_.construct_at(first_available_index, std::forward<ArgsT>(args)...);
+      return true;
     }
 
     // If we end up here, it means that the map is full and the key we tried to insert does not match any existing key.
@@ -94,20 +115,37 @@ public:
   constexpr mapped_type& operator[](KT&& key) noexcept
   {
     const auto hash_id = hasher_(key);
+    size_type first_available_index = keys_storage_.capacity();
     for (size_type i = 0U; i < keys_storage_.capacity(); ++i)
     {
       const size_type index = get_index_quadratic(hash_id, i);
 
-      if (!keys_storage_.is_constructed(index))
+      if (keys_storage_.is_uninitialized(index))
       {
-        keys_storage_.construct_at(index, std::forward<KT>(key));
-        return values_storage_.construct_for_overwrite_at(index);
+        const auto insert_index = (first_available_index < keys_storage_.capacity()) ? first_available_index : index;
+        keys_storage_.construct_at(insert_index, std::forward<KT>(key));
+        return values_storage_.construct_for_overwrite_at(insert_index);
+      }
+
+      if (keys_storage_.is_destructed(index))
+      {
+        if (first_available_index == keys_storage_.capacity())
+        {
+          first_available_index = index;
+        }
+        continue;
       }
 
       if (key_equal_(keys_storage_[index], key))
       {
         return values_storage_[index];
       }
+    }
+
+    if (first_available_index < keys_storage_.capacity())
+    {
+      keys_storage_.construct_at(first_available_index, std::forward<KT>(key));
+      return values_storage_.construct_for_overwrite_at(first_available_index);
     }
 
     assert(false && "StaticFlatUnorderedMap is full. Cannot insert new key.");
@@ -145,9 +183,14 @@ private:
     {
       const size_type index = container->get_index_quadratic(hash_id, i);
 
-      if (!container->keys_storage_.is_constructed(index))
+      if (container->keys_storage_.is_uninitialized(index))
       {
         return container->end();
+      }
+
+      if (container->keys_storage_.is_destructed(index))
+      {
+        continue;
       }
 
       if (container->key_equal_(container->keys_storage_[index], key))

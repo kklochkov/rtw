@@ -136,3 +136,51 @@ TEST(StaticFlatUnorderedSet, find)
   it = set.find(3U);
   EXPECT_EQ(it, set.end()); // Non-existing key
 }
+
+TEST(InplaceStaticFlatUnorderedSet, erase_and_find_with_tombstone)
+{
+  // Use a small capacity to increase collision likelihood with quadratic probing.
+  rtw::stl::InplaceStaticFlatUnorderedSet<std::size_t, 8U> set;
+
+  // Insert several keys that collide (hash % 8U == 0U)
+  set.emplace(0U);
+  set.emplace(8U);
+  set.emplace(16U);
+
+  EXPECT_EQ(set.size(), 3U);
+  EXPECT_TRUE(set.contains(0U));
+  EXPECT_TRUE(set.contains(8U));
+  EXPECT_TRUE(set.contains(16U));
+
+  // Erase the first key in the probe chain - create a tombstone.
+  EXPECT_TRUE(set.erase(0U));
+  EXPECT_EQ(set.size(), 2U);
+  EXPECT_FALSE(set.contains(0U));
+
+  // Keys past the tombstone must still be findable.
+  EXPECT_TRUE(set.contains(8U));
+  EXPECT_TRUE(set.contains(16U));
+
+  // Re-insert the erased key - should reuse the tombstone slot.
+  EXPECT_TRUE(set.emplace(0U));
+  EXPECT_EQ(set.size(), 3U);
+  EXPECT_TRUE(set.contains(0U));
+  EXPECT_TRUE(set.contains(8U));
+  EXPECT_TRUE(set.contains(16U));
+
+  // Inserting a duplicate should return false.
+  EXPECT_FALSE(set.emplace(8U));
+  EXPECT_EQ(set.size(), 3U);
+
+  // Erase middle element and verify the est is still reachable.
+  EXPECT_TRUE(set.erase(8U));
+  EXPECT_EQ(set.size(), 2U);
+  EXPECT_TRUE(set.contains(0U));
+  EXPECT_FALSE(set.contains(8U));
+  EXPECT_TRUE(set.contains(16U));
+
+  // Insert a new key that would land on the tombstone.
+  EXPECT_TRUE(set.emplace(8U));
+  EXPECT_EQ(set.size(), 3U);
+  EXPECT_TRUE(set.contains(8U));
+}

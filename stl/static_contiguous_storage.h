@@ -73,6 +73,12 @@ public:
     }
   }
 
+  constexpr void reset() noexcept
+  {
+    destruct();
+    state_ = details::ObjectStorageState::UNINITIALIZED;
+  }
+
   constexpr pointer get_pointer() noexcept
   {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -146,6 +152,12 @@ public:
       // during destruction of the storage.
       state_ = details::ObjectStorageState::DESTRUCTED;
     }
+  }
+
+  constexpr void reset() noexcept
+  {
+    destruct();
+    state_ = details::ObjectStorageState::UNINITIALIZED;
   }
 
   constexpr pointer get_pointer() noexcept { return &data_; }
@@ -260,7 +272,7 @@ public:
     for (size_type index = 0U; index < capacity_; ++index)
     {
       auto& storage = get_derived().get_storage(index);
-      storage.destruct();
+      storage.reset();
     }
     used_slots_ = 0U;
   }
