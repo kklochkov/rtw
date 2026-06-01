@@ -29,9 +29,9 @@ public:
   template <typename... ArgsT>
   constexpr reference emplace(ArgsT&&... args) noexcept
   {
-    auto& result = storage_.construct_at(size(), std::forward<ArgsT>(args)...);
-    push_heap(size() - 1U);
-    return result;
+    storage_.construct_at(size(), std::forward<ArgsT>(args)...);
+    const auto index = push_heap(size() - 1U);
+    return storage_[index];
   }
 
   template <typename U = T>
@@ -63,13 +63,14 @@ private:
   constexpr size_type get_left(const size_type index) const noexcept { return (2U * index) + 1U; }
   constexpr size_type get_right(const size_type index) const noexcept { return (2U * index) + 2U; }
 
-  constexpr void push_heap(size_type index) noexcept
+  constexpr size_type push_heap(size_type index) noexcept
   {
     while ((index > 0U) && compare_(storage_[get_parent(index)], storage_[index]))
     {
       std::swap(storage_[get_parent(index)], storage_[index]);
       index = get_parent(index);
     }
+    return index;
   }
 
   constexpr void pop_heap(const size_type index) noexcept

@@ -369,8 +369,14 @@ has_cycle_dfs_iterative(const GenericDirectedGraph<VertexAttributesT, EdgeAttrib
     bool on_stack{false};
   };
 
+  struct VertexSearchState
+  {
+    VertexId vertex_id{};
+    std::size_t next_neighbor_index{0U};
+  };
+
   auto attributes = AlgorithmTraits::template make_buffer<VertexSearchAttributes>(graph, VertexSearchAttributes{});
-  auto dfs_stack = AlgorithmTraits::template make_dfs_stack<VertexId>(graph);
+  auto dfs_stack = AlgorithmTraits::template make_dfs_stack<VertexSearchState>(graph);
   for (auto start_u = graph.get_first_vertex_id(); start_u <= graph.get_last_vertex_id(); ++start_u)
   {
     if (attributes[start_u].state != VisitState::UNVISITED)
@@ -382,46 +388,35 @@ has_cycle_dfs_iterative(const GenericDirectedGraph<VertexAttributesT, EdgeAttrib
     attributes[start_u].on_stack = true;
 
     dfs_stack.clear();
-    dfs_stack.push(start_u);
+    dfs_stack.push(VertexSearchState{start_u, 0U});
 
     while (!dfs_stack.empty())
     {
-      const auto u = dfs_stack.top();
-      auto& u_attr = attributes[u];
+      auto& top = dfs_stack.top();
+      const auto& edges = graph.get_edges(top.vertex_id);
 
-      bool unvisited_found = false;
-
+      if (top.next_neighbor_index < edges.size())
       {
-        const auto& edges = graph.get_edges(u);
-        for (const auto& edge : edges)
-        {
-          const auto v = edge.to;
-          auto& v_attr = attributes[v];
-          if (v_attr.state == VisitState::VISITING)
-          {
-            if (v_attr.on_stack)
-            {
-              return true;
-            }
-          }
+        const auto v = edges[top.next_neighbor_index].to;
+        ++top.next_neighbor_index;
 
-          if (v_attr.state == VisitState::UNVISITED)
-          {
-            // An unvisited neighbor found, push it to the stack and start exploring it.
-            unvisited_found = true;
-            v_attr.state = VisitState::VISITING;
-            v_attr.on_stack = true;
-            dfs_stack.push(v);
-            break;
-          }
+        if ((attributes[v].state == VisitState::VISITING) && attributes[v].on_stack)
+        {
+          return true;
+        }
+
+        if (attributes[v].state == VisitState::UNVISITED)
+        {
+          attributes[v].state = VisitState::VISITING;
+          attributes[v].on_stack = true;
+          dfs_stack.push(VertexSearchState{v, 0U});
         }
       }
-
-      if (!unvisited_found)
+      else
       {
-        // All neighbors have been visited, mark the vertex as fully visited.
-        u_attr.state = VisitState::VISITED;
-        u_attr.on_stack = false;
+        // All neighbors are visited.
+        attributes[top.vertex_id].on_stack = false;
+        attributes[top.vertex_id].state = VisitState::VISITED;
         dfs_stack.pop();
       }
     }
