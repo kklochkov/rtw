@@ -28,6 +28,7 @@ public:
   {
     const auto index = top_;
     ++top_;
+    assert(top_ <= capacity());
     return storage_.construct_at(index, std::forward<ArgsT>(args)...);
   }
 

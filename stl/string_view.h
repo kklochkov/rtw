@@ -62,6 +62,7 @@ public:
 
   constexpr size_type copy(char* dest, const size_type count, const size_type pos = 0U) const noexcept
   {
+    assert(pos <= size());
     const size_type length = std::min(count, size() - pos);
     std::copy_n(storage_.data() + pos, length, dest);
     return length;
@@ -69,6 +70,7 @@ public:
 
   constexpr StringView substr(const size_type pos = 0U, const size_type count = NPOS) const noexcept
   {
+    assert(pos <= size());
     const size_type length = std::min(count, size() - pos);
     return StringView{storage_.data() + pos, length};
   }
@@ -123,7 +125,12 @@ public:
 
   constexpr size_type find(const StringView str, const size_type pos = 0U) const noexcept
   {
-    if (pos >= size() || str.empty() || size() < str.size())
+    if (str.empty())
+    {
+      return (pos <= size()) ? pos : NPOS;
+    }
+
+    if (pos >= size() || size() < str.size())
     {
       return NPOS;
     }

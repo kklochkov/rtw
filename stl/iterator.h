@@ -120,11 +120,6 @@ public:
     return StaticContiguousStorageIterator{it.container_, it.index_ + offset};
   }
 
-  friend constexpr StaticContiguousStorageIterator operator-(const difference_type offset,
-                                                             const StaticContiguousStorageIterator& it) noexcept
-  {
-    return StaticContiguousStorageIterator{it.container_, it.index_ - offset};
-  }
   friend constexpr StaticContiguousStorageIterator operator-(const StaticContiguousStorageIterator& it,
                                                              const difference_type offset) noexcept
   {

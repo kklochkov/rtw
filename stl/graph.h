@@ -97,6 +97,7 @@ public:
   constexpr VertexId get_first_vertex_id() const noexcept { return VertexId{0U}; }
   constexpr VertexId get_last_vertex_id() const noexcept
   {
+    assert(!empty());
     return VertexId{static_cast<VertexId::ID_TYPE>(size() - 1U)};
   }
 

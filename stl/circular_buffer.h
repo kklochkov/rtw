@@ -120,11 +120,6 @@ public:
       return CircularBufferIterator{it.container_, it.index_ + offset};
     }
 
-    friend constexpr CircularBufferIterator operator-(const difference_type offset,
-                                                      const CircularBufferIterator& it) noexcept
-    {
-      return CircularBufferIterator{it.container_, it.index_ - offset};
-    }
     friend constexpr CircularBufferIterator operator-(const CircularBufferIterator& it,
                                                       const difference_type offset) noexcept
     {
