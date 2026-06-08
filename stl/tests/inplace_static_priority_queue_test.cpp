@@ -298,3 +298,71 @@ TEST(InplaceStaticPriorityQueueTest, min_queue_additional_tests)
     EXPECT_THAT(result, testing::ElementsAreArray({7, 7, 7, 7, 7, 7, 7}));
   }
 }
+
+// =============================================================================
+// Constexpr evaluation tests (static_assert)
+// =============================================================================
+namespace
+{
+
+struct ConstexprBase
+{
+  int tag{};
+};
+
+struct PQVal : ConstexprBase
+{
+  constexpr PQVal() noexcept = default;
+  constexpr explicit PQVal(int v) noexcept : ConstexprBase{0}, val{v} {}
+  int val{};
+  constexpr bool operator==(const PQVal& other) const noexcept { return val == other.val; }
+  constexpr bool operator<(const PQVal& other) const noexcept { return val < other.val; }
+  constexpr bool operator>(const PQVal& other) const noexcept { return val > other.val; }
+};
+
+static_assert(!rtw::stl::details::IS_TRIVIAL_V<PQVal>, "PQVal must be non-trivial to use the constexpr storage path.");
+
+constexpr auto make_constexpr_pq()
+{
+  rtw::stl::InplaceStaticPriorityQueue<PQVal, 8U> pq;
+  pq.emplace(3);
+  pq.emplace(1);
+  pq.emplace(5);
+  pq.emplace(2);
+  pq.emplace(4);
+  return pq;
+}
+
+// Max-heap: top should be the largest element.
+static_assert(make_constexpr_pq().size() == 5U, "constexpr pq size");
+static_assert(make_constexpr_pq().top() == PQVal{5}, "constexpr pq top is max");
+static_assert(!make_constexpr_pq().empty(), "constexpr pq not empty");
+static_assert(!make_constexpr_pq().full(), "constexpr pq not full");
+static_assert(make_constexpr_pq().capacity() == 8U, "constexpr pq capacity");
+
+constexpr auto make_constexpr_pq_pop()
+{
+  rtw::stl::InplaceStaticPriorityQueue<PQVal, 8U> pq;
+  pq.emplace(10);
+  pq.emplace(30);
+  pq.emplace(20);
+  pq.pop(); // removes 30 (max)
+  return pq;
+}
+
+static_assert(make_constexpr_pq_pop().size() == 2U, "constexpr pq pop size");
+static_assert(make_constexpr_pq_pop().top() == PQVal{20}, "constexpr pq pop top is next max");
+
+constexpr auto make_constexpr_pq_clear()
+{
+  rtw::stl::InplaceStaticPriorityQueue<PQVal, 4U> pq;
+  pq.emplace(1);
+  pq.emplace(2);
+  pq.clear();
+  return pq;
+}
+
+static_assert(make_constexpr_pq_clear().empty(), "constexpr pq clear");
+static_assert(make_constexpr_pq_clear().size() == 0U, "constexpr pq clear size");
+
+} // namespace

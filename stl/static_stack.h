@@ -5,6 +5,19 @@
 namespace rtw::stl
 {
 
+/// @brief A fixed-capacity LIFO stack.
+///
+/// GenericStaticStack provides a stack interface over a contiguous storage backend.
+/// Never allocates dynamically when used with InplaceStaticContiguousStorage.
+///
+/// @tparam T Element type.
+/// @tparam StorageT Storage backend.
+///
+/// Complexity:
+///   - push / emplace: O(1)
+///   - pop: O(1)
+///   - top / bottom: O(1)
+///   - size / empty / capacity: O(1)
 template <typename T, typename StorageT = StaticContiguousStorage<T>>
 class GenericStaticStack
 {
@@ -21,50 +34,82 @@ public:
 
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
+  constexpr bool full() const noexcept { return size() == capacity(); }
   constexpr size_type capacity() const noexcept { return storage_.capacity(); }
 
+  /// @brief Constructs an element in-place on top of the stack.
+  /// @param[in] args Arguments forwarded to the element constructor.
+  /// @return Reference to the newly constructed element.
+  /// @pre size() < capacity()
   template <typename... ArgsT>
   constexpr reference emplace(ArgsT&&... args) noexcept
   {
-    const auto index = top_;
-    ++top_;
-    assert(top_ <= capacity());
-    return storage_.construct_at(index, std::forward<ArgsT>(args)...);
+    assert(size() < capacity());
+    return storage_.construct_at(size(), std::forward<ArgsT>(args)...);
   }
 
+  /// @brief Pushes @p value onto the stack.
+  /// @param[in] value Element to push.
   template <typename U = T>
   constexpr void push(U&& value) noexcept
   {
     emplace(std::forward<U>(value));
   }
 
+  /// @brief Pops the top element, copying it into @p value.
+  /// @param[out] value Destination for the popped element.
+  /// @pre !empty()
   constexpr void pop(T& value) noexcept
   {
     value = top();
     pop();
   }
 
+  /// @brief Removes the top element.
+  /// @pre !empty()
   constexpr void pop() noexcept
   {
-    --top_;
-    storage_.destruct_at(top_);
+    assert(!empty());
+    storage_.destruct_at(size() - 1U);
   }
 
-  constexpr reference top() noexcept { return storage_[top_ - 1U]; }
-  constexpr const_reference top() const noexcept { return storage_[top_ - 1U]; }
-
-  constexpr reference bottom() noexcept { return storage_[0U]; }
-  constexpr const_reference bottom() const noexcept { return storage_[0U]; }
-
-  constexpr void clear()
+  /// @brief Returns a reference to the top (most recently pushed) element.
+  /// @pre !empty()
+  constexpr reference top() noexcept
   {
-    top_ = 0U;
-    storage_.clear();
+    assert(!empty());
+    return storage_[size() - 1U];
   }
+
+  /// @brief Returns a const reference to the top (most recently pushed) element.
+  /// @pre !empty()
+  constexpr const_reference top() const noexcept
+  {
+    assert(!empty());
+    return storage_[size() - 1U];
+  }
+
+  /// @brief Returns a reference to the bottom (first pushed) element.
+  /// @pre !empty()
+  constexpr reference bottom() noexcept
+  {
+    assert(!empty());
+    return storage_[0U];
+  }
+
+  /// @brief Returns a const reference to the bottom (first pushed) element.
+  /// @pre !empty()
+  constexpr const_reference bottom() const noexcept
+  {
+    assert(!empty());
+    return storage_[0U];
+  }
+
+  /// @brief Destroys all elements and sets size to zero.
+  constexpr void clear() noexcept { storage_.clear(); }
 
 private:
   StorageType storage_;
-  size_type top_{0U};
 };
 
 template <typename T>

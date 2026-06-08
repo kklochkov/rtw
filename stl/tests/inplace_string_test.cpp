@@ -1,5 +1,5 @@
 #include "stl/format.h"
-#include "stl/static_string.h"
+#include "stl/inplace_string.h"
 
 #include <gtest/gtest.h>
 
@@ -231,3 +231,72 @@ TEST(InplaceStringTest, reverse_iterator)
   std::reverse(string.rbegin(), string.rend());
   EXPECT_EQ(string, "Hello");
 }
+
+// =============================================================================
+// Constexpr evaluation tests (static_assert)
+// =============================================================================
+namespace
+{
+
+constexpr auto make_constexpr_string()
+{
+  rtw::stl::InplaceString<16U> s{"Hello"};
+  s += ", World";
+  return s;
+}
+
+static_assert(make_constexpr_string().size() == 12U, "constexpr string size");
+static_assert(make_constexpr_string()[0U] == 'H', "constexpr string[0]");
+static_assert(make_constexpr_string()[5U] == ',', "constexpr string[5]");
+static_assert(!make_constexpr_string().empty(), "constexpr string not empty");
+static_assert(make_constexpr_string().capacity() == 16U, "constexpr string capacity");
+
+constexpr auto make_constexpr_string_push_pop()
+{
+  rtw::stl::InplaceString<8U> s{"abc"};
+  s.push_back('d');
+  s.pop_back();
+  s.pop_back();
+  return s;
+}
+
+static_assert(make_constexpr_string_push_pop().size() == 2U, "constexpr string push/pop size");
+static_assert(make_constexpr_string_push_pop()[0U] == 'a', "constexpr string push/pop[0]");
+static_assert(make_constexpr_string_push_pop()[1U] == 'b', "constexpr string push/pop[1]");
+
+constexpr auto make_constexpr_string_comparison()
+{
+  rtw::stl::InplaceString<8U> a{"abc"};
+  rtw::stl::InplaceString<8U> b{"abd"};
+  return a < b;
+}
+
+static_assert(make_constexpr_string_comparison(), "constexpr string comparison");
+
+constexpr auto make_constexpr_string_clear()
+{
+  rtw::stl::InplaceString<8U> s{"hello"};
+  s.clear();
+  return s;
+}
+
+static_assert(make_constexpr_string_clear().empty(), "constexpr string clear");
+static_assert(make_constexpr_string_clear().size() == 0U, "constexpr string clear size");
+
+constexpr auto make_constexpr_string_find()
+{
+  rtw::stl::InplaceString<32U> s{"Hello, World!"};
+  return s.find('W');
+}
+
+static_assert(make_constexpr_string_find() == 7U, "constexpr string find");
+
+constexpr auto make_constexpr_string_starts_ends()
+{
+  rtw::stl::InplaceString<16U> s{"Hello, World!"};
+  return s.starts_with("Hello") && s.ends_with("World!");
+}
+
+static_assert(make_constexpr_string_starts_ends(), "constexpr string starts/ends_with");
+
+} // namespace

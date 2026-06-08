@@ -1,11 +1,33 @@
 #pragma once
 
-#include "stl/iterator.h"
+#include "stl/hash_iterator.h"
 #include "stl/static_contiguous_storage.h"
 
 namespace rtw::stl
 {
 
+/// @brief A fixed-capacity open-addressing hash set with quadratic probing.
+///
+/// GenericStaticFlatUnorderedSet stores unique keys in a flat contiguous buffer.
+/// Uses quadratic probing for collision resolution and supports tombstone-aware
+/// insertion (reuses slots from erased elements). Never allocates dynamically
+/// when used with InplaceStaticContiguousStorage.
+///
+/// @note Capacity should ideally be a prime number for optimal quadratic probing coverage.
+/// With non-prime capacities, some slots may be unreachable, causing insertion to fail
+/// (returning false) even when the table is not full.
+///
+/// @note Iterator invalidation: erase() invalidates only the iterator to the erased element.
+/// emplace()/insert() do not invalidate existing iterators. clear() invalidates all iterators.
+///
+/// @tparam KeyT Key type.
+/// @tparam HashT Hash function (default: std::hash<KeyT>).
+/// @tparam KeyEqualT Key equality comparator (default: std::equal_to<KeyT>).
+/// @tparam KeyStorageT Storage backend for keys.
+///
+/// Complexity:
+///   - emplace / find / erase / contains: O(1) average, O(n) worst case
+///   - size / empty / capacity: O(1)
 template <typename KeyT, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>,
           typename KeyStorageT = StaticContiguousStorage<KeyT>>
 class GenericStaticFlatUnorderedSet
@@ -30,10 +52,13 @@ public:
 
   constexpr size_type size() const noexcept { return keys_storage_.used_slots(); }
   constexpr bool empty() const noexcept { return keys_storage_.empty(); }
+  constexpr bool full() const noexcept { return size() == capacity(); }
   constexpr size_type capacity() const noexcept { return keys_storage_.capacity(); }
 
-  /// @note If the key already exists, the function returns false. Otherwise inserts and returns true.
-  /// Tombstone (destructed) slots are reused for insertion.
+  /// @brief Inserts a key if it does not already exist.
+  /// @param[in] key The key to insert.
+  /// @return true if insertion took place, false if the key already exists.
+  /// @note Tombstone (destructed) slots are reused for insertion.
   template <typename KT = key_type>
   constexpr bool emplace(KT&& key) noexcept
   {
@@ -75,10 +100,24 @@ public:
     return false;
   }
 
+  /// @brief Inserts a copy of @p value.
+  /// @param[in] value The key to insert.
+  /// @return true if insertion took place.
   constexpr bool insert(const key_type& value) noexcept { return emplace(value); }
+
+  /// @brief Inserts @p value by move.
+  /// @param[in,out] value The key to move-insert.
+  /// @return true if insertion took place.
   constexpr bool insert(key_type&& value) noexcept { return emplace(std::move(value)); }
 
+  /// @brief Erases the element with the given @p key.
+  /// @param[in] key The key to erase.
+  /// @return true if an element was erased.
   constexpr bool erase(const key_type& key) noexcept { return erase(find(key)); }
+
+  /// @brief Erases the element pointed to by @p it.
+  /// @param[in] it Iterator to the element to erase.
+  /// @return true if an element was erased (i.e. it was not end()).
   constexpr bool erase(const const_iterator& it) noexcept
   {
     if (it != end())
@@ -90,9 +129,17 @@ public:
     return false;
   }
 
+  /// @brief Destroys all elements and resets all slots to uninitialized.
   constexpr void clear() noexcept { keys_storage_.clear(); }
 
+  /// @brief Finds the element with the given @p key.
+  /// @param[in] key The key to search for.
+  /// @return Iterator to the element, or end() if not found.
   constexpr const_iterator find(const key_type& key) const noexcept { return find<const_iterator>(this, key); }
+
+  /// @brief Checks whether the set contains the given @p key.
+  /// @param[in] key The key to search for.
+  /// @return true if the key is present.
   constexpr bool contains(const key_type& key) const noexcept { return find(key) != cend(); }
 
   constexpr const_iterator begin() const noexcept { return const_iterator::make_begin_iterator(this); }

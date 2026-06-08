@@ -5,6 +5,22 @@
 namespace rtw::stl
 {
 
+/// @brief A fixed-capacity circular (ring) buffer with random-access iterators.
+///
+/// GenericCircularBuffer supports push/pop at both front and back. When full, push_back
+/// (emplace_back) overwrites the oldest (front) element, and push_front (emplace_front)
+/// overwrites the newest (back) element. Logical indices map to physical positions via
+/// modular arithmetic. Supports range-based for loops via random-access iterators.
+///
+/// @tparam T Element type.
+/// @tparam StorageT Storage backend.
+///
+/// Complexity:
+///   - push_front / push_back / emplace_front / emplace_back: O(1)
+///   - pop_front / pop_back: O(1)
+///   - operator[]: O(1)
+///   - front / back: O(1)
+///   - size / empty / capacity: O(1)
 template <typename T, typename StorageT = StaticContiguousStorage<T>>
 class GenericCircularBuffer
 {
@@ -143,8 +159,12 @@ public:
 
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
+  constexpr bool full() const noexcept { return size() == capacity(); }
   constexpr size_type capacity() const noexcept { return storage_.capacity(); }
 
+  /// @brief Constructs an element in-place at the front of the buffer. Overwrites the newest (back) element if full.
+  /// @param[in] args Arguments forwarded to the element constructor.
+  /// @return Reference to the newly constructed element.
   template <typename... ArgsT>
   constexpr reference emplace_front(ArgsT&&... args) noexcept
   {
@@ -152,18 +172,26 @@ public:
     return emplace_at_index(head_, std::forward<ArgsT>(args)...);
   }
 
+  /// @brief Pushes @p value to the front of the buffer.
+  /// @param[in] value Element to push.
   template <typename U = T>
   constexpr void push_front(U&& value) noexcept
   {
     emplace_front(std::forward<U>(value));
   }
 
+  /// @brief Removes the front element.
+  /// @pre !empty()
   constexpr void pop_front() noexcept
   {
+    assert(!empty());
     storage_.destruct_at(head_);
     advance_head();
   }
 
+  /// @brief Constructs an element in-place at the back. Overwrites the oldest element if full.
+  /// @param[in] args Arguments forwarded to the element constructor.
+  /// @return Reference to the newly constructed element.
   template <typename... ArgsT>
   constexpr reference emplace_back(ArgsT&&... args) noexcept
   {
@@ -178,32 +206,78 @@ public:
     return emplace_at_index(index, std::forward<ArgsT>(args)...);
   }
 
+  /// @brief Pushes @p value to the back. Overwrites the oldest element if full.
+  /// @param[in] value Element to push.
   template <typename U = T>
   constexpr void push_back(U&& value) noexcept
   {
     emplace_back(std::forward<U>(value));
   }
 
+  /// @brief Removes the back element.
+  /// @pre !empty()
   constexpr void pop_back() noexcept
   {
     assert(!empty());
     storage_.destruct_at(get_back_index());
   }
 
+  /// @brief Destroys all elements and resets the head index.
   constexpr void clear() noexcept
   {
     head_ = 0U;
     storage_.clear();
   }
 
-  constexpr reference front() noexcept { return storage_[head_]; }
-  constexpr const_reference front() const noexcept { return storage_[head_]; }
+  /// @brief Returns a reference to the front (oldest) element.
+  /// @pre !empty()
+  constexpr reference front() noexcept
+  {
+    assert(!empty());
+    return storage_[head_];
+  }
 
-  constexpr reference back() noexcept { return storage_[get_back_index()]; }
-  constexpr const_reference back() const noexcept { return storage_[get_back_index()]; }
+  /// @brief Returns a const reference to the front (oldest) element.
+  /// @pre !empty()
+  constexpr const_reference front() const noexcept
+  {
+    assert(!empty());
+    return storage_[head_];
+  }
 
-  constexpr reference operator[](const size_type index) noexcept { return storage_[get_index(index)]; }
-  constexpr const_reference operator[](const size_type index) const noexcept { return storage_[get_index(index)]; }
+  /// @brief Returns a reference to the back (newest) element.
+  /// @pre !empty()
+  constexpr reference back() noexcept
+  {
+    assert(!empty());
+    return storage_[get_back_index()];
+  }
+
+  /// @brief Returns a const reference to the back (newest) element.
+  /// @pre !empty()
+  constexpr const_reference back() const noexcept
+  {
+    assert(!empty());
+    return storage_[get_back_index()];
+  }
+
+  /// @brief Returns a reference to the element at logical @p index (0 = front).
+  /// @param[in] index Logical position relative to front.
+  /// @pre index < size()
+  constexpr reference operator[](const size_type index) noexcept
+  {
+    assert(index < size());
+    return storage_[get_index(index)];
+  }
+
+  /// @brief Returns a const reference to the element at logical @p index (0 = front).
+  /// @param[in] index Logical position relative to front.
+  /// @pre index < size()
+  constexpr const_reference operator[](const size_type index) const noexcept
+  {
+    assert(index < size());
+    return storage_[get_index(index)];
+  }
 
   constexpr iterator begin() noexcept { return iterator{this, 0U}; }
   constexpr const_iterator begin() const noexcept { return const_iterator{this, 0U}; }

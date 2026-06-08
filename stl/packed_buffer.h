@@ -56,24 +56,43 @@ public:
 
   constexpr size_type size() const noexcept { return storage_.used_slots(); }
   constexpr bool empty() const noexcept { return storage_.empty(); }
+  constexpr bool full() const noexcept { return size() == capacity(); }
   constexpr size_type capacity() const noexcept { return storage_.capacity(); }
 
+  /// @brief Constructs an element in-place at the end of the buffer.
+  /// @param[in] args Arguments forwarded to the element constructor.
+  /// @return Reference to the newly constructed element.
+  /// @pre size() < capacity()
   template <typename... ArgsT>
   constexpr reference emplace_back(ArgsT&&... args) noexcept
   {
+    assert(size() < capacity());
     return storage_.construct_at(size(), std::forward<ArgsT>(args)...);
   }
 
+  /// @brief Appends @p value to the end of the buffer.
+  /// @param[in] value Element to append.
   template <typename U = T>
   constexpr void push_back(U&& value) noexcept
   {
     emplace_back(std::forward<U>(value));
   }
 
-  constexpr void pop_back() noexcept { storage_.destruct_at(size() - 1U); }
+  /// @brief Removes the last element.
+  /// @pre !empty()
+  constexpr void pop_back() noexcept
+  {
+    assert(!empty());
+    storage_.destruct_at(size() - 1U);
+  }
 
+  /// @brief Removes the element at @p index by swapping it with the last element, then popping.
+  /// @param[in] index Position of the element to remove.
+  /// @note This operation does NOT preserve element ordering.
+  /// @pre !empty()
   constexpr void remove(const size_type index) noexcept
   {
+    assert(!empty());
     const auto last_index = size() - 1U;
     if (index != last_index)
     {
@@ -82,7 +101,40 @@ public:
     storage_.destruct_at(last_index);
   }
 
+  /// @brief Destroys all elements and sets size to zero.
   constexpr void clear() noexcept { storage_.clear(); }
+
+  /// @brief Returns a reference to the first element.
+  /// @pre !empty()
+  constexpr reference front() noexcept
+  {
+    assert(!empty());
+    return storage_[0U];
+  }
+
+  /// @brief Returns a const reference to the first element.
+  /// @pre !empty()
+  constexpr const_reference front() const noexcept
+  {
+    assert(!empty());
+    return storage_[0U];
+  }
+
+  /// @brief Returns a reference to the last element.
+  /// @pre !empty()
+  constexpr reference back() noexcept
+  {
+    assert(!empty());
+    return storage_[size() - 1U];
+  }
+
+  /// @brief Returns a const reference to the last element.
+  /// @pre !empty()
+  constexpr const_reference back() const noexcept
+  {
+    assert(!empty());
+    return storage_[size() - 1U];
+  }
 
   constexpr reference operator[](const size_type index) noexcept { return storage_[index]; }
   constexpr const_reference operator[](const size_type index) const noexcept { return storage_[index]; }

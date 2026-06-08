@@ -205,3 +205,101 @@ TEST(InplacePackedBufferTest, iterators)
 
   EXPECT_TRUE(rtw::stl::is_memory_contiguous(buffer.begin(), buffer.end()));
 }
+
+// =============================================================================
+// Constexpr evaluation tests (static_assert)
+// =============================================================================
+namespace
+{
+
+struct ConstexprBase
+{
+  int tag{};
+};
+
+struct PBConstexprVal : ConstexprBase
+{
+  constexpr PBConstexprVal() noexcept = default;
+  constexpr explicit PBConstexprVal(int v) noexcept : ConstexprBase{0}, val{v} {}
+  int val{};
+  constexpr bool operator==(const PBConstexprVal& other) const noexcept { return val == other.val; }
+};
+
+static_assert(!rtw::stl::details::IS_TRIVIAL_V<PBConstexprVal>,
+              "PBConstexprVal must be non-trivial to use the constexpr storage path.");
+
+constexpr auto make_constexpr_packed_buffer()
+{
+  rtw::stl::InplacePackedBuffer<PBConstexprVal, 8U> buf;
+  buf.emplace_back(1);
+  buf.emplace_back(2);
+  buf.emplace_back(3);
+  buf.emplace_back(4);
+  return buf;
+}
+
+static_assert(make_constexpr_packed_buffer().size() == 4U, "constexpr packed_buffer size");
+static_assert(make_constexpr_packed_buffer()[0U] == PBConstexprVal{1}, "constexpr packed_buffer [0]");
+static_assert(make_constexpr_packed_buffer()[3U] == PBConstexprVal{4}, "constexpr packed_buffer [3]");
+static_assert(!make_constexpr_packed_buffer().empty(), "constexpr packed_buffer not empty");
+static_assert(!make_constexpr_packed_buffer().full(), "constexpr packed_buffer not full");
+static_assert(make_constexpr_packed_buffer().capacity() == 8U, "constexpr packed_buffer capacity");
+
+constexpr auto make_constexpr_packed_buffer_with_pop()
+{
+  rtw::stl::InplacePackedBuffer<PBConstexprVal, 8U> buf;
+  buf.emplace_back(10);
+  buf.emplace_back(20);
+  buf.emplace_back(30);
+  buf.pop_back();
+  return buf;
+}
+
+static_assert(make_constexpr_packed_buffer_with_pop().size() == 2U, "constexpr packed_buffer pop size");
+static_assert(make_constexpr_packed_buffer_with_pop()[1U] == PBConstexprVal{20}, "constexpr packed_buffer pop [1]");
+
+constexpr auto make_constexpr_packed_buffer_with_remove()
+{
+  rtw::stl::InplacePackedBuffer<PBConstexprVal, 8U> buf;
+  buf.emplace_back(1);
+  buf.emplace_back(2);
+  buf.emplace_back(3);
+  buf.emplace_back(4);
+  buf.remove(1U); // removes 2, moves 4 into position 1
+  return buf;
+}
+
+static_assert(make_constexpr_packed_buffer_with_remove().size() == 3U, "constexpr packed_buffer remove size");
+static_assert(make_constexpr_packed_buffer_with_remove()[0U] == PBConstexprVal{1},
+              "constexpr packed_buffer remove [0]");
+static_assert(make_constexpr_packed_buffer_with_remove()[1U] == PBConstexprVal{4},
+              "constexpr packed_buffer remove [1] (swapped)");
+static_assert(make_constexpr_packed_buffer_with_remove()[2U] == PBConstexprVal{3},
+              "constexpr packed_buffer remove [2]");
+
+constexpr auto make_constexpr_packed_buffer_front_back()
+{
+  rtw::stl::InplacePackedBuffer<PBConstexprVal, 8U> buf;
+  buf.emplace_back(100);
+  buf.emplace_back(200);
+  buf.emplace_back(300);
+  return buf;
+}
+
+static_assert(make_constexpr_packed_buffer_front_back().front() == PBConstexprVal{100},
+              "constexpr packed_buffer front");
+static_assert(make_constexpr_packed_buffer_front_back().back() == PBConstexprVal{300}, "constexpr packed_buffer back");
+
+constexpr auto make_constexpr_packed_buffer_cleared()
+{
+  rtw::stl::InplacePackedBuffer<PBConstexprVal, 4U> buf;
+  buf.emplace_back(1);
+  buf.emplace_back(2);
+  buf.clear();
+  return buf;
+}
+
+static_assert(make_constexpr_packed_buffer_cleared().size() == 0U, "constexpr packed_buffer clear");
+static_assert(make_constexpr_packed_buffer_cleared().empty(), "constexpr packed_buffer empty after clear");
+
+} // namespace

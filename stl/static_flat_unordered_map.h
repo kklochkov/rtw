@@ -1,11 +1,37 @@
 #pragma once
 
-#include "stl/iterator.h"
+#include "stl/hash_iterator.h"
 #include "stl/static_contiguous_storage.h"
 
 namespace rtw::stl
 {
 
+/// @brief A fixed-capacity open-addressing hash map with quadratic probing.
+///
+/// GenericStaticFlatUnorderedMap stores key-value pairs in parallel flat contiguous buffers.
+/// Uses quadratic probing for collision resolution and supports tombstone-aware
+/// insertion (reuses slots from erased elements). If a key already exists, emplace
+/// overwrites the mapped value. Never allocates dynamically when used with
+/// InplaceStaticContiguousStorage.
+///
+/// @note Capacity should ideally be a prime number for optimal quadratic probing coverage.
+/// With non-prime capacities, some slots may be unreachable, causing insertion to fail
+/// even when the table is not full.
+///
+/// @note Iterator invalidation: erase() invalidates only the iterator to the erased element.
+/// emplace()/insert()/operator[] do not invalidate existing iterators. clear() invalidates
+/// all iterators.
+///
+/// @tparam KeyT Key type.
+/// @tparam T Mapped value type.
+/// @tparam HashT Hash function (default: std::hash<KeyT>).
+/// @tparam KeyEqualT Key equality comparator (default: std::equal_to<KeyT>).
+/// @tparam KeyStorageT Storage backend for keys.
+/// @tparam ValueStorageT Storage backend for values.
+///
+/// Complexity:
+///   - emplace / find / erase / operator[] / contains: O(1) average, O(n) worst case
+///   - size / empty / capacity: O(1)
 template <typename KeyT, typename T, typename HashT = std::hash<KeyT>, typename KeyEqualT = std::equal_to<KeyT>,
           typename KeyStorageT = StaticContiguousStorage<KeyT>, typename ValueStorageT = StaticContiguousStorage<T>>
 class GenericStaticFlatUnorderedMap
@@ -36,11 +62,15 @@ public:
 
   constexpr size_type size() const noexcept { return keys_storage_.used_slots(); }
   constexpr bool empty() const noexcept { return keys_storage_.empty(); }
+  constexpr bool full() const noexcept { return size() == capacity(); }
   constexpr size_type capacity() const noexcept { return keys_storage_.capacity(); }
 
-  /// @note If the key already exists, the mapped value is overwritten and the function returns true.
-  /// Returns false only if the map is full and the key is not present.
-  /// Tombstone (destructed) slots are reused for insertion.
+  /// @brief Inserts or overwrites a key-value pair.
+  /// @param[in] key The key to insert or look up.
+  /// @param[in] args Arguments forwarded to construct the mapped value.
+  /// @return true if the key was inserted or updated, false only if the map is full and the key is absent.
+  /// @note Tombstone (destructed) slots are reused for insertion. If the key already exists, the
+  /// mapped value is overwritten.
   template <typename KT = key_type, typename... ArgsT>
   constexpr bool emplace(KT&& key, ArgsT&&... args) noexcept
   {
@@ -85,14 +115,28 @@ public:
     return false;
   }
 
+  /// @brief Inserts a copy of @p value (pair).
+  /// @param[in] value Key-value pair to insert.
+  /// @return true if insertion took place or the value was updated.
   constexpr bool insert(const value_type& value) noexcept { return emplace(value.first, value.second); }
+
+  /// @brief Inserts @p value (pair) by move.
+  /// @param[in,out] value Key-value pair to move-insert.
+  /// @return true if insertion took place or the value was updated.
   constexpr bool insert(value_type&& value) noexcept
   {
     auto&& [key, mapped_value] = std::move(value);
     return emplace(std::move(key), std::move(mapped_value));
   }
 
+  /// @brief Erases the element with the given @p key.
+  /// @param[in] key The key to erase.
+  /// @return true if an element was erased.
   constexpr bool erase(const key_type& key) noexcept { return erase(find(key)); }
+
+  /// @brief Erases the element pointed to by @p it.
+  /// @param[in] it Iterator to the element to erase.
+  /// @return true if an element was erased (i.e. it was not end()).
   constexpr bool erase(const iterator& it) noexcept
   {
     if (it != end())
@@ -105,12 +149,16 @@ public:
     return false;
   }
 
+  /// @brief Destroys all key-value pairs and resets all slots to uninitialized.
   constexpr void clear() noexcept
   {
     keys_storage_.clear();
     values_storage_.clear();
   }
 
+  /// @brief Returns a reference to the mapped value for @p key, inserting a default if absent.
+  /// @param[in] key The key to look up or insert.
+  /// @return Reference to the mapped value.
   template <typename KT = key_type>
   constexpr mapped_type& operator[](KT&& key) noexcept
   {
@@ -152,10 +200,29 @@ public:
     __builtin_unreachable();
   }
 
-  constexpr const mapped_type& operator[](const key_type& key) const noexcept { return find(key)->second; }
+  /// @brief Returns a const reference to the mapped value for @p key. Asserts if key is absent.
+  /// @param[in] key The key to look up.
+  /// @return Const reference to the mapped value.
+  constexpr const mapped_type& operator[](const key_type& key) const noexcept
+  {
+    const auto it = find(key);
+    assert(it != cend() && "Key not found in const operator[]");
+    return it->second;
+  }
 
+  /// @brief Finds the element with the given @p key (mutable).
+  /// @param[in] key The key to search for.
+  /// @return Iterator to the element, or end() if not found.
   constexpr iterator find(const key_type& key) noexcept { return find<iterator>(this, key); }
+
+  /// @brief Finds the element with the given @p key (const).
+  /// @param[in] key The key to search for.
+  /// @return Const iterator to the element, or cend() if not found.
   constexpr const_iterator find(const key_type& key) const noexcept { return find<const_iterator>(this, key); }
+
+  /// @brief Checks whether the map contains the given @p key.
+  /// @param[in] key The key to search for.
+  /// @return true if the key is present.
   constexpr bool contains(const key_type& key) const noexcept { return find(key) != cend(); }
 
   constexpr const key_container_type& keys() const noexcept { return keys_storage_; }

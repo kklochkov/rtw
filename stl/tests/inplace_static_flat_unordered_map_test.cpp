@@ -208,3 +208,92 @@ TEST(InplaceStaticFlatUnorderedMap, find)
   it = map.find(3U);
   EXPECT_EQ(it, map.end()); // Non-existing key
 }
+
+TEST(InplaceStaticFlatUnorderedMap, tombstone_reuse)
+{
+  // Use a small capacity to increase collision probability and test tombstone traversal.
+  rtw::stl::InplaceStaticFlatUnorderedMap<std::size_t, int, 7U> map;
+
+  // Fill the map partially.
+  map.emplace(1U, 10);
+  map.emplace(2U, 20);
+  map.emplace(3U, 30);
+  map.emplace(4U, 40);
+  EXPECT_EQ(map.size(), 4U);
+
+  // Erase middle keys (creates tombstones).
+  EXPECT_TRUE(map.erase(2U));
+  EXPECT_TRUE(map.erase(3U));
+  EXPECT_EQ(map.size(), 2U);
+
+  // Verify erased keys are not found.
+  EXPECT_FALSE(map.contains(2U));
+  EXPECT_FALSE(map.contains(3U));
+
+  // Verify remaining keys are still found (find must skip tombstones).
+  EXPECT_TRUE(map.contains(1U));
+  EXPECT_TRUE(map.contains(4U));
+  EXPECT_EQ(map[1U], 10);
+  EXPECT_EQ(map[4U], 40);
+
+  // Insert new keys — should reuse tombstone slots.
+  map.emplace(5U, 50);
+  map.emplace(6U, 60);
+  EXPECT_EQ(map.size(), 4U);
+
+  // Verify all current keys are accessible.
+  EXPECT_EQ(map[1U], 10);
+  EXPECT_EQ(map[4U], 40);
+  EXPECT_EQ(map[5U], 50);
+  EXPECT_EQ(map[6U], 60);
+
+  // Erase all, then refill — ensures tombstones are cleared on reuse.
+  EXPECT_TRUE(map.erase(1U));
+  EXPECT_TRUE(map.erase(4U));
+  EXPECT_TRUE(map.erase(5U));
+  EXPECT_TRUE(map.erase(6U));
+  EXPECT_EQ(map.size(), 0U);
+  EXPECT_TRUE(map.empty());
+
+  // Refill after all-erased state.
+  map.emplace(10U, 100);
+  map.emplace(20U, 200);
+  EXPECT_EQ(map.size(), 2U);
+  EXPECT_EQ(map[10U], 100);
+  EXPECT_EQ(map[20U], 200);
+}
+
+TEST(InplaceStaticFlatUnorderedMap, find_skips_tombstones)
+{
+  // Keys that are likely to collide in a capacity-7 map (same hash % 7).
+  // We insert keys, erase one that's probed through, then verify the later one is still findable.
+  rtw::stl::InplaceStaticFlatUnorderedMap<std::size_t, int, 7U> map;
+
+  // Insert keys 0, 7, 14 — all hash to index 0 in capacity-7 (assuming identity hash for size_t).
+  map.emplace(0U, 0);
+  map.emplace(7U, 7);
+  map.emplace(14U, 14);
+  EXPECT_EQ(map.size(), 3U);
+
+  // Erase the middle one (key 7) — creates a tombstone in the probe chain.
+  EXPECT_TRUE(map.erase(7U));
+  EXPECT_EQ(map.size(), 2U);
+
+  // Find must still locate key 14 by probing past the tombstone.
+  EXPECT_TRUE(map.contains(14U));
+  EXPECT_EQ(map[14U], 14);
+  EXPECT_TRUE(map.contains(0U));
+  EXPECT_EQ(map[0U], 0);
+
+  // Re-insert key 7 — should reuse the tombstone slot.
+  map.emplace(7U, 77);
+  EXPECT_EQ(map.size(), 3U);
+  EXPECT_EQ(map[7U], 77);
+
+  // full() check
+  map.emplace(1U, 1);
+  map.emplace(2U, 2);
+  map.emplace(3U, 3);
+  map.emplace(4U, 4);
+  EXPECT_TRUE(map.full());
+}

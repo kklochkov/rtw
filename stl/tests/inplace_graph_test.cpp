@@ -1,5 +1,5 @@
 #include "stl/graph.h"
-#include "stl/static_string.h"
+#include "stl/inplace_string.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

@@ -193,3 +193,186 @@ TEST(StaticVectorTest, reverse_iterator)
 
   EXPECT_THAT(expected, ::testing::ElementsAreArray(vector));
 }
+
+TEST(StaticVectorTest, resize)
+{
+  StaticVector vector{10U};
+
+  vector.resize(5U);
+  EXPECT_EQ(vector.size(), 5U);
+  for (std::size_t i = 0U; i < 5U; ++i)
+  {
+    EXPECT_EQ(vector[i], (Struct{}));
+  }
+
+  // Resize down.
+  vector.resize(2U);
+  EXPECT_EQ(vector.size(), 2U);
+
+  // Resize back up.
+  vector.resize(4U);
+  EXPECT_EQ(vector.size(), 4U);
+
+  // Resize to zero.
+  vector.resize(0U);
+  EXPECT_EQ(vector.size(), 0U);
+  EXPECT_TRUE(vector.empty());
+}
+
+TEST(StaticVectorTest, insert_by_index)
+{
+  StaticVector vector{10U};
+
+  vector.push_back(Struct{1.0F, 1, 1});
+  vector.push_back(Struct{2.0F, 2, 2});
+  vector.push_back(Struct{3.0F, 3, 3});
+
+  // Insert at the beginning.
+  vector.insert(0U, Struct{0.0F, 0, 0});
+  EXPECT_EQ(vector.size(), 4U);
+  EXPECT_EQ(vector[0U], (Struct{0.0F, 0, 0}));
+  EXPECT_EQ(vector[1U], (Struct{1.0F, 1, 1}));
+  EXPECT_EQ(vector[2U], (Struct{2.0F, 2, 2}));
+  EXPECT_EQ(vector[3U], (Struct{3.0F, 3, 3}));
+
+  // Insert in the middle.
+  vector.insert(2U, Struct{1.5F, 15, 15});
+  EXPECT_EQ(vector.size(), 5U);
+  EXPECT_EQ(vector[2U], (Struct{1.5F, 15, 15}));
+  EXPECT_EQ(vector[3U], (Struct{2.0F, 2, 2}));
+
+  // Insert at the end.
+  vector.insert(vector.size(), Struct{9.0F, 9, 9});
+  EXPECT_EQ(vector.size(), 6U);
+  EXPECT_EQ(vector[5U], (Struct{9.0F, 9, 9}));
+
+  // Insert with move.
+  Struct moved{7.0F, 7, 7};
+  vector.insert(1U, std::move(moved));
+  EXPECT_EQ(vector.size(), 7U);
+  EXPECT_EQ(vector[1U], (Struct{7.0F, 7, 7}));
+}
+
+TEST(StaticVectorTest, insert_by_iterator)
+{
+  StaticVector vector{10U};
+
+  vector.push_back(Struct{1.0F, 1, 1});
+  vector.push_back(Struct{2.0F, 2, 2});
+  vector.push_back(Struct{3.0F, 3, 3});
+
+  // Insert at the beginning via iterator.
+  auto it = vector.insert(vector.cbegin(), Struct{0.0F, 0, 0});
+  EXPECT_EQ(vector.size(), 4U);
+  EXPECT_EQ(*it, (Struct{0.0F, 0, 0}));
+  EXPECT_EQ(vector[0U], (Struct{0.0F, 0, 0}));
+  EXPECT_EQ(vector[1U], (Struct{1.0F, 1, 1}));
+
+  // Insert in the middle via iterator.
+  it = vector.insert(vector.cbegin() + 2, Struct{1.5F, 15, 15});
+  EXPECT_EQ(vector.size(), 5U);
+  EXPECT_EQ(*it, (Struct{1.5F, 15, 15}));
+  EXPECT_EQ(vector[2U], (Struct{1.5F, 15, 15}));
+
+  // Insert at the end via iterator.
+  it = vector.insert(vector.cend(), Struct{9.0F, 9, 9});
+  EXPECT_EQ(vector.size(), 6U);
+  EXPECT_EQ(*it, (Struct{9.0F, 9, 9}));
+  EXPECT_EQ(vector[5U], (Struct{9.0F, 9, 9}));
+
+  // Insert with move via iterator.
+  Struct moved{7.0F, 7, 7};
+  it = vector.insert(vector.cbegin() + 1, std::move(moved));
+  EXPECT_EQ(vector.size(), 7U);
+  EXPECT_EQ(*it, (Struct{7.0F, 7, 7}));
+  EXPECT_EQ(vector[1U], (Struct{7.0F, 7, 7}));
+}
+
+TEST(StaticVectorTest, erase_by_index)
+{
+  StaticVector vector{10U};
+
+  vector.push_back(Struct{1.0F, 1, 1});
+  vector.push_back(Struct{2.0F, 2, 2});
+  vector.push_back(Struct{3.0F, 3, 3});
+  vector.push_back(Struct{4.0F, 4, 4});
+  vector.push_back(Struct{5.0F, 5, 5});
+
+  // Erase from the middle.
+  auto it = vector.erase(2U);
+  EXPECT_EQ(vector.size(), 4U);
+  EXPECT_EQ(*it, (Struct{4.0F, 4, 4}));
+  EXPECT_EQ(vector[0U], (Struct{1.0F, 1, 1}));
+  EXPECT_EQ(vector[1U], (Struct{2.0F, 2, 2}));
+  EXPECT_EQ(vector[2U], (Struct{4.0F, 4, 4}));
+  EXPECT_EQ(vector[3U], (Struct{5.0F, 5, 5}));
+
+  // Erase from the beginning.
+  it = vector.erase(0U);
+  EXPECT_EQ(vector.size(), 3U);
+  EXPECT_EQ(*it, (Struct{2.0F, 2, 2}));
+
+  // Erase last element.
+  it = vector.erase(vector.size() - 1U);
+  EXPECT_EQ(vector.size(), 2U);
+  EXPECT_EQ(it, vector.end());
+
+  // Erase all.
+  vector.erase(0U);
+  vector.erase(0U);
+  EXPECT_EQ(vector.size(), 0U);
+  EXPECT_TRUE(vector.empty());
+}
+
+TEST(StaticVectorTest, erase_by_iterator)
+{
+  StaticVector vector{10U};
+
+  vector.push_back(Struct{1.0F, 1, 1});
+  vector.push_back(Struct{2.0F, 2, 2});
+  vector.push_back(Struct{3.0F, 3, 3});
+  vector.push_back(Struct{4.0F, 4, 4});
+  vector.push_back(Struct{5.0F, 5, 5});
+
+  // Erase from the middle via iterator.
+  auto it = vector.erase(vector.cbegin() + 2);
+  EXPECT_EQ(vector.size(), 4U);
+  EXPECT_EQ(*it, (Struct{4.0F, 4, 4}));
+
+  // Erase from the beginning via iterator.
+  it = vector.erase(vector.cbegin());
+  EXPECT_EQ(vector.size(), 3U);
+  EXPECT_EQ(*it, (Struct{2.0F, 2, 2}));
+
+  // Erase last element via iterator.
+  it = vector.erase(vector.cbegin() + 2);
+  EXPECT_EQ(vector.size(), 2U);
+  EXPECT_EQ(it, vector.end());
+
+  // Erase all via iterator.
+  vector.erase(vector.cbegin());
+  vector.erase(vector.cbegin());
+  EXPECT_EQ(vector.size(), 0U);
+  EXPECT_TRUE(vector.empty());
+}
+
+TEST(StaticVectorTest, front_back_data)
+{
+  StaticVector vector{10U};
+
+  vector.push_back(Struct{1.0F, 1, 1});
+  vector.push_back(Struct{2.0F, 2, 2});
+  vector.push_back(Struct{3.0F, 3, 3});
+
+  EXPECT_EQ(vector.front(), (Struct{1.0F, 1, 1}));
+  EXPECT_EQ(vector.back(), (Struct{3.0F, 3, 3}));
+
+  // Modify via front/back.
+  vector.front() = Struct{10.0F, 10, 10};
+  vector.back() = Struct{30.0F, 30, 30};
+  EXPECT_EQ(vector[0U], (Struct{10.0F, 10, 10}));
+  EXPECT_EQ(vector[2U], (Struct{30.0F, 30, 30}));
+
+  // data() points to first element.
+  EXPECT_EQ(vector.data(), &vector[0U]);
+}

@@ -317,3 +317,135 @@ TEST(InplaceCircularBufferTest, iterators)
     ++index;
   }
 }
+
+TEST(InplaceCircularBufferTest, emplace_front_overwrite_at_full_capacity)
+{
+  rtw::stl::InplaceCircularBuffer<int, 4U> buffer;
+  buffer.emplace_back(1);
+  buffer.emplace_back(2);
+  buffer.emplace_back(3);
+  buffer.emplace_back(4);
+  ASSERT_TRUE(buffer.full());
+  ASSERT_EQ(buffer.size(), 4U);
+
+  // emplace_front on a full buffer: overwrites the back (newest) element.
+  buffer.emplace_front(99);
+  EXPECT_EQ(buffer.size(), 4U);
+  EXPECT_TRUE(buffer.full());
+  // Logical order: 99 (new front), 1, 2, 3. Old back (4) was overwritten.
+  EXPECT_EQ(buffer[0U], 99);
+  EXPECT_EQ(buffer[1U], 1);
+  EXPECT_EQ(buffer[2U], 2);
+  EXPECT_EQ(buffer[3U], 3);
+  EXPECT_EQ(buffer.front(), 99);
+  EXPECT_EQ(buffer.back(), 3);
+}
+
+TEST(InplaceCircularBufferTest, emplace_back_overwrite_at_full_capacity)
+{
+  rtw::stl::InplaceCircularBuffer<int, 4U> buffer;
+  buffer.emplace_back(1);
+  buffer.emplace_back(2);
+  buffer.emplace_back(3);
+  buffer.emplace_back(4);
+  ASSERT_TRUE(buffer.full());
+
+  // emplace_back on a full buffer: overwrites the front (oldest) element.
+  buffer.emplace_back(99);
+  EXPECT_EQ(buffer.size(), 4U);
+  EXPECT_TRUE(buffer.full());
+  // Logical order: 2, 3, 4, 99. Old front (1) was overwritten.
+  EXPECT_EQ(buffer[0U], 2);
+  EXPECT_EQ(buffer[1U], 3);
+  EXPECT_EQ(buffer[2U], 4);
+  EXPECT_EQ(buffer[3U], 99);
+  EXPECT_EQ(buffer.front(), 2);
+  EXPECT_EQ(buffer.back(), 99);
+}
+
+TEST(InplaceCircularBufferTest, full_method)
+{
+  rtw::stl::InplaceCircularBuffer<int, 3U> buffer;
+  EXPECT_FALSE(buffer.full());
+
+  buffer.emplace_back(1);
+  EXPECT_FALSE(buffer.full());
+
+  buffer.emplace_back(2);
+  EXPECT_FALSE(buffer.full());
+
+  buffer.emplace_back(3);
+  EXPECT_TRUE(buffer.full());
+
+  buffer.pop_front();
+  EXPECT_FALSE(buffer.full());
+}
+
+// =============================================================================
+// Constexpr evaluation tests (static_assert)
+// =============================================================================
+namespace
+{
+
+struct ConstexprBase
+{
+  int tag{};
+};
+
+struct BufVal : ConstexprBase
+{
+  constexpr BufVal() noexcept = default;
+  constexpr explicit BufVal(int v) noexcept : ConstexprBase{0}, val{v} {}
+  int val{};
+  constexpr bool operator==(const BufVal& other) const noexcept { return val == other.val; }
+};
+
+static_assert(!rtw::stl::details::IS_TRIVIAL_V<BufVal>,
+              "BufVal must be non-trivial to use the constexpr storage path.");
+
+constexpr auto make_constexpr_buffer()
+{
+  rtw::stl::InplaceCircularBuffer<BufVal, 4U> buf;
+  buf.emplace_back(1);
+  buf.emplace_back(2);
+  buf.emplace_back(3);
+  buf.pop_front();
+  return buf;
+}
+
+static_assert(make_constexpr_buffer().size() == 2U, "constexpr buffer size");
+static_assert(make_constexpr_buffer().front() == BufVal{2}, "constexpr buffer front");
+static_assert(make_constexpr_buffer().back() == BufVal{3}, "constexpr buffer back");
+static_assert(!make_constexpr_buffer().empty(), "constexpr buffer not empty");
+static_assert(!make_constexpr_buffer().full(), "constexpr buffer not full");
+
+constexpr auto make_constexpr_buffer_overwrite()
+{
+  rtw::stl::InplaceCircularBuffer<BufVal, 3U> buf;
+  buf.emplace_back(1);
+  buf.emplace_back(2);
+  buf.emplace_back(3);
+  // Full — next push_back overwrites front (oldest).
+  buf.emplace_back(4);
+  return buf;
+}
+
+static_assert(make_constexpr_buffer_overwrite().size() == 3U, "constexpr buffer overwrite size");
+static_assert(make_constexpr_buffer_overwrite().front() == BufVal{2}, "constexpr buffer overwrite front");
+static_assert(make_constexpr_buffer_overwrite().back() == BufVal{4}, "constexpr buffer overwrite back");
+static_assert(make_constexpr_buffer_overwrite().full(), "constexpr buffer overwrite full");
+
+constexpr auto make_constexpr_buffer_emplace_front()
+{
+  rtw::stl::InplaceCircularBuffer<BufVal, 4U> buf;
+  buf.emplace_front(1);
+  buf.emplace_front(2);
+  buf.emplace_front(3);
+  return buf;
+}
+
+static_assert(make_constexpr_buffer_emplace_front().size() == 3U, "constexpr buffer emplace_front size");
+static_assert(make_constexpr_buffer_emplace_front().front() == BufVal{3}, "constexpr buffer emplace_front front");
+static_assert(make_constexpr_buffer_emplace_front().back() == BufVal{1}, "constexpr buffer emplace_front back");
+
+} // namespace

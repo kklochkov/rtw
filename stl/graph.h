@@ -71,6 +71,21 @@ struct AdjacencyListTraits
 
 } // namespace details
 
+/// @brief A fixed-capacity directed graph with adjacency-list representation.
+///
+/// Supports both heap-allocated (std::vector) and fully inplace (InplaceStaticVector) storage
+/// via the AdjacencyListTraits mechanism. Vertices carry optional user attributes; edges carry
+/// at minimum a destination vertex (BasicDirectedEdgeAttributes) and optionally a weight.
+///
+/// @tparam VertexAttributesT Per-vertex user data (use EmptyVertexAttributes for none).
+/// @tparam EdgeAttributesT Per-edge data (must derive from BasicDirectedEdgeAttributes).
+/// @tparam AdjacencyListTraitsArgsT Optional compile-time capacity parameter.
+///
+/// Complexity:
+///   - add_vertex: O(1)
+///   - add_edge: O(1) amortized
+///   - get_edges: O(1)
+///   - operator[]: O(1)
 template <typename VertexAttributesT, typename EdgeAttributesT = BasicDirectedEdgeAttributes,
           typename... AdjacencyListTraitsArgsT>
 class GenericDirectedGraph
@@ -258,6 +273,10 @@ struct AlgorithmTraits<VertexAttributesT, EdgeAttributesT, std::integral_constan
 
 } // namespace details
 
+/// @brief Detects cycles in a directed graph using Kahn's algorithm (BFS-based).
+/// @param[in] graph The directed graph to check.
+/// @return true if the graph contains a cycle.
+/// @note Complexity: O(V + E) time, O(V) space.
 template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
 inline bool has_cycle_bfs(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
 {
@@ -308,6 +327,10 @@ enum class VisitState : std::uint8_t
   VISITED
 };
 
+/// @brief Detects cycles in a directed graph using recursive DFS with 3-color marking.
+/// @param[in] graph The directed graph to check.
+/// @return true if the graph contains a cycle.
+/// @note Complexity: O(V + E) time, O(V) space (plus recursion stack depth up to O(V)).
 template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
 inline bool
 has_cycle_dfs_recursive(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
@@ -357,6 +380,10 @@ has_cycle_dfs_recursive(const GenericDirectedGraph<VertexAttributesT, EdgeAttrib
   return false;
 }
 
+/// @brief Detects cycles in a directed graph using iterative DFS with explicit stack.
+/// @param[in] graph The directed graph to check.
+/// @return true if the graph contains a cycle.
+/// @note Complexity: O(V + E) time, O(V) space.
 template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
 inline bool
 has_cycle_dfs_iterative(const GenericDirectedGraph<VertexAttributesT, EdgeAttributesT, ArgsT...>& graph) noexcept
@@ -425,6 +452,10 @@ has_cycle_dfs_iterative(const GenericDirectedGraph<VertexAttributesT, EdgeAttrib
   return false;
 }
 
+/// @brief Computes a topological ordering using Kahn's algorithm (BFS-based).
+/// @param[in] graph The directed graph to sort.
+/// @return Topological order, or std::nullopt if the graph has a cycle.
+/// @note Complexity: O(V + E) time, O(V) space.
 template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
 inline std::optional<typename details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT,
                                                        ArgsT...>::template static_vector_type<VertexId>>
@@ -477,6 +508,10 @@ topological_sort_bfs(const GenericDirectedGraph<VertexAttributesT, EdgeAttribute
   return result;
 }
 
+/// @brief Computes a topological ordering using recursive DFS with 3-color marking.
+/// @param[in] graph The directed graph to sort.
+/// @return Topological order, or std::nullopt if the graph has a cycle.
+/// @note Complexity: O(V + E) time, O(V) space (plus recursion stack depth up to O(V)).
 template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
 inline std::optional<typename details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT,
                                                        ArgsT...>::template static_vector_type<VertexId>>
@@ -532,6 +567,10 @@ topological_sort_dfs_recursive(const GenericDirectedGraph<VertexAttributesT, Edg
   return result;
 }
 
+/// @brief Computes a topological ordering using iterative DFS with explicit stack.
+/// @param[in] graph The directed graph to sort.
+/// @return Topological order, or std::nullopt if the graph has a cycle.
+/// @note Complexity: O(V + E) time, O(V) space.
 template <typename VertexAttributesT, typename EdgeAttributesT, typename... ArgsT>
 inline std::optional<typename details::AlgorithmTraits<VertexAttributesT, EdgeAttributesT,
                                                        ArgsT...>::template static_vector_type<VertexId>>

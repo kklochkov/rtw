@@ -139,3 +139,72 @@ TEST(InplaceStaticFlatUnorderedSet, find)
   it = set.find(3U);
   EXPECT_EQ(it, set.end()); // Non-existing key
 }
+
+TEST(InplaceStaticFlatUnorderedSet, tombstone_reuse)
+{
+  // Use a small capacity to make collision/tombstone behavior observable.
+  rtw::stl::InplaceStaticFlatUnorderedSet<std::size_t, 7U> set;
+
+  // Fill several slots.
+  EXPECT_TRUE(set.emplace(1U));
+  EXPECT_TRUE(set.emplace(2U));
+  EXPECT_TRUE(set.emplace(3U));
+  EXPECT_TRUE(set.emplace(4U));
+  EXPECT_TRUE(set.emplace(5U));
+  EXPECT_EQ(set.size(), 5U);
+
+  // Erase some elements — creates tombstones.
+  EXPECT_TRUE(set.erase(2U));
+  EXPECT_TRUE(set.erase(4U));
+  EXPECT_EQ(set.size(), 3U);
+  EXPECT_FALSE(set.contains(2U));
+  EXPECT_FALSE(set.contains(4U));
+
+  // Insert new elements — should reuse tombstone slots.
+  EXPECT_TRUE(set.emplace(10U));
+  EXPECT_TRUE(set.emplace(20U));
+  EXPECT_EQ(set.size(), 5U);
+  EXPECT_TRUE(set.contains(10U));
+  EXPECT_TRUE(set.contains(20U));
+
+  // Original non-erased elements still findable.
+  EXPECT_TRUE(set.contains(1U));
+  EXPECT_TRUE(set.contains(3U));
+  EXPECT_TRUE(set.contains(5U));
+
+  // Fill remaining slots.
+  EXPECT_TRUE(set.emplace(30U));
+  EXPECT_TRUE(set.emplace(40U));
+  EXPECT_EQ(set.size(), 7U);
+
+  // Container is full — further insertions fail.
+  EXPECT_FALSE(set.emplace(50U));
+  EXPECT_EQ(set.size(), 7U);
+
+  // Erase and re-insert to verify tombstone reuse still works after full-fill.
+  EXPECT_TRUE(set.erase(30U));
+  EXPECT_EQ(set.size(), 6U);
+  EXPECT_TRUE(set.emplace(99U));
+  EXPECT_EQ(set.size(), 7U);
+  EXPECT_TRUE(set.contains(99U));
+  EXPECT_FALSE(set.contains(30U));
+}
+
+TEST(InplaceStaticFlatUnorderedSet, find_skips_tombstones)
+{
+  // Verify that find correctly skips over tombstones to reach elements further in the probe chain.
+  rtw::stl::InplaceStaticFlatUnorderedSet<std::size_t, 7U> set;
+
+  // Insert elements that may collide (hash % 7 may map multiple keys to same slot).
+  set.emplace(0U);
+  set.emplace(7U);  // hash(7) % 7 == 0 on many implementations, same probe chain as 0
+  set.emplace(14U); // hash(14) % 7 == 0, further along the chain
+
+  // Erase the middle element.
+  EXPECT_TRUE(set.erase(7U));
+  EXPECT_FALSE(set.contains(7U));
+
+  // Elements before and after the tombstone are still findable.
+  EXPECT_TRUE(set.contains(0U));
+  EXPECT_TRUE(set.contains(14U));
+}

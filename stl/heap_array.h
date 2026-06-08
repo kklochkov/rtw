@@ -5,6 +5,18 @@
 namespace rtw::stl
 {
 
+/// @brief A heap-allocated, fixed-size array with all elements constructed on creation.
+///
+/// HeapArray allocates a contiguous block of StaticContiguousStorage on the heap and immediately
+/// constructs all elements (default or from an initial value). Used internally by graph algorithms
+/// as a dynamically-sized buffer when compile-time capacity is not available.
+///
+/// @tparam T Element type (must be default constructible).
+///
+/// Complexity:
+///   - Construction: O(n)
+///   - operator[]: O(1)
+///   - size: O(1)
 template <typename T>
 class HeapArray
 {
@@ -38,6 +50,8 @@ public:
   }
 
   size_type size() const noexcept { return storage_.used_slots(); }
+  bool empty() const noexcept { return storage_.empty(); }
+  size_type capacity() const noexcept { return storage_.capacity(); }
 
   reference operator[](const size_type index) noexcept { return storage_[index]; }
   const_reference operator[](const size_type index) const noexcept { return storage_[index]; }

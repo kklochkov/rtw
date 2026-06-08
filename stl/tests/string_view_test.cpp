@@ -182,3 +182,80 @@ TEST(StringViewTest, ostream_operator)
   oss << view;
   EXPECT_EQ(oss.str(), "Hello, World!");
 }
+
+TEST(StringViewTest, remove_prefix)
+{
+  rtw::stl::StringView view{"Hello, World!"};
+  view.remove_prefix(7U);
+  EXPECT_EQ(view.size(), 6U);
+  EXPECT_EQ(view, "World!");
+
+  // Remove entire remaining prefix.
+  view.remove_prefix(6U);
+  EXPECT_TRUE(view.empty());
+  EXPECT_EQ(view.size(), 0U);
+}
+
+TEST(StringViewTest, remove_prefix_death)
+{
+  rtw::stl::StringView view{"Hi"};
+  EXPECT_DEATH(view.remove_prefix(3U), ".*");
+}
+
+TEST(StringViewTest, remove_suffix)
+{
+  rtw::stl::StringView view{"Hello, World!"};
+  view.remove_suffix(7U);
+  EXPECT_EQ(view.size(), 6U);
+  EXPECT_EQ(view, "Hello,");
+
+  // Remove entire remaining suffix.
+  view.remove_suffix(6U);
+  EXPECT_TRUE(view.empty());
+  EXPECT_EQ(view.size(), 0U);
+}
+
+TEST(StringViewTest, remove_suffix_death)
+{
+  rtw::stl::StringView view{"Hi"};
+  EXPECT_DEATH(view.remove_suffix(3U), ".*");
+}
+
+TEST(StringViewTest, copy)
+{
+  rtw::stl::StringView view{"Hello, World!"};
+  char buf[16]{};
+
+  // Copy full string.
+  const auto copied = view.copy(buf, view.size());
+  EXPECT_EQ(copied, 13U);
+  EXPECT_EQ((rtw::stl::StringView{buf, copied}), "Hello, World!");
+
+  // Copy with offset.
+  char buf2[16]{};
+  const auto copied2 = view.copy(buf2, 5U, 7U);
+  EXPECT_EQ(copied2, 5U);
+  EXPECT_EQ((rtw::stl::StringView{buf2, copied2}), "World");
+
+  // Copy with count exceeding remaining length.
+  char buf3[16]{};
+  const auto copied3 = view.copy(buf3, 100U, 10U);
+  EXPECT_EQ(copied3, 3U);
+  EXPECT_EQ((rtw::stl::StringView{buf3, copied3}), "ld!");
+}
+
+TEST(StringViewTest, copy_death)
+{
+  rtw::stl::StringView view{"Hi"};
+  char buf[4]{};
+  EXPECT_DEATH(view.copy(buf, 1U, 5U), ".*");
+}
+
+TEST(StringViewTest, remove_prefix_suffix_combined)
+{
+  rtw::stl::StringView view{"<<Hello>>"};
+  view.remove_prefix(2U);
+  view.remove_suffix(2U);
+  EXPECT_EQ(view, "Hello");
+  EXPECT_EQ(view.size(), 5U);
+}

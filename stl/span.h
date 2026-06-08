@@ -10,6 +10,18 @@
 namespace rtw::stl
 {
 
+/// @brief A non-owning, lightweight view over a contiguous sequence of elements.
+///
+/// Span provides a std::span-like interface for C++17: constructible from pointer+size, arrays,
+/// std::array, or random-access iterators. Supports subspan, first, last, and element access.
+/// Does not own the data.
+///
+/// @tparam T Element type (may be const-qualified for read-only views).
+///
+/// Complexity:
+///   - All operations: O(1) except subspan/first/last which are O(1).
+///   - operator[]: O(1)
+///   - size / empty: O(1)
 template <typename T>
 class Span
 {

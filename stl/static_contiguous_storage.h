@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stl/iterator.h"
+#include "stl/contiguous_storage_iterator.h"
 
 #include <array>
 #include <cassert>
@@ -16,6 +16,10 @@ template <typename T>
 constexpr inline bool IS_TRIVIAL_V =
     std::is_standard_layout_v<T> && std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
 
+/// @brief Tri-state lifecycle tracking for storage slots.
+/// UNINITIALIZED: slot has never held a value (or was reset via clear()).
+/// CONSTRUCTED: slot currently holds a live value.
+/// DESTRUCTED: slot previously held a value that was erased (tombstone for hash probing).
 enum class ObjectStorageState : std::uint8_t
 {
   UNINITIALIZED = 0U,
@@ -25,9 +29,19 @@ enum class ObjectStorageState : std::uint8_t
 
 } // namespace details
 
+/// @brief Type-erased aligned storage for a single object with tri-state lifecycle tracking.
+///
+/// AlignedObjectStorage<T, true> (trivial types): uses placement-new into a byte array.
+/// AlignedObjectStorage<T, false> (non-trivial, default-constructible types): uses assignment
+/// for C++17 constexpr compatibility (placement-new is not constexpr until C++26).
+///
+/// Tracks object state as UNINITIALIZED / CONSTRUCTED / DESTRUCTED to support tombstone-aware
+/// probing in hash containers.
 template <typename T, bool IS_TRIVIAL>
 class AlignedObjectStorage;
 
+/// @brief Specialization for trivial types: uses placement-new into an aligned byte array.
+/// Supports non-constexpr construction but benefits from trivial copy/destruction semantics.
 template <typename T>
 class AlignedObjectStorage<T, true>
 {
@@ -45,6 +59,9 @@ public:
   constexpr bool is_constructed() const noexcept { return state_ == details::ObjectStorageState::CONSTRUCTED; }
   constexpr bool is_destructed() const noexcept { return state_ == details::ObjectStorageState::DESTRUCTED; }
 
+  /// @brief Constructs the stored object in-place via placement-new.
+  /// @param[in] args Arguments forwarded to T's constructor.
+  /// @return Reference to the constructed object.
   template <typename... ArgsT>
   constexpr reference construct(ArgsT&&... args) noexcept
   {
@@ -55,6 +72,8 @@ public:
     return *value;
   }
 
+  /// @brief Constructs the stored object via default-initialization (no arguments).
+  /// @return Reference to the constructed object.
   constexpr reference construct_for_overwrite_at() noexcept
   {
     assert(!is_constructed());
@@ -64,6 +83,7 @@ public:
     return *value;
   }
 
+  /// @brief Marks the slot as destructed (tombstone). For trivial types, no destructor is called.
   constexpr void destruct() noexcept
   {
     if (is_constructed())
@@ -73,6 +93,7 @@ public:
     }
   }
 
+  /// @brief Resets the slot to UNINITIALIZED state (used by clear()).
   constexpr void reset() noexcept
   {
     destruct();
@@ -127,6 +148,9 @@ public:
   constexpr bool is_constructed() const noexcept { return state_ == details::ObjectStorageState::CONSTRUCTED; }
   constexpr bool is_destructed() const noexcept { return state_ == details::ObjectStorageState::DESTRUCTED; }
 
+  /// @brief Constructs the stored object via assignment (constexpr-compatible in C++17).
+  /// @param[in] args Arguments forwarded to T's brace-init constructor.
+  /// @return Reference to the constructed object.
   template <typename... ArgsT>
   constexpr reference construct(ArgsT&&... args) noexcept
   {
@@ -136,6 +160,8 @@ public:
     return data_;
   }
 
+  /// @brief Constructs the stored object via default-initialization.
+  /// @return Reference to the constructed object.
   constexpr reference construct_for_overwrite_at() noexcept
   {
     assert(!is_constructed());
@@ -144,6 +170,7 @@ public:
     return data_;
   }
 
+  /// @brief Marks the slot as destructed (tombstone). Does not call the destructor explicitly.
   constexpr void destruct() noexcept
   {
     if (is_constructed())
@@ -154,6 +181,7 @@ public:
     }
   }
 
+  /// @brief Resets the slot to UNINITIALIZED state (used by clear()).
   constexpr void reset() noexcept
   {
     destruct();
@@ -178,6 +206,14 @@ private:
   details::ObjectStorageState state_ : 2;
 };
 
+/// @brief CRTP base providing indexed construct/destruct/clear over a contiguous array of AlignedObjectStorage slots.
+///
+/// Derived classes (StaticContiguousStorage, InplaceStaticContiguousStorage) supply the actual
+/// backing array via get_storage(index). This base manages the used_slots count and provides
+/// iterators, operator[], and bulk clear().
+///
+/// @tparam T Element type.
+/// @tparam DerivedT CRTP derived class that implements get_storage().
 template <typename T, typename DerivedT>
 class GenericStaticContiguousStorage
 {
@@ -292,6 +328,14 @@ public:
   constexpr reverse_iterator rend() noexcept { return reverse_iterator{begin()}; }
   constexpr const_reverse_iterator rend() const noexcept { return const_reverse_iterator{begin()}; }
   constexpr const_reverse_iterator crend() const noexcept { return const_reverse_iterator{cbegin()}; }
+
+  /// @brief Returns a pointer to the underlying storage of the first slot.
+  /// Valid even when the container is empty (returns the address of slot 0).
+  constexpr pointer data() noexcept { return get_derived().get_storage(0U).get_pointer(); }
+
+  /// @brief Returns a const pointer to the underlying storage of the first slot.
+  /// Valid even when the container is empty (returns the address of slot 0).
+  constexpr const_pointer data() const noexcept { return get_derived().get_storage(0U).get_pointer(); }
 
 private:
   constexpr explicit GenericStaticContiguousStorage(const size_t capacity) noexcept : capacity_{capacity}

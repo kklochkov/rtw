@@ -7,6 +7,18 @@
 namespace rtw::stl
 {
 
+/// @brief A non-owning, read-only view over a contiguous character sequence.
+///
+/// StringView provides a std::string_view-like interface: find, substr, compare, remove_prefix/suffix,
+/// starts_with/ends_with, and iteration. Does not own the data and does not guarantee null-termination.
+///
+/// Complexity:
+///   - find(char): O(n)
+///   - find(string): O(n * m) worst case
+///   - compare: O(min(n, m))
+///   - substr / copy: O(k) where k = copied length
+///   - operator[]: O(1)
+///   - size / empty: O(1)
 class StringView
 {
   using StorageType = Span<const char>;

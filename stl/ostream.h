@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stl/flags.h"
-#include "stl/static_string.h"
+#include "stl/inplace_string.h"
 #include "stl/string_view.h"
 
 #include <iostream>

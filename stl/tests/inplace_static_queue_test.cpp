@@ -31,7 +31,79 @@ TEST(InplaceStaticQueueTest, constructor)
   EXPECT_EQ(queue.size(), 0U);
   EXPECT_EQ(queue.capacity(), 10U);
   EXPECT_TRUE(queue.empty());
+
+  EXPECT_DEATH(queue.pop(), ".*");
 }
+
+// =============================================================================
+// Constexpr evaluation tests (static_assert)
+// =============================================================================
+namespace
+{
+
+struct ConstexprBase
+{
+  int tag{};
+};
+
+struct QueueVal : ConstexprBase
+{
+  constexpr QueueVal() noexcept = default;
+  constexpr explicit QueueVal(int v) noexcept : ConstexprBase{0}, val{v} {}
+  int val{};
+  constexpr bool operator==(const QueueVal& other) const noexcept { return val == other.val; }
+};
+
+static_assert(!rtw::stl::details::IS_TRIVIAL_V<QueueVal>,
+              "QueueVal must be non-trivial to use the constexpr storage path.");
+
+constexpr auto make_constexpr_queue()
+{
+  rtw::stl::InplaceStaticQueue<QueueVal, 8U> q;
+  q.emplace(1);
+  q.emplace(2);
+  q.emplace(3);
+  q.pop();
+  return q;
+}
+
+static_assert(make_constexpr_queue().size() == 2U, "constexpr queue size");
+static_assert(make_constexpr_queue().front() == QueueVal{2}, "constexpr queue front");
+static_assert(make_constexpr_queue().back() == QueueVal{3}, "constexpr queue back");
+static_assert(!make_constexpr_queue().empty(), "constexpr queue not empty");
+static_assert(!make_constexpr_queue().full(), "constexpr queue not full");
+
+constexpr auto make_constexpr_queue_wraparound()
+{
+  rtw::stl::InplaceStaticQueue<QueueVal, 4U> q;
+  q.emplace(1);
+  q.emplace(2);
+  q.emplace(3);
+  q.pop();      // head advances to 1
+  q.pop();      // head advances to 2
+  q.emplace(4); // wraps around to index 0
+  q.emplace(5); // wraps around to index 1
+  return q;
+}
+
+static_assert(make_constexpr_queue_wraparound().size() == 3U, "constexpr queue wraparound size");
+static_assert(make_constexpr_queue_wraparound().front() == QueueVal{3}, "constexpr queue wraparound front");
+static_assert(make_constexpr_queue_wraparound().back() == QueueVal{5}, "constexpr queue wraparound back");
+
+constexpr auto make_constexpr_queue_clear()
+{
+  rtw::stl::InplaceStaticQueue<QueueVal, 4U> q;
+  q.emplace(1);
+  q.emplace(2);
+  q.clear();
+  q.emplace(10);
+  return q;
+}
+
+static_assert(make_constexpr_queue_clear().size() == 1U, "constexpr queue clear then push");
+static_assert(make_constexpr_queue_clear().front() == QueueVal{10}, "constexpr queue clear front");
+
+} // namespace
 
 TEST(InplaceStaticQueueTest, push_pop)
 {
