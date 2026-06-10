@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <tuple>
 #include <typeindex>
 #include <unordered_map>
@@ -36,22 +37,36 @@ template <>
 class SynchronizationPolicy<ThreadingPolicy::SINGLE_THREADED>
 {
 public:
-  struct LockGuard
-  {};
+  struct SharedMutex
+  {
+    void lock_shared() const noexcept {}
+    void unlock_shared() const noexcept {}
+    void lock() const noexcept {}
+    void unlock() const noexcept {}
+  };
 
-  static LockGuard make_lock_guard() noexcept { return LockGuard{}; }
+  using SharedLockGuard = std::shared_lock<SharedMutex>;
+  using UniqueLockGuard = std::unique_lock<SharedMutex>;
+
+  SharedLockGuard make_shared_lock_guard() const noexcept { return SharedLockGuard{mutex_}; }
+  UniqueLockGuard make_unique_lock_guard() const noexcept { return UniqueLockGuard{mutex_}; }
+
+private:
+  mutable SharedMutex mutex_;
 };
 
 template <>
 class SynchronizationPolicy<ThreadingPolicy::MULTI_THREADED>
 {
 public:
-  using LockGuard = std::lock_guard<std::mutex>;
+  using SharedLockGuard = std::shared_lock<std::shared_mutex>;
+  using UniqueLockGuard = std::unique_lock<std::shared_mutex>;
 
-  LockGuard make_lock_guard() noexcept { return LockGuard{mutex_}; }
+  SharedLockGuard make_shared_lock_guard() const noexcept { return SharedLockGuard{mutex_}; }
+  UniqueLockGuard make_unique_lock_guard() const noexcept { return UniqueLockGuard{mutex_}; }
 
 private:
-  std::mutex mutex_;
+  mutable std::shared_mutex mutex_;
 };
 
 enum class EventBusState : std::uint8_t
@@ -217,14 +232,14 @@ public:
   template <typename EventT, typename CallableT, typename... ArgsT>
   void add_subscription(CallableT&& callable, ArgsT&&... args)
   {
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
     subscribe_unsafe<EventT>(std::forward<CallableT>(callable), std::forward<ArgsT>(args)...);
   }
 
   template <typename EventT, typename CallableT, typename... ArgsT>
   [[nodiscard]] Subscription subscribe(CallableT&& callable, ArgsT&&... args)
   {
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
     auto& context = subscribe_unsafe<EventT>(std::forward<CallableT>(callable), std::forward<ArgsT>(args)...);
     return Subscription{this, context.handler_type_index, context.event_handler.get(), state_token_};
   }
@@ -236,7 +251,7 @@ public:
       return;
     }
 
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
 
     for (auto& [_, subscriptions] : event_handlers_)
     {
@@ -259,7 +274,7 @@ public:
   template <typename EventT>
   void unsubscribe() noexcept
   {
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
 
     const auto type_index = get_event_type_index<EventT>();
     if (auto it = event_handlers_.find(type_index); it != event_handlers_.end())
@@ -271,21 +286,21 @@ public:
 
   void clear() noexcept
   {
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
     event_handlers_.clear();
     total_subscribers_ = 0U;
   }
 
   bool empty() const noexcept
   {
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_shared_lock_guard();
     return total_subscribers_ == 0U;
   }
 
   template <typename EventT>
   void publish(const EventT& event) noexcept
   {
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
 
     const auto type_index = get_event_type_index<EventT>();
     if (auto it = event_handlers_.find(type_index); it != event_handlers_.end())
@@ -300,7 +315,7 @@ public:
   template <typename EventT>
   std::size_t get_number_of_subscribers() const noexcept
   {
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_shared_lock_guard();
 
     const auto type_index = get_event_type_index<EventT>();
     if (auto it = event_handlers_.find(type_index); it != event_handlers_.end())
@@ -312,7 +327,7 @@ public:
 
   std::size_t get_total_number_of_subscribers() const noexcept
   {
-    [[maybe_unused]] const auto lock_guard = synchronization_policy_.make_lock_guard();
+    const auto lock_guard = synchronization_policy_.make_shared_lock_guard();
     return total_subscribers_;
   }
 
