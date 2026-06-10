@@ -16,6 +16,24 @@ enum class ArithmeticType : std::uint8_t
   FLOATING_POINT,
 };
 
+/// @brief A double-width integer type composed of a high and low half.
+///
+/// Int<T> represents a 2*N-bit integer where N = sizeof(T)*8. The high half
+/// determines signedness: Int<int64_t> is a signed 128-bit integer, Int<uint64_t>
+/// is unsigned 128-bit. Arithmetic operations (add, sub, mul, div, shifts, bitwise)
+/// are all constexpr and implemented without platform intrinsics.
+///
+/// Conversions from/to floating-point, integral types, and between signed/unsigned
+/// variants are provided. A full std::numeric_limits specialization is included.
+///
+/// @tparam T The underlying type for the high half. Must be integral.
+///           Signedness of T determines signedness of the whole number.
+///
+/// Complexity:
+///   - Addition/Subtraction: O(1)
+///   - Multiplication: O(1) (four half-width multiplies + adds)
+///   - Division: O(N) where N = bit width (long division)
+///   - Shifts/Bitwise: O(1)
 template <typename T>
 class Int
 {
@@ -102,9 +120,14 @@ public:
   {
     if constexpr (std::is_signed_v<hi_type>)
     {
-      if ((hi_ < 0) && (hi_ != MIN_HI) && (lo_ != MIN_LO))
+      if (hi_ < 0)
       {
-        return -static_cast<F>(-*this);
+        // For min(), negation overflows -- fall through to direct formula which works,
+        // because static_cast<F>(MIN_HI) is negative and produces the correct result.
+        if ((hi_ != MIN_HI) || (lo_ != MIN_LO))
+        {
+          return -static_cast<F>(-*this);
+        }
       }
     }
 
@@ -114,6 +137,7 @@ public:
 
   constexpr Int& operator<<=(const std::uint32_t shift) noexcept
   {
+    assert(shift < BITS && "Shift amount must be less than bit width");
     if (shift >= LO_BITS)
     {
       hi_ = lo_ << (shift - LO_BITS);
@@ -129,6 +153,7 @@ public:
 
   constexpr Int& operator>>=(const std::uint32_t shift) noexcept
   {
+    assert(shift < BITS && "Shift amount must be less than bit width");
     if (shift >= LO_BITS)
     {
       lo_ = hi_ >> (shift - LO_BITS);
@@ -210,7 +235,7 @@ public:
     return *this;
   }
 
-  constexpr Int operator++(int) noexcept
+  constexpr Int operator++(std::int32_t) noexcept
   {
     const auto result = *this;
     ++(*this);
@@ -223,7 +248,7 @@ public:
     return *this;
   }
 
-  constexpr Int operator--(int) noexcept
+  constexpr Int operator--(std::int32_t) noexcept
   {
     const auto result = *this;
     --(*this);
@@ -264,7 +289,8 @@ public:
   friend constexpr Int operator+(Int lhs) noexcept { return lhs; }
   friend constexpr Int operator-(Int lhs) noexcept
   {
-    return Int{static_cast<hi_type>(~lhs.hi_ + static_cast<hi_type>(lhs.lo_ == 0U)),
+    // Perform addition in unsigned to avoid signed overflow UB when lhs == min().
+    return Int{static_cast<hi_type>(static_cast<lo_type>(~lhs.hi_) + static_cast<lo_type>(lhs.lo_ == 0U)),
                static_cast<lo_type>(~lhs.lo_ + 1U)};
   }
   /// @}
@@ -308,6 +334,9 @@ private:
 
   /// Division algorithm. Adjusted version of the algorithm from: Hacker's Delight, 2nd Edition
   /// @{
+
+  /// @brief Result of integer division: quotient and remainder.
+  /// @tparam U The underlying type for the Int half.
   template <typename U>
   struct DivResult
   {
@@ -357,11 +386,14 @@ private:
   }
 
   /// Shift-and-subtract division algorithm. Adjusted version of the algorithm from: Hacker's Delight, 2nd Edition
+  /// @pre Not (dividend == min() && divisor == -1). That case overflows (result is -min() which exceeds max()).
   template <typename U = T, typename = std::enable_if_t<std::is_signed_v<U>>>
   constexpr static DivResult<U> div_signed(Int<U> dividend, Int<U> divisor) noexcept
   {
     using UInt = Int<std::make_unsigned_t<U>>;
     using Int = Int<U>;
+
+    assert(!(dividend == Int::min() && divisor == Int{-1}));
 
     const auto dividend_sign = math::signbit(dividend.hi());
     const auto divisor_sign = math::signbit(divisor.hi());
@@ -409,8 +441,8 @@ private:
   /// @}
 
 private:
-  hi_type hi_;
-  lo_type lo_;
+  hi_type hi_; ///< High half. Intentionally uninitialized for trivial default constructibility.
+  lo_type lo_; ///< Low half. Intentionally uninitialized for trivial default constructibility.
 };
 
 using Int128 = Int<std::int64_t>;
@@ -465,14 +497,14 @@ struct numeric_limits<rtw::multiprecision::Int<T>>
   constexpr static bool is_iec559 = false;
   constexpr static bool is_bounded = true;
   constexpr static bool is_modulo = !std::is_signed_v<T>;
-  constexpr static int digits = Int::BITS - std::is_signed_v<T>; // Excluding the sign bit
-  constexpr static int digits10 = static_cast<int>(Int::BITS * rtw::math_constants::LOG10_2<double>);
-  constexpr static int max_digits10 = 0;
-  constexpr static int radix = 2;
-  constexpr static int min_exponent = 0;
-  constexpr static int min_exponent10 = 0;
-  constexpr static int max_exponent = 0;
-  constexpr static int max_exponent10 = 0;
+  constexpr static std::int32_t digits = Int::BITS - std::is_signed_v<T>; // Excluding the sign bit
+  constexpr static std::int32_t digits10 = static_cast<std::int32_t>(Int::BITS * rtw::math_constants::LOG10_2<double>);
+  constexpr static std::int32_t max_digits10 = 0;
+  constexpr static std::int32_t radix = 2;
+  constexpr static std::int32_t min_exponent = 0;
+  constexpr static std::int32_t min_exponent10 = 0;
+  constexpr static std::int32_t max_exponent = 0;
+  constexpr static std::int32_t max_exponent10 = 0;
   constexpr static bool traps = numeric_limits<T>::traps;
   constexpr static bool tinyness_before = false;
 

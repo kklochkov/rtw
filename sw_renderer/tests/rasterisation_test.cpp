@@ -111,7 +111,8 @@ TEST(Rasterisation, draw_line_bresenham_matches_dda_count)
 
   // Both algorithms should produce similar number of pixels
   // (may differ by 1 due to rounding)
-  const auto size_diff = std::abs(static_cast<int>(dda_pixels.size()) - static_cast<int>(bresenham_pixels.size()));
+  const auto size_diff =
+      std::abs(static_cast<std::int32_t>(dda_pixels.size()) - static_cast<std::int32_t>(bresenham_pixels.size()));
   EXPECT_LE(size_diff, 1);
 }
 

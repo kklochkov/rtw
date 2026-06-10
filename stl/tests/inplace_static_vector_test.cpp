@@ -389,14 +389,14 @@ namespace
 
 struct ConstexprBase
 {
-  int tag{};
+  std::int32_t tag{};
 };
 
 struct ConstexprVal : ConstexprBase
 {
   constexpr ConstexprVal() noexcept = default;
-  constexpr explicit ConstexprVal(int v) noexcept : ConstexprBase{0}, val{v} {}
-  int val{};
+  constexpr explicit ConstexprVal(std::int32_t v) noexcept : ConstexprBase{0}, val{v} {}
+  std::int32_t val{};
   constexpr bool operator==(const ConstexprVal& other) const noexcept { return val == other.val; }
 };
 

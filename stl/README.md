@@ -94,7 +94,7 @@ Containers are fully `constexpr` when `T` is a non-standard-layout type (inherit
 
 ```cpp
 // Constexpr usage (non-trivial type)
-struct MyVal : SomeBase { int x; };
+struct MyVal : SomeBase { std::int32_t x; };
 
 
 constexpr auto make_vec() {

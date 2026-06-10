@@ -7,13 +7,37 @@
 namespace rtw::multiprecision::math
 {
 
+/// @brief Returns the absolute value of a signed fixed-point number.
+/// @tparam T Signed underlying integral type.
+/// @tparam FRAC_BITS Number of fractional bits.
+/// @tparam SaturationT Wider type for saturation arithmetic.
+/// @param[in] value The fixed-point number.
+/// @return |value|. For MIN_VALUE, saturates to MAX (avoids signed overflow UB).
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT, typename = std::enable_if_t<std::is_signed_v<T>>>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> abs(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
-  return FixedPoint(RAW_VALUE_CONSTRUCT, std::abs(value.raw_value()));
+  const auto raw = value.raw_value();
+  // Avoid UB from std::abs(MIN_VALUE) by clamping to MAX first.
+  // For MIN_VALUE, -MIN_VALUE overflows; saturate to MAX instead.
+  if (raw == std::numeric_limits<T>::min())
+  {
+    return FixedPoint(RAW_VALUE_CONSTRUCT, std::numeric_limits<T>::max());
+  }
+  return FixedPoint(RAW_VALUE_CONSTRUCT, std::abs(raw));
 }
 
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr std::int8_t sign(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
+{
+  return math::sign(value.raw_value());
+}
+
+/// @brief Clamps a fixed-point value to the range [min, max].
+/// @param[in] value The value to clamp.
+/// @param[in] min Lower bound.
+/// @param[in] max Upper bound.
+/// @return Clamped value.
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> clamp(const FixedPoint<T, FRAC_BITS, SaturationT> value,
                                                       const FixedPoint<T, FRAC_BITS, SaturationT> min,
@@ -23,6 +47,9 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> clamp(const FixedPoint<T, FRAC_B
   return FixedPoint(RAW_VALUE_CONSTRUCT, std::clamp(value.raw_value(), min.raw_value(), max.raw_value()));
 }
 
+/// @brief Returns the largest integer fixed-point value not greater than @p value.
+/// @param[in] value The fixed-point number.
+/// @return floor(value).
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> floor(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
@@ -31,36 +58,90 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> floor(const FixedPoint<T, FRAC_B
   return FixedPoint(RAW_VALUE_CONSTRUCT, value.raw_value() & FixedPoint::INTEGER_MASK);
 }
 
+/// @brief Returns the smallest integer fixed-point value not less than @p value.
+/// @param[in] value The fixed-point number.
+/// @return ceil(value). Saturates to max() if the result exceeds the representable range.
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> ceil(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
-  // Clear the fractional part and round up
-  return FixedPoint(RAW_VALUE_CONSTRUCT, (value.raw_value() + FixedPoint::FRACTION_MASK) & FixedPoint::INTEGER_MASK);
+  const auto raw = value.raw_value();
+
+  // If no fractional part, value is already an integer.
+  if ((raw & FixedPoint::FRACTION_MASK) == 0)
+  {
+    return value;
+  }
+
+  // Has fractional part: round up toward +infinity.
+  // Use SaturationT to avoid overflow when raw + FRACTION_MASK exceeds T's range.
+  // Compute mask in SaturationT width (sign/zero extension of FRACTION_MASK from T is insufficient
+  // for unsigned types where zero-extension loses upper bits).
+  constexpr auto WIDE_MASK = ~static_cast<SaturationT>(FixedPoint::FRACTION_MASK);
+  const auto wide = static_cast<SaturationT>(raw) + static_cast<SaturationT>(FixedPoint::FRACTION_MASK);
+  const auto result = wide & WIDE_MASK;
+
+  if (result > static_cast<SaturationT>(FixedPoint::MAX_INTEGER))
+  {
+    return FixedPoint::max();
+  }
+
+  return FixedPoint(RAW_VALUE_CONSTRUCT, static_cast<T>(result));
 }
 
+/// @brief Rounds to the nearest integer (half away from zero).
+/// @param[in] value The fixed-point number.
+/// @return round(value). Saturates to max() if the rounded result exceeds the representable range.
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> round(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
+  constexpr auto WIDE_MASK = ~static_cast<SaturationT>(FixedPoint::FRACTION_MASK);
+
   // Round half away from zero (matching std::round behavior)
   if constexpr (std::is_signed_v<T>)
   {
     const auto raw = value.raw_value();
     if (raw >= 0)
     {
-      return FixedPoint(RAW_VALUE_CONSTRUCT, (raw + FixedPoint::HALF) & FixedPoint::INTEGER_MASK);
+      // Use SaturationT to avoid overflow when raw + HALF exceeds T's range.
+      const auto wide = static_cast<SaturationT>(raw) + static_cast<SaturationT>(FixedPoint::HALF);
+      const auto result = wide & WIDE_MASK;
+      if (result > static_cast<SaturationT>(FixedPoint::MAX_INTEGER))
+      {
+        return FixedPoint::max();
+      }
+      return FixedPoint(RAW_VALUE_CONSTRUCT, static_cast<T>(result));
     }
-    // For negative: negate, round as positive, negate back
-    const auto pos_rounded = (-raw + FixedPoint::HALF) & FixedPoint::INTEGER_MASK;
-    return FixedPoint(RAW_VALUE_CONSTRUCT, -pos_rounded);
+    // For MIN_INTEGER, -raw overflows. MIN_INTEGER has no fractional bits set
+    // (it's the most negative representable value with zero fractional part),
+    // so rounding it is the identity.
+    if (raw == std::numeric_limits<T>::min())
+    {
+      return value;
+    }
+    // For negative: negate, round as positive, negate back.
+    // Use SaturationT to avoid overflow when -raw + HALF exceeds T's range.
+    const auto pos = -static_cast<SaturationT>(raw);
+    const auto pos_rounded = (pos + static_cast<SaturationT>(FixedPoint::HALF)) & WIDE_MASK;
+    return FixedPoint(RAW_VALUE_CONSTRUCT, static_cast<T>(-pos_rounded));
   }
   else
   {
-    return FixedPoint(RAW_VALUE_CONSTRUCT, (value.raw_value() + FixedPoint::HALF) & FixedPoint::INTEGER_MASK);
+    // Use SaturationT to avoid overflow when raw + HALF wraps past T's max.
+    const auto wide = static_cast<SaturationT>(value.raw_value()) + static_cast<SaturationT>(FixedPoint::HALF);
+    const auto result = wide & WIDE_MASK;
+    if (result > static_cast<SaturationT>(FixedPoint::MAX_INTEGER))
+    {
+      return FixedPoint::max();
+    }
+    return FixedPoint(RAW_VALUE_CONSTRUCT, static_cast<T>(result));
   }
 }
 
+/// @brief Truncates toward zero (discards fractional part).
+/// @param[in] value The fixed-point number.
+/// @return trunc(value).
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> trunc(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
@@ -123,6 +204,9 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> sqrt(const FixedPoint<T, FRAC_BI
 namespace details
 {
 
+/// @brief Computes n! (factorial).
+/// @param[in] n The non-negative integer.
+/// @return n!
 constexpr std::uint64_t factorial(const std::uint64_t n) noexcept
 {
   std::uint64_t result = 1U;
@@ -145,12 +229,18 @@ enum class Quadrant : std::uint8_t
   IV
 };
 
+/// @brief Returns the sign multiplier for sine in the given quadrant.
+/// @param[in] quadrant The quadrant (I–IV).
+/// @return +1 or -1.
 constexpr std::int8_t sin_sign(const Quadrant quadrant) noexcept
 {
   constexpr std::int8_t SIGNS[] = {1, 1, -1, -1};
   return SIGNS[static_cast<std::uint8_t>(quadrant)]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 }
 
+/// @brief Returns the sign multiplier for cosine in the given quadrant.
+/// @param[in] quadrant The quadrant (I–IV).
+/// @return +1 or -1.
 constexpr std::int8_t cos_sign(const Quadrant quadrant) noexcept
 {
   constexpr std::int8_t SIGNS[] = {1, -1, -1, 1};
@@ -574,7 +664,9 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> exp(const FixedPoint<T, FRAC_BIT
     {
       return FixedPoint::max();
     }
-    return FixedPoint(RAW_VALUE_CONSTRUCT, exp_r.raw_value() << k);
+    // Cast to unsigned before left shift to avoid C++17 UB (shifting into the sign bit).
+    using UnsignedT = std::make_unsigned_t<T>;
+    return FixedPoint(RAW_VALUE_CONSTRUCT, static_cast<T>(static_cast<UnsignedT>(exp_r.raw_value()) << k));
   }
   // k < 0: right shift
   if (-k >= static_cast<std::int32_t>(FixedPoint::BITS))
@@ -658,6 +750,10 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> log(const FixedPoint<T, FRAC_BIT
   return (FixedPoint{k} * LN2) + log_m;
 }
 
+/// @brief Computes the base-2 logarithm of a fixed-point number.
+/// @pre value must be positive. Violation will trigger assertion failure.
+/// @param[in] value A positive fixed-point number.
+/// @return log2(value).
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> log2(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
@@ -666,6 +762,10 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> log2(const FixedPoint<T, FRAC_BI
   return log(value) * LOG2_E;
 }
 
+/// @brief Computes the base-10 logarithm of a fixed-point number.
+/// @pre value must be positive. Violation will trigger assertion failure.
+/// @param[in] value A positive fixed-point number.
+/// @return log10(value).
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> log10(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
 {
@@ -708,6 +808,10 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> pow(const FixedPoint<T, FRAC_BIT
   return exp(exponent * log(base));
 }
 
+/// @brief Returns a value with the magnitude of @p x and the sign of @p y.
+/// @param[in] x The value whose magnitude is used.
+/// @param[in] y The value whose sign is used.
+/// @return |x| with the sign of y. For unsigned types, returns x unchanged.
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 constexpr FixedPoint<T, FRAC_BITS, SaturationT> copysign(const FixedPoint<T, FRAC_BITS, SaturationT> x,
                                                          const FixedPoint<T, FRAC_BITS, SaturationT> y) noexcept
@@ -760,25 +864,56 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> fdim(const FixedPoint<T, FRAC_BI
 }
 
 /// Calculate the hypotenuse of a right triangle: sqrt(x^2 + y^2 + z^2).
-/// Uses careful computation to avoid intermediate overflow where possible.
+/// Uses scaling by the largest magnitude to avoid intermediate overflow in x*x + y*y + z*z.
+/// If max = max(|x|, |y|, |z|), computes max * sqrt((x/max)^2 + (y/max)^2 + (z/max)^2).
 /// @param[in] x The first cathetus.
 /// @param[in] y The second cathetus.
 /// @param[in] z The third cathetus.
 /// @return The hypotenuse length.
 /// @{
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> hypot(const FixedPoint<T, FRAC_BITS, SaturationT> x,
-                                                      const FixedPoint<T, FRAC_BITS, SaturationT> y,
-                                                      const FixedPoint<T, FRAC_BITS, SaturationT> z) noexcept
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> hypot(FixedPoint<T, FRAC_BITS, SaturationT> x,
+                                                      FixedPoint<T, FRAC_BITS, SaturationT> y,
+                                                      FixedPoint<T, FRAC_BITS, SaturationT> z) noexcept
 {
-  return sqrt((x * x) + (y * y) + (z * z));
+  using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
+
+  x *= sign(x);
+  y *= sign(y);
+  z *= sign(z);
+
+  const auto max_val = std::max({x, y, z});
+
+  if (max_val == FixedPoint{0})
+  {
+    return FixedPoint{0};
+  }
+
+  const auto sx = x / max_val;
+  const auto sy = y / max_val;
+  const auto sz = z / max_val;
+
+  return max_val * sqrt(sx * sx + sy * sy + sz * sz);
 }
 
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
-constexpr FixedPoint<T, FRAC_BITS, SaturationT> hypot(const FixedPoint<T, FRAC_BITS, SaturationT> x,
-                                                      const FixedPoint<T, FRAC_BITS, SaturationT> y) noexcept
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> hypot(FixedPoint<T, FRAC_BITS, SaturationT> x,
+                                                      FixedPoint<T, FRAC_BITS, SaturationT> y) noexcept
 {
-  return sqrt((x * x) + (y * y));
+  using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
+
+  x *= sign(x);
+  y *= sign(y);
+
+  const auto [min_val, max_val] = std::minmax({x, y});
+
+  if (max_val == FixedPoint{0})
+  {
+    return FixedPoint{0};
+  }
+
+  const auto ratio = min_val / max_val;
+  return max_val * sqrt(FixedPoint{1} + ratio * ratio);
 }
 /// @}
 

@@ -600,3 +600,106 @@ TYPED_TEST(UnsignedFixedPointMathTest, classification)
   EXPECT_FALSE(rtw::multiprecision::math::isnan(value));
   EXPECT_TRUE(rtw::multiprecision::math::isnormal(value));
 }
+
+TYPED_TEST(SignedFixedPointMathTest, fmod_zero_divisor_death)
+{
+  EXPECT_DEATH(rtw::multiprecision::math::fmod(TypeParam(1.0), TypeParam(0.0)), ".*");
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, fmod_zero_divisor_death)
+{
+  EXPECT_DEATH(rtw::multiprecision::math::fmod(TypeParam(1.0), TypeParam(0.0)), ".*");
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, round_near_max_saturates)
+{
+  // Unsigned max has all fractional bits set: round should go up but saturate to max.
+  const auto rounded = rtw::multiprecision::math::round(TypeParam::max());
+  EXPECT_EQ(rounded, TypeParam::max());
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, ceil_near_max_saturates)
+{
+  // Unsigned max has all fractional bits set: ceil should saturate to max.
+  const auto ceiled = rtw::multiprecision::math::ceil(TypeParam::max());
+  EXPECT_EQ(ceiled, TypeParam::max());
+}
+
+TYPED_TEST(SignedFixedPointMathTest, log_non_positive_death)
+{
+  // log requires a positive argument
+  EXPECT_DEATH(rtw::multiprecision::math::log(TypeParam(-1.0)), ".*");
+  EXPECT_DEATH(rtw::multiprecision::math::log(TypeParam(0.0)), ".*");
+}
+
+TYPED_TEST(SignedFixedPointMathTest, pow_negative_base_death)
+{
+  // pow requires non-negative base (except special cases: 0^y, x^0, 1^y)
+  EXPECT_DEATH(rtw::multiprecision::math::pow(TypeParam(-2.0), TypeParam(1.0)), ".*");
+  EXPECT_DEATH(rtw::multiprecision::math::pow(TypeParam(-0.5), TypeParam(2.0)), ".*");
+}
+
+// =============================================================================
+// Additional edge case tests
+// =============================================================================
+TYPED_TEST(SignedFixedPointMathTest, exp_large_positive_saturates)
+{
+  // exp(large) should saturate to max rather than overflow.
+  // Use a value large enough that 2^k exceeds INTEGER_BITS.
+  const auto result = rtw::multiprecision::math::exp(TypeParam::max());
+  EXPECT_EQ(result, TypeParam::max());
+}
+
+TYPED_TEST(SignedFixedPointMathTest, exp_large_negative_returns_zero)
+{
+  // exp(very negative) should return 0 (right-shift pushes all bits out).
+  const auto result = rtw::multiprecision::math::exp(TypeParam::min());
+  EXPECT_EQ(result, TypeParam(0));
+}
+
+TYPED_TEST(SignedFixedPointMathTest, atan2_zero_zero_returns_zero)
+{
+  // atan2(0, 0) is mathematically undefined but documented to return 0.
+  const auto result = rtw::multiprecision::math::atan2(TypeParam(0.0), TypeParam(0.0));
+  EXPECT_EQ(result, TypeParam(0));
+}
+
+TYPED_TEST(SignedFixedPointMathTest, sqrt_max_value)
+{
+  // sqrt(max) should produce a valid result without crashing.
+  const auto result = rtw::multiprecision::math::sqrt(TypeParam::max());
+  const auto expected = std::sqrt(static_cast<double>(TypeParam::max()));
+  // Allow wider tolerance for 8-bit types due to limited precision.
+  const double tolerance = TypeParam::BITS <= 16 ? 1.0 : 0.1;
+  EXPECT_NEAR(static_cast<double>(result), expected, tolerance);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, sqrt_max_value)
+{
+  // sqrt(max) should produce a valid result without crashing.
+  const auto result = rtw::multiprecision::math::sqrt(TypeParam::max());
+  const auto expected = std::sqrt(static_cast<double>(TypeParam::max()));
+  const double tolerance = TypeParam::BITS <= 16 ? 1.0 : 0.1;
+  EXPECT_NEAR(static_cast<double>(result), expected, tolerance);
+}
+
+TYPED_TEST(SignedFixedPointMathTest, hypot_large_values_no_overflow)
+{
+  // hypot(max/2, max/2) previously would overflow in x*x. With scaling, it should be safe.
+  const TypeParam half_max(rtw::multiprecision::RAW_VALUE_CONSTRUCT, TypeParam::MAX_INTEGER / 2);
+  const auto result = rtw::multiprecision::math::hypot(half_max, half_max);
+  const double expected = std::hypot(static_cast<double>(half_max), static_cast<double>(half_max));
+  // Wider tolerance since scaling introduces division rounding.
+  const double tolerance = TypeParam::BITS <= 16 ? 2.0 : 0.5;
+  EXPECT_NEAR(static_cast<double>(result), expected, tolerance);
+}
+
+TYPED_TEST(UnsignedFixedPointMathTest, hypot_large_values_no_overflow)
+{
+  // hypot(max/2, max/2) previously would overflow in x*x. With scaling, it should be safe.
+  const TypeParam half_max(rtw::multiprecision::RAW_VALUE_CONSTRUCT, TypeParam::MAX_INTEGER / 2);
+  const auto result = rtw::multiprecision::math::hypot(half_max, half_max);
+  const double expected = std::hypot(static_cast<double>(half_max), static_cast<double>(half_max));
+  const double tolerance = TypeParam::BITS <= 16 ? 2.0 : 0.5;
+  EXPECT_NEAR(static_cast<double>(result), expected, tolerance);
+}

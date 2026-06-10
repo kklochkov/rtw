@@ -307,14 +307,14 @@ namespace
 
 struct ConstexprBase
 {
-  int tag{};
+  std::int32_t tag{};
 };
 
 struct PQVal : ConstexprBase
 {
   constexpr PQVal() noexcept = default;
-  constexpr explicit PQVal(int v) noexcept : ConstexprBase{0}, val{v} {}
-  int val{};
+  constexpr explicit PQVal(std::int32_t v) noexcept : ConstexprBase{0}, val{v} {}
+  std::int32_t val{};
   constexpr bool operator==(const PQVal& other) const noexcept { return val == other.val; }
   constexpr bool operator<(const PQVal& other) const noexcept { return val < other.val; }
   constexpr bool operator>(const PQVal& other) const noexcept { return val > other.val; }

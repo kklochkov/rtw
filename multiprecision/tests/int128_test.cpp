@@ -824,3 +824,293 @@ TEST(operators, count_leading_zero_128)
     EXPECT_EQ(rtw::multiprecision::math::count_leading_zero(a), rtw::multiprecision::Int128U::BITS); // a == 0
   }
 }
+
+// =============================================================================
+// Constexpr static_assert tests
+// =============================================================================
+namespace
+{
+
+// --- Int128 arithmetic at compile time ---
+static_assert(rtw::multiprecision::Int128{0}.hi() == 0, "Int128 zero hi");
+static_assert(rtw::multiprecision::Int128{0}.lo() == 0, "Int128 zero lo");
+static_assert(rtw::multiprecision::Int128{42}.lo() == 42, "Int128 from int");
+static_assert(rtw::multiprecision::Int128{-1}.hi() == -1, "Int128 -1 hi is all-ones");
+static_assert(rtw::multiprecision::Int128{-1}.lo() == ~std::uint64_t{0}, "Int128 -1 lo is all-ones");
+
+// Addition
+static_assert((rtw::multiprecision::Int128{10} + rtw::multiprecision::Int128{20}).lo() == 30, "Int128 add");
+static_assert((rtw::multiprecision::Int128{-5} + rtw::multiprecision::Int128{5}) == rtw::multiprecision::Int128{0},
+              "Int128 add to zero");
+
+// Subtraction
+static_assert((rtw::multiprecision::Int128{100} - rtw::multiprecision::Int128{42}).lo() == 58, "Int128 sub");
+
+// Multiplication
+static_assert((rtw::multiprecision::Int128{7} * rtw::multiprecision::Int128{6}).lo() == 42, "Int128 mul");
+static_assert((rtw::multiprecision::Int128{-3} * rtw::multiprecision::Int128{4}) == rtw::multiprecision::Int128{-12},
+              "Int128 mul negative");
+
+// Division
+static_assert((rtw::multiprecision::Int128{42} / rtw::multiprecision::Int128{7}).lo() == 6, "Int128 div");
+static_assert((rtw::multiprecision::Int128{-42} / rtw::multiprecision::Int128{7}) == rtw::multiprecision::Int128{-6},
+              "Int128 div negative");
+
+// Modulo
+static_assert((rtw::multiprecision::Int128{10} % rtw::multiprecision::Int128{3}).lo() == 1, "Int128 mod");
+
+// Shifts
+static_assert((rtw::multiprecision::Int128{1} << 64U).hi() == 1, "Int128 shift left 64");
+static_assert((rtw::multiprecision::Int128{1} << 64U).lo() == 0, "Int128 shift left 64 lo");
+static_assert((rtw::multiprecision::Int128{0, 1} >> 1U).lo() == 0, "Int128 shift right");
+
+// Bitwise
+static_assert((rtw::multiprecision::Int128{0xFF} & rtw::multiprecision::Int128{0x0F}).lo() == 0x0F, "Int128 AND");
+static_assert((rtw::multiprecision::Int128{0xF0} | rtw::multiprecision::Int128{0x0F}).lo() == 0xFF, "Int128 OR");
+static_assert((rtw::multiprecision::Int128{0xFF} ^ rtw::multiprecision::Int128{0x0F}).lo() == 0xF0, "Int128 XOR");
+static_assert((~rtw::multiprecision::Int128{0}).hi() == -1, "Int128 NOT hi");
+static_assert((~rtw::multiprecision::Int128{0}).lo() == ~std::uint64_t{0}, "Int128 NOT lo");
+
+// Comparisons
+static_assert(rtw::multiprecision::Int128{1} > rtw::multiprecision::Int128{0}, "Int128 gt");
+static_assert(rtw::multiprecision::Int128{-1} < rtw::multiprecision::Int128{0}, "Int128 lt");
+static_assert(rtw::multiprecision::Int128{42} == rtw::multiprecision::Int128{42}, "Int128 eq");
+static_assert(rtw::multiprecision::Int128{42} != rtw::multiprecision::Int128{43}, "Int128 ne");
+static_assert(rtw::multiprecision::Int128::min() < rtw::multiprecision::Int128::max(), "Int128 min < max");
+
+// Unsigned
+static_assert((rtw::multiprecision::Int128U{100} + rtw::multiprecision::Int128U{200}).lo() == 300, "Int128U add");
+static_assert((rtw::multiprecision::Int128U{50} * rtw::multiprecision::Int128U{3}).lo() == 150, "Int128U mul");
+
+// --- math::abs at compile time ---
+static_assert(rtw::multiprecision::math::abs(rtw::multiprecision::Int128{-42}) == rtw::multiprecision::Int128{42},
+              "Int128 abs(-42)");
+static_assert(rtw::multiprecision::math::abs(rtw::multiprecision::Int128{0}) == rtw::multiprecision::Int128{0},
+              "Int128 abs(0)");
+static_assert(rtw::multiprecision::math::abs(rtw::multiprecision::Int128{42}) == rtw::multiprecision::Int128{42},
+              "Int128 abs(42)");
+static_assert(rtw::multiprecision::math::abs(rtw::multiprecision::Int128::min()) == rtw::multiprecision::Int128::max(),
+              "Int128 abs(min) saturates to max");
+static_assert(rtw::multiprecision::math::abs(rtw::multiprecision::Int128::max()) == rtw::multiprecision::Int128::max(),
+              "Int128 abs(max) == max");
+
+// Unary negation of min(): wraps to min() (well-defined via unsigned arithmetic, no UB)
+static_assert(-rtw::multiprecision::Int128::min() == rtw::multiprecision::Int128::min(),
+              "Int128 -min() wraps to min() (no UB)");
+static_assert((-rtw::multiprecision::Int128{42}) == rtw::multiprecision::Int128{-42}, "Int128 -42 negates correctly");
+static_assert((-(-rtw::multiprecision::Int128{7})) == rtw::multiprecision::Int128{7},
+              "Int128 double negation is identity");
+static_assert((-rtw::multiprecision::Int128{0}) == rtw::multiprecision::Int128{0}, "Int128 -0 == 0");
+
+} // namespace
+
+// =============================================================================
+// Additional runtime tests
+// =============================================================================
+
+TEST(Int128, float_roundtrip)
+{
+  using rtw::multiprecision::Int128;
+
+  // Small values should roundtrip exactly through double
+  for (std::int64_t v : {0L, 1L, -1L, 42L, -42L, 1'000'000L, -1'000'000L})
+  {
+    const Int128 original{v};
+    const double as_double = static_cast<double>(original);
+    const Int128 back{as_double};
+    EXPECT_EQ(back, original) << "Roundtrip failed for " << v;
+  }
+
+  // Large values lose precision through float but should be approximately correct
+  const Int128 large{std::int64_t{1} << 50, 0};
+  const double as_double = static_cast<double>(large);
+  const Int128 back{as_double};
+  // Within floating-point precision (double has 53 bits of mantissa)
+  EXPECT_EQ(back, large);
+}
+
+TEST(Int128, bitwise_not)
+{
+  using rtw::multiprecision::Int128;
+  using rtw::multiprecision::Int128U;
+
+  EXPECT_EQ(~Int128{0}, Int128{-1});
+  EXPECT_EQ(~Int128{-1}, Int128{0});
+  EXPECT_EQ(~Int128U{0}, Int128U::max());
+  EXPECT_EQ(~~Int128{42}, Int128{42}); // Double complement is identity
+}
+
+TEST(Int128, modulo_operations)
+{
+  using rtw::multiprecision::Int128;
+
+  EXPECT_EQ(Int128{10} % Int128{3}, Int128{1});
+  EXPECT_EQ(Int128{10} % Int128{5}, Int128{0});
+  EXPECT_EQ(Int128{-10} % Int128{3}, Int128{-1});
+  EXPECT_EQ(Int128{10} % Int128{-3}, Int128{1});
+  EXPECT_EQ(Int128{7} % Int128{7}, Int128{0});
+  EXPECT_EQ(Int128{0} % Int128{42}, Int128{0});
+}
+
+TEST(Int128, comparison_operators)
+{
+  using rtw::multiprecision::Int128;
+
+  EXPECT_TRUE(Int128{0} == Int128{0});
+  EXPECT_TRUE(Int128{1} != Int128{0});
+  EXPECT_TRUE(Int128{1} > Int128{0});
+  EXPECT_TRUE(Int128{0} < Int128{1});
+  EXPECT_TRUE(Int128{1} >= Int128{1});
+  EXPECT_TRUE(Int128{1} <= Int128{1});
+  EXPECT_TRUE(Int128{-1} < Int128{0});
+  EXPECT_TRUE(Int128{-1} < Int128{1});
+  EXPECT_TRUE(Int128::min() < Int128::max());
+  EXPECT_TRUE(Int128::max() > Int128::min());
+  EXPECT_TRUE(Int128::min() <= Int128::min());
+  EXPECT_TRUE(Int128::max() >= Int128::max());
+}
+
+TEST(Int128, property_based_arithmetic)
+{
+  using rtw::multiprecision::Int128;
+
+  // Commutativity of addition
+  const Int128 a{123'456'789};
+  const Int128 b{987'654'321};
+  EXPECT_EQ(a + b, b + a);
+
+  // Commutativity of multiplication
+  EXPECT_EQ(a * b, b * a);
+
+  // Additive identity
+  EXPECT_EQ(a + Int128{0}, a);
+  EXPECT_EQ(Int128{0} + a, a);
+
+  // Multiplicative identity
+  EXPECT_EQ(a * Int128{1}, a);
+  EXPECT_EQ(Int128{1} * a, a);
+
+  // Additive inverse
+  EXPECT_EQ(a + (-a), Int128{0});
+
+  // Subtraction as inverse of addition
+  EXPECT_EQ((a + b) - b, a);
+  EXPECT_EQ((a + b) - a, b);
+
+  // Division/modulo relationship: a == (a/b)*b + (a%b)
+  const Int128 q = a / b;
+  const Int128 r = a % b;
+  EXPECT_EQ(q * b + r, a);
+
+  // Distributivity: a * (b + c) == a*b + a*c
+  const Int128 c{42};
+  EXPECT_EQ(a * (b + c), a * b + a * c);
+}
+
+TEST(Int128, division_by_zero_death)
+{
+  using rtw::multiprecision::Int128;
+  using rtw::multiprecision::Int128U;
+
+  EXPECT_DEATH(Int128{42} / Int128{0}, ".*");
+  EXPECT_DEATH(Int128{42} % Int128{0}, ".*");
+  EXPECT_DEATH(Int128U{42} / Int128U{0}, ".*");
+  EXPECT_DEATH(Int128U{42} % Int128U{0}, ".*");
+}
+
+TEST(Int128, shift_overflow_death)
+{
+  using rtw::multiprecision::Int128;
+  using rtw::multiprecision::Int128U;
+
+  // Shift by BITS (128) or more is undefined — assert fires
+  EXPECT_DEATH(Int128{1} << 128U, ".*");
+  EXPECT_DEATH(Int128{1} >> 128U, ".*");
+  EXPECT_DEATH(Int128U{1} << 128U, ".*");
+  EXPECT_DEATH(Int128U{1} >> 128U, ".*");
+  EXPECT_DEATH(Int128{1} << 200U, ".*");
+}
+
+TEST(Int128, div_signed_min_by_neg1_death)
+{
+  using rtw::multiprecision::Int128;
+
+  // min() / -1 overflows: -min() exceeds max(). Assert fires.
+  EXPECT_DEATH(Int128::min() / Int128{-1}, ".*");
+  EXPECT_DEATH(Int128::min() % Int128{-1}, ".*");
+}
+
+TEST(Int128, abs_min_value_saturates)
+{
+  using rtw::multiprecision::Int128;
+
+  // abs(min()) should saturate to max() (cannot represent -min in signed)
+  EXPECT_EQ(rtw::multiprecision::math::abs(Int128::min()), Int128::max());
+
+  // abs of normal values should work correctly
+  EXPECT_EQ(rtw::multiprecision::math::abs(Int128{-42}), Int128{42});
+  EXPECT_EQ(rtw::multiprecision::math::abs(Int128{42}), Int128{42});
+  EXPECT_EQ(rtw::multiprecision::math::abs(Int128{0}), Int128{0});
+  EXPECT_EQ(rtw::multiprecision::math::abs(Int128{-1}), Int128{1});
+  EXPECT_EQ(rtw::multiprecision::math::abs(Int128::max()), Int128::max());
+}
+
+TEST(Int128, shift_boundary_cases)
+{
+  using rtw::multiprecision::Int128;
+  using rtw::multiprecision::Int128U;
+
+  // Shift by 0 — identity
+  EXPECT_EQ(Int128{42} << 0U, Int128{42});
+  EXPECT_EQ(Int128{42} >> 0U, Int128{42});
+  EXPECT_EQ(Int128U{42} << 0U, Int128U{42});
+  EXPECT_EQ(Int128U{42} >> 0U, Int128U{42});
+
+  // Shift by 1
+  EXPECT_EQ(Int128{1} << 1U, Int128{2});
+  EXPECT_EQ(Int128{4} >> 1U, Int128{2});
+
+  // Shift by exactly LO_BITS (64)
+  EXPECT_EQ(Int128{1} << 64U, (Int128{1, 0}));
+  EXPECT_EQ((Int128{1, 0}) >> 64U, Int128{1});
+
+  // Shift by 127 (max useful for 128-bit)
+  EXPECT_EQ(Int128U{1} << 127U, (Int128U{std::uint64_t{1} << 63U, 0U}));
+  EXPECT_EQ((Int128U{std::uint64_t{1} << 63U, 0U}) >> 127U, Int128U{1});
+
+  // Signed right shift — arithmetic (fills with sign bit)
+  EXPECT_EQ(Int128{-1} >> 1U, Int128{-1});  // Sign extension
+  EXPECT_EQ(Int128{-1} >> 64U, Int128{-1}); // Sign extension over full lo
+  EXPECT_EQ(Int128{-2} >> 1U, Int128{-1});  // -2 >> 1 == -1
+
+  // Shift by LO_BITS - 1 (63)
+  EXPECT_EQ(Int128U{1} << 63U, (Int128U{0, std::uint64_t{1} << 63U}));
+}
+
+TEST(Int128, float_conversion_negative_edge_cases)
+{
+  using rtw::multiprecision::Int128;
+
+  // min() should convert to double correctly (large negative)
+  const double min_as_double = static_cast<double>(Int128::min());
+  EXPECT_LT(min_as_double, 0.0);
+
+  // max() should convert to double correctly (large positive)
+  const double max_as_double = static_cast<double>(Int128::max());
+  EXPECT_GT(max_as_double, 0.0);
+
+  // Verify min < max in double space
+  EXPECT_LT(min_as_double, max_as_double);
+
+  // Verify symmetry: |min| approximately equals |max| (off by 1 in integer, negligible in float)
+  EXPECT_NEAR(-min_as_double, max_as_double, max_as_double * 1e-15);
+
+  // Negative values that fit in double mantissa should roundtrip exactly
+  const Int128 neg{-1'000'000};
+  const double neg_dbl = static_cast<double>(neg);
+  EXPECT_DOUBLE_EQ(neg_dbl, -1000000.0);
+
+  // Values near zero should be exact
+  EXPECT_DOUBLE_EQ(static_cast<double>(Int128{-1}), -1.0);
+  EXPECT_DOUBLE_EQ(static_cast<double>(Int128{-42}), -42.0);
+}

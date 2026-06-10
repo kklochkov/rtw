@@ -128,11 +128,11 @@ constexpr Matrix<T, ROWS, 1, MEMORY_ORDER> get_householder_vector(const Matrix<T
   T sign{1};
   if constexpr (multiprecision::IS_COMPLEX_V<T>)
   {
-    sign = multiprecision::math::sign(v[start_row].real() < 0);
+    sign = multiprecision::math::sign(v[start_row].real());
   }
   else
   {
-    sign = multiprecision::math::sign(v[start_row] < 0);
+    sign = multiprecision::math::sign(v[start_row]);
   }
 
   const auto alpha = sign * norm; // Adjust the sign of norm to prevent numerical instability.

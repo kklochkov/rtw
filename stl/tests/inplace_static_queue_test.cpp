@@ -43,14 +43,14 @@ namespace
 
 struct ConstexprBase
 {
-  int tag{};
+  std::int32_t tag{};
 };
 
 struct QueueVal : ConstexprBase
 {
   constexpr QueueVal() noexcept = default;
-  constexpr explicit QueueVal(int v) noexcept : ConstexprBase{0}, val{v} {}
-  int val{};
+  constexpr explicit QueueVal(std::int32_t v) noexcept : ConstexprBase{0}, val{v} {}
+  std::int32_t val{};
   constexpr bool operator==(const QueueVal& other) const noexcept { return val == other.val; }
 };
 

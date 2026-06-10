@@ -24,10 +24,10 @@ inline std::ostream& operator<<(std::ostream& os, const Color color) noexcept
   os << std::hex << std::uppercase;
   os << "rgba: 0x" << color.rgba;
   os << std::dec;
-  os << ", r: " << static_cast<int>(color.r());
-  os << ", g: " << static_cast<int>(color.g());
-  os << ", b: " << static_cast<int>(color.b());
-  os << ", a: " << static_cast<int>(color.a());
+  os << ", r: " << static_cast<std::int32_t>(color.r());
+  os << ", g: " << static_cast<std::int32_t>(color.g());
+  os << ", b: " << static_cast<std::int32_t>(color.b());
+  os << ", a: " << static_cast<std::int32_t>(color.a());
   os << std::fixed << std::setprecision(4);
   os << ", rf: " << color.rf();
   os << ", gf: " << color.gf();

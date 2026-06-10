@@ -320,7 +320,7 @@ TEST(InplaceCircularBufferTest, iterators)
 
 TEST(InplaceCircularBufferTest, emplace_front_overwrite_at_full_capacity)
 {
-  rtw::stl::InplaceCircularBuffer<int, 4U> buffer;
+  rtw::stl::InplaceCircularBuffer<std::int32_t, 4U> buffer;
   buffer.emplace_back(1);
   buffer.emplace_back(2);
   buffer.emplace_back(3);
@@ -343,7 +343,7 @@ TEST(InplaceCircularBufferTest, emplace_front_overwrite_at_full_capacity)
 
 TEST(InplaceCircularBufferTest, emplace_back_overwrite_at_full_capacity)
 {
-  rtw::stl::InplaceCircularBuffer<int, 4U> buffer;
+  rtw::stl::InplaceCircularBuffer<std::int32_t, 4U> buffer;
   buffer.emplace_back(1);
   buffer.emplace_back(2);
   buffer.emplace_back(3);
@@ -365,7 +365,7 @@ TEST(InplaceCircularBufferTest, emplace_back_overwrite_at_full_capacity)
 
 TEST(InplaceCircularBufferTest, full_method)
 {
-  rtw::stl::InplaceCircularBuffer<int, 3U> buffer;
+  rtw::stl::InplaceCircularBuffer<std::int32_t, 3U> buffer;
   EXPECT_FALSE(buffer.full());
 
   buffer.emplace_back(1);
@@ -389,14 +389,14 @@ namespace
 
 struct ConstexprBase
 {
-  int tag{};
+  std::int32_t tag{};
 };
 
 struct BufVal : ConstexprBase
 {
   constexpr BufVal() noexcept = default;
-  constexpr explicit BufVal(int v) noexcept : ConstexprBase{0}, val{v} {}
-  int val{};
+  constexpr explicit BufVal(std::int32_t v) noexcept : ConstexprBase{0}, val{v} {}
+  std::int32_t val{};
   constexpr bool operator==(const BufVal& other) const noexcept { return val == other.val; }
 };
 

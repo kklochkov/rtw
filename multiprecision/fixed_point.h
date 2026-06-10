@@ -20,23 +20,28 @@ struct RawValueConstructTag
 constexpr inline RawValueConstructTag RAW_VALUE_CONSTRUCT{RawValueConstructTag::Tag::TAG};
 
 /// Fixed-point number representation using QM.N format (ARM notation).
-/// Overflows are handled by saturating the result to the minimum or maximum value.
 /// See https://en.wikipedia.org/wiki/Q_(number_format) for more information.
 /// More information about fixed-point arithmetic can be found here:
 /// https://en.m.wikipedia.org/wiki/Fixed-point_arithmetic
 /// Ranges are:
 /// - Signed: -2^(M-1) to 2^(M-1) - 2^(-N)
 /// - Unsigned: 0 to 2^(M-1) - 2^(-N)
-/// @note The saturation of the unsigned fixed-point number might yield wrap-around behavior in some cases.
-/// 1. Case: when subtracting a larger number from a smaller number, the result will wrap around to the maximum value.
-/// For example, `c = 0 - 1 = max_unsigned - 1`.
-/// 2. Case: when constructing a fixed-point number from a negative floating-point number,
-/// after rescaling and rounding, the result will be 0.
-/// I.e., `cast_to_unsigned(round(value * ONE)) * RESOLUTION = max_unsigned - 1`.
-/// In fact the latter case yields the same result as saturation to minimum value.
+///
+/// @note **Overflow strategy**: All arithmetic operations promote to a wider `SaturationT` type
+/// before computation, then clamp (saturate) the result to [MIN_INTEGER, MAX_INTEGER] before storing.
+/// This guarantees no signed integer overflow UB in any arithmetic path. The saturation type must be
+/// at least twice the width of T (e.g., int64_t for int32_t T, Int128 for int64_t T).
+///
+/// @note **Unsigned subtraction**: For unsigned T, subtracting a larger value from a smaller one wraps
+/// through the unsigned domain before saturation, which effectively yields MAX rather than 0.
+/// This is inherent to unsigned semantics and documented as wrap-around behavior.
+///
+/// @note The `operator-()` (unary negation) saturates `-MIN` to `MAX` for signed types,
+/// matching the standard library's behavior of avoiding signed overflow UB on the most negative value.
+///
 /// @tparam T The underlying type of the fixed-point number.
 /// @tparam FRAC_BITS The number of fractional bits.
-/// @tparam SaturationT The type used for saturation.
+/// @tparam SaturationT The wider type used for intermediate arithmetic (must be at least 2*sizeof(T) wide).
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 class FixedPoint
 {
@@ -53,7 +58,7 @@ public:
   constexpr static std::uint32_t BITS = sizeof(T) * 8U;
   constexpr static std::uint32_t FRACTIONAL_BITS = FRAC_BITS;
   constexpr static std::uint32_t INTEGER_BITS = BITS - FRACTIONAL_BITS - std::uint32_t{std::is_signed_v<T>};
-  constexpr static T ONE = 1UL << FRACTIONAL_BITS;
+  constexpr static T ONE = T{1} << FRACTIONAL_BITS;
   constexpr static T HALF = ONE >> 1U;
   constexpr static double RESOLUTION = 1.0L / static_cast<double>(ONE);
   constexpr static double ULP = RESOLUTION; // Unit in the last place or Unit of least precision (ULP)
@@ -121,6 +126,11 @@ public:
   template <typename U = T, typename = std::enable_if_t<std::is_signed_v<U>>>
   constexpr FixedPoint operator-() const noexcept
   {
+    // Saturate: -MIN overflows, clamp to MAX instead.
+    if (value_ == MIN_INTEGER)
+    {
+      return FixedPoint(RAW_VALUE_CONSTRUCT, MAX_INTEGER);
+    }
     return FixedPoint(RAW_VALUE_CONSTRUCT, -value_);
   }
 
@@ -166,7 +176,8 @@ public:
     // If signs are same, add rhs_value/2 to the result, otherwise subtract rhs_value/2.
     // This is to ensure that the result is rounded up for positive numbers and rounded down for negative numbers.
     const auto same_sign = math::signbit(result) == math::signbit(rhs_value);
-    const auto half = rhs_value >> 1U;
+    // Use division instead of right-shift to avoid implementation-defined behavior for negative values.
+    const auto half = rhs_value / SaturationT{2};
     const SaturationT halfs[] = {-half, half}; // NOLINT(cppcoreguidelines-avoid-c-arrays)
     result += halfs[same_sign];
 
@@ -179,6 +190,7 @@ public:
 
   constexpr FixedPoint& operator%=(const FixedPoint rhs) noexcept
   {
+    assert(rhs.value_ != 0 && "Modulo by zero");
     const auto result = static_cast<SaturationT>(value_) % static_cast<SaturationT>(rhs.value_);
     value_ = saturate_and_cast(result);
     return *this;
@@ -304,7 +316,7 @@ namespace std
 {
 
 // NOLINTBEGIN(readability-identifier-naming)
-template <typename T, std::int8_t FRAC_BITS, typename SaturationT>
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 struct numeric_limits<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>>
 {
   using FixedPoint = rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>;
@@ -322,18 +334,22 @@ struct numeric_limits<rtw::multiprecision::FixedPoint<T, FRAC_BITS, SaturationT>
   constexpr static bool is_iec559 = false;
   constexpr static bool is_bounded = true;
   constexpr static bool is_modulo = false;
-  constexpr static int digits = static_cast<int>(FixedPoint::FRACTIONAL_BITS);
-  constexpr static int digits10 = static_cast<int>(FixedPoint::FRACTIONAL_BITS * rtw::math_constants::LOG10_2<double>);
-  constexpr static int max_digits10 =
-      static_cast<int>((FixedPoint::INTEGER_BITS + FixedPoint::FRACTIONAL_BITS) * rtw::math_constants::LOG10_2<double>);
-  constexpr static int radix = 2;
-  constexpr static int min_exponent = -static_cast<int>(FixedPoint::FRACTIONAL_BITS) + std::is_signed_v<T>;
-  constexpr static int max_exponent = static_cast<int>(FixedPoint::INTEGER_BITS);
-  constexpr static int min_exponent10 =
-      static_cast<int>(-static_cast<int>(FixedPoint::FRACTIONAL_BITS) * rtw::math_constants::LOG10_2<double>)
+  constexpr static std::int32_t digits =
+      static_cast<std::int32_t>(FixedPoint::INTEGER_BITS + FixedPoint::FRACTIONAL_BITS);
+  constexpr static std::int32_t digits10 = static_cast<std::int32_t>(
+      (FixedPoint::INTEGER_BITS + FixedPoint::FRACTIONAL_BITS) * rtw::math_constants::LOG10_2<double>);
+  constexpr static std::int32_t max_digits10 = static_cast<std::int32_t>(
+      (FixedPoint::INTEGER_BITS + FixedPoint::FRACTIONAL_BITS) * rtw::math_constants::LOG10_2<double>);
+  constexpr static std::int32_t radix = 2;
+  constexpr static std::int32_t min_exponent =
+      -static_cast<std::int32_t>(FixedPoint::FRACTIONAL_BITS) + std::is_signed_v<T>;
+  constexpr static std::int32_t max_exponent = static_cast<std::int32_t>(FixedPoint::INTEGER_BITS);
+  constexpr static std::int32_t min_exponent10 =
+      static_cast<std::int32_t>(-static_cast<std::int32_t>(FixedPoint::FRACTIONAL_BITS)
+                                * rtw::math_constants::LOG10_2<double>)
       + std::is_signed_v<T>;
-  constexpr static int max_exponent10 =
-      static_cast<int>(FixedPoint::INTEGER_BITS * rtw::math_constants::LOG10_2<double>);
+  constexpr static std::int32_t max_exponent10 =
+      static_cast<std::int32_t>(FixedPoint::INTEGER_BITS * rtw::math_constants::LOG10_2<double>);
   constexpr static bool traps = numeric_limits<T>::traps;
   constexpr static bool tinyness_before = false;
 

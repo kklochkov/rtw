@@ -1,4 +1,5 @@
 #include "multiprecision/fixed_point.h"
+#include "multiprecision/fixed_point_math.h"
 #include "multiprecision/format.h" // IWYU pragma: keep
 
 #include <gmock/gmock.h>
@@ -348,6 +349,11 @@ TYPED_TEST(SignedFixedPointTest, assignment)
     TypeParam a(1.0);
     const TypeParam b(0.0);
     EXPECT_DEATH(a /= b, "");
+  }
+  {
+    TypeParam a(1.0);
+    const TypeParam b(0.0);
+    EXPECT_DEATH(a %= b, "");
   }
 }
 
@@ -720,8 +726,8 @@ TEST(NumericLimits, exponent10_is_constexpr)
   // Verify min_exponent10 and max_exponent10 are constexpr (previously used non-constexpr std::log10)
   {
     using FP = rtw::multiprecision::FixedPoint8;
-    constexpr int MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
-    constexpr int MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
+    constexpr std::int32_t MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
+    constexpr std::int32_t MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
     // min_exponent10 should be negative (fractional bits give sub-1 resolution)
     EXPECT_LT(MIN_EXP10, 0);
     // max_exponent10 should be positive (integer bits give values > 1)
@@ -729,16 +735,166 @@ TEST(NumericLimits, exponent10_is_constexpr)
   }
   {
     using FP = rtw::multiprecision::FixedPoint16;
-    constexpr int MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
-    constexpr int MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
+    constexpr std::int32_t MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
+    constexpr std::int32_t MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
     EXPECT_LT(MIN_EXP10, 0);
     EXPECT_GT(MAX_EXP10, 0);
   }
   {
     using FP = rtw::multiprecision::FixedPoint32;
-    constexpr int MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
-    constexpr int MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
+    constexpr std::int32_t MIN_EXP10 = std::numeric_limits<FP>::min_exponent10;
+    constexpr std::int32_t MAX_EXP10 = std::numeric_limits<FP>::max_exponent10;
     EXPECT_LT(MIN_EXP10, 0);
     EXPECT_GT(MAX_EXP10, 0);
   }
 }
+
+// =============================================================================
+// Constexpr static_assert tests for FixedPoint arithmetic
+// =============================================================================
+namespace
+{
+
+using FP8 = rtw::multiprecision::FixedPoint8;
+
+// Construction from positive integer
+static_assert(FP8{1}.raw_value() == FP8::ONE, "FP8(1) == ONE");
+static_assert(FP8{0}.raw_value() == 0, "FP8(0) == 0");
+static_assert(FP8{5}.raw_value() == 5 * FP8::ONE, "FP8(5) == 5*ONE");
+
+// Raw-value construction
+static_assert(FP8(rtw::multiprecision::RAW_VALUE_CONSTRUCT, 256).raw_value() == 256, "FP8 raw 256");
+static_assert(FP8(rtw::multiprecision::RAW_VALUE_CONSTRUCT, -256).raw_value() == -256, "FP8 raw -256");
+
+// Addition
+static_assert((FP8{1} + FP8{2}).raw_value() == 3 * FP8::ONE, "FP8 1+2 == 3");
+static_assert((FP8{10} + FP8{20}).raw_value() == 30 * FP8::ONE, "FP8 10+20 == 30");
+
+// Subtraction
+static_assert((FP8{5} - FP8{3}).raw_value() == 2 * FP8::ONE, "FP8 5-3 == 2");
+static_assert((FP8{1} - FP8{1}).raw_value() == 0, "FP8 1-1 == 0");
+
+// Multiplication
+static_assert((FP8{2} * FP8{3}).raw_value() == 6 * FP8::ONE, "FP8 2*3 == 6");
+static_assert((FP8{4} * FP8{5}).raw_value() == 20 * FP8::ONE, "FP8 4*5 == 20");
+
+// Division
+static_assert((FP8{6} / FP8{2}).raw_value() == 3 * FP8::ONE, "FP8 6/2 == 3");
+static_assert((FP8{10} / FP8{5}).raw_value() == 2 * FP8::ONE, "FP8 10/5 == 2");
+
+// Comparison (positive values only for constexpr)
+static_assert(FP8{1} > FP8{0}, "FP8 1 > 0");
+static_assert(FP8{2} == FP8{2}, "FP8 2 == 2");
+static_assert(FP8{1} != FP8{2}, "FP8 1 != 2");
+static_assert(FP8{1} <= FP8{1}, "FP8 1 <= 1");
+static_assert(FP8{1} >= FP8{1}, "FP8 1 >= 1");
+static_assert(FP8{3} > FP8{2}, "FP8 3 > 2");
+static_assert(FP8{2} < FP8{3}, "FP8 2 < 3");
+
+// Saturation: addition that overflows should clamp to max
+constexpr auto fp8_saturate_add()
+{
+  FP8 v = FP8::max();
+  v += FP8{1};
+  return v;
+}
+static_assert(fp8_saturate_add() == FP8::max(), "FP8 max+1 saturates to max");
+
+// Subtraction resulting in smaller value
+constexpr auto fp8_sub_chain()
+{
+  FP8 v{10};
+  v -= FP8{3};
+  v -= FP8{2};
+  return v;
+}
+static_assert(fp8_sub_chain() == FP8{5}, "FP8 10-3-2 == 5");
+
+// Multiplication and division compose
+static_assert((FP8{6} / FP8{3}) * FP8{3} == FP8{6}, "FP8 (6/3)*3 == 6");
+
+// Unary negation: -min() saturates to max()
+static_assert((-FP8::min()) == FP8::max(), "FP8 -min() saturates to max()");
+static_assert((-FP8{5}).raw_value() == -5 * FP8::ONE, "FP8 -5 negates correctly");
+static_assert((-(-FP8{3})) == FP8{3}, "FP8 double negation is identity");
+
+// round(min()) should not UB — min() has zero fractional part, returns itself
+static_assert(rtw::multiprecision::math::round(FP8::min()) == FP8::min(), "FP8 round(min) == min");
+static_assert(rtw::multiprecision::math::round(FP8{0}) == FP8{0}, "FP8 round(0) == 0");
+static_assert(rtw::multiprecision::math::round(FP8{3}) == FP8{3}, "FP8 round(3) == 3 (integer stays)");
+static_assert(rtw::multiprecision::math::trunc(FP8::min()) == FP8::min(), "FP8 trunc(min) == min");
+
+// ceil: basic correctness
+static_assert(rtw::multiprecision::math::ceil(FP8{3}) == FP8{3}, "FP8 ceil(3) == 3 (already integer)");
+static_assert(rtw::multiprecision::math::ceil(FP8{0}) == FP8{0}, "FP8 ceil(0) == 0");
+static_assert(rtw::multiprecision::math::ceil(FP8::min()) == FP8::min(), "FP8 ceil(min) == min (no frac)");
+
+// ceil: fractional values round up
+constexpr auto fp8_ceil_positive_frac()
+{
+  // 1.5 in raw: 1*256 + 128 = 384
+  FP8 v(rtw::multiprecision::RAW_VALUE_CONSTRUCT, 384);
+  return rtw::multiprecision::math::ceil(v);
+}
+static_assert(fp8_ceil_positive_frac() == FP8{2}, "FP8 ceil(1.5) == 2");
+
+constexpr auto fp8_ceil_negative_frac()
+{
+  // -1.5 in raw: -(1*256 + 128) = -384
+  FP8 v(rtw::multiprecision::RAW_VALUE_CONSTRUCT, -384);
+  return rtw::multiprecision::math::ceil(v);
+}
+static_assert(fp8_ceil_negative_frac().raw_value() == -256, "FP8 ceil(-1.5) == -1");
+
+// ceil: near-MAX overflow saturates to max()
+constexpr auto fp8_ceil_near_max()
+{
+  // max() = 0x7FFF = 32767 raw. Integer part = 127, frac part = 0xFF = all 1s.
+  // ceil(127.996) should be 128, but 128 can't be represented -> saturate to max().
+  return rtw::multiprecision::math::ceil(FP8::max());
+}
+static_assert(fp8_ceil_near_max() == FP8::max(), "FP8 ceil(max) saturates to max");
+
+// ceil: one-below-max integer has fractional bits, saturates
+constexpr auto fp8_ceil_just_above_max_integer()
+{
+  // 127 + epsilon in raw: 127*256 + 1 = 32513
+  FP8 v(rtw::multiprecision::RAW_VALUE_CONSTRUCT, 127 * 256 + 1);
+  return rtw::multiprecision::math::ceil(v);
+}
+static_assert(fp8_ceil_just_above_max_integer() == FP8::max(), "FP8 ceil(127+eps) saturates to max");
+
+// ceil: unsigned near-max overflow saturates
+using FP8U = rtw::multiprecision::FixedPoint8U;
+constexpr auto fp8u_ceil_near_max() { return rtw::multiprecision::math::ceil(FP8U::max()); }
+static_assert(fp8u_ceil_near_max() == FP8U::max(), "FP8U ceil(max) saturates to max");
+
+constexpr auto fp8u_ceil_just_above_max_integer()
+{
+  // 255 + epsilon in raw: 255*256 + 1 = 65281
+  FP8U v(rtw::multiprecision::RAW_VALUE_CONSTRUCT, 255U * 256U + 1U);
+  return rtw::multiprecision::math::ceil(v);
+}
+static_assert(fp8u_ceil_just_above_max_integer() == FP8U::max(), "FP8U ceil(255+eps) saturates to max");
+
+// numeric_limits::digits: should be total value bits (INTEGER_BITS + FRACTIONAL_BITS)
+static_assert(std::numeric_limits<FP8>::digits == 15, "FP8 digits = 7 int + 8 frac = 15");
+static_assert(std::numeric_limits<FP8U>::digits == 16, "FP8U digits = 8 int + 8 frac = 16");
+static_assert(std::numeric_limits<rtw::multiprecision::FixedPoint16>::digits == 31,
+              "FP16 digits = 15 int + 16 frac = 31");
+static_assert(std::numeric_limits<rtw::multiprecision::FixedPoint16U>::digits == 32,
+              "FP16U digits = 16 int + 16 frac = 32");
+
+// round: near-MAX positive saturates to max (signed)
+constexpr auto fp8_round_near_max()
+{
+  // max() = 0x7FFF raw. Integer=127, frac=0xFF. 127.996... rounds to 128, but can't represent -> saturate.
+  return rtw::multiprecision::math::round(FP8::max());
+}
+static_assert(fp8_round_near_max() == FP8::max(), "FP8 round(max) saturates to max");
+
+// round: unsigned near-MAX saturates
+constexpr auto fp8u_round_near_max() { return rtw::multiprecision::math::round(FP8U::max()); }
+static_assert(fp8u_round_near_max() == FP8U::max(), "FP8U round(max) saturates to max");
+
+} // namespace
