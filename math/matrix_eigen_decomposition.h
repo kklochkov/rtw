@@ -277,7 +277,8 @@ extract_eigenvalues(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix, const T t
         // Real eigenvalues
         const auto sign = multiprecision::math::sign(half_trace);
         const auto eigenvalue1 = half_trace + (sign * sqrt_discriminant);
-        const auto eigenvalue2 = trace_det.determinant / eigenvalue1;
+        // When eigenvalue1 is zero, both eigenvalues are zero (since det = e1*e2 = 0 and trace = e1+e2 = 0).
+        const auto eigenvalue2 = (eigenvalue1 != T{0}) ? (trace_det.determinant / eigenvalue1) : T{0};
         result[row] = ComplexT{eigenvalue1, T{0}};
         result[row + 1U] = ComplexT{eigenvalue2, T{0}};
       }

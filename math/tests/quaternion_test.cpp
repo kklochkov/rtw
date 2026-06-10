@@ -148,6 +148,25 @@ TEST(Quaternion, axis_recovers_original_axis)
   EXPECT_NEAR(recovered_axis.z(), original_axis.z(), EPSILON);
 }
 
+TEST(Quaternion, axis_identity_returns_x_axis)
+{
+  constexpr QuaternionD Q{rtw::math::IDENTITY};
+  const auto result = rtw::math::axis(Q);
+  EXPECT_NEAR(result.x(), 1.0, EPSILON);
+  EXPECT_NEAR(result.y(), 0.0, EPSILON);
+  EXPECT_NEAR(result.z(), 0.0, EPSILON);
+}
+
+TEST(Quaternion, axis_near_identity_returns_x_axis)
+{
+  // Very small rotation -- vector part is near-zero
+  const auto q = QuaternionD::from_axis_angle(Vector3D{0.0, 0.0, 1.0}, AngleD{1e-20});
+  const auto result = rtw::math::axis(q);
+  EXPECT_NEAR(result.x(), 1.0, EPSILON);
+  EXPECT_NEAR(result.y(), 0.0, EPSILON);
+  EXPECT_NEAR(result.z(), 0.0, EPSILON);
+}
+
 TEST(Quaternion, from_euler_angles_zero)
 {
   const auto q = QuaternionD::from_euler_angles(AngleD{0.0}, AngleD{0.0}, AngleD{0.0}); // roll, pitch, yaw
@@ -696,4 +715,33 @@ TEST(Quaternion, slerp_vs_pow_equivalence)
     const auto pow_result = rtw::math::pow(q2, t);
     expect_quaternion_equivalent(slerp_result, pow_result);
   }
+}
+
+TEST(Quaternion, static_properties)
+{
+  // Identity quaternion is w=1, xyz=0
+  constexpr QuaternionD IDENTITY{rtw::math::IDENTITY};
+  static_assert(IDENTITY.w() == 1.0);
+  static_assert(IDENTITY.x() == 0.0);
+  static_assert(IDENTITY.y() == 0.0);
+  static_assert(IDENTITY.z() == 0.0);
+
+  // Zero quaternion
+  constexpr QuaternionD ZERO{rtw::math::ZERO};
+  static_assert(ZERO.w() == 0.0);
+  static_assert(ZERO.x() == 0.0);
+  static_assert(ZERO.y() == 0.0);
+  static_assert(ZERO.z() == 0.0);
+
+  // Conjugate flips the vector part
+  constexpr QuaternionD Q{1.0, 2.0, 3.0, 4.0};
+  constexpr auto CONJ = Q.conjugate();
+  static_assert(CONJ.w() == 1.0);
+  static_assert(CONJ.x() == -2.0);
+  static_assert(CONJ.y() == -3.0);
+  static_assert(CONJ.z() == -4.0);
+
+  // Norm squared (dot with self)
+  static_assert(rtw::math::norm2(IDENTITY) == 1.0);
+  static_assert(rtw::math::norm2(Q) == 30.0);
 }

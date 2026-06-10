@@ -68,8 +68,13 @@ constexpr Matrix2x2<T, MEMORY_ORDER> make_scale(const Vector2<T>& scale) noexcep
 template <typename T, MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>
 constexpr Matrix2x2<T, MEMORY_ORDER> make_rotation(const Angle<T> angle) noexcept
 {
-  const auto c = std::cos(angle);
-  const auto s = std::sin(angle);
+  using multiprecision::math::cos;
+  using multiprecision::math::sin;
+  using std::cos;
+  using std::sin;
+
+  const auto c = cos(static_cast<T>(angle));
+  const auto s = sin(static_cast<T>(angle));
   // clang-format off
   return Matrix2x2<T, MEMORY_ORDER>{math::FROM_ROW_MAJOR,
     c, -s,

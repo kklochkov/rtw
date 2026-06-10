@@ -14,15 +14,16 @@ namespace rtw::math
 /// `i = q0 + t * (q1 - q0)`, where `i` is the intersection point.
 /// Solving the equation for `t` gives the following result:
 /// `t = (p - q0) * n / (q1 - q0) * n`, where `*` is dot product, @c p is a point on the plane, @c n is the plane's
-/// The intersesion point can then be calculated by using the linear interpolation function: `i = lerp(q0, q1, t)`.
+/// normal vector.
+/// The intersection point can then be calculated by using the linear interpolation function: `i = lerp(q0, q1, t)`.
 /// The plane is defined by a point and a normal.
 /// The line is defined by two points.
 /// @tparam T The type of the point's coordinates.
 /// @tparam N The number of dimensions.
-/// @param p A point on the plane.
-/// @param n The normal of the plane.
-/// @param q0 A point on the line.
-/// @param q1 A point on the line.
+/// @param[in] p A point on the plane.
+/// @param[in] n The normal of the plane.
+/// @param[in] q0 A point on the line.
+/// @param[in] q1 A point on the line.
 /// @return The intersection of the line and the plane or std::nullopt if the line is parallel to the plane.
 template <typename T, std::uint16_t N>
 constexpr std::optional<T> intersection_factor(const Point<T, N>& p, const Vector<T, N>& n, const Point<T, N>& q0,
@@ -42,13 +43,12 @@ constexpr std::optional<T> intersection_factor(const Point<T, N>& p, const Vecto
 /// Returns the intersection point of the line and the plane.
 /// The plane is defined by a point and a normal.
 /// The line is defined by two points.
-/// @tparam POLICY The policy to check the calculation.
 /// @tparam T The type of the point's coordinates.
 /// @tparam N The number of dimensions.
-/// @param p A point on the plane.
-/// @param n The normal of the plane.
-/// @param q0 A point on the line.
-/// @param q1 A point on the line.
+/// @param[in] p A point on the plane.
+/// @param[in] n The normal of the plane.
+/// @param[in] q0 A point on the line.
+/// @param[in] q1 A point on the line.
 /// @return The intersection point of the line and the plane or std::nullopt if the line is parallel to the plane.
 template <typename T, std::uint16_t N>
 constexpr std::optional<Point<T, N>> intersection(const Point<T, N>& p, const Vector<T, N>& n, const Point<T, N>& q0,
@@ -68,13 +68,12 @@ constexpr std::optional<Point<T, N>> intersection(const Point<T, N>& p, const Ve
 /// `i = p0 + t * (p1 - p0)`, where `i` is the intersection point.
 /// Solving the equation for `t` gives the following result:
 /// `t = (p0 - q0) x (q0 - q1) / (p0 - p1) x (q0 - q1)`, where `x` is the cross product.
-/// The intersesion point can then be calculated by using the linear interpolation function: `i = lerp(p0, p1, t)`.
-/// @tparam POLICY The policy to check the calculation.
+/// The intersection point can then be calculated by using the linear interpolation function: `i = lerp(p0, p1, t)`.
 /// @tparam T The type of the point's coordinates.
-/// @param p0 A point on the first line.
-/// @param p1 A point on the first line.
-/// @param q0 A point on the second line.
-/// @param q1 A point on the second line.
+/// @param[in] p0 A point on the first line.
+/// @param[in] p1 A point on the first line.
+/// @param[in] q0 A point on the second line.
+/// @param[in] q1 A point on the second line.
 /// @return The intersection factor of the two lines or std::nullopt if the lines are parallel.
 template <typename T>
 constexpr std::optional<T> intersection_factor(const Point2<T>& p0, const Point2<T>& p1, const Point2<T>& q0,
@@ -93,12 +92,11 @@ constexpr std::optional<T> intersection_factor(const Point2<T>& p0, const Point2
 
 /// Returns the intersection point of the two 2D lines.
 /// The lines are defined by two points.
-/// @tparam POLICY The policy to check the calculation.
 /// @tparam T The type of the point's coordinates.
-/// @param p0 A point on the first line.
-/// @param p1 A point on the first line.
-/// @param q0 A point on the second line.
-/// @param q1 A point on the second line.
+/// @param[in] p0 A point on the first line.
+/// @param[in] p1 A point on the first line.
+/// @param[in] q0 A point on the second line.
+/// @param[in] q1 A point on the second line.
 /// @return The intersection point of the two lines or std::nullopt if the lines are parallel.
 template <typename T>
 constexpr std::optional<Point2<T>> intersection(const Point2<T>& p0, const Point2<T>& p1, const Point2<T>& q0,

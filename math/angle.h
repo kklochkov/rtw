@@ -4,8 +4,6 @@
 #include "math/numeric.h"
 #include "multiprecision/fixed_point.h"
 
-#include <cmath>
-
 namespace rtw::math
 {
 
@@ -128,11 +126,12 @@ using AngleQ16 = Angle<multiprecision::FixedPoint16>;
 using AngleQ32 = Angle<multiprecision::FixedPoint32>;
 
 template <typename T>
-Angle<T> normalize(const Angle<T>& angle) noexcept
+constexpr Angle<T> normalize(const Angle<T>& angle) noexcept
 {
-  // std::fmod is not constexpr in C++17, but it is in C++20.
-  Angle<T> result{std::fmod(angle + PI<T>, TAU<T>)};
-  if (result < 0)
+  const auto value = static_cast<T>(angle + PI<T>);
+  const auto period = static_cast<T>(TAU<T>);
+  Angle<T> result{multiprecision::math::fmod(value, period)};
+  if (result < Angle<T>{T{0}})
   {
     result += TAU<T>;
   }
@@ -140,13 +139,13 @@ Angle<T> normalize(const Angle<T>& angle) noexcept
 }
 
 template <typename T>
-T distance(const Angle<T>& lhs, const Angle<T>& rhs) noexcept
+constexpr T distance(const Angle<T>& lhs, const Angle<T>& rhs) noexcept
 {
   return normalize(rhs - lhs);
 }
 
 template <typename T>
-Angle<T> interpolate(const Angle<T>& lhs, const Angle<T>& rhs, const T t) noexcept
+constexpr Angle<T> interpolate(const Angle<T>& lhs, const Angle<T>& rhs, const T t) noexcept
 {
   return normalize(Angle<T>{((T{1} - t) * lhs) + (t * rhs)});
 }

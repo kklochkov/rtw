@@ -148,10 +148,10 @@ constexpr Frustum3<T> make_frustum(const FrustumParameters<T> params) noexcept
   frustum.near.distance = params.near;
   frustum.far.normal = Vector3<T>{T{0}, T{0}, T{1}};
   frustum.far.distance = params.far;
-  frustum.top.normal = normalize(cross(far_bottom_left - bottom_left, bottom_right - bottom_left));
-  frustum.top.distance = 0;
-  frustum.bottom.normal = normalize(cross(top_right - top_left, far_top_left - top_left));
+  frustum.bottom.normal = normalize(cross(far_bottom_left - bottom_left, bottom_right - bottom_left));
   frustum.bottom.distance = 0;
+  frustum.top.normal = normalize(cross(top_right - top_left, far_top_left - top_left));
+  frustum.top.distance = 0;
   frustum.left.normal = normalize(cross(far_top_left - top_left, bottom_left - top_left));
   frustum.left.distance = 0;
   frustum.right.normal = normalize(cross(bottom_right - top_right, far_top_right - top_right));

@@ -58,3 +58,16 @@ TEST(Angle, interpolate)
   EXPECT_NEAR(rtw::math::interpolate(0.0_radD, 1.0_radD, 0.75).rad(), 0.75, EPSILON);
   EXPECT_NEAR(rtw::math::interpolate(0.0_degD, 1.0_degD, 0.75).deg(), 0.75, EPSILON);
 }
+
+TEST(Angle, normalize_is_constexpr)
+{
+  // Verify that normalize, distance, and interpolate are constexpr
+  using namespace rtw::math::angle_literals;
+  constexpr auto NORMALIZED = rtw::math::normalize(0.5_radD);
+  static_assert(NORMALIZED.rad() > 0.49);
+  static_assert(NORMALIZED.rad() < 0.51);
+
+  constexpr auto WRAPPED = rtw::math::normalize(0.5_radD + rtw::math::TAU<double>);
+  static_assert(WRAPPED.rad() > 0.49);
+  static_assert(WRAPPED.rad() < 0.51);
+}

@@ -284,6 +284,42 @@ TEST(Vector, operator_unary_minus)
   EXPECT_THAT(v2, ::testing::ElementsAre(-1.0F, -2.0F, -3.0F));
 }
 
+TEST(Vector, static_properties)
+{
+  // Default construction is zero
+  static_assert(rtw::math::Vector3I{} == rtw::math::Vector3I{0, 0, 0});
+
+  // Element access
+  constexpr rtw::math::Vector3I V{1, 2, 3};
+  static_assert(V.x() == 1);
+  static_assert(V.y() == 2);
+  static_assert(V.z() == 3);
+  static_assert(V[0] == 1);
+  static_assert(V[1] == 2);
+  static_assert(V[2] == 3);
+
+  // Dot product
+  static_assert(rtw::math::dot(V, rtw::math::Vector3I{4, 5, 6}) == 32);
+
+  // Cross product (directly constructs result, no UNINITIALIZED)
+  static_assert(rtw::math::cross(rtw::math::Vector3I{1, 0, 0}, rtw::math::Vector3I{0, 1, 0})
+                == rtw::math::Vector3I{0, 0, 1});
+
+  // Norm squared (via dot)
+  static_assert(rtw::math::norm2(V) == 14);
+
+  // Copy construction preserves values
+  constexpr rtw::math::Vector3I V2{V};
+  static_assert(V2 == V);
+
+  // Widening copy (3D -> 4D pads with zero)
+  constexpr rtw::math::Vector4I V4{V};
+  static_assert(V4[0] == 1);
+  static_assert(V4[1] == 2);
+  static_assert(V4[2] == 3);
+  static_assert(V4[3] == 0);
+}
+
 TEST(Vector, normalize)
 {
   {

@@ -11,6 +11,8 @@ namespace rtw::math
 /// Make a barycentric coordinate from a point and a triangle.
 /// The winding order is counter-clockwise.
 /// The coordinate system is right-handed.
+/// @pre The triangle must not be degenerate (i.e., vertices must not be collinear).
+///      Violation will trigger assertion failure.
 /// @tparam T The type of the elements.
 /// @param[in] v0 The first vertex of the triangle.
 /// @param[in] v1 The second vertex of the triangle.
@@ -28,6 +30,7 @@ constexpr Barycentric<T> make_barycentric(const Point2<T>& v0, const Point2<T>& 
   const auto pb = p - v2;
   const auto pc = p - v0;
   const auto area = cross(a, b);
+  assert(area != T{0} && "Degenerate triangle: vertices are collinear (zero area)");
   const auto alpha = cross(a, pa) / area;
   const auto beta = cross(b, pb) / area;
   const auto gamma = cross(c, pc) / area;

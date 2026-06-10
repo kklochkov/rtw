@@ -226,3 +226,25 @@ TEST(Barycentric, contains3)
   ASSERT_NEAR(r.beta(), 24.F / 25.0F, 1e-6F);
   ASSERT_NEAR(r.gamma(), 1.0F / 25.0F, 1e-6F);
 }
+
+TEST(Barycentric, make_barycentric_degenerate_triangle_death)
+{
+  // Collinear points form a degenerate triangle with zero area
+  const rtw::math::Point2F v0{0.0F, 0.0F};
+  const rtw::math::Point2F v1{1.0F, 1.0F};
+  const rtw::math::Point2F v2{2.0F, 2.0F}; // collinear with v0 and v1
+  const rtw::math::Point2F p{0.5F, 0.5F};
+
+  EXPECT_DEATH(rtw::math::make_barycentric(v0, v1, v2, p), "");
+}
+
+TEST(Barycentric, make_barycentric_coincident_vertices_death)
+{
+  // Two coincident vertices also produce zero area
+  const rtw::math::Point2F v0{1.0F, 1.0F};
+  const rtw::math::Point2F v1{1.0F, 1.0F}; // same as v0
+  const rtw::math::Point2F v2{2.0F, 3.0F};
+  const rtw::math::Point2F p{1.5F, 2.0F};
+
+  EXPECT_DEATH(rtw::math::make_barycentric(v0, v1, v2, p), "");
+}

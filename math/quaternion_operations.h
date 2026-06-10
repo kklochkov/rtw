@@ -37,10 +37,23 @@ constexpr Quaternion<T> normalize(const Quaternion<T>& quaternion) noexcept
   return quaternion / n;
 }
 
+/// Returns the rotation axis of a quaternion.
+/// For identity (or near-identity) quaternions where the vector part is near zero,
+/// returns the positive x-axis as a conventional default (the rotation angle is 0).
+/// @param[in] quaternion The quaternion.
+/// @param[in] epsilon The near-zero epsilon for the vector part magnitude.
+/// @return The normalized rotation axis.
 template <typename T>
-constexpr Vector3<T> axis(const Quaternion<T>& quaternion) noexcept
+constexpr Vector3<T> axis(const Quaternion<T>& quaternion, const T epsilon = default_near_zero_epsilon<T>()) noexcept
 {
-  return normalize(quaternion.xyz());
+  const auto v = quaternion.xyz();
+  const auto n = norm(v);
+  if (is_near_zero(n, epsilon))
+  {
+    // Identity quaternion has no meaningful axis; return x-axis by convention.
+    return Vector3<T>{T{1}, T{0}, T{0}};
+  }
+  return v / n;
 }
 
 template <typename T>
@@ -169,6 +182,7 @@ constexpr Quaternion<T> slerp(const Quaternion<T>& q1, Quaternion<T> q2, const T
   // Compute the angle between the quaternions and perform spherical linear interpolation.
   const auto theta = acos(cos_theta);
   const auto sin_theta = sin(theta);
+  assert(sin_theta != T{0} && "slerp: sin(theta) is zero (should be caught by nlerp fallback)");
   const auto weight_q1 = sin((T{1} - t) * theta) / sin_theta;
   const auto weight_q2 = sin(t * theta) / sin_theta;
 

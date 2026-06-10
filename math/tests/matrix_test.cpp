@@ -1021,3 +1021,45 @@ TEST(Matrix, operator_stream)
 ])";
   EXPECT_EQ(ss.str(), EXPECTED);
 }
+
+TEST(Matrix, static_properties)
+{
+  using Mat2 = rtw::math::Matrix<int, 2, 2>;
+  using Mat3 = rtw::math::Matrix<int, 3, 3>;
+
+  // Default construction is zero
+  static_assert(Mat2{} == Mat2{0, 0, 0, 0});
+
+  // Identity construction
+  constexpr Mat2 I2{rtw::math::IDENTITY};
+  static_assert(I2(0, 0) == 1);
+  static_assert(I2(0, 1) == 0);
+  static_assert(I2(1, 0) == 0);
+  static_assert(I2(1, 1) == 1);
+
+  // Element access
+  constexpr Mat2 A{1, 2, 3, 4};
+  static_assert(A(0, 0) == 1);
+  static_assert(A(0, 1) == 2);
+  static_assert(A(1, 0) == 3);
+  static_assert(A(1, 1) == 4);
+  static_assert(A[0] == 1);
+  static_assert(A[3] == 4);
+
+  // Determinant 2x2: ad - bc = 1*4 - 2*3 = -2
+  static_assert(rtw::math::determinant(A) == -2);
+
+  // Determinant 3x3
+  constexpr Mat3 B{1, 2, 3, 0, 1, 4, 5, 6, 0};
+  static_assert(rtw::math::determinant(B) == 1);
+
+  // Copy construction preserves values
+  constexpr Mat2 A_COPY{A};
+  static_assert(A_COPY == A);
+
+  // Rows/cols
+  static_assert(A.rows() == 2);
+  static_assert(A.cols() == 2);
+  static_assert(B.rows() == 3);
+  static_assert(B.cols() == 3);
+}
