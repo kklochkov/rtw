@@ -21,13 +21,17 @@ namespace rtw::ecs
 
 namespace details
 {
+/// @brief Compile-time log2 for power-of-2 values.
+/// @param[in] n The value (must be a power of 2 for meaningful results).
+/// @return The base-2 logarithm of n.
 constexpr std::uint8_t log2(const std::uint64_t n) noexcept { return n > 1U ? 1U + log2(n / 2U) : 0U; }
 } // namespace details
 
 /// Entity identifier consisting of an ID and a generation to prevent dangling references.
 ///
-/// The ID is a unique identifier for the entity, while the generation is incremented each time an entity with the same
-/// ID is destroyed and recreated.
+/// The index is a unique slot in the entity array. The generation is incremented each time
+/// an entity at that slot is destroyed, allowing detection of stale handles that reference
+/// a previously-destroyed entity at the same index.
 struct EntityId
 {
   using INDEX_TYPE = std::uint32_t;
@@ -40,14 +44,18 @@ struct EntityId
 
   constexpr bool operator!=(const EntityId& other) const noexcept { return !(*this == other); }
 
-  INDEX_TYPE index{};
-  GENERATION_TYPE generation{};
+  INDEX_TYPE index{};           ///< Slot index in the entity array.
+  GENERATION_TYPE generation{}; ///< Generation counter to detect stale handles.
 };
 
+/// Bitmask signature identifying which component types an entity possesses.
+/// @tparam EnumT A power-of-2 scoped enum where each value represents a component type bit.
 template <typename EnumT>
 struct EntitySignature : stl::Flags<EnumT>
 {};
 
+/// An entity handle pairing an ID with its component signature.
+/// @tparam EnumT The component type enum.
 template <typename EnumT>
 struct Entity
 {
@@ -58,13 +66,22 @@ struct Entity
 
   constexpr bool operator==(const Entity& other) const noexcept { return id == other.id; }
 
-  EntitySignature signature{};
-  EntityId id{};
+  EntitySignature signature{}; ///< Bitmask of component types this entity possesses.
+  EntityId id{};               ///< Unique generational identifier.
 };
 
+/// Unique index identifying a component type's storage slot.
 struct ComponentId : stl::Id
 {};
 
+/// CRTP base for component types. Provides compile-time type and ID metadata.
+///
+/// @pre EnumT must be a scoped enum with power-of-2 values (one bit per component type).
+///      The VALUE must be a single power-of-2 flag from that enum.
+///      This constraint ensures COMPONENT_ID correctly maps to a unique array index via log2.
+///
+/// @tparam EnumT The component type enum (must be a scoped enum with power-of-2 values).
+/// @tparam VALUE The specific enum value for this component (must be a single power-of-2 flag).
 template <typename EnumT, EnumT VALUE>
 struct Component
 {
@@ -85,6 +102,9 @@ struct Component
 };
 
 template <typename EnumT>
+/// Bitmask signature identifying which component types a system requires.
+/// An entity is added to a system if the entity's signature is a superset of the system's signature.
+/// @tparam EnumT The component type enum.
 struct SystemSignature : stl::Flags<EnumT>
 {};
 
@@ -141,6 +161,8 @@ public:
 /// Stores components of a specific type in a packed array for cache efficiency.
 /// Maps EntityIds to component indices for O(1) lookup.
 /// Uses swap-and-pop removal to maintain contiguous storage.
+/// @tparam EnumT The component type enum.
+/// @tparam ComponentT The concrete component type (must derive from Component<EnumT, VALUE>).
 template <typename EnumT, typename ComponentT>
 class ComponentStorage final : public IComponentStorage
 {
@@ -152,12 +174,16 @@ public:
   static_assert(std::is_same_v<ComponentType, typename ComponentT::ComponentType>,
                 "ComponentT must have the same enum type as ComponentType.");
 
+  /// @param[in] max_number_of_entities Maximum entities this storage can hold.
   explicit ComponentStorage(const std::size_t max_number_of_entities) noexcept
       : components_{max_number_of_entities}, entity_id_to_index_{max_number_of_entities},
         index_to_entity_id_{max_number_of_entities}
   {
   }
 
+  /// Emplaces a component for the given entity. No-op if the entity already has this component.
+  /// @param[in] entity The entity to attach the component to.
+  /// @param[in] args Constructor arguments forwarded to the component.
   template <typename... ArgsT>
   void emplace(const Entity& entity, ArgsT&&... args) noexcept
   {
@@ -175,28 +201,39 @@ public:
   bool empty() const noexcept { return components_.empty(); }
   std::size_t size() const noexcept { return components_.size(); }
 
+  /// @param[in] entity The entity to check.
+  /// @return True if this storage contains a component for the entity.
   bool contains(const Entity& entity) const noexcept
   {
     return entity_id_to_index_.find(entity.id) != entity_id_to_index_.end();
   }
 
+  /// @pre The entity must have a component in this storage.
+  /// @param[in] entity The entity whose component to retrieve.
+  /// @return Reference to the entity's component.
   ComponentT& get(const Entity& entity) noexcept
   {
-    assert(contains(entity));
-    const auto index = entity_id_to_index_[entity.id];
-    return components_[index];
+    auto it = entity_id_to_index_.find(entity.id);
+    assert(it != entity_id_to_index_.end());
+    return components_[it->second];
   }
 
+  /// @pre The entity must have a component in this storage.
+  /// @param[in] entity The entity whose component to retrieve.
+  /// @return Const reference to the entity's component.
   const ComponentT& get(const Entity& entity) const noexcept
   {
-    assert(contains(entity));
-    const auto index = entity_id_to_index_[entity.id];
-    return components_[index];
+    auto it = entity_id_to_index_.find(entity.id);
+    assert(it != entity_id_to_index_.end());
+    return components_[it->second];
   }
 
   ComponentT& operator[](const Entity& entity) noexcept { return get(entity); }
   const ComponentT& operator[](const Entity& entity) const noexcept { return get(entity); }
 
+  /// Removes the component for the entity. No-op if the entity has no component in this storage.
+  /// Uses swap-and-pop to maintain contiguous storage.
+  /// @param[in] entity The entity whose component to remove.
   void remove(const Entity& entity) noexcept
   {
     if (components_.empty())
@@ -339,6 +376,12 @@ private:
 /// Manages entity lifecycle, tags, and groups.
 /// Uses generational indices to detect stale entity references.
 /// Tags provide unique 1:1 entity naming; groups provide 1:N categorization.
+///
+/// @note Each entity can belong to at most ONE group at a time.
+///       Adding an entity to a new group automatically removes it from its previous group.
+///
+/// @tparam EnumT The component type enum.
+/// @tparam MAX_NUMBER_OF_ENTITIES_PER_GROUP Maximum entities allowed in a single group.
 template <typename EnumT, std::size_t MAX_NUMBER_OF_ENTITIES_PER_GROUP>
 class EntityManager
 {
@@ -349,6 +392,7 @@ public:
   using Entity = Entity<ComponentType>;
   using EntitySignature = typename Entity::EntitySignature;
 
+  /// @param[in] max_number_of_entities Maximum entities this manager can hold.
   explicit EntityManager(const std::size_t max_number_of_entities) noexcept
       : entities_{max_number_of_entities}, free_ids_{max_number_of_entities}, tag_to_entity_id_{max_number_of_entities},
         entity_id_to_tag_{max_number_of_entities}, group_to_entity_ids_{max_number_of_entities},
@@ -360,6 +404,10 @@ public:
     }
   }
 
+  /// Creates a new entity with the given signature.
+  /// @pre The free entity pool must not be empty (asserts in debug).
+  /// @param[in] signature The component bitmask for the new entity.
+  /// @return The newly created entity handle.
   Entity create(EntitySignature signature) noexcept
   {
     assert(!free_ids_.empty());
@@ -373,12 +421,18 @@ public:
     return entity;
   }
 
+  /// Checks if the entity handle is still valid (not destroyed or recycled).
+  /// @param[in] entity The entity handle to validate.
+  /// @return True if the entity is alive and the generation matches.
   bool is_valid(const Entity& entity) const noexcept
   {
     const auto index = entity.id.index;
     return (index < entities_.size()) && (entities_[index].id.generation == entity.id.generation);
   }
 
+  /// Destroys the entity, incrementing its generation and returning the slot to the free list.
+  /// Also removes the entity's tag and group membership. No-op if the entity is already invalid.
+  /// @param[in] entity The entity to destroy.
   void destroy(const Entity& entity) noexcept
   {
     assert(entity.id.index < entities_.size());
@@ -399,14 +453,20 @@ public:
     }
   }
 
+  /// @return The number of currently alive entities.
   std::size_t size() const noexcept { return entities_.size() - free_ids_.size(); }
 
+  /// Assigns a unique tag (name) to an entity. Tags are 1:1 (one tag per entity, one entity per tag).
+  /// @param[in] entity The entity to tag.
+  /// @param[in] tag The tag name.
   void tag(const Entity& entity, const stl::InplaceStringSmall& tag) noexcept
   {
     tag_to_entity_id_[tag] = entity.id;
     entity_id_to_tag_[entity.id] = tag;
   }
 
+  /// Removes the entity's tag. No-op if the entity has no tag.
+  /// @param[in] entity The entity to untag.
   void untag(const Entity& entity) noexcept
   {
     const auto it = entity_id_to_tag_.find(entity.id);
@@ -442,6 +502,10 @@ public:
     }
   }
 
+  /// Adds the entity to a group. Each entity can belong to at most one group;
+  /// adding to a new group removes the entity from its previous group.
+  /// @param[in] entity The entity to add.
+  /// @param[in] group The group name.
   void add_to_group(const Entity& entity, const stl::InplaceStringSmall& group) noexcept
   {
     remove_from_group(entity);

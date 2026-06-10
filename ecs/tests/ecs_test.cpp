@@ -798,3 +798,145 @@ TEST(EcsTest, for_each_entity_with_tag)
   ecs_manager.for_each_entity_with_tag("NonExistent", [&](const Entity&) { ++count_none; });
   EXPECT_EQ(count_none, 0U);
 }
+
+// --- Death tests ---
+
+TEST(EcsTest, create_entity_when_pool_exhausted_death)
+{
+  constexpr std::size_t TINY_POOL = 1U;
+  rtw::ecs::ECSManager<ComponentType, MAX_NUMBER_OF_ENTITIES_PER_GROUP, Transform, Rigidbody, Collider, Sprite, Mesh,
+                       Debug, Health, Damage>
+      ecs_manager{TINY_POOL, MAX_NUMBER_OF_SYSTEMS};
+
+  // Exhaust the pool
+  ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  EXPECT_EQ(ecs_manager.get_number_of_entities(), 1U);
+
+  // Creating another should trigger assert
+  EXPECT_DEATH(ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE), "");
+}
+
+TEST(EcsTest, get_component_missing_entity_death)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+
+  const auto entity = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  // Do NOT emplace any component -- get should assert
+  EXPECT_DEATH(ecs_manager.get_component<Transform>(entity), "");
+}
+
+TEST(EcsTest, system_double_create_death)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+  ecs_manager.create_system<DefaultSystem>();
+
+  // Creating the same system type twice should trigger assert
+  EXPECT_DEATH(ecs_manager.create_system<DefaultSystem>(), "");
+}
+
+// --- Partial signature matching ---
+
+namespace
+{
+constexpr inline rtw::ecs::SystemSignature<ComponentType> PARTIAL_SYSTEM_SIGNATURE{ComponentType::TRANSFORM
+                                                                                   | ComponentType::RIGID_BODY};
+
+struct PartialSystem : public System
+{
+  PartialSystem() noexcept : System{PARTIAL_SYSTEM_SIGNATURE, MAX_NUMBER_OF_ENTITIES_PER_SYSTEM} {}
+};
+
+constexpr inline rtw::ecs::SystemSignature<ComponentType> PHYSICS_SYSTEM_SIGNATURE{ComponentType::TRANSFORM
+                                                                                   | ComponentType::RIGID_BODY};
+constexpr inline rtw::ecs::SystemSignature<ComponentType> RENDER_SYSTEM_SIGNATURE{ComponentType::TRANSFORM
+                                                                                  | ComponentType::SPRITE};
+constexpr inline rtw::ecs::SystemSignature<ComponentType> COMBAT_SYSTEM_SIGNATURE{ComponentType::HEALTH
+                                                                                  | ComponentType::DAMAGE};
+
+struct PhysicsSystem : public System
+{
+  PhysicsSystem() noexcept : System{PHYSICS_SYSTEM_SIGNATURE, MAX_NUMBER_OF_ENTITIES_PER_SYSTEM} {}
+};
+struct RenderSystem : public System
+{
+  RenderSystem() noexcept : System{RENDER_SYSTEM_SIGNATURE, MAX_NUMBER_OF_ENTITIES_PER_SYSTEM} {}
+};
+struct CombatSystem : public System
+{
+  CombatSystem() noexcept : System{COMBAT_SYSTEM_SIGNATURE, MAX_NUMBER_OF_ENTITIES_PER_SYSTEM} {}
+};
+} // namespace
+
+TEST(EcsTest, system_partial_signature_matching)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+  auto& system = ecs_manager.create_system<PartialSystem>();
+
+  // Entity with superset signature (all components) should MATCH the system
+  const auto entity_full = ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  EXPECT_EQ(system.size(), 1U);
+
+  // Entity with exact match (only TRANSFORM | RIGID_BODY) should also match
+  const rtw::ecs::EntitySignature<ComponentType> exact_signature{ComponentType::TRANSFORM | ComponentType::RIGID_BODY};
+  const auto entity_exact = ecs_manager.create_entity(exact_signature);
+  EXPECT_EQ(system.size(), 2U);
+
+  // Entity with subset (only TRANSFORM) should NOT match -- needs both TRANSFORM & RIGID_BODY
+  const rtw::ecs::EntitySignature<ComponentType> subset_signature{ComponentType::TRANSFORM | ComponentType::TRANSFORM};
+  const auto entity_subset = ecs_manager.create_entity(subset_signature);
+  EXPECT_EQ(system.size(), 2U); // still 2, not 3
+
+  // Entity with disjoint signature should NOT match
+  const rtw::ecs::EntitySignature<ComponentType> disjoint_signature{ComponentType::SPRITE | ComponentType::MESH};
+  const auto entity_disjoint = ecs_manager.create_entity(disjoint_signature);
+  EXPECT_EQ(system.size(), 2U); // still 2
+
+  (void)entity_full;
+  (void)entity_exact;
+  (void)entity_subset;
+  (void)entity_disjoint;
+}
+
+// --- Multiple systems with different signatures ---
+
+TEST(EcsTest, multiple_systems_different_signatures)
+{
+  ECSManager ecs_manager{MAX_NUMBER_OF_ENTITIES, MAX_NUMBER_OF_SYSTEMS};
+  auto& physics = ecs_manager.create_system<PhysicsSystem>();
+  auto& render = ecs_manager.create_system<RenderSystem>();
+  auto& combat = ecs_manager.create_system<CombatSystem>();
+
+  // Entity with TRANSFORM | RIGID_BODY should only be in PhysicsSystem
+  const rtw::ecs::EntitySignature<ComponentType> physics_entity{ComponentType::TRANSFORM | ComponentType::RIGID_BODY};
+  ecs_manager.create_entity(physics_entity);
+  EXPECT_EQ(physics.size(), 1U);
+  EXPECT_EQ(render.size(), 0U);
+  EXPECT_EQ(combat.size(), 0U);
+
+  // Entity with TRANSFORM | SPRITE should only be in RenderSystem
+  const rtw::ecs::EntitySignature<ComponentType> render_entity{ComponentType::TRANSFORM | ComponentType::SPRITE};
+  ecs_manager.create_entity(render_entity);
+  EXPECT_EQ(physics.size(), 1U);
+  EXPECT_EQ(render.size(), 1U);
+  EXPECT_EQ(combat.size(), 0U);
+
+  // Entity with HEALTH | DAMAGE should only be in CombatSystem
+  const rtw::ecs::EntitySignature<ComponentType> combat_entity{ComponentType::HEALTH | ComponentType::DAMAGE};
+  ecs_manager.create_entity(combat_entity);
+  EXPECT_EQ(physics.size(), 1U);
+  EXPECT_EQ(render.size(), 1U);
+  EXPECT_EQ(combat.size(), 1U);
+
+  // Entity with ALL components should be in ALL systems
+  ecs_manager.create_entity(DEFAULT_ENTITY_SIGNATURE);
+  EXPECT_EQ(physics.size(), 2U);
+  EXPECT_EQ(render.size(), 2U);
+  EXPECT_EQ(combat.size(), 2U);
+
+  // Entity with empty signature should be in no system
+  const rtw::ecs::EntitySignature<ComponentType> empty_signature{};
+  ecs_manager.create_entity(empty_signature);
+  EXPECT_EQ(physics.size(), 2U);
+  EXPECT_EQ(render.size(), 2U);
+  EXPECT_EQ(combat.size(), 2U);
+}
