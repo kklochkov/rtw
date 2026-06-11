@@ -1,16 +1,23 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <tuple>
+#include <type_traits>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace rtw::event_bus
 {
 
+/// Polymorphic base class for all event types.
+///
+/// User-defined events must inherit from this class to be publishable on the event bus.
+/// The virtual destructor enables safe polymorphic deletion and RTTI-based type dispatch.
 struct Event
 {
   Event() = default;
@@ -21,18 +28,24 @@ struct Event
   virtual ~Event() = default;
 };
 
+/// Threading policy selector for the event bus.
 enum class ThreadingPolicy : std::uint8_t
 {
   SINGLE_THREADED, ///< No synchronization is performed. Single-threaded access only.
-  MULTI_THREADED   ///< Mutex-based synchronization. Multi-threaded access is safe.
+  MULTI_THREADED   ///< Reader-writer (shared_mutex) synchronization. Multi-threaded access is safe.
 };
 
 namespace details
 {
 
+/// Synchronization policy abstraction. Specializations provide zero-cost no-ops (single-threaded)
+/// or real shared_mutex locking (multi-threaded).
+/// @tparam POLICY The threading policy.
 template <ThreadingPolicy POLICY>
 class SynchronizationPolicy;
 
+/// Single-threaded specialization: all lock operations are no-ops.
+/// Uses a stub SharedMutex satisfying the SharedMutex named requirement with empty methods.
 template <>
 class SynchronizationPolicy<ThreadingPolicy::SINGLE_THREADED>
 {
@@ -55,6 +68,9 @@ private:
   mutable SharedMutex mutex_;
 };
 
+/// Multi-threaded specialization: uses std::shared_mutex for reader-writer locking.
+/// Read-only queries (empty, get_number_of_subscribers) acquire shared locks;
+/// mutations (subscribe, unsubscribe, publish, clear) acquire unique locks.
 template <>
 class SynchronizationPolicy<ThreadingPolicy::MULTI_THREADED>
 {
@@ -142,6 +158,14 @@ class GenericEventBus
   }
 
 public:
+  /// RAII subscription handle. Automatically unsubscribes when destroyed.
+  ///
+  /// Move-only. Holding a Subscription keeps the handler alive; dropping it removes the handler.
+  /// Safe to outlive the EventBus -- destruction/unsubscribe becomes a no-op if the bus is already gone
+  /// (detected via a shared atomic state token).
+  ///
+  /// Use `release()` to detach without unsubscribing (the handler remains registered permanently
+  /// or until the bus is destroyed).
   class Subscription
   {
     friend class GenericEventBus;
@@ -229,21 +253,42 @@ public:
   GenericEventBus& operator=(GenericEventBus&& other) noexcept = delete;
   ~GenericEventBus() { *state_token_ = details::EventBusState::DESTROYED; }
 
+  /// Subscribes a callable to events of type EventT without returning a Subscription handle.
+  /// The handler remains registered until the bus is destroyed or `unsubscribe<EventT>()` / `clear()` is called.
+  /// @tparam EventT The event type to subscribe to (must derive from Event).
+  /// @tparam CallableT The callable type (lambda, functor, function pointer, or member function pointer).
+  /// @tparam ArgsT Additional bound arguments (e.g., object pointer for member functions).
+  /// @param[in] callable The handler to invoke when EventT is published.
+  /// @param[in] args Additional arguments bound to the callable (forwarded at dispatch time).
   template <typename EventT, typename CallableT, typename... ArgsT>
   void add_subscription(CallableT&& callable, ArgsT&&... args)
   {
+    static_assert(std::is_invocable_v<CallableT, ArgsT..., const EventT&>,
+                  "Callable must be invocable with (ArgsT..., const EventT&)");
     const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
     subscribe_unsafe<EventT>(std::forward<CallableT>(callable), std::forward<ArgsT>(args)...);
   }
 
+  /// Subscribes a callable to events of type EventT and returns an RAII Subscription handle.
+  /// The handler is automatically unsubscribed when the Subscription is destroyed or `unsubscribe()` is called on it.
+  /// @tparam EventT The event type to subscribe to (must derive from Event).
+  /// @tparam CallableT The callable type.
+  /// @tparam ArgsT Additional bound arguments.
+  /// @param[in] callable The handler to invoke when EventT is published.
+  /// @param[in] args Additional arguments bound to the callable.
+  /// @return A move-only Subscription handle that unsubscribes on destruction.
   template <typename EventT, typename CallableT, typename... ArgsT>
   [[nodiscard]] Subscription subscribe(CallableT&& callable, ArgsT&&... args)
   {
+    static_assert(std::is_invocable_v<CallableT, ArgsT..., const EventT&>,
+                  "Callable must be invocable with (ArgsT..., const EventT&)");
     const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
     auto& context = subscribe_unsafe<EventT>(std::forward<CallableT>(callable), std::forward<ArgsT>(args)...);
     return Subscription{this, context.handler_type_index, context.event_handler.get(), state_token_};
   }
 
+  /// Removes a specific subscription by handle. No-op if the subscription belongs to a different bus.
+  /// @param[in] subscription The subscription handle to remove.
   void unsubscribe(const Subscription& subscription) noexcept
   {
     if (subscription.get_event_bus() != this)
@@ -271,6 +316,8 @@ public:
     }
   }
 
+  /// Removes all subscriptions for a specific event type.
+  /// @tparam EventT The event type whose handlers should be removed.
   template <typename EventT>
   void unsubscribe() noexcept
   {
@@ -284,6 +331,7 @@ public:
     }
   }
 
+  /// Removes all subscriptions for all event types.
   void clear() noexcept
   {
     const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
@@ -291,6 +339,7 @@ public:
     total_subscribers_ = 0U;
   }
 
+  /// @return True if there are no subscribers for any event type.
   bool empty() const noexcept
   {
     const auto lock_guard = synchronization_policy_.make_shared_lock_guard();
@@ -298,7 +347,12 @@ public:
   }
 
   template <typename EventT>
-  void publish(const EventT& event) noexcept
+  /// Publishes an event to all registered handlers for that event type.
+  /// Handlers are invoked synchronously in registration order.
+  /// If a handler throws, the exception propagates immediately and subsequent handlers are not called.
+  /// @tparam EventT The event type to publish (must derive from Event).
+  /// @param[in] event The event instance to dispatch to handlers.
+  void publish(const EventT& event)
   {
     const auto lock_guard = synchronization_policy_.make_unique_lock_guard();
 
@@ -312,6 +366,8 @@ public:
     }
   }
 
+  /// @tparam EventT The event type to query.
+  /// @return The number of handlers registered for the given event type.
   template <typename EventT>
   std::size_t get_number_of_subscribers() const noexcept
   {
@@ -325,12 +381,15 @@ public:
     return 0U;
   }
 
+  /// @return The total number of handlers registered across all event types.
   std::size_t get_total_number_of_subscribers() const noexcept
   {
     const auto lock_guard = synchronization_policy_.make_shared_lock_guard();
     return total_subscribers_;
   }
 
+  /// @tparam EventT The event type to query.
+  /// @return True if at least one handler is registered for the given event type.
   template <typename EventT>
   bool has_subscribers() const noexcept
   {
@@ -376,7 +435,9 @@ private:
   std::size_t total_subscribers_{0U};
 };
 
+/// Single-threaded event bus (no synchronization overhead).
 using EventBus = GenericEventBus<ThreadingPolicy::SINGLE_THREADED>;
+/// Thread-safe event bus with reader-writer locking via std::shared_mutex.
 using ThreadSafeEventBus = GenericEventBus<ThreadingPolicy::MULTI_THREADED>;
 
 } // namespace rtw::event_bus

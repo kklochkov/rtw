@@ -422,4 +422,160 @@ TEST(EventBusTest, subscription_outlives_event_bus)
   // Subscription destructor runs here - should also be safe
 }
 
+// --- clear() ---
+
+TEST(EventBusTest, clear)
+{
+  EventBus event_bus;
+  std::uint32_t call_count = 0U;
+
+  event_bus.add_subscription<TestEvent42>([&call_count](const TestEvent42&) { ++call_count; });
+  event_bus.add_subscription<TestEvent43>([&call_count](const TestEvent43&) { ++call_count; });
+  event_bus.add_subscription<TestEvent44>([&call_count](const TestEvent44&) { ++call_count; });
+
+  EXPECT_EQ(event_bus.get_total_number_of_subscribers(), 3U);
+  EXPECT_FALSE(event_bus.empty());
+
+  event_bus.clear();
+
+  EXPECT_EQ(event_bus.get_total_number_of_subscribers(), 0U);
+  EXPECT_TRUE(event_bus.empty());
+
+  // Publishing after clear should not invoke any handlers.
+  event_bus.publish(TestEvent42{});
+  event_bus.publish(TestEvent43{});
+  event_bus.publish(TestEvent44{});
+  EXPECT_EQ(call_count, 0U);
+
+  // Double clear should be safe.
+  event_bus.clear();
+  EXPECT_TRUE(event_bus.empty());
+}
+
+// --- has_subscribers() ---
+
+TEST(EventBusTest, has_subscribers)
+{
+  EventBus event_bus;
+
+  EXPECT_FALSE(event_bus.has_subscribers<TestEvent42>());
+  EXPECT_FALSE(event_bus.has_subscribers<TestEvent43>());
+
+  event_bus.add_subscription<TestEvent42>([](const TestEvent42&) {});
+  EXPECT_TRUE(event_bus.has_subscribers<TestEvent42>());
+  EXPECT_FALSE(event_bus.has_subscribers<TestEvent43>());
+
+  event_bus.add_subscription<TestEvent43>([](const TestEvent43&) {});
+  EXPECT_TRUE(event_bus.has_subscribers<TestEvent43>());
+
+  event_bus.unsubscribe<TestEvent42>();
+  EXPECT_FALSE(event_bus.has_subscribers<TestEvent42>());
+  EXPECT_TRUE(event_bus.has_subscribers<TestEvent43>());
+}
+
+// --- publish with no subscribers ---
+
+TEST(EventBusTest, publish_no_subscribers)
+{
+  EventBus event_bus;
+
+  // Publishing to an empty bus should be a silent no-op (no crash, no side effects).
+  event_bus.publish(TestEvent42{});
+  event_bus.publish(TestEvent43{});
+
+  EXPECT_TRUE(event_bus.empty());
+  EXPECT_EQ(event_bus.get_total_number_of_subscribers(), 0U);
+}
+
+// --- multiple handlers for the same event type, dispatch order ---
+
+TEST(EventBusTest, multiple_handlers_same_event_dispatch_order)
+{
+  EventBus event_bus;
+  std::vector<int> dispatch_order;
+
+  event_bus.add_subscription<TestEvent42>([&dispatch_order](const TestEvent42&) { dispatch_order.push_back(1); });
+  event_bus.add_subscription<TestEvent42>([&dispatch_order](const TestEvent42&) { dispatch_order.push_back(2); });
+  event_bus.add_subscription<TestEvent42>([&dispatch_order](const TestEvent42&) { dispatch_order.push_back(3); });
+
+  EXPECT_EQ(event_bus.get_number_of_subscribers<TestEvent42>(), 3U);
+
+  event_bus.publish(TestEvent42{});
+
+  // Handlers are dispatched in registration order.
+  ASSERT_EQ(dispatch_order.size(), 3U);
+  EXPECT_EQ(dispatch_order[0], 1);
+  EXPECT_EQ(dispatch_order[1], 2);
+  EXPECT_EQ(dispatch_order[2], 3);
+}
+
+// --- ThreadSafeEventBus basic functionality ---
+
+TEST(EventBusTest, thread_safe_bus_basic)
+{
+  ThreadSafeEventBus bus;
+
+  EXPECT_TRUE(bus.empty());
+  EXPECT_EQ(bus.get_total_number_of_subscribers(), 0U);
+  EXPECT_FALSE(bus.has_subscribers<TestEvent42>());
+
+  std::uint32_t call_count = 0U;
+  auto subscription = bus.subscribe<TestEvent42>([&call_count](const TestEvent42&) { ++call_count; });
+
+  EXPECT_TRUE(subscription);
+  EXPECT_FALSE(bus.empty());
+  EXPECT_EQ(bus.get_number_of_subscribers<TestEvent42>(), 1U);
+  EXPECT_TRUE(bus.has_subscribers<TestEvent42>());
+
+  bus.publish(TestEvent42{});
+  EXPECT_EQ(call_count, 1U);
+
+  subscription.unsubscribe();
+  EXPECT_TRUE(bus.empty());
+
+  bus.publish(TestEvent42{});
+  EXPECT_EQ(call_count, 1U); // not called again
+}
+
+TEST(EventBusTest, thread_safe_bus_multiple_event_types)
+{
+  ThreadSafeEventBus bus;
+
+  std::uint32_t count_42 = 0U;
+  std::uint32_t count_43 = 0U;
+
+  bus.add_subscription<TestEvent42>([&count_42](const TestEvent42&) { ++count_42; });
+  bus.add_subscription<TestEvent43>([&count_43](const TestEvent43&) { ++count_43; });
+
+  EXPECT_EQ(bus.get_total_number_of_subscribers(), 2U);
+
+  bus.publish(TestEvent42{});
+  EXPECT_EQ(count_42, 1U);
+  EXPECT_EQ(count_43, 0U);
+
+  bus.publish(TestEvent43{});
+  EXPECT_EQ(count_42, 1U);
+  EXPECT_EQ(count_43, 1U);
+
+  bus.clear();
+  EXPECT_TRUE(bus.empty());
+
+  bus.publish(TestEvent42{});
+  bus.publish(TestEvent43{});
+  EXPECT_EQ(count_42, 1U);
+  EXPECT_EQ(count_43, 1U);
+}
+
+TEST(EventBusTest, thread_safe_bus_subscription_outlives_bus)
+{
+  ThreadSafeEventBus::Subscription subscription;
+  {
+    ThreadSafeEventBus bus;
+    subscription = bus.subscribe<TestEvent42>([](const TestEvent42&) {});
+    EXPECT_TRUE(subscription);
+  }
+  // Bus is destroyed; subscription should safely no-op on destruction/unsubscribe.
+  subscription.unsubscribe();
+}
+
 } // namespace rtw::event_bus
