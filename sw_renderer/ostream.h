@@ -10,14 +10,22 @@
 namespace rtw::sw_renderer
 {
 
+/// Formats a texture coordinate as "TexCoord(u, v)".
+/// @param[in,out] os The output stream.
+/// @param[in] coord The texture coordinate to format.
+/// @return Reference to the output stream.
 template <typename T>
-std::ostream& operator<<(std::ostream& os, const TexCoord<T>& coord) noexcept
+std::ostream& operator<<(std::ostream& os, const TexCoord<T>& coord)
 {
   os << "TexCoord";
   return math::details::operator<< <math::details::FormatType::VECTOR>(os, coord.as_matrix());
 }
 
-inline std::ostream& operator<<(std::ostream& os, const Color color) noexcept
+/// Formats a Color as "Color(rgba: 0xRRGGBBAA, r: R, g: G, b: B, a: A, rf: R, gf: G, bf: B, af: A)".
+/// @param[in,out] os The output stream.
+/// @param[in] color The color to format.
+/// @return Reference to the output stream.
+inline std::ostream& operator<<(std::ostream& os, const Color color)
 {
   const auto temp_format = os.flags();
   os << "Color(";

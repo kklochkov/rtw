@@ -11,6 +11,8 @@
 #include "math/matrix_operations.h"
 #include "math/vector_operations.h"
 
+#include <algorithm>
+
 namespace rtw::sw_renderer
 {
 
@@ -114,9 +116,13 @@ void Renderer::fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const Ve
         {
           // Perspective correct interpolation of texture coordinates.
           const auto tex_coord = (v0.tex_coord * b.w0() + v1.tex_coord * b.w1() + v2.tex_coord * b.w2()) * inv_z;
-          const auto texel =
-              texture.texel(static_cast<std::size_t>(tex_coord.u() * static_cast<single_precision>(texture.width())),
-                            static_cast<std::size_t>(tex_coord.v() * static_cast<single_precision>(texture.height())));
+          const auto tex_x =
+              std::min(static_cast<std::size_t>(tex_coord.u() * static_cast<single_precision>(texture.width())),
+                       texture.width() - 1U);
+          const auto tex_y =
+              std::min(static_cast<std::size_t>(tex_coord.v() * static_cast<single_precision>(texture.height())),
+                       texture.height() - 1U);
+          const auto texel = texture.texel(tex_x, tex_y);
           draw_pixel(p, texel * light_intensity);
           set_depth(p.x(), p.y(), static_cast<float>(inv_z));
         }
@@ -192,9 +198,13 @@ void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF
           {
             // Perspective correct interpolation of texture coordinates.
             const auto tex_coord = (v0.tex_coord * b.w0() + v1.tex_coord * b.w1() + v2.tex_coord * b.w2()) * inv_z;
-            const auto texel = texture.texel(
-                static_cast<std::size_t>(tex_coord.u() * static_cast<single_precision>(texture.width())),
-                static_cast<std::size_t>(tex_coord.v() * static_cast<single_precision>(texture.height())));
+            const auto tex_x =
+                std::min(static_cast<std::size_t>(tex_coord.u() * static_cast<single_precision>(texture.width())),
+                         texture.width() - 1U);
+            const auto tex_y =
+                std::min(static_cast<std::size_t>(tex_coord.v() * static_cast<single_precision>(texture.height())),
+                         texture.height() - 1U);
+            const auto texel = texture.texel(tex_x, tex_y);
             draw_pixel(p, texel * light_intensity);
             set_depth(p.x(), p.y(), static_cast<float>(inv_z));
           }
@@ -304,7 +314,7 @@ void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
 
     {
       ++frame_stats.triangles_submitted;
-      frame_stats.triangles_clipped += static_cast<std::size_t>(triangles.triangle_count > 0U);
+      frame_stats.triangles_clipped += static_cast<std::size_t>(triangles.triangle_count == 0U);
     }
 
     // Back-face culling, rasterisation and shading.

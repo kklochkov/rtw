@@ -232,9 +232,9 @@ void load_mtl(std::istream& stream, Mesh& mesh)
         break;
       }
     }
-    else if (line[0] == 'm')
+    else if ((line[0] == 'm') && (line.size() > 5U))
     {
-      // Texture
+      // Texture (map_Ka, map_Kd, map_Ks)
       switch (line[5])
       {
       case 'a': // Ambient

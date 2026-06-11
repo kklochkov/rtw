@@ -47,4 +47,6 @@ private:
   std::size_t pitch_{};
 };
 
+static_assert(sizeof(std::uint32_t) == 4, "Texel format must be 32 bits (RGBA8888)");
+
 } // namespace rtw::sw_renderer

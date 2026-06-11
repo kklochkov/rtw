@@ -35,12 +35,16 @@ constexpr math::Matrix4x4<T, MEMORY_ORDER> make_look_at(const math::Point3<T>& e
   // clang-format on
 }
 
+/// Camera state for the software renderer.
+///
+/// Stores position, orientation, and velocity for a first-person camera.
+/// Use make_look_at() to generate the view matrix from position and direction.
 struct Camera
 {
-  Point3F position;
-  Vector3F direction;
-  Vector3F velocity;
-  EulerAnglesF rotation{};
+  Point3F position;        ///< Camera position in world space.
+  Vector3F direction;      ///< Unit forward direction vector.
+  Vector3F velocity;       ///< Current velocity (units per frame).
+  EulerAnglesF rotation{}; ///< Orientation as yaw/pitch/roll angles.
 };
 
 } // namespace rtw::sw_renderer

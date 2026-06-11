@@ -10,6 +10,7 @@ cc_test_with_llvm_symbolizer(
         "obj_loader_test.cpp",
         "projection_test.cpp",
         "rasterisation_test.cpp",
+        "renderer_test.cpp",
         "tex_coord_test.cpp",
     ],
     data = ["//sw_renderer/resources:cube"],

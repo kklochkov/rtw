@@ -10,17 +10,18 @@
 namespace rtw::sw_renderer
 {
 
+/// Bit flags controlling which rendering features are active.
 enum class RenderMode : std::uint8_t
 {
   NONE = 0U,
-  FACE_CULLING = 1U << 0U,
-  WIREFRAME = 1U << 1U,
-  SHADING = 1U << 2U,
-  VERTEX_DRAWING = 1U << 3U,
-  LIGHT = 1U << 4U,
-  NORMAL_DRAW = 1U << 5U,
-  TEXTURE = 1U << 6U,
-  STATS = 1U << 7U
+  FACE_CULLING = 1U << 0U,   ///< Back-face culling enabled.
+  WIREFRAME = 1U << 1U,      ///< Draw triangle edges.
+  SHADING = 1U << 2U,        ///< Fill triangles with flat/gouraud shading.
+  VERTEX_DRAWING = 1U << 3U, ///< Draw dots at vertex positions.
+  LIGHT = 1U << 4U,          ///< Apply directional lighting.
+  NORMAL_DRAW = 1U << 5U,    ///< Visualize vertex normals.
+  TEXTURE = 1U << 6U,        ///< Apply texture mapping.
+  STATS = 1U << 7U           ///< Collect per-frame rendering statistics.
 };
 
 using RenderModeFlags = stl::Flags<RenderMode>;
@@ -42,9 +43,15 @@ struct RenderStats
   }
 };
 
+/// Software rasterizer with configurable rendering modes (wireframe, shading, texturing, lighting).
+///
+/// Owns a color buffer and a depth buffer. Renders triangle meshes via draw_mesh() or
+/// individual primitives via draw_pixel/draw_line/draw_triangle/fill_triangle.
 class Renderer
 {
 public:
+  /// @param[in] width Framebuffer width in pixels.
+  /// @param[in] height Framebuffer height in pixels.
   Renderer(const std::size_t width, const std::size_t height);
 
   std::size_t width() const { return color_buffer_.width(); }

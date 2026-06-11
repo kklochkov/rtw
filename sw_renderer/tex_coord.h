@@ -6,6 +6,13 @@
 namespace rtw::sw_renderer
 {
 
+/// 2D texture coordinate (u, v) stored as a 2x1 matrix.
+///
+/// Provides named accessors u()/v() (equivalently s()/t()) for the two components.
+/// Coordinates are typically in [0, 1] range but are not clamped by this class.
+/// Supports arithmetic operations for interpolation (addition, scalar multiply/divide).
+///
+/// @tparam T The scalar type (e.g., float, FixedPoint16).
 template <typename T>
 class TexCoord : math::Matrix<T, 2, 1>
 {
@@ -27,6 +34,7 @@ public:
   constexpr explicit TexCoord(math::UninitializedTag tag) noexcept : Matrix(tag) {}
   constexpr TexCoord(math::InitializeWithValueTag tag, const T value) noexcept : Matrix(tag, value) {}
 
+  /// Construct from explicit u and v components.
   constexpr TexCoord(const T u, const T v) noexcept : Matrix(u, v) {}
 
   template <math::MemoryOrder MEMORY_ORDER>
@@ -42,17 +50,17 @@ public:
   constexpr explicit operator Vector() const noexcept { return Vector{as_matrix()}; }
   constexpr explicit operator Matrix() const noexcept { return as_matrix(); }
 
-  constexpr value_type u() const noexcept { return operator[](0); }
-  constexpr reference u() noexcept { return operator[](0); }
+  constexpr value_type u() const noexcept { return operator[](0); } ///< Horizontal texture coordinate.
+  constexpr reference u() noexcept { return operator[](0); }        ///< Horizontal texture coordinate (mutable).
 
-  constexpr value_type s() const noexcept { return u(); }
-  constexpr reference s() noexcept { return u(); }
+  constexpr value_type s() const noexcept { return u(); } ///< Alias for u().
+  constexpr reference s() noexcept { return u(); }        ///< Alias for u() (mutable).
 
-  constexpr value_type v() const noexcept { return operator[](1); }
-  constexpr reference v() noexcept { return operator[](1); }
+  constexpr value_type v() const noexcept { return operator[](1); } ///< Vertical texture coordinate.
+  constexpr reference v() noexcept { return operator[](1); }        ///< Vertical texture coordinate (mutable).
 
-  constexpr value_type t() const noexcept { return v(); }
-  constexpr reference t() noexcept { return v(); }
+  constexpr value_type t() const noexcept { return v(); } ///< Alias for v().
+  constexpr reference t() noexcept { return v(); }        ///< Alias for v() (mutable).
 
   constexpr TexCoord& operator*=(const value_type rhs) noexcept
   {
@@ -94,6 +102,11 @@ public:
   /// @}
 };
 
+/// Linearly interpolate between two texture coordinates.
+/// @param[in] lhs Start texture coordinate.
+/// @param[in] rhs End texture coordinate.
+/// @param[in] t Interpolation factor in [0, 1].
+/// @return Interpolated texture coordinate.
 template <typename T>
 constexpr TexCoord<T> lerp(const TexCoord<T>& lhs, const TexCoord<T>& rhs, const T t) noexcept
 {

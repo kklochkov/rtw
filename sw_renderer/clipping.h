@@ -35,12 +35,12 @@ constexpr ConvexPolygonVertex<T, CAPACITY> clip_against_plane(const ConvexPolygo
         math::dot(static_cast<math::Vector3<T>>(current.point.xyz()), plane.normal) + plane.distance;
     const auto next_n_dot = math::dot(static_cast<math::Vector3<T>>(next.point.xyz()), plane.normal) + plane.distance;
 
-    if (current_n_dot >= 0.0F)
+    if (current_n_dot >= T{0})
     {
       clipped_result.push_back(current);
     }
 
-    if (current_n_dot * next_n_dot < 0.0F)
+    if (current_n_dot * next_n_dot < T{0})
     {
       const auto t = current_n_dot / (current_n_dot - next_n_dot);
       Vertex<T> intersection;
