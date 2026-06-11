@@ -721,6 +721,70 @@ TEST(NumericLimits, round_error)
   }
 }
 
+TEST(FixedPointConversion, widening_is_lossless)
+{
+  using rtw::multiprecision::FixedPoint16;
+  using rtw::multiprecision::FixedPoint32;
+
+  // Widening FixedPoint16 -> FixedPoint32 preserves the value exactly.
+  for (const double value : {0.0, 1.0, -1.0, 0.5, -0.5, 123.25, -123.25, 0.0000152587890625 /* 1 ULP */})
+  {
+    const FixedPoint16 narrow{value};
+    const FixedPoint32 wide{narrow};
+    EXPECT_DOUBLE_EQ(static_cast<double>(wide), static_cast<double>(narrow));
+  }
+
+  // The raw value is shifted left by the difference in fractional bits (16 -> 32 => << 16).
+  const FixedPoint16 one_ulp{rtw::multiprecision::RAW_VALUE_CONSTRUCT, 1};
+  const FixedPoint32 wide_one_ulp{one_ulp};
+  EXPECT_EQ(wide_one_ulp.raw_value(), static_cast<std::int64_t>(1) << 16);
+}
+
+TEST(FixedPointConversion, narrowing_rounds_half_away_from_zero)
+{
+  using rtw::multiprecision::FixedPoint16;
+  using rtw::multiprecision::FixedPoint32;
+
+  // Values representable in both round-trip exactly.
+  for (const double value : {0.0, 1.0, -1.0, 0.5, -0.5, 100.25, -100.25})
+  {
+    const FixedPoint32 wide{value};
+    const FixedPoint16 narrow{wide};
+    EXPECT_DOUBLE_EQ(static_cast<double>(narrow), value);
+  }
+
+  // 1.5 of FixedPoint16's ULP, expressed in FixedPoint32, rounds away from zero to 2 ULP.
+  constexpr auto ULP16_IN_FP32 = static_cast<std::int64_t>(1) << 16; // 2^-16 expressed at 2^-32 scale.
+  const FixedPoint32 one_and_half_ulp{rtw::multiprecision::RAW_VALUE_CONSTRUCT, ULP16_IN_FP32 + (ULP16_IN_FP32 / 2)};
+  EXPECT_EQ(FixedPoint16{one_and_half_ulp}.raw_value(), 2);
+
+  const FixedPoint32 neg_one_and_half_ulp{rtw::multiprecision::RAW_VALUE_CONSTRUCT,
+                                          -(ULP16_IN_FP32 + (ULP16_IN_FP32 / 2))};
+  EXPECT_EQ(FixedPoint16{neg_one_and_half_ulp}.raw_value(), -2);
+}
+
+TEST(FixedPointConversion, narrowing_saturates_out_of_range)
+{
+  using rtw::multiprecision::FixedPoint16;
+  using rtw::multiprecision::FixedPoint32;
+
+  // FixedPoint32 holds values far beyond FixedPoint16's range (~+-32768) -> clamp on narrowing.
+  EXPECT_EQ(FixedPoint16{FixedPoint32{1.0e6}}, FixedPoint16::max());
+  EXPECT_EQ(FixedPoint16{FixedPoint32{-1.0e6}}, FixedPoint16::min());
+}
+
+TEST(FixedPointConversion, round_trip_preserves_representable_values)
+{
+  using rtw::multiprecision::FixedPoint16;
+  using rtw::multiprecision::FixedPoint32;
+
+  for (const double value : {0.0, 1.0, -1.0, 0.25, -0.25, 12345.5, -12345.5})
+  {
+    const FixedPoint16 original{value};
+    EXPECT_EQ(FixedPoint16{FixedPoint32{original}}, original);
+  }
+}
+
 TEST(NumericLimits, exponent10_is_constexpr)
 {
   // Verify min_exponent10 and max_exponent10 are constexpr (previously used non-constexpr std::log10)
@@ -896,5 +960,12 @@ static_assert(fp8_round_near_max() == FP8::max(), "FP8 round(max) saturates to m
 // round: unsigned near-MAX saturates
 constexpr auto fp8u_round_near_max() { return rtw::multiprecision::math::round(FP8U::max()); }
 static_assert(fp8u_round_near_max() == FP8U::max(), "FP8U round(max) saturates to max");
+
+// Converting constructor between fixed-point types is constexpr and value-preserving for
+// representable values (widening is always lossless; narrowing of integers is exact).
+static_assert(rtw::multiprecision::FixedPoint32{FP8{5}} == rtw::multiprecision::FixedPoint32{5},
+              "FP8(5) widened to FP32 equals FP32(5)");
+static_assert(FP8{rtw::multiprecision::FixedPoint32{5}} == FP8{5}, "FP32(5) narrowed to FP8 equals FP8(5)");
+static_assert(FP8{rtw::multiprecision::FixedPoint32{-3.0}} == -FP8{3}, "FP32(-3) narrowed to FP8 equals FP8(-3)");
 
 } // namespace

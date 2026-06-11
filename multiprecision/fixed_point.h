@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <complex>
 #include <cstdint>
+#include <type_traits>
 
 namespace rtw::multiprecision
 {
@@ -96,6 +97,37 @@ public:
     value_ = saturate_and_cast(result);
   }
   // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
+
+  /// Converting constructor between fixed-point types of different scale and/or width.
+  /// Rescales the raw value from @p OTHER_FRAC_BITS to @c FRAC_BITS: widening the fractional
+  /// part is lossless, narrowing rounds half away from zero. The result is saturated to this
+  /// type's representable range. The non-template copy constructor is preferred for same-type
+  /// arguments, so this never shadows it.
+  template <typename OtherT, std::uint8_t OTHER_FRAC_BITS, typename OtherSaturationT>
+  constexpr explicit FixedPoint(const FixedPoint<OtherT, OTHER_FRAC_BITS, OtherSaturationT> other) noexcept
+  {
+    // Use the wider of the two saturation types as the intermediate so neither the source raw
+    // value nor the rescaled result can be truncated before saturation.
+    using WideT = std::conditional_t<(sizeof(SaturationT) >= sizeof(OtherSaturationT)), SaturationT, OtherSaturationT>;
+    WideT raw = static_cast<WideT>(other.raw_value());
+    if constexpr (FRAC_BITS >= OTHER_FRAC_BITS)
+    {
+      // Multiply by a positive power of two rather than left-shifting `raw`, which may be negative
+      // (left shift of a negative value is undefined behaviour and rejected in constant expressions).
+      raw *= WideT{1} << static_cast<std::uint32_t>(FRAC_BITS - OTHER_FRAC_BITS);
+    }
+    else
+    {
+      constexpr std::uint32_t SHIFT = OTHER_FRAC_BITS - FRAC_BITS;
+      const WideT divisor = WideT{1} << SHIFT;
+      const WideT half = divisor / WideT{2};
+      // Round half away from zero (matching operator/=) and divide rather than right-shift to
+      // avoid implementation-defined behaviour for negative values.
+      raw += math::signbit(raw) ? -half : half;
+      raw /= divisor;
+    }
+    value_ = static_cast<T>(std::clamp(raw, static_cast<WideT>(MIN_INTEGER), static_cast<WideT>(MAX_INTEGER)));
+  }
 
   constexpr static FixedPoint min() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, MIN_INTEGER); }
   constexpr static FixedPoint max() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, MAX_INTEGER); }

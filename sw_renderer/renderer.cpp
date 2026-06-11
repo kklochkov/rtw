@@ -74,7 +74,7 @@ void Renderer::fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const Ve
         if (inv_z < depth(p.x(), p.y()))
         {
           draw_pixel(p, color * light_intensity);
-          set_depth(p.x(), p.y(), static_cast<float>(inv_z));
+          set_depth(p.x(), p.y(), inv_z);
         }
       });
 }
@@ -97,7 +97,7 @@ void Renderer::fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const Ve
                                       const auto inv_z_f = static_cast<float>(inv_z);
                                       const auto color = (v0.color * w0 + v1.color * w1 + v2.color * w2) * inv_z_f;
                                       draw_pixel(p, color * light_intensity);
-                                      set_depth(p.x(), p.y(), inv_z_f);
+                                      set_depth(p.x(), p.y(), inv_z);
                                     }
                                   });
 }
@@ -124,7 +124,7 @@ void Renderer::fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const Ve
                        texture.height() - 1U);
           const auto texel = texture.texel(tex_x, tex_y);
           draw_pixel(p, texel * light_intensity);
-          set_depth(p.x(), p.y(), static_cast<float>(inv_z));
+          set_depth(p.x(), p.y(), inv_z);
         }
       });
 }
@@ -144,7 +144,7 @@ void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF
           if (inv_z < depth(p.x(), p.y()))
           {
             draw_pixel(p, color * light_intensity);
-            set_depth(p.x(), p.y(), static_cast<float>(inv_z));
+            set_depth(p.x(), p.y(), inv_z);
           }
         }
       });
@@ -170,7 +170,7 @@ void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF
             const auto inv_z_f = static_cast<float>(inv_z);
             const auto color = (v0.color * w0 + v1.color * w1 + v2.color * w2) * inv_z_f;
             draw_pixel(p, color * light_intensity);
-            set_depth(p.x(), p.y(), inv_z_f);
+            set_depth(p.x(), p.y(), inv_z);
           }
         }
 #ifdef RTW_DEBUG_DRAWING
@@ -206,7 +206,7 @@ void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF
                          texture.height() - 1U);
             const auto texel = texture.texel(tex_x, tex_y);
             draw_pixel(p, texel * light_intensity);
-            set_depth(p.x(), p.y(), static_cast<float>(inv_z));
+            set_depth(p.x(), p.y(), inv_z);
           }
         }
       });

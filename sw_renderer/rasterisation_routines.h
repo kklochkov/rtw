@@ -151,25 +151,31 @@ void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2,
   const auto max_x = static_cast<std::int32_t>(ceil(std::max({v0.point.x(), v1.point.x(), v2.point.x()})));
   const auto max_y = static_cast<std::int32_t>(ceil(std::max({v0.point.y(), v1.point.y(), v2.point.y()})));
 
-  const auto va = v0.point.xy();
-  const auto vb = v1.point.xy();
-  const auto vc = v2.point.xy();
+  // Compute the edge functions and barycentric weights in double_precision. In fixed-point mode this
+  // widens the rasteriser math from FixedPoint16 (Q15.16, which saturates above ~32768) to FixedPoint32
+  // (Q31.32), so the screen-space cross products cannot overflow for large triangles. In floating-point
+  // mode this is float -> double and is otherwise transparent.
+  const auto va = v0.point.xy().cast<double_precision>();
+  const auto vb = v1.point.xy().cast<double_precision>();
+  const auto vc = v2.point.xy().cast<double_precision>();
   auto edge_a = vc - vb; // a
   auto edge_b = va - vc; // b
   auto edge_c = vb - va; // c
   const auto area = math::cross(edge_a, edge_b);
 
   // Calculate the initial barycentric coordinates of the top-left corner of the bounding box with subpixel precision.
-  const Point2F p0{static_cast<single_precision>(min_x) + 0.5F, static_cast<single_precision>(min_y) + 0.5F};
+  const Point2D p0{static_cast<double_precision>(min_x) + double_precision{0.5},
+                   static_cast<double_precision>(min_y) + double_precision{0.5}};
   auto w0_init = math::cross(edge_a, p0 - vc);
   auto w1_init = math::cross(edge_b, p0 - va);
   auto w2_init = math::cross(edge_c, p0 - vb);
 
   // Apply top-left fill convention.
-  constexpr single_precision ZERO{0.0F};
-  w0_init += is_top_left(edge_a) ? ZERO : -ULP;
-  w1_init += is_top_left(edge_b) ? ZERO : -ULP;
-  w2_init += is_top_left(edge_c) ? ZERO : -ULP;
+  constexpr double_precision ZERO{0.0};
+  const auto bias = static_cast<double_precision>(ULP);
+  w0_init += is_top_left(edge_a) ? ZERO : -bias;
+  w1_init += is_top_left(edge_b) ? ZERO : -bias;
+  w2_init += is_top_left(edge_c) ? ZERO : -bias;
 
   // Normalize the barycentric coordinates to avoid division in the inner loop.
   w0_init /= area;
@@ -192,7 +198,8 @@ void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2,
       if ((w0 >= 0) && (w1 >= 0) && (w2 >= 0))
       {
         const Point2I p{x, y};
-        const BarycentricF b{w0, w1, w2};
+        const BarycentricF b{static_cast<single_precision>(w0), static_cast<single_precision>(w1),
+                             static_cast<single_precision>(w2)};
         rasterise(v0, v1, v2, p, b);
       }
 

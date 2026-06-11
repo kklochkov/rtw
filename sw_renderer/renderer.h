@@ -87,8 +87,11 @@ public:
   void set_render_stats_enabled(const bool enabled) { render_mode_.set(RenderMode::STATS, enabled); }
   bool render_stats_enabled() const { return render_mode_.test(RenderMode::STATS); }
 
-  void set_depth(const std::size_t x, const std::size_t y, const float depth) { depth_buffer_.set_depth(x, y, depth); }
-  float depth(const std::size_t x, const std::size_t y) const { return depth_buffer_.depth(x, y); }
+  void set_depth(const std::size_t x, const std::size_t y, const single_precision depth)
+  {
+    depth_buffer_.set_depth(x, y, depth);
+  }
+  single_precision depth(const std::size_t x, const std::size_t y) const { return depth_buffer_.depth(x, y); }
 
   const RenderStats& stats() const noexcept { return stats_; }
 
