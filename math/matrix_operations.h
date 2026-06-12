@@ -228,4 +228,132 @@ constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> inverse(const Matrix<T, ROWS, COLS
   return matrix_decomposition::qr::householder::inverse(matrix);
 }
 
+/// Compute the Hadamard product of two matrices, which is the element-wise product of the matrices.
+/// See https://en.wikipedia.org/wiki/Hadamard_product_(matrices).
+/// @param[in] lhs The first matrix.
+/// @param[in] rhs The second matrix.
+/// @return The Hadamard product of the matrices.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> hadamard(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& lhs,
+                                                       const Matrix<T, ROWS, COLS, MEMORY_ORDER>& rhs) noexcept
+{
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
+  for (std::uint32_t i = 0U; i < lhs.size(); ++i)
+  {
+    result[i] = lhs[i] * rhs[i];
+  }
+  return result;
+}
+
+/// Compute the element-wise minimum of two matrices.
+/// @param[in] lhs The first matrix.
+/// @param[in] rhs The second matrix.
+/// @return The element-wise minimum of the matrices.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> min(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& lhs,
+                                                  const Matrix<T, ROWS, COLS, MEMORY_ORDER>& rhs) noexcept
+{
+  using std::min;
+
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
+  for (std::uint32_t i = 0U; i < lhs.size(); ++i)
+  {
+    result[i] = min(lhs[i], rhs[i]);
+  }
+  return result;
+}
+
+/// Compute the element-wise minimum of a matrix and a scalar.
+/// @param[in] lhs The matrix.
+/// @param[in] rhs The scalar.
+/// @return The element-wise minimum of the matrix and the scalar.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> min(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& lhs, const T rhs) noexcept
+{
+  using std::min;
+
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
+  for (std::uint32_t i = 0U; i < lhs.size(); ++i)
+  {
+    result[i] = min(lhs[i], rhs);
+  }
+  return result;
+}
+
+/// Compute the element-wise maximum of two matrices.
+/// @param[in] lhs The first matrix.
+/// @param[in] rhs The second matrix.
+/// @return The element-wise minimum of the matrices.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> max(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& lhs,
+                                                  const Matrix<T, ROWS, COLS, MEMORY_ORDER>& rhs) noexcept
+{
+  using std::max;
+
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
+  for (std::uint32_t i = 0U; i < lhs.size(); ++i)
+  {
+    result[i] = max(lhs[i], rhs[i]);
+  }
+  return result;
+}
+
+/// Compute the element-wise maximum of a matrix and a scalar.
+/// @param[in] lhs The matrix.
+/// @param[in] rhs The scalar.
+/// @return The element-wise minimum of the matrix and the scalar.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> max(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& lhs, const T rhs) noexcept
+{
+  using std::max;
+
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
+  for (std::uint32_t i = 0U; i < lhs.size(); ++i)
+  {
+    result[i] = max(lhs[i], rhs);
+  }
+  return result;
+}
+
+/// Compute the element-wise clamp of a matrix between two matrices.
+/// @param[in] value The matrix to clamp.
+/// @param[in] lo The matrix of lower bounds.
+/// @param[in] hi The matrix of upper bounds.
+/// @return The element-wise clamp of the matrix between the two matrices.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> clamp(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& value,
+                                                    const Matrix<T, ROWS, COLS, MEMORY_ORDER>& lo,
+                                                    const Matrix<T, ROWS, COLS, MEMORY_ORDER>& hi) noexcept
+{
+  using multiprecision::math::clamp;
+  using std::clamp;
+
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
+  for (std::uint32_t i = 0U; i < value.size(); ++i)
+  {
+    result[i] = clamp(value[i], lo[i], hi[i]);
+  }
+  return result;
+}
+
+/// Compute the element-wise clamp of a matrix between a matrix and a scalar.
+/// @param[in] value The matrix to clamp.
+/// @param[in] lo The matrix of lower bounds.
+/// @param[in] hi The scalar of upper bounds.
+/// @return The element-wise clamp of the matrix between the matrix and the scalar.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> clamp(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& value, const T lo,
+                                                    const T hi) noexcept
+{
+  using multiprecision::math::clamp;
+  using std::clamp;
+
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
+  for (std::uint32_t i = 0U; i < value.size(); ++i)
+  {
+    result[i] = clamp(value[i], lo, hi);
+  }
+  return result;
+}
+
 } // namespace rtw::math

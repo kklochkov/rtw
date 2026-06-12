@@ -15,7 +15,8 @@ namespace detail
 template <typename T>
 constexpr T clamp01(const T v) noexcept
 {
-  return v < T{0} ? T{0} : (v > T{1} ? T{1} : v);
+  using std::clamp;
+  return clamp(v, T{0}, T{1});
 }
 
 /// Clamp a uint16 to [0, 255] and cast to uint8.

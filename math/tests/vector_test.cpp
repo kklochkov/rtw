@@ -446,3 +446,157 @@ TEST(Vector, vector_projection)
     EXPECT_DEATH(rtw::math::vector_projection(V, ONTO), "");
   }
 }
+
+TEST(Vector, hadamard)
+{
+  constexpr rtw::math::Vector3F A{1.0F, 2.0F, 3.0F};
+  constexpr rtw::math::Vector3F B{4.0F, 5.0F, 6.0F};
+  EXPECT_THAT(rtw::math::hadamard(A, B), ::testing::ElementsAre(4.0F, 10.0F, 18.0F));
+}
+
+TEST(Vector, min)
+{
+  constexpr rtw::math::Vector3F A{1.0F, 5.0F, 3.0F};
+  constexpr rtw::math::Vector3F B{4.0F, 2.0F, 3.0F};
+  EXPECT_THAT(rtw::math::min(A, B), ::testing::ElementsAre(1.0F, 2.0F, 3.0F));
+  EXPECT_THAT(rtw::math::min(A, 3.0F), ::testing::ElementsAre(1.0F, 3.0F, 3.0F));
+}
+
+TEST(Vector, max)
+{
+  constexpr rtw::math::Vector3F A{1.0F, 5.0F, 3.0F};
+  constexpr rtw::math::Vector3F B{4.0F, 2.0F, 3.0F};
+  EXPECT_THAT(rtw::math::max(A, B), ::testing::ElementsAre(4.0F, 5.0F, 3.0F));
+  EXPECT_THAT(rtw::math::max(A, 3.0F), ::testing::ElementsAre(3.0F, 5.0F, 3.0F));
+}
+
+TEST(Vector, clamp)
+{
+  constexpr rtw::math::Vector3F V{-1.0F, 0.5F, 2.0F};
+  constexpr rtw::math::Vector3F LO{0.0F, 0.0F, 0.0F};
+  constexpr rtw::math::Vector3F HI{1.0F, 1.0F, 1.0F};
+  EXPECT_THAT(rtw::math::clamp(V, LO, HI), ::testing::ElementsAre(0.0F, 0.5F, 1.0F));
+  EXPECT_THAT(rtw::math::clamp(V, 0.0F, 1.0F), ::testing::ElementsAre(0.0F, 0.5F, 1.0F));
+}
+
+TEST(Vector, operations_integer)
+{
+  using namespace rtw::math;
+
+  // Hadamard (element-wise) product.
+  EXPECT_THAT(hadamard(Vector3I{1, 2, 3}, Vector3I{4, 5, 6}), ::testing::ElementsAre(4, 10, 18));
+
+  // Component-wise min/max.
+  EXPECT_THAT(min(Vector3I{1, 5, 3}, Vector3I{4, 2, 3}), ::testing::ElementsAre(1, 2, 3));
+  EXPECT_THAT(max(Vector3I{1, 5, 3}, Vector3I{4, 2, 3}), ::testing::ElementsAre(4, 5, 3));
+
+  // Scalar-bound min/max.
+  EXPECT_THAT(min(Vector3I{1, 5, 3}, 3), ::testing::ElementsAre(1, 3, 3));
+  EXPECT_THAT(max(Vector3I{1, 5, 3}, 3), ::testing::ElementsAre(3, 5, 3));
+
+  // Clamp with per-component and scalar bounds.
+  EXPECT_THAT(clamp(Vector3I{-1, 5, 20}, Vector3I{0, 0, 0}, Vector3I{10, 10, 10}), ::testing::ElementsAre(0, 5, 10));
+  EXPECT_THAT(clamp(Vector3I{-1, 5, 20}, 0, 10), ::testing::ElementsAre(0, 5, 10));
+}
+
+template <typename T>
+class SignedFixedPointVectorOpsTest : public ::testing::Test
+{};
+using SignedFixedPointVectorTypes =
+    ::testing::Types<rtw::multiprecision::FixedPoint8, rtw::multiprecision::FixedPoint16,
+                     rtw::multiprecision::FixedPoint32>;
+TYPED_TEST_SUITE(SignedFixedPointVectorOpsTest, SignedFixedPointVectorTypes, );
+
+TYPED_TEST(SignedFixedPointVectorOpsTest, hadamard)
+{
+  using namespace rtw::math;
+  using Vec = Vector3<TypeParam>;
+  const auto result = hadamard(Vec{TypeParam(2.0), TypeParam(3.0), TypeParam(-4.0)},
+                               Vec{TypeParam(4.0), TypeParam(5.0), TypeParam(2.0)});
+  EXPECT_NEAR(static_cast<double>(result[0]), 8.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(result[1]), 15.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(result[2]), -8.0, TypeParam::RESOLUTION);
+}
+
+TYPED_TEST(SignedFixedPointVectorOpsTest, min_max)
+{
+  using namespace rtw::math;
+  using Vec = Vector3<TypeParam>;
+  const Vec a{TypeParam(1.0), TypeParam(5.0), TypeParam(-3.0)};
+  const Vec b{TypeParam(4.0), TypeParam(2.0), TypeParam(3.0)};
+
+  const auto mn = min(a, b);
+  EXPECT_NEAR(static_cast<double>(mn[0]), 1.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(mn[1]), 2.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(mn[2]), -3.0, TypeParam::RESOLUTION);
+
+  const auto mx = max(a, b);
+  EXPECT_NEAR(static_cast<double>(mx[0]), 4.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(mx[1]), 5.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(mx[2]), 3.0, TypeParam::RESOLUTION);
+
+  const auto mns = min(a, TypeParam(2.0));
+  EXPECT_NEAR(static_cast<double>(mns[1]), 2.0, TypeParam::RESOLUTION);
+  const auto mxs = max(a, TypeParam(2.0));
+  EXPECT_NEAR(static_cast<double>(mxs[2]), 2.0, TypeParam::RESOLUTION);
+}
+
+TYPED_TEST(SignedFixedPointVectorOpsTest, clamp)
+{
+  using namespace rtw::math;
+  using Vec = Vector3<TypeParam>;
+  const Vec v{TypeParam(-1.0), TypeParam(5.0), TypeParam(20.0)};
+  const Vec lo{TypeParam(0.0), TypeParam(0.0), TypeParam(0.0)};
+  const Vec hi{TypeParam(10.0), TypeParam(10.0), TypeParam(10.0)};
+
+  const auto c = clamp(v, lo, hi);
+  EXPECT_NEAR(static_cast<double>(c[0]), 0.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(c[1]), 5.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(c[2]), 10.0, TypeParam::RESOLUTION);
+
+  const auto cs = clamp(v, TypeParam(0.0), TypeParam(10.0));
+  EXPECT_NEAR(static_cast<double>(cs[0]), 0.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(cs[1]), 5.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(cs[2]), 10.0, TypeParam::RESOLUTION);
+}
+
+template <typename T>
+class UnsignedFixedPointVectorOpsTest : public ::testing::Test
+{};
+using UnsignedFixedPointVectorTypes =
+    ::testing::Types<rtw::multiprecision::FixedPoint8U, rtw::multiprecision::FixedPoint16U,
+                     rtw::multiprecision::FixedPoint32U>;
+TYPED_TEST_SUITE(UnsignedFixedPointVectorOpsTest, UnsignedFixedPointVectorTypes, );
+
+TYPED_TEST(UnsignedFixedPointVectorOpsTest, min_max_clamp)
+{
+  using namespace rtw::math;
+  using Vec = Vector3<TypeParam>;
+  const Vec a{TypeParam(1.0), TypeParam(5.0), TypeParam(3.0)};
+  const Vec b{TypeParam(4.0), TypeParam(2.0), TypeParam(3.0)};
+
+  const auto mn = min(a, b);
+  EXPECT_NEAR(static_cast<double>(mn[0]), 1.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(mn[1]), 2.0, TypeParam::RESOLUTION);
+
+  const auto mx = max(a, b);
+  EXPECT_NEAR(static_cast<double>(mx[0]), 4.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(mx[1]), 5.0, TypeParam::RESOLUTION);
+
+  const auto c =
+      clamp(Vec{TypeParam(1.0), TypeParam(5.0), TypeParam(20.0)}, Vec{TypeParam(0.0), TypeParam(0.0), TypeParam(0.0)},
+            Vec{TypeParam(10.0), TypeParam(10.0), TypeParam(10.0)});
+  EXPECT_NEAR(static_cast<double>(c[0]), 1.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(c[1]), 5.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(c[2]), 10.0, TypeParam::RESOLUTION);
+}
+
+TYPED_TEST(UnsignedFixedPointVectorOpsTest, hadamard)
+{
+  using namespace rtw::math;
+  using Vec = Vector2<TypeParam>;
+
+  const auto h = hadamard(Vec{TypeParam(2.0), TypeParam(3.0)}, Vec{TypeParam(4.0), TypeParam(5.0)});
+  EXPECT_NEAR(static_cast<double>(h[0]), 8.0, TypeParam::RESOLUTION);
+  EXPECT_NEAR(static_cast<double>(h[1]), 15.0, TypeParam::RESOLUTION);
+}

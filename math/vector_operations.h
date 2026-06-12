@@ -80,4 +80,46 @@ constexpr Vector<T, N> vector_projection(const Vector<T, N>& vector, const Vecto
   return (dot(vector, onto) / onto_norm2) * onto;
 }
 
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> hadamard(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
+{
+  return Vector<T, N>{hadamard(lhs.as_matrix(), rhs.as_matrix())};
+}
+
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> min(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
+{
+  return Vector<T, N>{min(lhs.as_matrix(), rhs.as_matrix())};
+}
+
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> min(const Vector<T, N>& lhs, const T rhs) noexcept
+{
+  return Vector<T, N>{min(lhs.as_matrix(), rhs)};
+}
+
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> max(const Vector<T, N>& lhs, const Vector<T, N>& rhs) noexcept
+{
+  return Vector<T, N>{max(lhs.as_matrix(), rhs.as_matrix())};
+}
+
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> max(const Vector<T, N>& lhs, const T rhs) noexcept
+{
+  return Vector<T, N>{max(lhs.as_matrix(), rhs)};
+}
+
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> clamp(const Vector<T, N>& value, const Vector<T, N>& lo, const Vector<T, N>& hi) noexcept
+{
+  return Vector<T, N>{clamp(value.as_matrix(), lo.as_matrix(), hi.as_matrix())};
+}
+
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> clamp(const Vector<T, N>& value, const T lo, const T hi) noexcept
+{
+  return Vector<T, N>{clamp(value.as_matrix(), lo, hi)};
+}
+
 } // namespace rtw::math

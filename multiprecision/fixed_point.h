@@ -109,7 +109,7 @@ public:
     // Use the wider of the two saturation types as the intermediate so neither the source raw
     // value nor the rescaled result can be truncated before saturation.
     using WideT = std::conditional_t<(sizeof(SaturationT) >= sizeof(OtherSaturationT)), SaturationT, OtherSaturationT>;
-    WideT raw = static_cast<WideT>(other.raw_value());
+    auto raw = static_cast<WideT>(other.raw_value());
     if constexpr (FRAC_BITS >= OTHER_FRAC_BITS)
     {
       // Multiply by a positive power of two rather than left-shifting `raw`, which may be negative
