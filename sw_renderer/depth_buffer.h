@@ -30,7 +30,10 @@ public:
   std::size_t height() const { return height_; }
   std::size_t size() const { return buffer_.size(); }
 
-  void clear() { std::fill(buffer_.begin(), buffer_.end(), std::numeric_limits<single_precision>::max()); }
+  void clear(const single_precision value = std::numeric_limits<single_precision>::max())
+  {
+    std::fill(buffer_.begin(), buffer_.end(), value);
+  }
 
   void set_depth(const std::size_t x, const std::size_t y, const single_precision depth)
   {

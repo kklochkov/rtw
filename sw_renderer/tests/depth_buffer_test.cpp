@@ -56,6 +56,21 @@ TEST(DepthBuffer, clear)
   EXPECT_EQ(buffer.depth(7, 7), MAX_DEPTH);
 }
 
+TEST(DepthBuffer, clear_with_value)
+{
+  DepthBuffer buffer{10, 10};
+
+  buffer.set_depth(3, 3, 0.1F);
+  buffer.set_depth(7, 7, 0.9F);
+
+  buffer.clear(0.5F);
+
+  EXPECT_EQ(buffer.depth(0, 0), 0.5F);
+  EXPECT_EQ(buffer.depth(3, 3), 0.5F);
+  EXPECT_EQ(buffer.depth(7, 7), 0.5F);
+  EXPECT_EQ(buffer.depth(9, 9), 0.5F);
+}
+
 TEST(DepthBuffer, multiple_pixels)
 {
   DepthBuffer buffer{10, 10};
