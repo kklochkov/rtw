@@ -13,6 +13,7 @@ cc_test_with_llvm_symbolizer(
         "rasterisation_test.cpp",
         "register_file_test.cpp",
         "renderer_test.cpp",
+        "sampler_test.cpp",
         "tex_coord_test.cpp",
         "varyings_test.cpp",
     ],

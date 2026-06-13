@@ -20,6 +20,7 @@ cc_library(
         "rasterisation_routines.h",
         "register_file.h",
         "renderer.h",
+        "sampler.h",
         "tex_coord.h",
         "texture.h",
         "types.h",
