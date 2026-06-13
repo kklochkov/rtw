@@ -356,4 +356,29 @@ constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> clamp(const Matrix<T, ROWS, COLS, 
   return result;
 }
 
+/// Saturate a matrix by clamping its elements between 0 and 1.
+/// @param[in] matrix The matrix to saturate.
+/// @return The saturated matrix.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> saturate(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
+{
+  return clamp(matrix, T{0}, T{1});
+}
+
+/// Compute the element-wise fractional part of a matrix, which is the matrix minus its floor.
+/// @param[in] matrix The matrix.
+/// @return The element-wise fractional part of the matrix.
+template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY_ORDER>
+constexpr Matrix<T, ROWS, COLS, MEMORY_ORDER> fract(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
+{
+  using multiprecision::math::fract;
+
+  Matrix<T, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
+  for (std::uint32_t i = 0U; i < matrix.size(); ++i)
+  {
+    result[i] = fract(matrix[i]);
+  }
+  return result;
+}
+
 } // namespace rtw::math

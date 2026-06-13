@@ -14,6 +14,7 @@ cc_test_with_llvm_symbolizer(
         "register_file_test.cpp",
         "renderer_test.cpp",
         "sampler_test.cpp",
+        "shader_builtins_test.cpp",
         "tex_coord_test.cpp",
         "varyings_test.cpp",
     ],
@@ -33,6 +34,23 @@ cc_test_with_llvm_symbolizer(
     name = "rasterisation_fixed_point_test",
     size = "small",
     srcs = ["rasterisation_fixed_point_test.cpp"],
+    local_defines = ["RTW_USE_FIXED_POINT"],
+    tags = ["no-clang-tidy"],
+    deps = [
+        "//multiprecision",
+        "//sw_renderer",
+        "@googletest//:gtest_main",
+    ],
+)
+
+# Compile-smoke for the Step 2 shader-support primitives (Color <-> Vector4 conversions, Sampler2D,
+# shader built-ins) under RTW_USE_FIXED_POINT, so single_precision is FixedPoint16. Proves these
+# header-only templates instantiate and run in fixed-point mode; the exhaustive exact assertions live
+# in the float sw_renderer_tests target.
+cc_test_with_llvm_symbolizer(
+    name = "shader_builtins_fixed_point_test",
+    size = "small",
+    srcs = ["shader_builtins_fixed_point_test.cpp"],
     local_defines = ["RTW_USE_FIXED_POINT"],
     tags = ["no-clang-tidy"],
     deps = [

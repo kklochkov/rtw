@@ -122,4 +122,16 @@ constexpr Vector<T, N> clamp(const Vector<T, N>& value, const T lo, const T hi) 
   return Vector<T, N>{clamp(value.as_matrix(), lo, hi)};
 }
 
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> saturate(const Vector<T, N>& value) noexcept
+{
+  return clamp(value, T{0}, T{1});
+}
+
+template <typename T, std::uint16_t N>
+constexpr Vector<T, N> fract(const Vector<T, N>& value) noexcept
+{
+  return Vector<T, N>{fract(value.as_matrix())};
+}
+
 } // namespace rtw::math

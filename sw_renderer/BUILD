@@ -21,6 +21,7 @@ cc_library(
         "register_file.h",
         "renderer.h",
         "sampler.h",
+        "shader_builtins.h",
         "tex_coord.h",
         "texture.h",
         "types.h",

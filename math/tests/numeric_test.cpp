@@ -1,5 +1,8 @@
 #include "math/numeric.h"
+#include "math/vector.h"
+#include "math/vector_operations.h"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <limits>
@@ -160,4 +163,16 @@ TEST(Numeric, saturate)
   EXPECT_EQ(saturate(0.5), 0.5);
   EXPECT_EQ(saturate(1.5), 1.0);
   EXPECT_EQ(saturate(-0.5), 0.0);
+}
+
+TEST(Numeric, saturate_vector)
+{
+  const rtw::math::Vector<float, 3> value{-0.5F, 0.5F, 1.5F};
+  EXPECT_THAT(rtw::math::saturate(value), ::testing::ElementsAre(0.0F, 0.5F, 1.0F));
+}
+
+TEST(Numeric, fract_vector)
+{
+  const rtw::math::Vector<float, 3> value{1.25F, 2.5F, -0.25F};
+  EXPECT_THAT(rtw::math::fract(value), ::testing::ElementsAre(0.25F, 0.5F, ::testing::FloatNear(0.75F, 1.0e-6F)));
 }

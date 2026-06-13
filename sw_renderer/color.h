@@ -2,6 +2,7 @@
 
 #include "math/interpolation.h"
 #include "math/vector.h"
+#include "multiprecision/math.h"
 #include "sw_renderer/precision.h"
 
 #include <cstdint>
@@ -12,14 +13,6 @@ namespace rtw::sw_renderer
 
 namespace details
 {
-
-/// Clamp a value to [0, 1].
-template <typename T>
-constexpr T clamp01(const T v) noexcept
-{
-  using std::clamp;
-  return clamp(v, T{0}, T{1});
-}
 
 /// Clamp a uint16 to [0, 255] and cast to uint8.
 constexpr std::uint8_t clamp255(const std::uint16_t v) noexcept
@@ -51,10 +44,10 @@ struct Color
   /// Construct from floating-point channels [0.0, 1.0]. Values are clamped before conversion.
   template <typename T = float, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
   constexpr Color(const T r, const T g, const T b, const T a = 1.0F) noexcept
-      : Color{static_cast<std::uint8_t>(details::clamp01(r) * T{255}),
-              static_cast<std::uint8_t>(details::clamp01(g) * T{255}),
-              static_cast<std::uint8_t>(details::clamp01(b) * T{255}),
-              static_cast<std::uint8_t>(details::clamp01(a) * T{255})}
+      : Color{static_cast<std::uint8_t>(multiprecision::math::saturate(r) * T{255}),
+              static_cast<std::uint8_t>(multiprecision::math::saturate(g) * T{255}),
+              static_cast<std::uint8_t>(multiprecision::math::saturate(b) * T{255}),
+              static_cast<std::uint8_t>(multiprecision::math::saturate(a) * T{255})}
   {
   }
 
@@ -70,7 +63,10 @@ struct Color
   }
   constexpr std::uint8_t r() const noexcept { return (rgba >> 24U) & 0xFFU; }
 
-  constexpr void set_rf(const float r) noexcept { set_r(static_cast<std::uint8_t>(details::clamp01(r) * 255.0F)); }
+  constexpr void set_rf(const float r) noexcept
+  {
+    set_r(static_cast<std::uint8_t>(multiprecision::math::saturate(r) * 255.0F));
+  }
   constexpr float rf() const noexcept { return static_cast<float>(r()) / 255.0F; }
 
   constexpr void set_g(const std::uint8_t g) noexcept
@@ -79,7 +75,10 @@ struct Color
   }
   constexpr std::uint8_t g() const noexcept { return (rgba >> 16U) & 0xFFU; }
 
-  constexpr void set_gf(const float g) noexcept { set_g(static_cast<std::uint8_t>(details::clamp01(g) * 255.0F)); }
+  constexpr void set_gf(const float g) noexcept
+  {
+    set_g(static_cast<std::uint8_t>(multiprecision::math::saturate(g) * 255.0F));
+  }
   constexpr float gf() const noexcept { return static_cast<float>(g()) / 255.0F; }
 
   constexpr void set_b(const std::uint8_t b) noexcept
@@ -88,13 +87,19 @@ struct Color
   }
   constexpr std::uint8_t b() const noexcept { return (rgba >> 8U) & 0xFFU; }
 
-  constexpr void set_bf(const float b) noexcept { set_b(static_cast<std::uint8_t>(details::clamp01(b) * 255.0F)); }
+  constexpr void set_bf(const float b) noexcept
+  {
+    set_b(static_cast<std::uint8_t>(multiprecision::math::saturate(b) * 255.0F));
+  }
   constexpr float bf() const noexcept { return static_cast<float>(b()) / 255.0F; }
 
   constexpr void set_a(const std::uint8_t a) noexcept { rgba = (rgba & 0xFF'FF'FF'00U) | a; }
   constexpr std::uint8_t a() const noexcept { return rgba & 0xFFU; }
 
-  constexpr void set_af(const float a) noexcept { set_a(static_cast<std::uint8_t>(details::clamp01(a) * 255.0F)); }
+  constexpr void set_af(const float a) noexcept
+  {
+    set_a(static_cast<std::uint8_t>(multiprecision::math::saturate(a) * 255.0F));
+  }
   constexpr float af() const noexcept { return static_cast<float>(a()) / 255.0F; }
 
   constexpr explicit operator math::Vector4<single_precision>() const noexcept

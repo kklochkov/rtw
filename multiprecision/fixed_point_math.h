@@ -47,6 +47,16 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> clamp(const FixedPoint<T, FRAC_B
   return FixedPoint(RAW_VALUE_CONSTRUCT, std::clamp(value.raw_value(), min.raw_value(), max.raw_value()));
 }
 
+/// @brief Clamps a fixed-point value to the range [0, 1].
+/// @param[in] value The value to clamp.
+/// @return Clamped value.
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> saturate(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
+{
+  using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
+  return clamp(value, FixedPoint{0}, FixedPoint{1});
+}
+
 /// @brief Returns the largest integer fixed-point value not greater than @p value.
 /// @param[in] value The fixed-point number.
 /// @return floor(value).
@@ -56,6 +66,15 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> floor(const FixedPoint<T, FRAC_B
   using FixedPoint = FixedPoint<T, FRAC_BITS, SaturationT>;
   // Clear the fractional part and round down
   return FixedPoint(RAW_VALUE_CONSTRUCT, value.raw_value() & FixedPoint::INTEGER_MASK);
+}
+
+/// @brief Returns the fractional part of a fixed-point number (value - floor(value)).
+/// @param[in] value The fixed-point number.
+/// @return fract(value).
+template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
+constexpr FixedPoint<T, FRAC_BITS, SaturationT> fract(const FixedPoint<T, FRAC_BITS, SaturationT> value) noexcept
+{
+  return value - floor(value);
 }
 
 /// @brief Returns the smallest integer fixed-point value not less than @p value.

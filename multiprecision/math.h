@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <limits>
@@ -121,6 +122,25 @@ constexpr F fmod(const F dividend, const F divisor) noexcept
     return dividend - (divisor * static_cast<F>(static_cast<std::int64_t>(quotient)));
   }
   return dividend - (divisor * quotient);
+}
+
+/// Clamp @p value to [0, 1].
+/// @param[in] value The scalar value.
+/// @return The clamped value.
+template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
+constexpr T saturate(const T value) noexcept
+{
+  return std::clamp(value, T{0}, T{1});
+}
+
+/// @brief Returns the fractional part of a floating-point value.
+/// @tparam T Floating-point type.
+/// @param[in] value The value to extract the fractional part from.
+/// @return The fractional part of the value, in the range [0, 1).
+template <typename T, typename = std::enable_if_t<std::is_floating_point_v<T>>>
+constexpr T fract(const T value) noexcept
+{
+  return value - std::floor(value);
 }
 
 } // namespace rtw::multiprecision::math

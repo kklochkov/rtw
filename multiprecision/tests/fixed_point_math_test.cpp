@@ -116,6 +116,20 @@ TYPED_TEST(SignedFixedPointMathTest, clamp)
   EXPECT_EQ(rtw::multiprecision::math::clamp(TypeParam(3.23), TypeParam(0.0), TypeParam(2.0)), 2.0);
 }
 
+TYPED_TEST(SignedFixedPointMathTest, saturate)
+{
+  EXPECT_EQ(rtw::multiprecision::math::saturate(TypeParam(0.5)), TypeParam(0.5));
+  EXPECT_EQ(rtw::multiprecision::math::saturate(TypeParam(2.0)), TypeParam(1.0));
+  EXPECT_EQ(rtw::multiprecision::math::saturate(TypeParam(-1.0)), TypeParam(0.0));
+}
+
+TYPED_TEST(SignedFixedPointMathTest, fract)
+{
+  EXPECT_EQ(rtw::multiprecision::math::fract(TypeParam(1.25)), TypeParam(0.25));
+  EXPECT_EQ(rtw::multiprecision::math::fract(TypeParam(2.5)), TypeParam(0.5));
+  EXPECT_EQ(rtw::multiprecision::math::fract(TypeParam(-0.25)), TypeParam(0.75));
+}
+
 TYPED_TEST(SignedFixedPointMathTest, ceil)
 {
   EXPECT_EQ(rtw::multiprecision::math::ceil(TypeParam(1.23)), 2.0);
