@@ -1,6 +1,8 @@
 #pragma once
 
 #include "math/interpolation.h"
+#include "math/vector.h"
+#include "sw_renderer/precision.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -8,7 +10,7 @@
 namespace rtw::sw_renderer
 {
 
-namespace detail
+namespace details
 {
 
 /// Clamp a value to [0, 1].
@@ -22,10 +24,10 @@ constexpr T clamp01(const T v) noexcept
 /// Clamp a uint16 to [0, 255] and cast to uint8.
 constexpr std::uint8_t clamp255(const std::uint16_t v) noexcept
 {
-  return static_cast<std::uint8_t>(v > 255U ? 255U : v);
+  return static_cast<std::uint8_t>(std::min(v, std::uint16_t{255}));
 }
 
-} // namespace detail
+} // namespace details
 
 /// RGBA color stored as a packed 32-bit integer in RGBA byte order (R in MSB, A in LSB).
 ///
@@ -49,10 +51,16 @@ struct Color
   /// Construct from floating-point channels [0.0, 1.0]. Values are clamped before conversion.
   template <typename T = float, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
   constexpr Color(const T r, const T g, const T b, const T a = 1.0F) noexcept
-      : Color{static_cast<std::uint8_t>(detail::clamp01(r) * T{255}),
-              static_cast<std::uint8_t>(detail::clamp01(g) * T{255}),
-              static_cast<std::uint8_t>(detail::clamp01(b) * T{255}),
-              static_cast<std::uint8_t>(detail::clamp01(a) * T{255})}
+      : Color{static_cast<std::uint8_t>(details::clamp01(r) * T{255}),
+              static_cast<std::uint8_t>(details::clamp01(g) * T{255}),
+              static_cast<std::uint8_t>(details::clamp01(b) * T{255}),
+              static_cast<std::uint8_t>(details::clamp01(a) * T{255})}
+  {
+  }
+
+  constexpr explicit Color(const math::Vector4<single_precision>& vec) noexcept
+      : Color{static_cast<float>(vec.x()), static_cast<float>(vec.y()), static_cast<float>(vec.z()),
+              static_cast<float>(vec.w())}
   {
   }
 
@@ -62,7 +70,7 @@ struct Color
   }
   constexpr std::uint8_t r() const noexcept { return (rgba >> 24U) & 0xFFU; }
 
-  constexpr void set_rf(const float r) noexcept { set_r(static_cast<std::uint8_t>(detail::clamp01(r) * 255.0F)); }
+  constexpr void set_rf(const float r) noexcept { set_r(static_cast<std::uint8_t>(details::clamp01(r) * 255.0F)); }
   constexpr float rf() const noexcept { return static_cast<float>(r()) / 255.0F; }
 
   constexpr void set_g(const std::uint8_t g) noexcept
@@ -71,7 +79,7 @@ struct Color
   }
   constexpr std::uint8_t g() const noexcept { return (rgba >> 16U) & 0xFFU; }
 
-  constexpr void set_gf(const float g) noexcept { set_g(static_cast<std::uint8_t>(detail::clamp01(g) * 255.0F)); }
+  constexpr void set_gf(const float g) noexcept { set_g(static_cast<std::uint8_t>(details::clamp01(g) * 255.0F)); }
   constexpr float gf() const noexcept { return static_cast<float>(g()) / 255.0F; }
 
   constexpr void set_b(const std::uint8_t b) noexcept
@@ -80,14 +88,19 @@ struct Color
   }
   constexpr std::uint8_t b() const noexcept { return (rgba >> 8U) & 0xFFU; }
 
-  constexpr void set_bf(const float b) noexcept { set_b(static_cast<std::uint8_t>(detail::clamp01(b) * 255.0F)); }
+  constexpr void set_bf(const float b) noexcept { set_b(static_cast<std::uint8_t>(details::clamp01(b) * 255.0F)); }
   constexpr float bf() const noexcept { return static_cast<float>(b()) / 255.0F; }
 
   constexpr void set_a(const std::uint8_t a) noexcept { rgba = (rgba & 0xFF'FF'FF'00U) | a; }
   constexpr std::uint8_t a() const noexcept { return rgba & 0xFFU; }
 
-  constexpr void set_af(const float a) noexcept { set_a(static_cast<std::uint8_t>(detail::clamp01(a) * 255.0F)); }
+  constexpr void set_af(const float a) noexcept { set_a(static_cast<std::uint8_t>(details::clamp01(a) * 255.0F)); }
   constexpr float af() const noexcept { return static_cast<float>(a()) / 255.0F; }
+
+  constexpr explicit operator math::Vector4<single_precision>() const noexcept
+  {
+    return math::Vector4<single_precision>{rf(), gf(), bf(), af()};
+  }
 
   constexpr Color invert() const noexcept
   {
@@ -104,9 +117,9 @@ struct Color
   /// Add two colors channel-wise. Channels are clamped to [0, 255] (saturating addition).
   constexpr Color operator+(const Color& other) const noexcept
   {
-    return Color{detail::clamp255(static_cast<std::uint16_t>(r()) + other.r()),
-                 detail::clamp255(static_cast<std::uint16_t>(g()) + other.g()),
-                 detail::clamp255(static_cast<std::uint16_t>(b()) + other.b()), a()};
+    return Color{details::clamp255(static_cast<std::uint16_t>(r()) + other.r()),
+                 details::clamp255(static_cast<std::uint16_t>(g()) + other.g()),
+                 details::clamp255(static_cast<std::uint16_t>(b()) + other.b()), a()};
   }
 
   constexpr bool operator==(const Color& other) const noexcept { return rgba == other.rgba; }

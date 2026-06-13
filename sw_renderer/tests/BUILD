@@ -6,6 +6,7 @@ cc_test_with_llvm_symbolizer(
     srcs = [
         "clipping_test.cpp",
         "color_buffer_test.cpp",
+        "color_test.cpp",
         "depth_buffer_test.cpp",
         "obj_loader_test.cpp",
         "projection_test.cpp",
