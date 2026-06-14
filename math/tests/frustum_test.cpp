@@ -80,16 +80,16 @@ TEST(Frustum, make_frustum_near_far_planes)
   const auto frustum = rtw::math::make_frustum(params);
 
   // Near plane should point towards -Z (into the frustum)
-  EXPECT_NEAR(frustum.near.normal.x(), 0.0F, EPSILON);
-  EXPECT_NEAR(frustum.near.normal.y(), 0.0F, EPSILON);
-  EXPECT_NEAR(frustum.near.normal.z(), -1.0F, EPSILON);
-  EXPECT_FLOAT_EQ(frustum.near.distance, 0.1F);
+  EXPECT_NEAR(frustum.near().normal.x(), 0.0F, EPSILON);
+  EXPECT_NEAR(frustum.near().normal.y(), 0.0F, EPSILON);
+  EXPECT_NEAR(frustum.near().normal.z(), -1.0F, EPSILON);
+  EXPECT_FLOAT_EQ(frustum.near().distance, 0.1F);
 
   // Far plane should point towards +Z
-  EXPECT_NEAR(frustum.far.normal.x(), 0.0F, EPSILON);
-  EXPECT_NEAR(frustum.far.normal.y(), 0.0F, EPSILON);
-  EXPECT_NEAR(frustum.far.normal.z(), 1.0F, EPSILON);
-  EXPECT_FLOAT_EQ(frustum.far.distance, 100.0F);
+  EXPECT_NEAR(frustum.far().normal.x(), 0.0F, EPSILON);
+  EXPECT_NEAR(frustum.far().normal.y(), 0.0F, EPSILON);
+  EXPECT_NEAR(frustum.far().normal.z(), 1.0F, EPSILON);
+  EXPECT_FLOAT_EQ(frustum.far().distance, 100.0F);
 }
 
 TEST(Frustum, make_frustum_side_planes_are_normalized)
@@ -99,12 +99,12 @@ TEST(Frustum, make_frustum_side_planes_are_normalized)
   const auto frustum = rtw::math::make_frustum(params);
 
   // All plane normals should be unit vectors (norm 1)
-  EXPECT_NEAR(rtw::math::norm(frustum.left.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.right.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.top.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.bottom.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.near.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.far.normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.left().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.right().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.top().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.bottom().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.near().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.far().normal), 1.0F, EPSILON);
 }
 
 TEST(Frustum, make_frustum_side_planes_pass_through_origin)
@@ -114,10 +114,10 @@ TEST(Frustum, make_frustum_side_planes_pass_through_origin)
   const auto frustum = rtw::math::make_frustum(params);
 
   // Side planes (left, right, top, bottom) pass through the origin
-  EXPECT_FLOAT_EQ(frustum.left.distance, 0.0F);
-  EXPECT_FLOAT_EQ(frustum.right.distance, 0.0F);
-  EXPECT_FLOAT_EQ(frustum.top.distance, 0.0F);
-  EXPECT_FLOAT_EQ(frustum.bottom.distance, 0.0F);
+  EXPECT_FLOAT_EQ(frustum.left().distance, 0.0F);
+  EXPECT_FLOAT_EQ(frustum.right().distance, 0.0F);
+  EXPECT_FLOAT_EQ(frustum.top().distance, 0.0F);
+  EXPECT_FLOAT_EQ(frustum.bottom().distance, 0.0F);
 }
 
 TEST(Frustum, extract_frustum_plane_normals_are_normalized)
@@ -128,12 +128,12 @@ TEST(Frustum, extract_frustum_plane_normals_are_normalized)
   const auto frustum = rtw::math::extract_frustum(projection);
 
   // All plane normals should be unit vectors
-  EXPECT_NEAR(rtw::math::norm(frustum.left.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.right.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.top.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.bottom.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.near.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.far.normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.left().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.right().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.top().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.bottom().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.near().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.far().normal), 1.0F, EPSILON);
 }
 
 TEST(Frustum, extract_frustum_from_identity_matrix)
@@ -143,12 +143,12 @@ TEST(Frustum, extract_frustum_from_identity_matrix)
 
   // For identity matrix, the frustum should be a unit cube [-1, 1]^3
   // All plane normals should be unit vectors
-  EXPECT_NEAR(rtw::math::norm(frustum.left.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.right.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.top.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.bottom.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.near.normal), 1.0F, EPSILON);
-  EXPECT_NEAR(rtw::math::norm(frustum.far.normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.left().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.right().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.top().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.bottom().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.near().normal), 1.0F, EPSILON);
+  EXPECT_NEAR(rtw::math::norm(frustum.far().normal), 1.0F, EPSILON);
 }
 
 TEST(Frustum, extract_frustum_from_column_major_matrix)
@@ -167,35 +167,35 @@ TEST(Frustum, extract_frustum_from_column_major_matrix)
   const auto frustum_cm = rtw::math::extract_frustum(projection_col_major);
 
   // Verify plane normals match between ROW_MAJOR and COLUMN_MAJOR extraction
-  EXPECT_NEAR(frustum_cm.left.normal.x(), frustum_rm.left.normal.x(), EPSILON);
-  EXPECT_NEAR(frustum_cm.left.normal.y(), frustum_rm.left.normal.y(), EPSILON);
-  EXPECT_NEAR(frustum_cm.left.normal.z(), frustum_rm.left.normal.z(), EPSILON);
-  EXPECT_NEAR(frustum_cm.left.distance, frustum_rm.left.distance, EPSILON);
+  EXPECT_NEAR(frustum_cm.left().normal.x(), frustum_rm.left().normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.left().normal.y(), frustum_rm.left().normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.left().normal.z(), frustum_rm.left().normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.left().distance, frustum_rm.left().distance, EPSILON);
 
-  EXPECT_NEAR(frustum_cm.right.normal.x(), frustum_rm.right.normal.x(), EPSILON);
-  EXPECT_NEAR(frustum_cm.right.normal.y(), frustum_rm.right.normal.y(), EPSILON);
-  EXPECT_NEAR(frustum_cm.right.normal.z(), frustum_rm.right.normal.z(), EPSILON);
-  EXPECT_NEAR(frustum_cm.right.distance, frustum_rm.right.distance, EPSILON);
+  EXPECT_NEAR(frustum_cm.right().normal.x(), frustum_rm.right().normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.right().normal.y(), frustum_rm.right().normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.right().normal.z(), frustum_rm.right().normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.right().distance, frustum_rm.right().distance, EPSILON);
 
-  EXPECT_NEAR(frustum_cm.near.normal.x(), frustum_rm.near.normal.x(), EPSILON);
-  EXPECT_NEAR(frustum_cm.near.normal.y(), frustum_rm.near.normal.y(), EPSILON);
-  EXPECT_NEAR(frustum_cm.near.normal.z(), frustum_rm.near.normal.z(), EPSILON);
-  EXPECT_NEAR(frustum_cm.near.distance, frustum_rm.near.distance, EPSILON);
+  EXPECT_NEAR(frustum_cm.near().normal.x(), frustum_rm.near().normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.near().normal.y(), frustum_rm.near().normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.near().normal.z(), frustum_rm.near().normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.near().distance, frustum_rm.near().distance, EPSILON);
 
-  EXPECT_NEAR(frustum_cm.far.normal.x(), frustum_rm.far.normal.x(), EPSILON);
-  EXPECT_NEAR(frustum_cm.far.normal.y(), frustum_rm.far.normal.y(), EPSILON);
-  EXPECT_NEAR(frustum_cm.far.normal.z(), frustum_rm.far.normal.z(), EPSILON);
-  EXPECT_NEAR(frustum_cm.far.distance, frustum_rm.far.distance, EPSILON);
+  EXPECT_NEAR(frustum_cm.far().normal.x(), frustum_rm.far().normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.far().normal.y(), frustum_rm.far().normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.far().normal.z(), frustum_rm.far().normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.far().distance, frustum_rm.far().distance, EPSILON);
 
-  EXPECT_NEAR(frustum_cm.top.normal.x(), frustum_rm.top.normal.x(), EPSILON);
-  EXPECT_NEAR(frustum_cm.top.normal.y(), frustum_rm.top.normal.y(), EPSILON);
-  EXPECT_NEAR(frustum_cm.top.normal.z(), frustum_rm.top.normal.z(), EPSILON);
-  EXPECT_NEAR(frustum_cm.top.distance, frustum_rm.top.distance, EPSILON);
+  EXPECT_NEAR(frustum_cm.top().normal.x(), frustum_rm.top().normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.top().normal.y(), frustum_rm.top().normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.top().normal.z(), frustum_rm.top().normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.top().distance, frustum_rm.top().distance, EPSILON);
 
-  EXPECT_NEAR(frustum_cm.bottom.normal.x(), frustum_rm.bottom.normal.x(), EPSILON);
-  EXPECT_NEAR(frustum_cm.bottom.normal.y(), frustum_rm.bottom.normal.y(), EPSILON);
-  EXPECT_NEAR(frustum_cm.bottom.normal.z(), frustum_rm.bottom.normal.z(), EPSILON);
-  EXPECT_NEAR(frustum_cm.bottom.distance, frustum_rm.bottom.distance, EPSILON);
+  EXPECT_NEAR(frustum_cm.bottom().normal.x(), frustum_rm.bottom().normal.x(), EPSILON);
+  EXPECT_NEAR(frustum_cm.bottom().normal.y(), frustum_rm.bottom().normal.y(), EPSILON);
+  EXPECT_NEAR(frustum_cm.bottom().normal.z(), frustum_rm.bottom().normal.z(), EPSILON);
+  EXPECT_NEAR(frustum_cm.bottom().distance, frustum_rm.bottom().distance, EPSILON);
 }
 
 TEST(Frustum, make_perspective_parameters_and_projection_roundtrip)

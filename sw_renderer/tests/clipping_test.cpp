@@ -4,6 +4,7 @@
 #include "math/angle.h"
 #include "math/frustum.h"
 #include "math/plane.h"
+#include "sw_renderer/vertex.h"
 
 #include <gtest/gtest.h>
 
@@ -11,6 +12,9 @@ namespace rtw::sw_renderer
 {
 namespace
 {
+
+template <typename T, std::size_t CAPACITY>
+using ConvexPolygonVertex = math::ConvexPolygon<T, Vertex, CAPACITY>;
 
 // Helper to create a vertex at a given position
 VertexF make_vertex(const float x, const float y, const float z)
@@ -43,7 +47,7 @@ TEST(Clipping, clip_triangle_inside_frustum)
   const auto v1 = make_vertex(0.5F, 0.0F, -5.0F);
   const auto v2 = make_vertex(0.0F, 0.5F, -5.0F);
 
-  const auto result = clip(v0, v1, v2, frustum);
+  const auto result = clip(v0, v1, v2, stl::make_span(frustum.planes()));
 
   // Triangle fully inside, should have 3 vertices
   EXPECT_EQ(result.size(), 3U);
@@ -58,7 +62,7 @@ TEST(Clipping, clip_triangle_outside_frustum_behind_camera)
   const auto v1 = make_vertex(0.5F, 0.0F, 1.0F);
   const auto v2 = make_vertex(0.0F, 0.5F, 1.0F);
 
-  const auto result = clip(v0, v1, v2, frustum);
+  const auto result = clip(v0, v1, v2, stl::make_span(frustum.planes()));
 
   // Triangle fully outside (behind camera), should be empty
   EXPECT_EQ(result.size(), 0U);
@@ -73,7 +77,7 @@ TEST(Clipping, clip_triangle_outside_frustum_beyond_far)
   const auto v1 = make_vertex(0.5F, 0.0F, -150.0F);
   const auto v2 = make_vertex(0.0F, 0.5F, -150.0F);
 
-  const auto result = clip(v0, v1, v2, frustum);
+  const auto result = clip(v0, v1, v2, stl::make_span(frustum.planes()));
 
   // Triangle fully outside (beyond far), should be empty
   EXPECT_EQ(result.size(), 0U);
@@ -89,7 +93,7 @@ TEST(Clipping, clip_triangle_straddling_near_plane)
   const auto v1 = make_vertex(0.5F, 0.0F, -1.0F); // inside
   const auto v2 = make_vertex(0.25F, 0.5F, 0.0F); // outside (behind near plane)
 
-  const auto result = clip(v0, v1, v2, frustum);
+  const auto result = clip(v0, v1, v2, stl::make_span(frustum.planes()));
 
   // One vertex clipped by near plane creates intersection points
   // The result should have more than 2 vertices (at least a triangle)

@@ -6,6 +6,8 @@
 #include "math/vector.h"
 #include "multiprecision/fixed_point_math.h"
 
+#include <array>
+
 namespace rtw::math
 {
 
@@ -30,14 +32,29 @@ namespace rtw::math
 /// The normals of the planes are pointing towards the positive half-space, i.e. the inside of the frustum.
 /// @tparam T The type of the frustum elements.
 template <typename T>
-struct Frustum3
+class Frustum3
 {
-  Plane3<T> left{};
-  Plane3<T> right{};
-  Plane3<T> top{};
-  Plane3<T> bottom{};
-  Plane3<T> near{};
-  Plane3<T> far{};
+public:
+  using Planes = std::array<Plane3<T>, 6U>;
+
+  constexpr const Planes& planes() const noexcept { return planes_; }
+
+  constexpr const Plane3<T>& left() const noexcept { return planes_[0U]; }
+  constexpr const Plane3<T>& right() const noexcept { return planes_[1U]; }
+  constexpr const Plane3<T>& top() const noexcept { return planes_[2U]; }
+  constexpr const Plane3<T>& bottom() const noexcept { return planes_[3U]; }
+  constexpr const Plane3<T>& near() const noexcept { return planes_[4U]; }
+  constexpr const Plane3<T>& far() const noexcept { return planes_[5U]; }
+
+  constexpr Plane3<T>& left() noexcept { return planes_[0U]; }
+  constexpr Plane3<T>& right() noexcept { return planes_[1U]; }
+  constexpr Plane3<T>& top() noexcept { return planes_[2U]; }
+  constexpr Plane3<T>& bottom() noexcept { return planes_[3U]; }
+  constexpr Plane3<T>& near() noexcept { return planes_[4U]; }
+  constexpr Plane3<T>& far() noexcept { return planes_[5U]; }
+
+private:
+  Planes planes_{};
 };
 
 using Frustum3F = Frustum3<float>;
@@ -144,18 +161,18 @@ constexpr Frustum3<T> make_frustum(const FrustumParameters<T> params) noexcept
   const Vector3<T> far_bottom_right{far_right, far_bottom, params.far};
 
   Frustum3<T> frustum;
-  frustum.near.normal = Vector3<T>{T{0}, T{0}, T{-1}};
-  frustum.near.distance = params.near;
-  frustum.far.normal = Vector3<T>{T{0}, T{0}, T{1}};
-  frustum.far.distance = params.far;
-  frustum.bottom.normal = normalize(cross(far_bottom_left - bottom_left, bottom_right - bottom_left));
-  frustum.bottom.distance = 0;
-  frustum.top.normal = normalize(cross(top_right - top_left, far_top_left - top_left));
-  frustum.top.distance = 0;
-  frustum.left.normal = normalize(cross(far_top_left - top_left, bottom_left - top_left));
-  frustum.left.distance = 0;
-  frustum.right.normal = normalize(cross(bottom_right - top_right, far_top_right - top_right));
-  frustum.right.distance = 0;
+  frustum.near().normal = Vector3<T>{T{0}, T{0}, T{-1}};
+  frustum.near().distance = params.near;
+  frustum.far().normal = Vector3<T>{T{0}, T{0}, T{1}};
+  frustum.far().distance = params.far;
+  frustum.bottom().normal = normalize(cross(far_bottom_left - bottom_left, bottom_right - bottom_left));
+  frustum.bottom().distance = 0;
+  frustum.top().normal = normalize(cross(top_right - top_left, far_top_left - top_left));
+  frustum.top().distance = 0;
+  frustum.left().normal = normalize(cross(far_top_left - top_left, bottom_left - top_left));
+  frustum.left().distance = 0;
+  frustum.right().normal = normalize(cross(bottom_right - top_right, far_top_right - top_right));
+  frustum.right().distance = 0;
   return frustum;
 }
 
@@ -182,18 +199,18 @@ constexpr Frustum3<T> extract_frustum(const Matrix4x4<T, MEMORY_ORDER>& matrix) 
   const auto far = column3 - column2;
 
   Frustum3<T> frustum;
-  frustum.left.normal = normalize(left.xyz());
-  frustum.left.distance = left.w();
-  frustum.right.normal = normalize(right.xyz());
-  frustum.right.distance = right.w();
-  frustum.top.normal = normalize(top.xyz());
-  frustum.top.distance = top.w();
-  frustum.bottom.normal = normalize(bottom.xyz());
-  frustum.bottom.distance = bottom.w();
-  frustum.near.normal = normalize(near.xyz());
-  frustum.near.distance = near.w();
-  frustum.far.normal = normalize(far.xyz());
-  frustum.far.distance = far.w();
+  frustum.left().normal = normalize(left.xyz());
+  frustum.left().distance = left.w();
+  frustum.right().normal = normalize(right.xyz());
+  frustum.right().distance = right.w();
+  frustum.top().normal = normalize(top.xyz());
+  frustum.top().distance = top.w();
+  frustum.bottom().normal = normalize(bottom.xyz());
+  frustum.bottom().distance = bottom.w();
+  frustum.near().normal = normalize(near.xyz());
+  frustum.near().distance = near.w();
+  frustum.far().normal = normalize(far.xyz());
+  frustum.far().distance = far.w();
   return frustum;
 }
 

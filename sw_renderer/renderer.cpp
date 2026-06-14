@@ -309,7 +309,7 @@ void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
     }
 
     // Frustum clipping.
-    const auto polygon = clip(v0, v1, v2, frustum_);
+    const auto polygon = clip(v0, v1, v2, stl::make_span(frustum_.planes()));
     const auto triangles = triangulate(polygon);
 
     {
