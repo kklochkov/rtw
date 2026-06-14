@@ -29,6 +29,8 @@ cc_library(
         "types.h",
         "varyings.h",
         "vertex.h",
+        "vertex_layout.h",
+        "vertex_stream.h",
     ],
     visibility = ["//visibility:public"],
     deps = [

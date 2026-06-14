@@ -19,6 +19,8 @@ cc_test_with_llvm_symbolizer(
         "shader_builtins_test.cpp",
         "tex_coord_test.cpp",
         "varyings_test.cpp",
+        "vertex_layout_test.cpp",
+        "vertex_stream_test.cpp",
     ],
     data = ["//sw_renderer/resources:cube"],
     tags = ["no-clang-tidy"],
@@ -53,6 +55,22 @@ cc_test_with_llvm_symbolizer(
     name = "shader_builtins_fixed_point_test",
     size = "small",
     srcs = ["shader_builtins_fixed_point_test.cpp"],
+    local_defines = ["RTW_USE_FIXED_POINT"],
+    tags = ["no-clang-tidy"],
+    deps = [
+        "//multiprecision",
+        "//sw_renderer",
+        "@googletest//:gtest_main",
+    ],
+)
+
+# Compile-smoke for the Step 4 vertex-input primitives (vertex_layout / vertex_stream) under
+# RTW_USE_FIXED_POINT, so single_precision is FixedPoint16. Proves the typed stream and the raw decode
+# path instantiate in fixed-point mode; the exact assertions live in the float sw_renderer_tests target.
+cc_test_with_llvm_symbolizer(
+    name = "vertex_input_fixed_point_test",
+    size = "small",
+    srcs = ["vertex_input_fixed_point_test.cpp"],
     local_defines = ["RTW_USE_FIXED_POINT"],
     tags = ["no-clang-tidy"],
     deps = [
