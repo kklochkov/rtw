@@ -17,6 +17,7 @@ cc_test_with_llvm_symbolizer(
         "renderer_test.cpp",
         "sampler_test.cpp",
         "shader_builtins_test.cpp",
+        "shader_test.cpp",
         "tex_coord_test.cpp",
         "varyings_test.cpp",
         "vertex_layout_test.cpp",
@@ -71,6 +72,22 @@ cc_test_with_llvm_symbolizer(
     name = "vertex_input_fixed_point_test",
     size = "small",
     srcs = ["vertex_input_fixed_point_test.cpp"],
+    local_defines = ["RTW_USE_FIXED_POINT"],
+    tags = ["no-clang-tidy"],
+    deps = [
+        "//multiprecision",
+        "//sw_renderer",
+        "@googletest//:gtest_main",
+    ],
+)
+
+# Compile-smoke for the Step 5 shader interface (contexts, stage outputs, dynamic IShaderProgram hook)
+# under RTW_USE_FIXED_POINT, so single_precision is FixedPoint16. Proves the interface instantiates and
+# runs in fixed-point mode; the exact assertions live in the float sw_renderer_tests target.
+cc_test_with_llvm_symbolizer(
+    name = "shader_fixed_point_test",
+    size = "small",
+    srcs = ["shader_fixed_point_test.cpp"],
     local_defines = ["RTW_USE_FIXED_POINT"],
     tags = ["no-clang-tidy"],
     deps = [
