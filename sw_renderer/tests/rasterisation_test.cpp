@@ -2,6 +2,9 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace rtw::sw_renderer
@@ -225,6 +228,94 @@ TEST(Rasterisation, fill_triangle_scanline_degenerate)
 
   // Degenerate triangle with zero height should have no pixels
   EXPECT_EQ(pixel_count, 0U);
+}
+
+TEST(Rasterisation, programmable_fill_triangle_bbox_basic)
+{
+  std::size_t pixel_count = 0;
+
+  // Window-space positions (x, y in pixels, z window-depth, w = 1/w_clip). Same winding as the
+  // legacy fill_triangle_bbox_basic test, so the signed area is positive and the triangle fills.
+  const Vector4F p0{10.0F, 10.0F, 1.0F, 1.0F};
+  const Vector4F p1{20.0F, 10.0F, 1.0F, 1.0F};
+  const Vector4F p2{15.0F, 20.0F, 1.0F, 1.0F};
+
+  const RegisterFile<single_precision, 1U> varyings0;
+  const RegisterFile<single_precision, 1U> varyings1;
+  const RegisterFile<single_precision, 1U> varyings2;
+
+  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2,
+                     [&pixel_count](const Point2I& /*p*/, const RegisterFile<single_precision, 1U>& /*varyings*/,
+                                    single_precision /*window_z*/, single_precision /*inv_w*/) { ++pixel_count; });
+
+  EXPECT_GT(pixel_count, 0U);
+}
+
+TEST(Rasterisation, programmable_fill_triangle_bbox_affine_interpolation)
+{
+  // With every vertex at w = 1 (1/w_clip = 1) perspective-correct interpolation reduces to affine
+  // interpolation. Feeding each vertex its own screen position as a varying must reconstruct the
+  // sample point (pixel centre) at every covered pixel, and the affine window-z (here z = vertex.x)
+  // must match the interpolated x. This pins both the barycentric sampling and the interpolation math.
+  const Vector4F p0{10.0F, 10.0F, 10.0F, 1.0F};
+  const Vector4F p1{20.0F, 10.0F, 20.0F, 1.0F};
+  const Vector4F p2{15.0F, 20.0F, 15.0F, 1.0F};
+
+  RegisterFile<single_precision, 1U> varyings0;
+  RegisterFile<single_precision, 1U> varyings1;
+  RegisterFile<single_precision, 1U> varyings2;
+  varyings0[0U] = Vector4F{10.0F, 10.0F, 0.0F, 0.0F};
+  varyings1[0U] = Vector4F{20.0F, 10.0F, 0.0F, 0.0F};
+  varyings2[0U] = Vector4F{15.0F, 20.0F, 0.0F, 0.0F};
+
+  std::size_t pixel_count = 0;
+  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2,
+                     [&pixel_count](const Point2I& p, const RegisterFile<single_precision, 1U>& varyings,
+                                    single_precision window_z, single_precision inv_w)
+                     {
+                       ++pixel_count;
+                       const auto expected_x = static_cast<single_precision>(p.x()) + 0.5F;
+                       const auto expected_y = static_cast<single_precision>(p.y()) + 0.5F;
+                       EXPECT_NEAR(varyings[0U].x(), expected_x, 0.05F);
+                       EXPECT_NEAR(varyings[0U].y(), expected_y, 0.05F);
+                       EXPECT_NEAR(window_z, expected_x, 0.05F);
+                       EXPECT_NEAR(inv_w, 1.0F, 0.05F);
+                     });
+
+  EXPECT_GT(pixel_count, 0U);
+}
+
+TEST(Rasterisation, programmable_fill_triangle_bbox_perspective_correct_constant)
+{
+  // Perspective-correct interpolation of a constant attribute must return that constant exactly,
+  // independent of the per-vertex 1/w. Use distinct, non-trivial 1/w values so the weights c_i = b_i/w_i
+  // differ from the plain barycentrics, then assert the constant survives and 1/w stays positive.
+  const Vector4F p0{10.0F, 10.0F, 1.0F, 1.0F};
+  const Vector4F p1{20.0F, 10.0F, 1.0F, 0.5F};
+  const Vector4F p2{15.0F, 20.0F, 1.0F, 0.25F};
+
+  constexpr single_precision CONSTANT{7.0F};
+  RegisterFile<single_precision, 1U> varyings0;
+  RegisterFile<single_precision, 1U> varyings1;
+  RegisterFile<single_precision, 1U> varyings2;
+  varyings0[0U] = Vector4F{CONSTANT, CONSTANT, CONSTANT, CONSTANT};
+  varyings1[0U] = Vector4F{CONSTANT, CONSTANT, CONSTANT, CONSTANT};
+  varyings2[0U] = Vector4F{CONSTANT, CONSTANT, CONSTANT, CONSTANT};
+
+  std::size_t pixel_count = 0;
+  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2,
+                     [&pixel_count](const Point2I& /*p*/, const RegisterFile<single_precision, 1U>& varyings,
+                                    single_precision /*window_z*/, single_precision inv_w)
+                     {
+                       ++pixel_count;
+                       EXPECT_NEAR(varyings[0U].x(), CONSTANT, 1e-3F);
+                       EXPECT_NEAR(varyings[0U].y(), CONSTANT, 1e-3F);
+                       EXPECT_NEAR(varyings[0U].z(), CONSTANT, 1e-3F);
+                       EXPECT_NEAR(varyings[0U].w(), CONSTANT, 1e-3F);
+                       EXPECT_GT(inv_w, 0.0F);
+                     });
+
+  EXPECT_GT(pixel_count, 0U);
 }
 
 } // namespace

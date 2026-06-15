@@ -4,6 +4,7 @@
 #include "math/vector.h"
 #include "math/vector_operations.h"
 
+#include "sw_renderer/register_file.h"
 #include "sw_renderer/types.h"
 #include "sw_renderer/vertex.h"
 
@@ -27,6 +28,13 @@ constexpr inline bool IS_BARYCENTRIC_TRIANGLE_RASTERISE_CALLBACK_V =
 template <typename RasteriseCallbackT>
 constexpr inline bool IS_TRIANGLE_RASTERISE_CALLBACK_V =
     std::is_invocable_r_v<void, RasteriseCallbackT, const VertexF&, const VertexF&, const VertexF&, const Point2I&>;
+
+/// The programmable-pipeline fragment callback: it receives the per-pixel perspective-correct varyings,
+/// the affine window-space depth and the interpolated 1/w.
+template <std::uint16_t N, typename RasteriseCallbackT>
+constexpr inline bool IS_VARYING_RASTERISE_CALLBACK_V =
+    std::is_invocable_r_v<void, RasteriseCallbackT, const Point2I&, const RegisterFile<single_precision, N>&,
+                          single_precision, single_precision>;
 
 } // namespace details
 
@@ -201,6 +209,129 @@ void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2,
         const BarycentricF b{static_cast<single_precision>(w0), static_cast<single_precision>(w1),
                              static_cast<single_precision>(w2)};
         rasterise(v0, v1, v2, p, b);
+      }
+
+      w0 -= edge_a.y();
+      w1 -= edge_b.y();
+      w2 -= edge_c.y();
+    }
+
+    w0_init += edge_a.x();
+    w1_init += edge_b.x();
+    w2_init += edge_c.x();
+  }
+}
+
+/// @brief Rasterise a triangle for the programmable pipeline, visiting pixels in a bounding box using the
+/// top-left fill convention (counter-clockwise winding). Additive companion to the `VertexF` `fill_triangle_bbox`
+/// above: this overload **owns** the perspective-correct varying interpolation and the affine window-z. For every
+/// covered pixel it hands the fragment callback the interpolated `RegisterFile` varyings, the window-space depth and
+/// the interpolated `1/w`.
+///
+/// The barycentric setup (edge functions / area / accumulators), the perspective-correct attribute/`w` combine and the
+/// window-z increment are evaluated in `double_precision` -- in fixed-point mode this widens
+/// `FixedPoint16` (Q15.16, saturates above ~32768) to `FixedPoint32` (Q31.32), so the screen-space cross products and
+/// the attribute/`w` sums cannot overflow -- and are narrowed to `single_precision` only at the per-fragment hand-off.
+/// `RegisterFile` storage stays `single_precision`.
+///
+/// @tparam N The number of vec4 varying slots.
+/// @tparam RasteriseCallbackT The fragment callback type. The function must have the following signature:
+/// void(const Point2I&, const RegisterFile<single_precision, N>&, single_precision window_z, single_precision inv_w).
+/// @param[in] p0 The first vertex window-space position (x, y in pixels, z window-depth, w = 1/w_clip).
+/// @param[in] p1 The second vertex window-space position.
+/// @param[in] p2 The third vertex window-space position.
+/// @param[in] varyings0 The first vertex varyings.
+/// @param[in] varyings1 The second vertex varyings.
+/// @param[in] varyings2 The third vertex varyings.
+/// @param[in] rasterise The callback function, invoked once per covered pixel.
+template <std::uint16_t N, typename RasteriseCallbackT,
+          typename = std::enable_if_t<details::IS_VARYING_RASTERISE_CALLBACK_V<N, RasteriseCallbackT>>>
+void fill_triangle_bbox(const Vector4F& p0, const Vector4F& p1, const Vector4F& p2,
+                        const RegisterFile<single_precision, N>& varyings0,
+                        const RegisterFile<single_precision, N>& varyings1,
+                        const RegisterFile<single_precision, N>& varyings2, RasteriseCallbackT rasterise)
+{
+  using multiprecision::math::ceil;
+  using multiprecision::math::floor;
+  using std::ceil;
+  using std::floor;
+
+  const auto min_x = static_cast<std::int32_t>(floor(std::min({p0.x(), p1.x(), p2.x()})));
+  const auto min_y = static_cast<std::int32_t>(floor(std::min({p0.y(), p1.y(), p2.y()})));
+  const auto max_x = static_cast<std::int32_t>(ceil(std::max({p0.x(), p1.x(), p2.x()})));
+  const auto max_y = static_cast<std::int32_t>(ceil(std::max({p0.y(), p1.y(), p2.y()})));
+
+  // Edge functions, area and barycentric accumulators in double_precision (see function note + §11).
+  const auto va = p0.xy().cast<double_precision>();
+  const auto vb = p1.xy().cast<double_precision>();
+  const auto vc = p2.xy().cast<double_precision>();
+  auto edge_a = vc - vb; // a
+  auto edge_b = va - vc; // b
+  auto edge_c = vb - va; // c
+  const auto area = math::cross(edge_a, edge_b);
+
+  // Barycentric coordinates of the bounding box's top-left corner sampled at the pixel centre.
+  // `p*.xy()` yields position vectors, so `corner` is a Vector2D and the differences below are vectors.
+  const Vector2D corner{static_cast<double_precision>(min_x) + double_precision{0.5},
+                        static_cast<double_precision>(min_y) + double_precision{0.5}};
+  auto w0_init = math::cross(edge_a, corner - vc);
+  auto w1_init = math::cross(edge_b, corner - va);
+  auto w2_init = math::cross(edge_c, corner - vb);
+
+  // TODO: check if the bias is actually necessary.
+  // Apply top-left fill convention.
+  constexpr double_precision ZERO{0.0};
+  const auto bias = static_cast<double_precision>(ULP);
+  w0_init += is_top_left(edge_a) ? ZERO : -bias;
+  w1_init += is_top_left(edge_b) ? ZERO : -bias;
+  w2_init += is_top_left(edge_c) ? ZERO : -bias;
+
+  // Normalize the barycentric coordinates and edge increments to avoid division in the inner loop.
+  w0_init /= area;
+  w1_init /= area;
+  w2_init /= area;
+  edge_a /= area;
+  edge_b /= area;
+  edge_c /= area;
+
+  // Per-vertex 1/w (cached at the perspective divide) and window-z, widened for the combine.
+  const auto inv_w0 = static_cast<double_precision>(p0.w());
+  const auto inv_w1 = static_cast<double_precision>(p1.w());
+  const auto inv_w2 = static_cast<double_precision>(p2.w());
+  const auto z0 = static_cast<double_precision>(p0.z());
+  const auto z1 = static_cast<double_precision>(p1.z());
+  const auto z2 = static_cast<double_precision>(p2.z());
+
+  for (std::int32_t y = min_y; y <= max_y; ++y)
+  {
+    auto w0 = w0_init;
+    auto w1 = w1_init;
+    auto w2 = w2_init;
+
+    for (std::int32_t x = min_x; x <= max_x; ++x)
+    {
+      if ((w0 >= 0) && (w1 >= 0) && (w2 >= 0))
+      {
+        // Perspective-correct varying interpolation: weight each vertex by b_i/w_i and normalize by
+        // their sum (= the interpolated 1/w = gl_FragCoord.w). Accumulate in double_precision.
+        const auto c0 = w0 * inv_w0;
+        const auto c1 = w1 * inv_w1;
+        const auto c2 = w2 * inv_w2;
+        const auto inv_w = c0 + c1 + c2;
+
+        RegisterFile<single_precision, N> varyings;
+        for (std::uint16_t slot = 0U; slot < N; ++slot)
+        {
+          const auto accumulated = varyings0[slot].template cast<double_precision>() * c0
+                                 + varyings1[slot].template cast<double_precision>() * c1
+                                 + varyings2[slot].template cast<double_precision>() * c2;
+          varyings[slot] = (accumulated / inv_w).template cast<single_precision>();
+        }
+
+        // Window-z interpolates affinely (GPU-correct), no perspective divide.
+        const auto window_z = static_cast<single_precision>((w0 * z0) + (w1 * z1) + (w2 * z2));
+
+        rasterise(Point2I{x, y}, varyings, window_z, static_cast<single_precision>(inv_w));
       }
 
       w0 -= edge_a.y();
