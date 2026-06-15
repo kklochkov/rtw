@@ -10,8 +10,16 @@
 #include "math/point.h"
 #include "math/vector.h"
 
+#include <cstdint>
+
 namespace rtw::sw_renderer
 {
+
+// --- Limits -----------------------------------------------------------------
+
+/// Number of vec4 varying slots the shader pipeline exposes (shader ABI width).
+/// Shared by the shader interface (`IShaderProgram`) and the clip-space clipper (`ClipVertex`).
+constexpr inline std::uint16_t MAX_VARYING_COUNT{16U};
 
 // --- Vectors ----------------------------------------------------------------
 

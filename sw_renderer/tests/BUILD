@@ -96,3 +96,20 @@ cc_test_with_llvm_symbolizer(
         "@googletest//:gtest_main",
     ],
 )
+
+# Compile-smoke for the Step 6 clip-space clipper under RTW_USE_FIXED_POINT, so single_precision is
+# FixedPoint16 and double_precision is FixedPoint32. Proves the homogeneous clipper instantiates and
+# runs in fixed-point mode, exercising the FixedPoint32 plane-distance widening; the exact assertions
+# live in the float sw_renderer_tests target.
+cc_test_with_llvm_symbolizer(
+    name = "clipping_fixed_point_test",
+    size = "small",
+    srcs = ["clipping_fixed_point_test.cpp"],
+    local_defines = ["RTW_USE_FIXED_POINT"],
+    tags = ["no-clang-tidy"],
+    deps = [
+        "//multiprecision",
+        "//sw_renderer",
+        "@googletest//:gtest_main",
+    ],
+)

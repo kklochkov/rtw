@@ -20,10 +20,9 @@ namespace rtw::sw_renderer
 /// @param[in] polygon The polygon to clip.
 /// @param[in] plane The half-space to clip against.
 /// @return The clipped polygon.
-template <typename T, template <typename> typename VertexT, template <typename> typename PlaneT,
-          std::size_t CAPACITY = 9U>
+template <typename T, template <typename> typename VertexT, typename PlaneT, std::size_t CAPACITY = 9U>
 constexpr math::ConvexPolygon<T, VertexT, CAPACITY>
-clip_against_plane(const math::ConvexPolygon<T, VertexT, CAPACITY>& polygon, const PlaneT<T>& plane) noexcept
+clip_against_plane(const math::ConvexPolygon<T, VertexT, CAPACITY>& polygon, const PlaneT& plane) noexcept
 {
   math::ConvexPolygon<T, VertexT, CAPACITY> clipped_result;
   for (std::size_t i = 0U; i < polygon.size(); ++i)
@@ -61,11 +60,9 @@ clip_against_plane(const math::ConvexPolygon<T, VertexT, CAPACITY>& polygon, con
 /// @param[in] v2 The third vertex of the triangle.
 /// @param[in] frustum The frustum to clip against. Must have 6 planes: left, right, top, bottom, near, far.
 /// @return The clipped triangle.
-template <typename T, template <typename> typename VertexT, template <typename> typename PlaneT,
-          std::size_t CAPACITY = 9U>
-constexpr math::ConvexPolygon<T, VertexT, CAPACITY> clip(const VertexT<T>& v0, const VertexT<T>& v1,
-                                                         const VertexT<T>& v2,
-                                                         const stl::Span<const PlaneT<T>> frustum) noexcept
+template <typename T, template <typename> typename VertexT, typename PlaneT, std::size_t CAPACITY = 9U>
+constexpr math::ConvexPolygon<T, VertexT, CAPACITY>
+clip(const VertexT<T>& v0, const VertexT<T>& v1, const VertexT<T>& v2, const stl::Span<const PlaneT> frustum) noexcept
 {
   assert((frustum.size() == 6U) && "Frustum must have 6 planes: left, right, top, bottom, near, far.");
 

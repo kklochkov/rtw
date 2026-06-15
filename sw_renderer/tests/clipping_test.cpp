@@ -1,3 +1,4 @@
+#include "sw_renderer/clip_space.h"
 #include "sw_renderer/clipping.h"
 #include "sw_renderer/types.h"
 
@@ -13,13 +14,22 @@ namespace rtw::sw_renderer
 namespace
 {
 
-template <typename T, std::size_t CAPACITY>
+template <typename T, std::size_t CAPACITY = 9U>
 using ConvexPolygonVertex = math::ConvexPolygon<T, Vertex, CAPACITY>;
 
 // Helper to create a vertex at a given position
 VertexF make_vertex(const float x, const float y, const float z)
 {
   return VertexF{math::Point4<single_precision>{x, y, z, 1.0F}};
+}
+// Helper to create a clip-space vertex with a single scalar varying in slot 0.
+ClipVertex<single_precision> make_clip_vertex(const float x, const float y, const float z, const float w,
+                                              const float varying = 0.0F)
+{
+  ClipVertex<single_precision> vertex;
+  vertex.position = math::Vector4<single_precision>{x, y, z, w};
+  vertex.varyings[0] = math::Vector4<single_precision>{varying, 0.0F, 0.0F, 0.0F};
+  return vertex;
 }
 
 // Create a test frustum with known parameters
@@ -110,7 +120,7 @@ TEST(Clipping, triangulate_quad)
   const auto v2 = make_vertex(1.0F, 1.0F, -5.0F);
   const auto v3 = make_vertex(0.0F, 1.0F, -5.0F);
 
-  ConvexPolygonVertex<single_precision, 8> quad;
+  ConvexPolygonVertex<single_precision> quad;
   quad.push_back(v0);
   quad.push_back(v1);
   quad.push_back(v2);
@@ -131,7 +141,7 @@ TEST(Clipping, triangulate_pentagon)
   const auto v3 = make_vertex(0.5F, 1.0F, -5.0F);
   const auto v4 = make_vertex(-0.5F, 0.5F, -5.0F);
 
-  ConvexPolygonVertex<single_precision, 8> pentagon;
+  ConvexPolygonVertex<single_precision> pentagon;
   pentagon.push_back(v0);
   pentagon.push_back(v1);
   pentagon.push_back(v2);
@@ -151,7 +161,7 @@ TEST(Clipping, triangulate_triangle)
   const auto v1 = make_vertex(1.0F, 0.0F, -5.0F);
   const auto v2 = make_vertex(0.5F, 1.0F, -5.0F);
 
-  ConvexPolygonVertex<single_precision, 8> triangle;
+  ConvexPolygonVertex<single_precision> triangle;
   triangle.push_back(v0);
   triangle.push_back(v1);
   triangle.push_back(v2);
@@ -165,7 +175,7 @@ TEST(Clipping, triangulate_triangle)
 TEST(Clipping, triangulate_invalid_polygon)
 {
   // Polygon with less than 3 vertices is invalid
-  ConvexPolygonVertex<single_precision, 8> invalid_polygon;
+  ConvexPolygonVertex<single_precision> invalid_polygon;
   invalid_polygon.push_back(make_vertex(0.0F, 0.0F, -5.0F));
   invalid_polygon.push_back(make_vertex(1.0F, 0.0F, -5.0F));
 
@@ -178,12 +188,66 @@ TEST(Clipping, triangulate_invalid_polygon)
 TEST(Clipping, triangulate_empty_polygon)
 {
   // Empty polygon
-  ConvexPolygonVertex<single_precision, 8> empty_polygon;
+  ConvexPolygonVertex<single_precision> empty_polygon;
 
   const auto result = triangulate(empty_polygon);
 
   // Empty polygon -> 0 triangles
   EXPECT_EQ(result.triangle_count, 0U);
+}
+
+TEST(Clipping, clip_space_triangle_inside)
+{
+  // |x|, |y|, |z| <= w, so the triangle lies entirely within the clip volume.
+  const auto v0 = make_clip_vertex(0.0F, 0.0F, 0.0F, 1.0F);
+  const auto v1 = make_clip_vertex(0.5F, 0.0F, 0.0F, 1.0F);
+  const auto v2 = make_clip_vertex(0.0F, 0.5F, 0.0F, 1.0F);
+
+  const auto result = clip(v0, v1, v2);
+
+  // Triangle fully inside the clip volume keeps its three vertices.
+  EXPECT_EQ(result.size(), 3U);
+}
+
+TEST(Clipping, clip_space_triangle_outside)
+{
+  // All vertices have x > w, so the whole triangle is beyond the right plane.
+  const auto v0 = make_clip_vertex(2.0F, 0.0F, 0.0F, 1.0F);
+  const auto v1 = make_clip_vertex(3.0F, 0.0F, 0.0F, 1.0F);
+  const auto v2 = make_clip_vertex(2.0F, 1.0F, 0.0F, 1.0F);
+
+  const auto result = clip(v0, v1, v2);
+
+  // Triangle fully outside the clip volume is rejected.
+  EXPECT_EQ(result.size(), 0U);
+}
+
+TEST(Clipping, clip_space_triangle_straddling_near)
+{
+  // One vertex behind the near plane (z + w < 0), two in front of it.
+  const auto v0 = make_clip_vertex(0.0F, 0.0F, 0.0F, 1.0F);
+  const auto v1 = make_clip_vertex(0.5F, 0.0F, 0.0F, 1.0F);
+  const auto v2 = make_clip_vertex(0.0F, 0.5F, -2.0F, 1.0F);
+
+  const auto result = clip(v0, v1, v2);
+
+  // Clipping the single outside vertex against the near plane turns the triangle into a quad.
+  EXPECT_EQ(result.size(), 4U);
+}
+
+TEST(Clipping, clip_space_interpolates_varyings)
+{
+  // v1 is outside the right plane (x > w); the v0->v1 edge crosses the plane at t = 0.5.
+  const auto v0 = make_clip_vertex(0.0F, 0.0F, 0.0F, 1.0F, 10.0F);
+  const auto v1 = make_clip_vertex(2.0F, 0.0F, 0.0F, 1.0F, 20.0F);
+  const auto v2 = make_clip_vertex(0.0F, 0.5F, 0.0F, 1.0F, 30.0F);
+
+  const auto result = clip(v0, v1, v2);
+
+  // Only the right plane clips, leaving [v0, A, B, v2]; A lies on x = w with the lerped varying.
+  ASSERT_EQ(result.size(), 4U);
+  EXPECT_FLOAT_EQ(result[1].position[0], 1.0F);
+  EXPECT_FLOAT_EQ(result[1].varyings[0][0], 15.0F);
 }
 
 } // namespace

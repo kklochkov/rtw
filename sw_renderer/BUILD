@@ -8,6 +8,7 @@ cc_library(
     ],
     hdrs = [
         "camera.h",
+        "clip_space.h",
         "clipping.h",
         "color.h",
         "color_buffer.h",
