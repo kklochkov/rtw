@@ -4,6 +4,7 @@ cc_library(
     name = "sw_renderer",
     srcs = [
         "obj_loader.cpp",
+        "pipeline.cpp",
         "renderer.cpp",
     ],
     hdrs = [
@@ -17,6 +18,7 @@ cc_library(
         "mesh.h",
         "obj_loader.h",
         "ostream.h",
+        "pipeline.h",
         "pipeline_state.h",
         "precision.h",
         "projection.h",
