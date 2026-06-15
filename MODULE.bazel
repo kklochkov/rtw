@@ -1,7 +1,13 @@
 module(name = "rtw")
 
+# C++ rules. Explicit dependency required since Bazel 8+ moved the cc_* rules out of native.
+bazel_dep(name = "rules_cc", version = "0.2.19")
+
+# Build-setting transitions (used to build fixed-point variants of cc_test/cc_binary).
+bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
+
 # Toolchain configuration for LLVM.
-bazel_dep(name = "toolchains_llvm", version = "1.4.0")
+bazel_dep(name = "toolchains_llvm", version = "1.7.0")
 
 # Configure and register the toolchain.
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
@@ -19,7 +25,7 @@ bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
-    commit = "4f28899228fb3ad0126897876f147ca15026151e",
+    commit = "abb61a688167623088f8768cc9264798df6a9d10",
     # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
     # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
 )
@@ -28,17 +34,19 @@ git_override(
 bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
 git_override(
     module_name = "bazel_clang_tidy",
-    commit = "f23d924918c581c68cd5cda5f12b4f8198ac0c35",
+    commit = "c4d35e0d0b838309358e57a2efed831780f85cd0",
     remote = "https://github.com/erenon/bazel_clang_tidy.git",
 )
 
 # Third-party dependencies
-bazel_dep(name = "fmt", version = "10.2.1")
-bazel_dep(name = "googletest", version = "1.14.0")
-bazel_dep(name = "google_benchmark", version = "1.8.3")
+bazel_dep(name = "fmt", version = "12.1.0")
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "google_benchmark", version = "1.9.5")
+bazel_dep(name = "cli11", version = "2.6.2")
 
-# Non BCR third-party dependencies
-bazel_dep(name = "cli11", version = "2.4.1")
+# Non BCR third-party dependencies (served from the local //bzlmod_registery).
+# imgui/implot stay here so their SDL2 backend keeps compiling against the
+# system (sysroot) SDL2 instead of BCR imgui's bundled @sdl2 dependency.
 bazel_dep(name = "imgui", version = "1.90.5-docking")
 bazel_dep(name = "implot", version = "0.16-docking")
 

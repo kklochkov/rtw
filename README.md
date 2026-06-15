@@ -35,7 +35,11 @@ To run the software renderer demo application use the following command:
 bazel run //sandbox/sw_renderer -c opt
 ```
 Note the `-c opt` flag, which is used to run the application in release mode to get better performance.
-It's possible to run the demo application that uses fixed-point arithmetic by adding the `--define=use_fixed_point`.
+
+It's possible to run a demo that uses fixed-point arithmetic via the dedicated target, which recompiles the renderer with `FixedPoint16` precision:
+```bash
+bazel run //sandbox/sw_renderer:sw_renderer_fixed_point -c opt
+```
 
 ## Third party libraries
 - [SDL2](https://www.libsdl.org/) - Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D

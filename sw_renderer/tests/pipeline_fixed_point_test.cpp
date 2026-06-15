@@ -24,13 +24,14 @@ namespace rtw::sw_renderer
 namespace
 {
 
-// This target is compiled with RTW_USE_FIXED_POINT (see BUILD local_defines) so that single_precision
-// is FixedPoint16 and double_precision is FixedPoint32. It is a compile-smoke proving the pipeline core
-// (clip-space clip, perspective divide / viewport transform with the FixedPoint32-widened winding area,
-// depth test and colour write) instantiates and runs in fixed-point mode; the exact assertions live in
-// the float sw_renderer_tests target.
+// This target is built via cc_test_with_fixed_point (see BUILD), whose config transition recompiles the
+// whole dependency graph -- including the //sw_renderer library (pipeline.cpp) -- with
+// RTW_USE_FIXED_POINT, so single_precision is FixedPoint16 and double_precision is FixedPoint32. It
+// exercises the pipeline core (clip-space clip, perspective divide / viewport transform with the
+// FixedPoint32-widened winding area, depth test and colour write) end-to-end in fixed-point mode and
+// checks the rasterised colour and depth output.
 static_assert(multiprecision::IS_FIXED_POINT_V<single_precision>,
-              "This test must be built with RTW_USE_FIXED_POINT (see BUILD local_defines)");
+              "This test must be built with RTW_USE_FIXED_POINT (built via cc_test_with_fixed_point; see BUILD)");
 
 constexpr std::size_t WIDTH{8U};
 constexpr std::size_t HEIGHT{8U};
@@ -61,7 +62,7 @@ public:
   }
 };
 
-TEST(PipelineFixedPoint, submits_triangle_without_crashing)
+TEST(PipelineFixedPoint, draw_arrays_fills_color_and_depth)
 {
   const std::vector<Vertex> vertices{Vertex{{-1.0F, -1.0F, 0.0F, 1.0F}}, Vertex{{3.0F, -1.0F, 0.0F, 1.0F}},
                                      Vertex{{-1.0F, 3.0F, 0.0F, 1.0F}}};
@@ -80,7 +81,15 @@ TEST(PipelineFixedPoint, submits_triangle_without_crashing)
 
   pipeline.draw_arrays(program, stream, state, framebuffer, stats);
 
+  // The ConstantColorProgram does no interpolation, so every covered pixel quantises exactly to red.
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{0xFF'00'00'FFU});
+  EXPECT_EQ(framebuffer.color_buffer().pixel(1U, 1U), Color{0xFF'00'00'FFU});
+  EXPECT_EQ(framebuffer.color_buffer().pixel(6U, 6U), Color{0xFF'00'00'FFU});
+  // Depth is barycentric-interpolated, so allow a small fixed-point slack around the expected 0.5.
+  EXPECT_NEAR(static_cast<float>(framebuffer.depth_buffer().depth(4U, 4U)), 0.5F, 1.0e-3F);
   EXPECT_EQ(stats.triangles_submitted, 1U);
+  EXPECT_GE(stats.triangles_rendered, 1U);
+  EXPECT_EQ(stats.triangles_clipped, 0U);
 }
 
 } // namespace

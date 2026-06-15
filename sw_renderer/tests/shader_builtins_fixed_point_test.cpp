@@ -14,18 +14,18 @@
 #include <cstdint>
 #include <initializer_list>
 
-// Compile-smoke for the Step 2 shader-support primitives (Color <-> Vector4 conversions, Sampler2D,
-// and the GLSL-style built-ins) built with RTW_USE_FIXED_POINT (see BUILD local_defines) so that
-// single_precision is FixedPoint16 (Q15.16). Its primary job is to prove these header-only templates
-// instantiate and run in the fixed-point mode; the float test files (color_test/sampler_test/
-// shader_builtins_test) carry the exhaustive, exact assertions. Tolerances here sit comfortably above
-// the FixedPoint16 resolution (~2^-16).
+// Fixed-point coverage for the Step 2 shader-support primitives (Color <-> Vector4 conversions,
+// Sampler2D, and the GLSL-style built-ins). Built via cc_test_with_fixed_point (see BUILD), whose config
+// transition compiles this target with RTW_USE_FIXED_POINT so that single_precision is FixedPoint16
+// (Q15.16). It runs these header-only templates in fixed-point mode and checks their numeric results;
+// the float test files (color_test/sampler_test/shader_builtins_test) carry the exhaustive assertions.
+// Tolerances here sit comfortably above the FixedPoint16 resolution (~2^-16).
 namespace
 {
 namespace sw = rtw::sw_renderer;
 
 static_assert(rtw::multiprecision::IS_FIXED_POINT_V<sw::single_precision>,
-              "This target must be built with RTW_USE_FIXED_POINT (see BUILD local_defines)");
+              "This target must be built with RTW_USE_FIXED_POINT (built via cc_test_with_fixed_point; see BUILD)");
 
 constexpr double TOLERANCE = 1.0e-3;
 

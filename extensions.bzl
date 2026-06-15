@@ -1,5 +1,5 @@
 _BUILD_CONTENT_PROLOGUE = """
-load("@@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
 package(default_visibility = ["//visibility:public"])"""
 

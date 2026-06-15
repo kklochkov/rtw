@@ -8,18 +8,18 @@
 
 #include <gtest/gtest.h>
 
-// Compile-smoke for the Step 6 clip-space clipper built with RTW_USE_FIXED_POINT (see BUILD
-// local_defines) so single_precision is FixedPoint16 and double_precision is FixedPoint32. The
-// homogeneous clipper must instantiate and run in fixed-point mode, exercising the FixedPoint32
-// plane-distance widening and the narrowing back to FixedPoint16; the exact assertions live in the
-// float sw_renderer_tests target.
+// Fixed-point coverage for the Step 6 clip-space clipper. Built via cc_test_with_fixed_point (see
+// BUILD), whose config transition compiles this target with RTW_USE_FIXED_POINT, so single_precision is
+// FixedPoint16 and double_precision is FixedPoint32. It exercises the homogeneous clipper in fixed-point
+// mode -- the FixedPoint32 plane-distance widening and the narrowing back to FixedPoint16 -- and checks
+// the clipped vertex count and the interpolated position / varying values.
 namespace
 {
 
 namespace sw = rtw::sw_renderer;
 
 static_assert(rtw::multiprecision::IS_FIXED_POINT_V<sw::single_precision>,
-              "This target must be built with RTW_USE_FIXED_POINT (see BUILD local_defines)");
+              "This target must be built with RTW_USE_FIXED_POINT (built via cc_test_with_fixed_point; see BUILD)");
 
 constexpr double TOLERANCE = 1.0e-3;
 

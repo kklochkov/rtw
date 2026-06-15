@@ -14,10 +14,11 @@
 #include <cstring>
 #include <vector>
 
-// Compile-smoke for the Step 4 vertex-input primitives built with RTW_USE_FIXED_POINT (see BUILD
-// local_defines) so single_precision is FixedPoint16. The typed stream and the raw decode path must
-// instantiate and run in fixed-point mode; the exhaustive, exact assertions live in the float
-// vertex_layout_test / vertex_stream_test targets.
+// Fixed-point coverage for the Step 4 vertex-input primitives. Built via cc_test_with_fixed_point (see
+// BUILD), whose config transition compiles this target with RTW_USE_FIXED_POINT so single_precision is
+// FixedPoint16. It runs the typed stream and the raw decode path in fixed-point mode and checks the
+// decoded values; the float vertex_layout_test / vertex_stream_test targets carry the exhaustive
+// assertions.
 namespace
 {
 
@@ -25,7 +26,7 @@ namespace sw = rtw::sw_renderer;
 namespace stl = rtw::stl;
 
 static_assert(rtw::multiprecision::IS_FIXED_POINT_V<sw::single_precision>,
-              "This target must be built with RTW_USE_FIXED_POINT (see BUILD local_defines)");
+              "This target must be built with RTW_USE_FIXED_POINT (built via cc_test_with_fixed_point; see BUILD)");
 
 constexpr double TOLERANCE = 1.0e-3;
 

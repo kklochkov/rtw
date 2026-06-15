@@ -1,4 +1,4 @@
-load("//:cc_defs.bzl", "cc_test_with_llvm_symbolizer")
+load("//:cc_defs.bzl", "cc_test_with_fixed_point", "cc_test_with_llvm_symbolizer")
 
 cc_test_with_llvm_symbolizer(
     name = "sw_renderer_tests",
@@ -33,7 +33,7 @@ cc_test_with_llvm_symbolizer(
     ],
 )
 
-cc_test_with_llvm_symbolizer(
+cc_test_with_fixed_point(
     name = "sw_renderer_fixed_point_tests",
     size = "small",
     srcs = [
@@ -44,7 +44,6 @@ cc_test_with_llvm_symbolizer(
         "shader_fixed_point_test.cpp",
         "vertex_input_fixed_point_test.cpp",
     ],
-    local_defines = ["RTW_USE_FIXED_POINT"],
     tags = ["no-clang-tidy"],
     deps = [
         "//multiprecision",

@@ -14,14 +14,14 @@ namespace rtw::sw_renderer
 namespace
 {
 
-// This test target is compiled with RTW_USE_FIXED_POINT (see BUILD local_defines) so that
-// single_precision is FixedPoint16 (Q15.16) and double_precision is FixedPoint32 (Q31.32). It guards
-// the fixed-point rasterisation path: fill_triangle_bbox computes edge functions in double_precision,
-// so the screen-space cross products do not overflow for large triangles. With FixedPoint16 alone
-// (max ~32768) the area/barycentric cross products saturate once a triangle spans more than ~181
-// pixels, corrupting the fill.
+// This target is built via cc_test_with_fixed_point (see BUILD), whose config transition compiles it
+// with RTW_USE_FIXED_POINT so that single_precision is FixedPoint16 (Q15.16) and double_precision is
+// FixedPoint32 (Q31.32). It guards the fixed-point rasterisation path: fill_triangle_bbox computes edge
+// functions in double_precision, so the screen-space cross products do not overflow for large triangles.
+// With FixedPoint16 alone (max ~32768) the area/barycentric cross products saturate once a triangle
+// spans more than ~181 pixels, corrupting the fill.
 static_assert(multiprecision::IS_FIXED_POINT_V<single_precision>,
-              "This test must be built with RTW_USE_FIXED_POINT (see BUILD local_defines)");
+              "This test must be built with RTW_USE_FIXED_POINT (built via cc_test_with_fixed_point; see BUILD)");
 
 TEST(RasterisationFixedPoint, small_triangle_fills_pixels)
 {

@@ -1,9 +1,3 @@
-# Not needed after https://github.com/bazelbuild/bazel/issues/7260 is closed
-build --incompatible_enable_cc_toolchain_resolution
-
-# Enable Bzlmod for every Bazel command
-common --enable_bzlmod
-
 # Registers
 common --registry=file://%workspace%/bzlmod_registery
 common --registry=https://bcr.bazel.build
@@ -33,6 +27,10 @@ build --cxxopt=-Wall
 build --cxxopt=-Wextra
 build --cxxopt=-Wpedantic
 build --cxxopt=-Werror
+
+# Route external (third-party) repository headers through -isystem so our -Werror
+# warnings only apply to first-party code, not to BCR dependencies' headers.
+build --features=external_include_paths
 
 # Sanitizers
 # The cc_test_with_llvm_symbolizer and cc_binary_with_llvm_symbolizer rules allow to use the llvm-symbolizer
@@ -68,4 +66,3 @@ build:sssan --linkopt=-fsanitize=safe-stack
 
 # different custom configs
 build:debug-drawing --copt="-DRTW_DEBUG_DRAWING"
-build:use-fixed-point --copt="-DRTW_USE_FIXED_POINT"
