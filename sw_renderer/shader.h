@@ -56,6 +56,6 @@ public:
   virtual FragmentShaderOutput fragment(const DynamicVaryings& input, const FragmentContext& context) const = 0;
 };
 
-using IShaderProgram = IShaderProgramGeneric<16U>;
+using IShaderProgram = IShaderProgramGeneric<MAX_VARYING_COUNT>;
 
 } // namespace rtw::sw_renderer
