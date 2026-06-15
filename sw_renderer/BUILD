@@ -22,6 +22,7 @@ cc_library(
         "projection.h",
         "rasterisation_routines.h",
         "register_file.h",
+        "render_stats.h",
         "renderer.h",
         "sampler.h",
         "shader.h",

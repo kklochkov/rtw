@@ -4,6 +4,7 @@
 #include "sw_renderer/color_buffer.h"
 #include "sw_renderer/depth_buffer.h"
 #include "sw_renderer/mesh.h"
+#include "sw_renderer/render_stats.h"
 #include "sw_renderer/types.h"
 #include "sw_renderer/vertex.h"
 
@@ -25,23 +26,6 @@ enum class RenderMode : std::uint8_t
 };
 
 using RenderModeFlags = stl::Flags<RenderMode>;
-
-/// Statistics collected during rendering.
-struct RenderStats
-{
-  std::size_t triangles_submitted{0}; ///< Triangles before clipping
-  std::size_t triangles_clipped{0};   ///< Triangles fully outside frustum
-  std::size_t triangles_culled{0};    ///< Triangles removed by face culling
-  std::size_t triangles_rendered{0};  ///< Triangles actually drawn
-
-  void reset() noexcept
-  {
-    triangles_submitted = 0;
-    triangles_clipped = 0;
-    triangles_culled = 0;
-    triangles_rendered = 0;
-  }
-};
 
 /// Software rasterizer with configurable rendering modes (wireframe, shading, texturing, lighting).
 ///
