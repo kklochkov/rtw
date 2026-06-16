@@ -1,7 +1,8 @@
 #include "math/barycentric.h"
 #include "math/barycentric_operations.h"
 #include "math/vector_operations.h"
-#include "sw_renderer/rasterisation_routines.h"
+#include "sw_renderer/fixed_pipeline/rasterisation_routines.h"
+#include "sw_renderer/raster_common.h"
 #include "sw_renderer/vertex.h"
 
 #include <benchmark/benchmark.h>

@@ -1,7 +1,7 @@
 #include "constants/time_constants.h"
 #include "sw_renderer/camera.h"
+#include "sw_renderer/fixed_pipeline/renderer.h"
 #include "sw_renderer/obj_loader.h"
-#include "sw_renderer/renderer.h"
 #include "sw_renderer/types.h"
 
 #include "math/transform3.h"

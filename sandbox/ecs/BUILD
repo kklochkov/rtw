@@ -26,7 +26,7 @@ cc_binary_with_llvm_symbolizer(
         "//ecs",
         "//event_bus",
         "//stl",
-        "//sw_renderer",
+        "//sw_renderer:core",
         "@cli11",
         "@fmt",
         "@sysroot//:SDL2",

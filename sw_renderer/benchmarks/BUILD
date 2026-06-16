@@ -5,7 +5,9 @@ cc_binary(
     srcs = ["rasterisation_benchmark.cpp"],
     tags = ["no-clang-tidy"],
     deps = [
-        "//sw_renderer",
+        "//math",
+        "//sw_renderer:core",
+        "//sw_renderer/fixed_pipeline",
         "@google_benchmark//:benchmark_main",
     ],
 )

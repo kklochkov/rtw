@@ -67,7 +67,7 @@ The `RenderStats` struct tracks per-frame:
 ## Build & Test
 
 ```bash
-bazel test //sw_renderer/tests:sw_renderer_tests
+bazel test //sw_renderer/tests:core_tests
 bazel run //sandbox/sw_renderer:sw_renderer  # interactive demo
 ```
 
