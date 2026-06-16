@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 namespace rtw::sw_renderer
@@ -164,6 +165,69 @@ TEST(Rasterisation, fill_triangle_bbox_basic)
   EXPECT_GT(pixel_count, 0U);
 }
 
+TEST(Rasterisation, fill_triangle_bbox_shared_edge_single_cover)
+{
+  // Two triangles tiling a square, meeting along the top-left -> bottom-right diagonal. The top-left
+  // fill convention must rasterise the shared edge for exactly one of them, so every covered pixel is
+  // visited exactly once (double-cover would double-blend translucent fragments). Both triangles are
+  // wound counter-clockwise here, so the signed area is positive.
+  constexpr std::int32_t GRID = 64;
+  std::vector<int> coverage(static_cast<std::size_t>(GRID * GRID), 0);
+
+  const VertexF tl{Point4F{10.0F, 10.0F, 1.0F, 1.0F}};
+  const VertexF tr{Point4F{30.0F, 10.0F, 1.0F, 1.0F}};
+  const VertexF br{Point4F{30.0F, 30.0F, 1.0F, 1.0F}};
+  const VertexF bl{Point4F{10.0F, 30.0F, 1.0F, 1.0F}};
+
+  const auto accumulate = [&coverage](const VertexF& /*v0*/, const VertexF& /*v1*/, const VertexF& /*v2*/,
+                                      const Point2I& p, const BarycentricF& /*b*/)
+  { ++coverage[static_cast<std::size_t>((p.y() * GRID) + p.x())]; };
+
+  fill_triangle_bbox(tl, tr, br, accumulate);
+  fill_triangle_bbox(tl, br, bl, accumulate);
+
+  int max_coverage = 0;
+  int total_coverage = 0;
+  for (const int count : coverage)
+  {
+    max_coverage = std::max(max_coverage, count);
+    total_coverage += count;
+  }
+  EXPECT_EQ(max_coverage, 1);   // no pixel rasterised twice along the shared edge
+  EXPECT_GT(total_coverage, 0); // the square is actually filled (no wholesale cracking)
+}
+
+TEST(Rasterisation, fill_triangle_bbox_shared_edge_back_facing_single_cover)
+{
+  // Same shared-edge invariant, but both triangles are wound clockwise (signed area < 0), as a
+  // CullMode::NONE back-facing triangle would be. The top-left bias must follow the sign of the area;
+  // otherwise the shared diagonal is rasterised by both triangles and its pixels are covered twice.
+  constexpr std::int32_t GRID = 64;
+  std::vector<int> coverage(static_cast<std::size_t>(GRID * GRID), 0);
+
+  const VertexF tl{Point4F{10.0F, 10.0F, 1.0F, 1.0F}};
+  const VertexF tr{Point4F{30.0F, 10.0F, 1.0F, 1.0F}};
+  const VertexF br{Point4F{30.0F, 30.0F, 1.0F, 1.0F}};
+  const VertexF bl{Point4F{10.0F, 30.0F, 1.0F, 1.0F}};
+
+  const auto accumulate = [&coverage](const VertexF& /*v0*/, const VertexF& /*v1*/, const VertexF& /*v2*/,
+                                      const Point2I& p, const BarycentricF& /*b*/)
+  { ++coverage[static_cast<std::size_t>((p.y() * GRID) + p.x())]; };
+
+  fill_triangle_bbox(tl, br, tr, accumulate);
+  fill_triangle_bbox(tl, bl, br, accumulate);
+
+  int max_coverage = 0;
+  int total_coverage = 0;
+  for (const int count : coverage)
+  {
+    max_coverage = std::max(max_coverage, count);
+    total_coverage += count;
+  }
+  EXPECT_EQ(max_coverage, 1);
+  EXPECT_GT(total_coverage, 0);
+}
+
 TEST(Rasterisation, fill_triangle_scanline_basic)
 {
   std::size_t pixel_count = 0;
@@ -316,6 +380,41 @@ TEST(Rasterisation, programmable_fill_triangle_bbox_perspective_correct_constant
                      });
 
   EXPECT_GT(pixel_count, 0U);
+}
+
+TEST(Rasterisation, programmable_fill_triangle_bbox_shared_edge_back_facing_single_cover)
+{
+  // The shared-edge single-cover invariant for the programmable overload, with clockwise (signed
+  // area < 0) triangles. The area-signed top-left bias must still exclude the shared diagonal for
+  // exactly one triangle, so no fragment is emitted (and later blended) twice.
+  constexpr std::int32_t GRID = 64;
+  std::vector<int> coverage(static_cast<std::size_t>(GRID * GRID), 0);
+
+  const Vector4F tl{10.0F, 10.0F, 1.0F, 1.0F};
+  const Vector4F tr{30.0F, 10.0F, 1.0F, 1.0F};
+  const Vector4F br{30.0F, 30.0F, 1.0F, 1.0F};
+  const Vector4F bl{10.0F, 30.0F, 1.0F, 1.0F};
+
+  const RegisterFile<single_precision, 1U> varyings0;
+  const RegisterFile<single_precision, 1U> varyings1;
+  const RegisterFile<single_precision, 1U> varyings2;
+
+  const auto accumulate = [&coverage](const Point2I& p, const RegisterFile<single_precision, 1U>& /*varyings*/,
+                                      single_precision /*window_z*/, single_precision /*inv_w*/)
+  { ++coverage[static_cast<std::size_t>((p.y() * GRID) + p.x())]; };
+
+  fill_triangle_bbox(tl, br, tr, varyings0, varyings1, varyings2, accumulate);
+  fill_triangle_bbox(tl, bl, br, varyings0, varyings1, varyings2, accumulate);
+
+  int max_coverage = 0;
+  int total_coverage = 0;
+  for (const int count : coverage)
+  {
+    max_coverage = std::max(max_coverage, count);
+    total_coverage += count;
+  }
+  EXPECT_EQ(max_coverage, 1);
+  EXPECT_GT(total_coverage, 0);
 }
 
 } // namespace

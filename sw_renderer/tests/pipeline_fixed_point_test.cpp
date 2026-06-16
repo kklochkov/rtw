@@ -44,9 +44,39 @@ struct Vertex
 
 static_assert(sizeof(Vertex) == 16U, "Vertex must be tightly packed for the byte-offset layout");
 
+const Vector4F RED{single_precision{1}, single_precision{0}, single_precision{0}, single_precision{1}};
+const Vector4F GREEN{single_precision{0}, single_precision{1}, single_precision{0}, single_precision{1}};
+const Vector4F WHITE{single_precision{1}, single_precision{1}, single_precision{1}, single_precision{1}};
+
+VertexLayout make_layout()
+{
+  return VertexLayout{{VertexAttribute{POSITION_LOCATION, 0U, ComponentType::FLOAT32, 4U}}, sizeof(Vertex)};
+}
+
+/// Non-owning raw stream over `vertices`; the caller keeps `vertices` alive.
+RawVertexStream make_stream(const std::vector<Vertex>& vertices)
+{
+  return RawVertexStream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
+}
+
+/// A counter-clockwise full-screen triangle: after clipping it covers every pixel in the 8x8 target.
+std::vector<Vertex> full_screen_triangle()
+{
+  return {Vertex{{-1.0F, -1.0F, 0.0F, 1.0F}}, Vertex{{3.0F, -1.0F, 0.0F, 1.0F}}, Vertex{{-1.0F, 3.0F, 0.0F, 1.0F}}};
+}
+
+PipelineState make_state()
+{
+  PipelineState state;
+  state.viewport = Viewport{0, 0, static_cast<std::int32_t>(WIDTH), static_cast<std::int32_t>(HEIGHT)};
+  return state;
+}
+
 class ConstantColorProgram : public IShaderProgram
 {
 public:
+  explicit ConstantColorProgram(const Vector4F& color) : color_{color} {}
+
   VertexShaderOutput vertex(const AttributeView& input, const VertexContext& /*context*/) const override
   {
     VertexShaderOutput out;
@@ -57,29 +87,27 @@ public:
   FragmentShaderOutput fragment(const DynamicVaryings& /*varyings*/, const FragmentContext& /*context*/) const override
   {
     FragmentShaderOutput out;
-    out.color = Vector4F{single_precision{1}, single_precision{0}, single_precision{0}, single_precision{1}};
+    out.color = color_;
     return out;
   }
+
+private:
+  Vector4F color_;
 };
 
 TEST(PipelineFixedPoint, draw_arrays_fills_color_and_depth)
 {
-  const std::vector<Vertex> vertices{Vertex{{-1.0F, -1.0F, 0.0F, 1.0F}}, Vertex{{3.0F, -1.0F, 0.0F, 1.0F}},
-                                     Vertex{{-1.0F, 3.0F, 0.0F, 1.0F}}};
-  const VertexLayout layout{{VertexAttribute{POSITION_LOCATION, 0U, ComponentType::FLOAT32, 4U}}, sizeof(Vertex)};
-  const RawVertexStream stream{layout, stl::as_bytes(stl::make_span(vertices))};
+  const auto vertices = full_screen_triangle();
+  const auto stream = make_stream(vertices);
 
   FrameBuffer framebuffer{WIDTH, HEIGHT};
   framebuffer.clear(Color{}, single_precision{1});
 
-  PipelineState state;
-  state.viewport = Viewport{0, 0, static_cast<std::int32_t>(WIDTH), static_cast<std::int32_t>(HEIGHT)};
-
-  const ConstantColorProgram program;
+  const ConstantColorProgram program{RED};
   RenderStats stats;
   Pipeline pipeline;
 
-  pipeline.draw_arrays(program, stream, state, framebuffer, stats);
+  pipeline.draw_arrays(program, stream, make_state(), framebuffer, stats);
 
   // The ConstantColorProgram does no interpolation, so every covered pixel quantises exactly to red.
   EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{0xFF'00'00'FFU});
@@ -90,6 +118,59 @@ TEST(PipelineFixedPoint, draw_arrays_fills_color_and_depth)
   EXPECT_EQ(stats.triangles_submitted, 1U);
   EXPECT_GE(stats.triangles_rendered, 1U);
   EXPECT_EQ(stats.triangles_clipped, 0U);
+}
+
+TEST(PipelineFixedPoint, blending_mixes_translucent_source_over_destination)
+{
+  const auto vertices = full_screen_triangle();
+  const auto stream = make_stream(vertices);
+
+  FrameBuffer framebuffer{WIDTH, HEIGHT};
+  framebuffer.clear(Color{GREEN}, single_precision{1}); // opaque green destination
+
+  // Classic source-over alpha blend, with the FixedPoint16 multiplies running inside pipeline.cpp.
+  auto state = make_state();
+  state.blend.enabled = true;
+  state.blend.src_rgb = BlendFactor::SRC_ALPHA;
+  state.blend.dst_rgb = BlendFactor::ONE_MINUS_SRC_ALPHA;
+
+  const ConstantColorProgram program{
+      Vector4F{single_precision{1}, single_precision{0}, single_precision{0}, single_precision{0.5F}}};
+  RenderStats stats;
+  Pipeline pipeline;
+
+  pipeline.draw_arrays(program, stream, state, framebuffer, stats);
+
+  // rgb = red * 0.5 + green * 0.5 = (0.5, 0.5, 0); a = 0.5 * 1 + 1 * 0 = 0.5; each 0.5 -> 127.
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U),
+            (Color{std::uint8_t{127}, std::uint8_t{127}, std::uint8_t{0}, std::uint8_t{127}}));
+}
+
+TEST(PipelineFixedPoint, additive_blending_sums_source_and_destination)
+{
+  const auto vertices = full_screen_triangle();
+  const auto stream = make_stream(vertices);
+
+  FrameBuffer framebuffer{WIDTH, HEIGHT};
+  framebuffer.clear(Color{GREEN}, single_precision{1}); // opaque green destination
+
+  // Additive blend (src * 1 + dst * 1) for both RGB and alpha.
+  auto state = make_state();
+  state.blend.enabled = true;
+  state.blend.src_rgb = BlendFactor::ONE;
+  state.blend.dst_rgb = BlendFactor::ONE;
+  state.blend.src_alpha = BlendFactor::ONE;
+  state.blend.dst_alpha = BlendFactor::ONE;
+
+  // Magenta added to green yields white; alpha 1 + 1 = 2 saturates (FixedPoint16 holds 2.0 exactly).
+  const ConstantColorProgram program{
+      Vector4F{single_precision{1}, single_precision{0}, single_precision{1}, single_precision{1}}};
+  RenderStats stats;
+  Pipeline pipeline;
+
+  pipeline.draw_arrays(program, stream, state, framebuffer, stats);
+
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{WHITE});
 }
 
 } // namespace

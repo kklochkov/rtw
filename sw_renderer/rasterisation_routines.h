@@ -128,9 +128,30 @@ void draw_line_bresenham(const Point2I& p0, const Point2I& p1, RasteriseCallback
 template <typename T>
 constexpr bool is_top_left(const math::Vector2<T>& edge) noexcept
 {
-  const bool is_top = edge.y() == T{0} && edge.x() < T{0};
+  const bool is_top = (edge.y() == T{0}) && (edge.x() < T{0});
   const bool is_left = edge.y() > T{0};
   return is_top || is_left;
+}
+
+/// Calculate the bias to apply to the edge function values for the top-left fill convention.
+///
+/// Apply the top-left fill convention. The bias nudges pixels lying exactly on a non-top-left edge to the
+/// outside, so a shared edge is rasterised by exactly one of the two triangles meeting on it (double-cover
+/// would double-blend translucent fragments). The bias must follow the sign of the signed `area`: the
+/// barycentrics are normalised by `area` below, and CullMode::NONE rasterises back-facing (clockwise,
+/// area < 0) triangles without reordering their vertices to counter-clockwise.
+///
+/// @tparam T The type of the elements.
+/// @param[in] area The signed area of the triangle (cross product of two edges).
+/// @param[in] edge The edge of the triangle.
+/// @return The bias to apply to the edge function values for the top-left fill convention.
+template <typename T>
+constexpr T fill_bias(const T area, const math::Vector2<T>& edge) noexcept
+{
+  constexpr double_precision ZERO{0.0};
+  const auto magnitude = static_cast<double_precision>(ULP);
+  const auto bias = (area > ZERO) ? magnitude : -magnitude;
+  return is_top_left(edge) ? ZERO : -bias;
 }
 
 /// Rasterise a triangle by visiting pixels in a bounding box using top-left fill convention.
@@ -179,11 +200,9 @@ void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2,
   auto w2_init = math::cross(edge_c, p0 - vb);
 
   // Apply top-left fill convention.
-  constexpr double_precision ZERO{0.0};
-  const auto bias = static_cast<double_precision>(ULP);
-  w0_init += is_top_left(edge_a) ? ZERO : -bias;
-  w1_init += is_top_left(edge_b) ? ZERO : -bias;
-  w2_init += is_top_left(edge_c) ? ZERO : -bias;
+  w0_init += fill_bias(area, edge_a);
+  w1_init += fill_bias(area, edge_b);
+  w2_init += fill_bias(area, edge_c);
 
   // Normalize the barycentric coordinates to avoid division in the inner loop.
   w0_init /= area;
@@ -278,13 +297,10 @@ void fill_triangle_bbox(const Vector4F& p0, const Vector4F& p1, const Vector4F& 
   auto w1_init = math::cross(edge_b, corner - va);
   auto w2_init = math::cross(edge_c, corner - vb);
 
-  // TODO: check if the bias is actually necessary.
   // Apply top-left fill convention.
-  constexpr double_precision ZERO{0.0};
-  const auto bias = static_cast<double_precision>(ULP);
-  w0_init += is_top_left(edge_a) ? ZERO : -bias;
-  w1_init += is_top_left(edge_b) ? ZERO : -bias;
-  w2_init += is_top_left(edge_c) ? ZERO : -bias;
+  w0_init += fill_bias(area, edge_a);
+  w1_init += fill_bias(area, edge_b);
+  w2_init += fill_bias(area, edge_c);
 
   // Normalize the barycentric coordinates and edge increments to avoid division in the inner loop.
   w0_init /= area;

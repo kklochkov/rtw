@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <vector>
 
 namespace rtw::sw_renderer
 {
@@ -129,6 +131,38 @@ TEST(RasterisationFixedPoint, programmable_large_triangle_preserves_constant_var
   EXPECT_LT(pixel_count, 32'000U);
   EXPECT_TRUE(inv_w_positive);
   EXPECT_LT(max_constant_error, 0.01); // Well above FixedPoint16 resolution (~2^-16).
+}
+
+TEST(RasterisationFixedPoint, shared_edge_back_facing_single_cover)
+{
+  // Fixed-point parity for the area-signed top-left bias: two clockwise (signed area < 0) triangles
+  // tiling a square and meeting along the top-left -> bottom-right diagonal must cover every pixel
+  // exactly once. With an unsigned bias the FixedPoint32 normalise-by-area flips the bias sign and the
+  // shared diagonal is rasterised by both triangles.
+  constexpr std::int32_t GRID = 64;
+  std::vector<int> coverage(static_cast<std::size_t>(GRID * GRID), 0);
+
+  const VertexF tl{Point4F{10.0F, 10.0F, 1.0F, 1.0F}};
+  const VertexF tr{Point4F{30.0F, 10.0F, 1.0F, 1.0F}};
+  const VertexF br{Point4F{30.0F, 30.0F, 1.0F, 1.0F}};
+  const VertexF bl{Point4F{10.0F, 30.0F, 1.0F, 1.0F}};
+
+  const auto accumulate = [&coverage](const VertexF& /*v0*/, const VertexF& /*v1*/, const VertexF& /*v2*/,
+                                      const Point2I& p, const BarycentricF& /*b*/)
+  { ++coverage[static_cast<std::size_t>((p.y() * GRID) + p.x())]; };
+
+  fill_triangle_bbox(tl, br, tr, accumulate);
+  fill_triangle_bbox(tl, bl, br, accumulate);
+
+  int max_coverage = 0;
+  int total_coverage = 0;
+  for (const int count : coverage)
+  {
+    max_coverage = std::max(max_coverage, count);
+    total_coverage += count;
+  }
+  EXPECT_EQ(max_coverage, 1);
+  EXPECT_GT(total_coverage, 0);
 }
 
 } // namespace

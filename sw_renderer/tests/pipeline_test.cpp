@@ -321,6 +321,56 @@ TEST(Pipeline, color_mask_disables_channel_writes)
             (Color{std::uint8_t{0}, std::uint8_t{255}, std::uint8_t{255}, std::uint8_t{255}}));
 }
 
+TEST(Pipeline, blending_mixes_translucent_source_over_destination)
+{
+  FrameBuffer framebuffer{WIDTH, HEIGHT};
+  framebuffer.clear(Color{GREEN}, 1.0F); // opaque green destination
+
+  // Classic "source-over" alpha blend: src * srcAlpha + dst * (1 - srcAlpha).
+  auto state = make_state();
+  state.blend.enabled = true;
+  state.blend.src_rgb = BlendFactor::SRC_ALPHA;
+  state.blend.dst_rgb = BlendFactor::ONE_MINUS_SRC_ALPHA;
+
+  // A half-transparent red fragment laid over the green background.
+  const ConstantColorProgram program{Vector4F{1.0F, 0.0F, 0.0F, 0.5F}};
+  const auto vertices = full_screen_triangle(RED);
+  const auto stream = make_stream(vertices);
+  RenderStats stats;
+  Pipeline pipeline;
+
+  pipeline.draw_arrays(program, stream, state, framebuffer, stats);
+
+  // rgb = red * 0.5 + green * 0.5 = (0.5, 0.5, 0); a = 0.5 * 1 + 1 * 0 = 0.5; each 0.5 -> 127.
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U),
+            (Color{std::uint8_t{127}, std::uint8_t{127}, std::uint8_t{0}, std::uint8_t{127}}));
+}
+
+TEST(Pipeline, additive_blending_sums_source_and_destination)
+{
+  FrameBuffer framebuffer{WIDTH, HEIGHT};
+  framebuffer.clear(Color{GREEN}, 1.0F); // opaque green destination
+
+  // Additive blend (src * 1 + dst * 1) for both RGB and alpha.
+  auto state = make_state();
+  state.blend.enabled = true;
+  state.blend.src_rgb = BlendFactor::ONE;
+  state.blend.dst_rgb = BlendFactor::ONE;
+  state.blend.src_alpha = BlendFactor::ONE;
+  state.blend.dst_alpha = BlendFactor::ONE;
+
+  // Magenta added to green yields white; alpha 1 + 1 = 2 saturates to 255.
+  const ConstantColorProgram program{Vector4F{1.0F, 0.0F, 1.0F, 1.0F}};
+  const auto vertices = full_screen_triangle(RED);
+  const auto stream = make_stream(vertices);
+  RenderStats stats;
+  Pipeline pipeline;
+
+  pipeline.draw_arrays(program, stream, state, framebuffer, stats);
+
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{WHITE});
+}
+
 TEST(Pipeline, discarded_fragments_leave_the_framebuffer_untouched)
 {
   FrameBuffer framebuffer{WIDTH, HEIGHT};
