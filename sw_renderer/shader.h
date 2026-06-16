@@ -52,8 +52,15 @@ public:
   IShaderProgramGeneric& operator=(IShaderProgramGeneric&&) = default;
   virtual ~IShaderProgramGeneric() = default;
 
+  void set_mvp_matrix(const Matrix4x4F& mvp) noexcept { mvp_matrix_ = mvp; }
+  Matrix4x4F& get_mvp_matrix() noexcept { return mvp_matrix_; }
+  const Matrix4x4F& get_mvp_matrix() const noexcept { return mvp_matrix_; }
+
   virtual VertexShaderOutput vertex(const AttributeView& input, const VertexContext& context) const = 0;
   virtual FragmentShaderOutput fragment(const DynamicVaryings& input, const FragmentContext& context) const = 0;
+
+private:
+  Matrix4x4F mvp_matrix_{Matrix4x4F::identity()};
 };
 
 using IShaderProgram = IShaderProgramGeneric<MAX_VARYING_COUNT>;

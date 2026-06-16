@@ -16,7 +16,7 @@
 #include <cstring>
 #include <vector>
 
-// Fixed-point coverage for the Step 5 shader interface. Built via cc_test_with_fixed_point (see BUILD),
+// Fixed-point coverage for the shader interface. Built via cc_test_with_fixed_point (see BUILD),
 // whose config transition compiles this target with RTW_USE_FIXED_POINT so single_precision is
 // FixedPoint16. It runs the stage contexts / outputs and the dynamic IShaderProgram hook in fixed-point
 // mode and checks the interpolated vertex / fragment outputs; the float shader_test target carries the

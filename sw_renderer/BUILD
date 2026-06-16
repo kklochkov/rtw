@@ -8,6 +8,7 @@ cc_library(
         "renderer.cpp",
     ],
     hdrs = [
+        "builtin_shaders.h",
         "camera.h",
         "clip_space.h",
         "clipping.h",

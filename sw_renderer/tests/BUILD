@@ -4,6 +4,7 @@ cc_test_with_llvm_symbolizer(
     name = "sw_renderer_tests",
     size = "small",
     srcs = [
+        "builtin_shaders_test.cpp",
         "clipping_test.cpp",
         "color_buffer_test.cpp",
         "color_test.cpp",
@@ -37,6 +38,7 @@ cc_test_with_fixed_point(
     name = "sw_renderer_fixed_point_tests",
     size = "small",
     srcs = [
+        "builtin_shaders_fixed_point_test.cpp",
         "clipping_fixed_point_test.cpp",
         "pipeline_fixed_point_test.cpp",
         "rasterisation_fixed_point_test.cpp",

@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-// Fixed-point coverage for the Step 6 clip-space clipper. Built via cc_test_with_fixed_point (see
+// Fixed-point coverage for the clip-space clipper. Built via cc_test_with_fixed_point (see
 // BUILD), whose config transition compiles this target with RTW_USE_FIXED_POINT, so single_precision is
 // FixedPoint16 and double_precision is FixedPoint32. It exercises the homogeneous clipper in fixed-point
 // mode -- the FixedPoint32 plane-distance widening and the narrowing back to FixedPoint16 -- and checks

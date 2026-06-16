@@ -14,7 +14,7 @@
 #include <cstdint>
 #include <initializer_list>
 
-// Fixed-point coverage for the Step 2 shader-support primitives (Color <-> Vector4 conversions,
+// Fixed-point coverage for the shader-support primitives (Color <-> Vector4 conversions,
 // Sampler2D, and the GLSL-style built-ins). Built via cc_test_with_fixed_point (see BUILD), whose config
 // transition compiles this target with RTW_USE_FIXED_POINT so that single_precision is FixedPoint16
 // (Q15.16). It runs these header-only templates in fixed-point mode and checks their numeric results;

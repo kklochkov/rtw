@@ -14,7 +14,7 @@
 #include <cstring>
 #include <vector>
 
-// Fixed-point coverage for the Step 4 vertex-input primitives. Built via cc_test_with_fixed_point (see
+// Fixed-point coverage for the vertex-input primitives. Built via cc_test_with_fixed_point (see
 // BUILD), whose config transition compiles this target with RTW_USE_FIXED_POINT so single_precision is
 // FixedPoint16. It runs the typed stream and the raw decode path in fixed-point mode and checks the
 // decoded values; the float vertex_layout_test / vertex_stream_test targets carry the exhaustive
