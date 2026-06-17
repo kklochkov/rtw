@@ -172,6 +172,10 @@ That file owns the programmable-pipeline-specific triangle walk:
 - compute affine window-space depth
 - emit one callback per covered fragment
 
+Like the fixed pipeline, this bounding-box walk follows Juan Pineda's
+"A Parallel Algorithm for Polygon Rasterization": coverage comes from incremental edge functions,
+while the programmable path layers perspective-correct varying interpolation on top.
+
 This mirrors how `fixed_pipeline/rasterisation_routines.h` works, but here the per-pixel payload is a
 `RegisterFile` instead of a fixed `Vertex` shape.
 

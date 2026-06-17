@@ -32,6 +32,8 @@ void fill_triangle_bbox(const Vector4F& p0, const Vector4F& p1, const Vector4F& 
                         const RegisterFile<single_precision, N>& varyings1,
                         const RegisterFile<single_precision, N>& varyings2, RasteriseCallbackT rasterise)
 {
+  // Bounding-box rasterization via incremental edge functions in the style of
+  // Juan Pineda's "A Parallel Algorithm for Polygon Rasterization".
   using multiprecision::math::ceil;
   using multiprecision::math::floor;
   using std::ceil;
@@ -67,12 +69,24 @@ void fill_triangle_bbox(const Vector4F& p0, const Vector4F& p1, const Vector4F& 
   edge_b /= area;
   edge_c /= area;
 
-  const auto inv_w0 = static_cast<double_precision>(p0.w());
-  const auto inv_w1 = static_cast<double_precision>(p1.w());
-  const auto inv_w2 = static_cast<double_precision>(p2.w());
+  const auto inv_w0 = p0.w();
+  const auto inv_w1 = p1.w();
+  const auto inv_w2 = p2.w();
   const auto z0 = static_cast<double_precision>(p0.z());
   const auto z1 = static_cast<double_precision>(p1.z());
   const auto z2 = static_cast<double_precision>(p2.z());
+
+  // Determine the highest active varying slot once per triangle. A slot that is zero on all three vertices
+  // interpolates to exactly zero, which the zero-initialised output already holds, so it can be skipped.
+  std::uint16_t active_count = 0U;
+  constexpr math::Vector4<single_precision> ZERO_VARYING{};
+  for (std::uint16_t slot = 0U; slot < N; ++slot)
+  {
+    if (varyings0[slot] != ZERO_VARYING || varyings1[slot] != ZERO_VARYING || varyings2[slot] != ZERO_VARYING)
+    {
+      active_count = static_cast<std::uint16_t>(slot + 1U);
+    }
+  }
 
   for (std::int32_t y = min_y; y <= max_y; ++y)
   {
@@ -84,22 +98,28 @@ void fill_triangle_bbox(const Vector4F& p0, const Vector4F& p1, const Vector4F& 
     {
       if ((w0 >= 0) && (w1 >= 0) && (w2 >= 0))
       {
-        const auto c0 = w0 * inv_w0;
-        const auto c1 = w1 * inv_w1;
-        const auto c2 = w2 * inv_w2;
+        const auto window_z = static_cast<single_precision>((w0 * z0) + (w1 * z1) + (w2 * z2));
+
+        const auto sw0 = static_cast<single_precision>(w0);
+        const auto sw1 = static_cast<single_precision>(w1);
+        const auto sw2 = static_cast<single_precision>(w2);
+        const auto c0 = sw0 * inv_w0;
+        const auto c1 = sw1 * inv_w1;
+        const auto c2 = sw2 * inv_w2;
         const auto inv_w = c0 + c1 + c2;
 
         RegisterFile<single_precision, N> varyings;
-        for (std::uint16_t slot = 0U; slot < N; ++slot)
+        if (active_count > 0U)
         {
-          const auto accumulated = varyings0[slot].template cast<double_precision>() * c0
-                                 + varyings1[slot].template cast<double_precision>() * c1
-                                 + varyings2[slot].template cast<double_precision>() * c2;
-          varyings[slot] = (accumulated / inv_w).template cast<single_precision>();
+          const auto recip = single_precision{1} / inv_w;
+          for (std::uint16_t slot = 0U; slot < active_count; ++slot)
+          {
+            const auto accumulated = (varyings0[slot] * c0) + (varyings1[slot] * c1) + (varyings2[slot] * c2);
+            varyings[slot] = accumulated * recip;
+          }
         }
 
-        const auto window_z = static_cast<single_precision>((w0 * z0) + (w1 * z1) + (w2 * z2));
-        rasterise(Point2I{x, y}, varyings, window_z, static_cast<single_precision>(inv_w));
+        rasterise(Point2I{x, y}, varyings, window_z, inv_w);
       }
 
       w0 -= edge_a.y();

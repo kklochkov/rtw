@@ -13,6 +13,10 @@
 namespace rtw::sw_renderer
 {
 
+// Shared raster helpers for the bounding-box triangle walk used by both pipelines.
+// The fill rules and incremental edge-function evaluation follow Juan Pineda's
+// "A Parallel Algorithm for Polygon Rasterization".
+
 namespace details
 {
 

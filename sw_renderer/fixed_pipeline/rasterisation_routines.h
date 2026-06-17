@@ -32,6 +32,8 @@ template <typename RasteriseCallbackT,
           typename = std::enable_if_t<details::IS_BARYCENTRIC_TRIANGLE_RASTERISE_CALLBACK_V<RasteriseCallbackT>>>
 void fill_triangle_bbox(const VertexF& v0, const VertexF& v1, const VertexF& v2, RasteriseCallbackT rasterise)
 {
+  // Bounding-box rasterization via incremental edge functions in the style of
+  // Juan Pineda's "A Parallel Algorithm for Polygon Rasterization".
   using multiprecision::math::ceil;
   using multiprecision::math::floor;
   using std::ceil;

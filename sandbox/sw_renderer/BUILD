@@ -28,11 +28,6 @@ cc_binary_with_llvm_symbolizer(
     ],
 )
 
-# Fixed-point build of the demo. The cc_binary_with_fixed_point transition
-# recompiles the whole dependency graph (including //sw_renderer) with
-# -DRTW_USE_FIXED_POINT, so single_precision becomes FixedPoint16 end-to-end.
-# Tagged "manual" so it is excluded from //... wildcard builds; run it explicitly:
-#   bazel run //sandbox/sw_renderer:fp -c opt
 cc_binary_with_fixed_point(
     name = "fp",
     srcs = ["main.cpp"],
@@ -44,6 +39,43 @@ cc_binary_with_fixed_point(
         "//stl",
         "//sw_renderer:core",
         "//sw_renderer/fixed_pipeline",
+        "@cli11",
+        "@fmt",
+        "@sysroot//:SDL2",
+        "@sysroot//:SDL2_image",
+    ],
+)
+
+cc_binary_with_llvm_symbolizer(
+    name = "programmable",
+    srcs = ["main_programmable.cpp"],
+    data = ["//sw_renderer/resources:textured_cube"],
+    deps = [
+        ":imgui_sdl2_backend",
+        "//constants:time_constants",
+        "//math",
+        "//stl",
+        "//sw_renderer:core",
+        "//sw_renderer/programmable_pipeline",
+        "@cli11",
+        "@fmt",
+        "@sysroot//:SDL2",
+        "@sysroot//:SDL2_image",
+    ],
+)
+
+cc_binary_with_fixed_point(
+    name = "programmable_fp",
+    srcs = ["main_programmable.cpp"],
+    data = ["//sw_renderer/resources:textured_cube"],
+    tags = ["manual"],
+    deps = [
+        ":imgui_sdl2_backend",
+        "//constants:time_constants",
+        "//math",
+        "//stl",
+        "//sw_renderer:core",
+        "//sw_renderer/programmable_pipeline",
         "@cli11",
         "@fmt",
         "@sysroot//:SDL2",

@@ -180,8 +180,9 @@ There are two families of triangle fill here:
 - `fill_triangle_bbox()`
 - `fill_triangle_scanline()`
 
-The bounding-box path is the one the main renderer uses. It is based on edge functions and
-barycentric coordinates, which is the more scalable implementation for a modern rasterizer.
+The bounding-box path is the one the main renderer uses. It follows the incremental edge-function
+approach from Juan Pineda's "A Parallel Algorithm for Polygon Rasterization", using edge functions
+and barycentric coordinates as the scalable implementation for the main rasterizer.
 
 The scanline path remains useful as an alternate implementation and for tests.
 
