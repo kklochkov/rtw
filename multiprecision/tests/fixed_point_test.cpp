@@ -1,9 +1,15 @@
 #include "multiprecision/fixed_point.h"
 #include "multiprecision/fixed_point_math.h"
 #include "multiprecision/format.h" // IWYU pragma: keep
+#include "multiprecision/int128.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <limits>
 
 // Constants were taken from https://chummersone.github.io/qformat.html#converter
 
@@ -596,6 +602,70 @@ TYPED_TEST(UnsignedFixedPointTest, arithmetic_saturate)
     const TypeParam a(1.0);
     const TypeParam b(0.0);
     EXPECT_DEATH(a / b, "");
+  }
+}
+// -----------------------------------------------------------------------------------------------
+namespace
+{
+// Reference implementation of the original "promote to the saturation type, then clamp" semantics that
+// FixedPoint::operator+= / operator-= used before the native saturating-add/sub fast path was added for the
+// Int128-backed types. Used to assert the fast path is bit-identical.
+template <typename Fp>
+typename Fp::underlying_type reference_add(const typename Fp::underlying_type a, const typename Fp::underlying_type b)
+{
+  using Sat = typename Fp::saturation_type;
+  const Sat result = static_cast<Sat>(a) + static_cast<Sat>(b);
+  return static_cast<typename Fp::underlying_type>(
+      std::clamp(result, static_cast<Sat>(Fp::MIN_INTEGER), static_cast<Sat>(Fp::MAX_INTEGER)));
+}
+
+template <typename Fp>
+typename Fp::underlying_type reference_sub(const typename Fp::underlying_type a, const typename Fp::underlying_type b)
+{
+  using Sat = typename Fp::saturation_type;
+  const Sat result = static_cast<Sat>(a) - static_cast<Sat>(b);
+  return static_cast<typename Fp::underlying_type>(
+      std::clamp(result, static_cast<Sat>(Fp::MIN_INTEGER), static_cast<Sat>(Fp::MAX_INTEGER)));
+}
+} // namespace
+
+TEST(fixed_point, fixed_point32_saturating_add_sub_matches_promote_and_clamp)
+{
+  using rtw::multiprecision::FixedPoint32;
+  using rtw::multiprecision::FixedPoint32U;
+  using rtw::multiprecision::RAW_VALUE_CONSTRUCT;
+
+  // Signed FixedPoint32: extremes, near-boundary (must NOT falsely saturate), unit/whole steps and mixed signs.
+  constexpr std::int64_t S_MIN = std::numeric_limits<std::int64_t>::min();
+  constexpr std::int64_t S_MAX = std::numeric_limits<std::int64_t>::max();
+  constexpr std::int64_t S_ONE = FixedPoint32::ONE;
+  const std::array<std::int64_t, 13> signed_raws = {S_MIN, S_MIN + 1, S_MIN / 2, -S_ONE, -1,        0,         1,
+                                                    S_ONE, S_MAX / 2, S_MAX - 1, S_MAX,  S_ONE * 3, -S_ONE * 3};
+  for (const auto a : signed_raws)
+  {
+    for (const auto b : signed_raws)
+    {
+      const FixedPoint32 fa{RAW_VALUE_CONSTRUCT, a};
+      const FixedPoint32 fb{RAW_VALUE_CONSTRUCT, b};
+      EXPECT_EQ((fa + fb).raw_value(), reference_add<FixedPoint32>(a, b)) << "add a=" << a << " b=" << b;
+      EXPECT_EQ((fa - fb).raw_value(), reference_sub<FixedPoint32>(a, b)) << "sub a=" << a << " b=" << b;
+    }
+  }
+
+  // Unsigned FixedPoint32U: includes the quirk that an underflowing subtraction saturates to max().
+  constexpr std::uint64_t U_MAX = std::numeric_limits<std::uint64_t>::max();
+  constexpr std::uint64_t U_ONE = FixedPoint32U::ONE;
+  const std::array<std::uint64_t, 8> unsigned_raws = {0U,         1U,         U_ONE, U_ONE * 3U,
+                                                      U_MAX / 2U, U_MAX - 1U, U_MAX, U_MAX - U_ONE};
+  for (const auto a : unsigned_raws)
+  {
+    for (const auto b : unsigned_raws)
+    {
+      const FixedPoint32U fa{RAW_VALUE_CONSTRUCT, a};
+      const FixedPoint32U fb{RAW_VALUE_CONSTRUCT, b};
+      EXPECT_EQ((fa + fb).raw_value(), reference_add<FixedPoint32U>(a, b)) << "uadd a=" << a << " b=" << b;
+      EXPECT_EQ((fa - fb).raw_value(), reference_sub<FixedPoint32U>(a, b)) << "usub a=" << a << " b=" << b;
+    }
   }
 }
 // -----------------------------------------------------------------------------------------------

@@ -46,11 +46,64 @@ constexpr inline RawValueConstructTag RAW_VALUE_CONSTRUCT{RawValueConstructTag::
 template <typename T, std::uint8_t FRAC_BITS, typename SaturationT>
 class FixedPoint
 {
-  constexpr static T saturate_and_cast(const SaturationT value) noexcept
+  template <typename U = SaturationT>
+  constexpr static T saturate_and_cast(const U value) noexcept
   {
-    return static_cast<T>(
-        std::clamp(value, static_cast<SaturationT>(MIN_INTEGER), static_cast<SaturationT>(MAX_INTEGER)));
+    return static_cast<T>(std::clamp(value, static_cast<U>(MIN_INTEGER), static_cast<U>(MAX_INTEGER)));
   }
+
+  /// Saturating add/subtract on the underlying type @c T, used by the Int128-backed types where the
+  /// saturation bounds are the full range of @c T (so promoting to the software-`Int128` @c SaturationT only
+  /// to detect @c T overflow would be wasteful). The arithmetic is done in the unsigned domain (two's
+  /// complement wraps with defined behaviour) and the overflow test reads the sign bit, so every bitwise
+  /// operand is unsigned. Both produce results identical to the promote-then-clamp path.
+  /// @{
+  constexpr static T add_saturate(const T lhs, const T rhs) noexcept
+  {
+    using UnsignedT = std::make_unsigned_t<T>;
+    const auto unsigned_lhs = static_cast<UnsignedT>(lhs);
+    const auto unsigned_sum = static_cast<UnsignedT>(unsigned_lhs + static_cast<UnsignedT>(rhs));
+    if constexpr (std::is_signed_v<T>)
+    {
+      // Signed overflow iff the operands share a sign yet the result's sign differs from them.
+      const auto overflow =
+          static_cast<UnsignedT>(~(unsigned_lhs ^ static_cast<UnsignedT>(rhs)) & (unsigned_lhs ^ unsigned_sum));
+      if ((overflow >> (BITS - 1U)) != 0U)
+      {
+        return (lhs < T{0}) ? MIN_INTEGER : MAX_INTEGER;
+      }
+    }
+    else if (unsigned_sum < unsigned_lhs) // Wrapped around: unsigned addition can only overflow upward.
+    {
+      return MAX_INTEGER;
+    }
+    return static_cast<T>(unsigned_sum);
+  }
+
+  constexpr static T sub_saturate(const T lhs, const T rhs) noexcept
+  {
+    using UnsignedT = std::make_unsigned_t<T>;
+    const auto unsigned_lhs = static_cast<UnsignedT>(lhs);
+    const auto unsigned_difference = static_cast<UnsignedT>(unsigned_lhs - static_cast<UnsignedT>(rhs));
+    if constexpr (std::is_signed_v<T>)
+    {
+      // Signed overflow iff the operands differ in sign and the result's sign differs from the minuend.
+      const auto overflow =
+          static_cast<UnsignedT>((unsigned_lhs ^ static_cast<UnsignedT>(rhs)) & (unsigned_lhs ^ unsigned_difference));
+      if ((overflow >> (BITS - 1U)) != 0U)
+      {
+        return (lhs < T{0}) ? MIN_INTEGER : MAX_INTEGER;
+      }
+    }
+    else if (unsigned_lhs < static_cast<UnsignedT>(rhs))
+    {
+      // Preserve the promote-to-wider-unsigned-then-clamp behaviour: the difference wraps to a value near
+      // 2^(2*BITS) that clamps up to MAX_INTEGER, so an unsigned underflow saturates to max(), not min().
+      return MAX_INTEGER;
+    }
+    return static_cast<T>(unsigned_difference);
+  }
+  /// @}
 
 public:
   using underlying_type = T;
@@ -106,27 +159,37 @@ public:
   template <typename OtherT, std::uint8_t OTHER_FRAC_BITS, typename OtherSaturationT>
   constexpr explicit FixedPoint(const FixedPoint<OtherT, OTHER_FRAC_BITS, OtherSaturationT> other) noexcept
   {
-    // Use the wider of the two saturation types as the intermediate so neither the source raw
-    // value nor the rescaled result can be truncated before saturation.
-    using WideT = std::conditional_t<(sizeof(SaturationT) >= sizeof(OtherSaturationT)), SaturationT, OtherSaturationT>;
-    auto raw = static_cast<WideT>(other.raw_value());
     if constexpr (FRAC_BITS >= OTHER_FRAC_BITS)
     {
-      // Multiply by a positive power of two rather than left-shifting `raw`, which may be negative
-      // (left shift of a negative value is undefined behaviour and rejected in constant expressions).
+      // Widening the fractional part is lossless. Use the wider of the two saturation types as the
+      // intermediate so the rescaled value cannot be truncated before saturation. Multiply by a positive
+      // power of two rather than left-shifting `raw`, which may be negative (left shift of a negative value
+      // is undefined behaviour and rejected in constant expressions).
+      using WideT =
+          std::conditional_t<(sizeof(SaturationT) >= sizeof(OtherSaturationT)), SaturationT, OtherSaturationT>;
+      auto raw = static_cast<WideT>(other.raw_value());
       raw *= WideT{1} << static_cast<std::uint32_t>(FRAC_BITS - OTHER_FRAC_BITS);
+      value_ = saturate_and_cast(raw);
     }
     else
     {
+      // Narrowing the fractional part: arithmetic right shift by SHIFT, rounding half away from zero
+      // (matching operator/=). Working on the magnitude in the unsigned domain and shifting *before*
+      // adding the rounding bit avoids signed-shift implementation-defined behaviour and any overflow,
+      // so neither a wide intermediate (a software Int128 when narrowing from FixedPoint32) nor a division is needed.
       constexpr std::uint32_t SHIFT = OTHER_FRAC_BITS - FRAC_BITS;
-      const WideT divisor = WideT{1} << SHIFT;
-      const WideT half = divisor / WideT{2};
-      // Round half away from zero (matching operator/=) and divide rather than right-shift to
-      // avoid implementation-defined behaviour for negative values.
-      raw += math::signbit(raw) ? -half : half;
-      raw /= divisor;
+      using UnsignedT = std::make_unsigned_t<OtherT>;
+      const OtherT src_raw = other.raw_value();
+      const bool negative = math::signbit(src_raw);
+      const auto magnitude = negative ? static_cast<UnsignedT>(~static_cast<UnsignedT>(src_raw) + UnsignedT{1})
+                                      : static_cast<UnsignedT>(src_raw);
+      const auto rounded = static_cast<UnsignedT>((magnitude >> SHIFT) + ((magnitude >> (SHIFT - 1U)) & UnsignedT{1}));
+      // `rounded` is at most half the source magnitude,
+      // it always fits in the signed source type and the negation cannot overflow.
+      // The source type is at least as wide as the target, it also holds the target's saturation bounds.
+      const auto scaled = negative ? static_cast<OtherT>(-static_cast<OtherT>(rounded)) : static_cast<OtherT>(rounded);
+      value_ = saturate_and_cast(scaled);
     }
-    value_ = static_cast<T>(std::clamp(raw, static_cast<WideT>(MIN_INTEGER), static_cast<WideT>(MAX_INTEGER)));
   }
 
   constexpr static FixedPoint min() noexcept { return FixedPoint(RAW_VALUE_CONSTRUCT, MIN_INTEGER); }
@@ -168,15 +231,31 @@ public:
 
   constexpr FixedPoint& operator+=(const FixedPoint rhs) noexcept
   {
-    const auto result = static_cast<SaturationT>(value_) + static_cast<SaturationT>(rhs.value_);
-    value_ = saturate_and_cast(result);
+    if constexpr (IS_BIG_INT_V<SaturationT>)
+    {
+      // Native saturating add on T avoids constructing a software Int128 just to detect T overflow.
+      value_ = add_saturate(value_, rhs.value_);
+    }
+    else
+    {
+      const auto result = static_cast<SaturationT>(value_) + static_cast<SaturationT>(rhs.value_);
+      value_ = saturate_and_cast(result);
+    }
     return *this;
   }
 
   constexpr FixedPoint& operator-=(const FixedPoint rhs) noexcept
   {
-    const auto result = static_cast<SaturationT>(value_) - static_cast<SaturationT>(rhs.value_);
-    value_ = saturate_and_cast(result);
+    if constexpr (IS_BIG_INT_V<SaturationT>)
+    {
+      // Native saturating subtract on T avoids constructing a software Int128 just to detect T overflow.
+      value_ = sub_saturate(value_, rhs.value_);
+    }
+    else
+    {
+      const auto result = static_cast<SaturationT>(value_) - static_cast<SaturationT>(rhs.value_);
+      value_ = saturate_and_cast(result);
+    }
     return *this;
   }
 
@@ -208,8 +287,12 @@ public:
     // If signs are same, add rhs_value/2 to the result, otherwise subtract rhs_value/2.
     // This is to ensure that the result is rounded up for positive numbers and rounded down for negative numbers.
     const auto same_sign = math::signbit(result) == math::signbit(rhs_value);
-    // Use division instead of right-shift to avoid implementation-defined behavior for negative values.
-    const auto half = rhs_value / SaturationT{2};
+    // Bias by half the divisor, truncated toward zero. Halve the underlying value directly (a native
+    // division) instead of widening to SaturationT first: for the Int128-backed types the widened
+    // `rhs_value / SaturationT{2}` runs a full software long-division just to divide by two. Integer
+    // division (not a right shift) preserves truncation toward zero, so the result is bit-identical while
+    // avoiding the implementation-defined rounding a shift of a negative value would introduce.
+    const auto half = static_cast<SaturationT>(rhs.value_ / T{2});
     const SaturationT halfs[] = {-half, half}; // NOLINT(cppcoreguidelines-avoid-c-arrays)
     result += halfs[same_sign];
 
