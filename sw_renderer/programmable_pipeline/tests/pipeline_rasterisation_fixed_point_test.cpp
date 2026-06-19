@@ -38,7 +38,7 @@ TEST(PipelineRasterisationFixedPoint, large_triangle_preserves_constant_varying)
   bool inv_w_positive = true;
 
   fill_triangle_bbox(
-      p0, p1, p2, varyings0, varyings1, varyings2,
+      p0, p1, p2, varyings0, varyings1, varyings2, math::BoundingBoxI{0, 0, 1'023, 1'023},
       [&](const Point2I&, const RegisterFile<single_precision, 1U>& varyings, single_precision, single_precision inv_w)
       {
         ++pixel_count;

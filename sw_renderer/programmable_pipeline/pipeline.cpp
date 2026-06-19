@@ -213,6 +213,9 @@ void Pipeline::process_triangle(const IShaderProgram& program, const ClipVertex<
     return;
   }
 
+  const math::BoundingBoxI bounds{0, 0, static_cast<std::int32_t>(framebuffer.width()) - 1,
+                                  static_cast<std::int32_t>(framebuffer.height()) - 1};
+
   for (std::size_t i = 0U; i < triangles.triangle_count; ++i)
   {
     const auto& triangle = triangles.triangles[i]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -244,7 +247,7 @@ void Pipeline::process_triangle(const IShaderProgram& program, const ClipVertex<
     }
 
     fill_triangle_bbox(
-        w0, w1, w2, cv0.varyings, cv1.varyings, cv2.varyings,
+        w0, w1, w2, cv0.varyings, cv1.varyings, cv2.varyings, bounds,
         [&](const Point2I& p, const RegisterFile<single_precision, MAX_VARYING_COUNT>& varyings,
             const single_precision window_z, const single_precision inv_w)
         {
@@ -272,7 +275,12 @@ void Pipeline::process_triangle(const IShaderProgram& program, const ClipVertex<
           }
 
           const auto depth = fragment.depth.value_or(window_z);
-          if (state.depth_test_enabled && !details::depth_test_passes(state.depth_func, depth, stored_z))
+          // Re-test depth only when the fragment shader overrode it.
+          // Otherwise `depth == window_z` and the early test above already passed against
+          // the same stored_z (nothing writes the depth buffer in between),
+          // so the re-test is redundant and skipping it leaves the depth/colour result unchanged.
+          if (fragment.depth.has_value() && state.depth_test_enabled
+              && !details::depth_test_passes(state.depth_func, depth, stored_z))
           {
             return;
           }

@@ -5,6 +5,7 @@
 #include "multiprecision/math.h"
 #include "sw_renderer/precision.h"
 
+#include <array>
 #include <cstdint>
 #include <type_traits>
 
@@ -18,6 +19,32 @@ namespace details
 constexpr std::uint8_t clamp255(const std::uint16_t v) noexcept
 {
   return static_cast<std::uint8_t>(std::min(v, std::uint16_t{255}));
+}
+
+using ColorsLUT = std::array<single_precision, 256U>;
+
+/// Build a lookup table mapping an 8-bit channel value to its normalised [0, 1] representation in single_precision.
+/// Each entry equals static_cast<single_precision>(static_cast<float>(byte) / 255), which is exactly what
+/// Color::rf()/gf()/bf()/af() compute, so converting a Color to a float vector becomes four table loads instead of
+/// four divisions plus float-to-fixed-point conversions.
+constexpr ColorsLUT make_byte_to_unit_float_lut() noexcept
+{
+  ColorsLUT lut{};
+  std::uint32_t byte = 0U;
+  for (auto& entry : lut)
+  {
+    entry = static_cast<single_precision>(static_cast<float>(byte) / 255.0F);
+    ++byte;
+  }
+  return lut;
+}
+
+constexpr inline ColorsLUT BYTE_TO_UNIT_FLOAT_LUT = make_byte_to_unit_float_lut();
+
+/// Normalised [0, 1] single_precision value for an 8-bit channel, looked up from BYTE_TO_UNIT_FLOAT_LUT.
+constexpr single_precision byte_to_unit_float(const std::uint8_t byte) noexcept
+{
+  return BYTE_TO_UNIT_FLOAT_LUT[byte]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
 }
 
 } // namespace details
@@ -104,7 +131,8 @@ struct Color
 
   constexpr explicit operator math::Vector4<single_precision>() const noexcept
   {
-    return math::Vector4<single_precision>{rf(), gf(), bf(), af()};
+    return math::Vector4<single_precision>{details::byte_to_unit_float(r()), details::byte_to_unit_float(g()),
+                                           details::byte_to_unit_float(b()), details::byte_to_unit_float(a())};
   }
 
   constexpr Color invert() const noexcept

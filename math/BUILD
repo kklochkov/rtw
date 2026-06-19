@@ -6,6 +6,7 @@ cc_library(
         "angle.h",
         "barycentric.h",
         "barycentric_operations.h",
+        "bounding_box.h",
         "convex_polygon.h",
         "convex_polygon_operations.h",
         "frustum.h",

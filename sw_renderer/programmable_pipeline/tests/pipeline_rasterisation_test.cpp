@@ -24,7 +24,7 @@ TEST(PipelineRasterisation, fill_triangle_bbox_basic)
   const RegisterFile<single_precision, 1U> varyings1;
   const RegisterFile<single_precision, 1U> varyings2;
 
-  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2,
+  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2, math::BoundingBoxI{0, 0, 1'023, 1'023},
                      [&pixel_count](const Point2I&, const RegisterFile<single_precision, 1U>&, single_precision,
                                     single_precision) { ++pixel_count; });
 
@@ -45,7 +45,7 @@ TEST(PipelineRasterisation, fill_triangle_bbox_affine_interpolation)
   varyings2[0U] = Vector4F{15.0F, 20.0F, 0.0F, 0.0F};
 
   std::size_t pixel_count = 0;
-  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2,
+  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2, math::BoundingBoxI{0, 0, 1'023, 1'023},
                      [&pixel_count](const Point2I& p, const RegisterFile<single_precision, 1U>& varyings,
                                     single_precision window_z, single_precision inv_w)
                      {
@@ -76,7 +76,7 @@ TEST(PipelineRasterisation, fill_triangle_bbox_perspective_correct_constant)
   varyings2[0U] = Vector4F{CONSTANT, CONSTANT, CONSTANT, CONSTANT};
 
   std::size_t pixel_count = 0;
-  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2,
+  fill_triangle_bbox(p0, p1, p2, varyings0, varyings1, varyings2, math::BoundingBoxI{0, 0, 1'023, 1'023},
                      [&pixel_count](const Point2I&, const RegisterFile<single_precision, 1U>& varyings,
                                     single_precision, single_precision inv_w)
                      {
@@ -109,8 +109,8 @@ TEST(PipelineRasterisation, fill_triangle_bbox_shared_edge_back_facing_single_co
       [&coverage](const Point2I& p, const RegisterFile<single_precision, 1U>&, single_precision, single_precision)
   { ++coverage[static_cast<std::size_t>((p.y() * GRID) + p.x())]; };
 
-  fill_triangle_bbox(tl, br, tr, varyings0, varyings1, varyings2, accumulate);
-  fill_triangle_bbox(tl, bl, br, varyings0, varyings1, varyings2, accumulate);
+  fill_triangle_bbox(tl, br, tr, varyings0, varyings1, varyings2, math::BoundingBoxI{0, 0, 1'023, 1'023}, accumulate);
+  fill_triangle_bbox(tl, bl, br, varyings0, varyings1, varyings2, math::BoundingBoxI{0, 0, 1'023, 1'023}, accumulate);
 
   int max_coverage = 0;
   int total_coverage = 0;
