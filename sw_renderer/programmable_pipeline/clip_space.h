@@ -19,6 +19,7 @@ struct ClipVertex
 {
   math::Vector4<T> position;
   RegisterFile<T, MAX_VARYING_COUNT> varyings;
+  T point_size{T{1}};
 };
 
 namespace clip_planes
@@ -64,7 +65,8 @@ constexpr double_precision signed_distance(const ClipVertex<T>& vertex, const ma
 template <typename T>
 constexpr ClipVertex<T> lerp(const ClipVertex<T>& v0, const ClipVertex<T>& v1, const T t) noexcept
 {
-  return ClipVertex<T>{math::lerp(v0.position, v1.position, t), lerp(v0.varyings, v1.varyings, t)};
+  return ClipVertex<T>{math::lerp(v0.position, v1.position, t), lerp(v0.varyings, v1.varyings, t),
+                       math::lerp(v0.point_size, v1.point_size, t)};
 }
 
 template <typename T, std::size_t CAPACITY = 9U>

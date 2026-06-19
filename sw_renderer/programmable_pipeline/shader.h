@@ -29,6 +29,9 @@ struct VertexShaderOutput
 {
   Vector4F position;
   VaryingsT varyings;
+  // GL gl_PointSize: square footprint in pixels when PolygonMode::POINT is active.
+  // FILL and LINE ignore it, and the default keeps existing shaders at single-pixel points.
+  single_precision point_size{1};
 };
 
 struct FragmentShaderOutput

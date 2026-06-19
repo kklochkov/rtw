@@ -135,12 +135,15 @@ TEST(BuiltinShadersFixedPoint, textured_shader_samples_the_bound_texture)
 
 TEST(BuiltinShadersFixedPoint, lit_shader_is_fully_lit_when_facing_the_light)
 {
-  LitShader shader; // default light direction (0, 0, -1)
-  shader.set_color(Vector4F{1.0F, 1.0F, 1.0F, 1.0F});
+  const std::vector<Vertex> vertices{make_vertex(Vector4F{0.0F, 0.0F, 0.0F, 1.0F}, Vector3F{0.0F, 0.0F, 1.0F},
+                                                 Vector2F{0.0F, 0.0F}, Vector4F{1.0F, 1.0F, 1.0F, 1.0F})};
+  const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
 
-  IShaderProgram::DynamicVaryings varyings;
-  varyings[0U] = Vector4F{0.0F, 0.0F, 1.0F, 0.0F};
-  expect_vector_near(shader.fragment(varyings, FragmentContext{}).color, {1.0, 1.0, 1.0, 1.0});
+  const LitShader shader; // default light direction (0, 0, -1)
+  // Exercises the fixed-point normalize + dot now living in the vertex stage; the normal faces the light so the
+  // per-vertex intensity saturates at 1 in the varying's x channel.
+  expect_vector_near(shader.vertex(stream[0], VertexContext{}).varyings[LitShader::INTENSITY_VARYING],
+                     {1.0, 0.0, 0.0, 0.0});
 }
 
 // --- Pipeline fill ----------------------------------------------------------
@@ -161,6 +164,44 @@ TEST(BuiltinShadersFixedPoint, flat_color_shader_fills_a_triangle)
 
   EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{0xFF'00'00'FFU});
   EXPECT_EQ(framebuffer.color_buffer().pixel(1U, 1U), Color{0xFF'00'00'FFU});
+}
+
+TEST(BuiltinShadersFixedPoint, standard_shader_composes_texture_vertex_colour_and_lighting)
+{
+  std::array<std::uint32_t, 1U> texels{0xFF'00'00'FFU}; // single red texel
+  const Texture texture{texels.data(), 1U, 1U};
+
+  StandardShader shader;
+  shader.set_base_color(Vector4F{1.0F, 1.0F, 1.0F, 1.0F});
+  shader.set_sampler(Sampler2D{texture, WrapMode::CLAMP_TO_EDGE, FilterMode::NEAREST});
+  shader.set_use_texture(true);
+  shader.set_use_vertex_color(true);
+  shader.set_use_lighting(true);
+
+  IShaderProgram::DynamicVaryings varyings;
+  varyings[StandardShader::UV_VARYING] = Vector4F{0.5F, 0.5F, 0.0F, 0.0F};
+  varyings[StandardShader::COLOR_VARYING] = Vector4F{0.5F, 0.5F, 0.5F, 1.0F};
+  varyings[StandardShader::LIGHT_VARYING] = Vector4F{1.0F, 0.0F, 0.0F, 0.0F}; // full per-vertex intensity
+
+  // White base * red texture * grey vertex colour, intensity 1 -> (0.5, 0, 0, 1).
+  expect_vector_near(shader.fragment(varyings, FragmentContext{}).color, {0.5, 0.0, 0.0, 1.0});
+}
+
+TEST(BuiltinShadersFixedPoint, standard_shader_fills_a_triangle_with_the_base_colour)
+{
+  FrameBuffer framebuffer{WIDTH, HEIGHT};
+  framebuffer.clear(Color{}, single_precision{1});
+
+  StandardShader shader; // all terms off -> plain base colour
+  shader.set_base_color(Vector4F{1.0F, 0.0F, 0.0F, 1.0F});
+  const auto vertices = full_screen_triangle();
+  const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
+  RenderStats stats;
+  Pipeline pipeline;
+
+  pipeline.draw_arrays(shader, stream, make_state(), framebuffer, stats);
+
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{0xFF'00'00'FFU});
 }
 
 } // namespace

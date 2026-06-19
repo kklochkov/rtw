@@ -123,5 +123,204 @@ TEST(PipelineRasterisation, fill_triangle_bbox_shared_edge_back_facing_single_co
   EXPECT_GT(total_coverage, 0);
 }
 
+TEST(PipelineRasterisation, draw_line_varyings_covers_endpoints)
+{
+  std::vector<Point2I> pixels;
+  const Vector4F p0{10.0F, 10.0F, 1.0F, 1.0F};
+  const Vector4F p1{40.0F, 25.0F, 1.0F, 1.0F};
+  const RegisterFile<single_precision, 1U> varyings0;
+  const RegisterFile<single_precision, 1U> varyings1;
+
+  draw_line_varyings(p0, p1, varyings0, varyings1, math::BoundingBoxI{0, 0, 1'023, 1'023},
+                     [&pixels](const Point2I& p, const RegisterFile<single_precision, 1U>&, single_precision,
+                               single_precision) { pixels.push_back(p); });
+
+  ASSERT_FALSE(pixels.empty());
+  EXPECT_EQ(pixels.front().x(), 10);
+  EXPECT_EQ(pixels.front().y(), 10);
+  EXPECT_EQ(pixels.back().x(), 40);
+  EXPECT_EQ(pixels.back().y(), 25);
+}
+
+TEST(PipelineRasterisation, draw_line_varyings_perspective_correct_constant)
+{
+  const Vector4F p0{10.0F, 20.0F, 1.0F, 1.0F};
+  const Vector4F p1{50.0F, 20.0F, 1.0F, 0.5F};
+
+  constexpr single_precision CONSTANT{7.0F};
+  RegisterFile<single_precision, 1U> varyings0;
+  RegisterFile<single_precision, 1U> varyings1;
+  varyings0[0U] = Vector4F{CONSTANT, CONSTANT, CONSTANT, CONSTANT};
+  varyings1[0U] = Vector4F{CONSTANT, CONSTANT, CONSTANT, CONSTANT};
+
+  std::size_t pixel_count = 0;
+  draw_line_varyings(
+      p0, p1, varyings0, varyings1, math::BoundingBoxI{0, 0, 1'023, 1'023},
+      [&](const Point2I&, const RegisterFile<single_precision, 1U>& varyings, single_precision, single_precision inv_w)
+      {
+        ++pixel_count;
+        EXPECT_NEAR(varyings[0U].x(), CONSTANT, 1e-3F);
+        EXPECT_GT(inv_w, 0.0F);
+      });
+
+  EXPECT_GT(pixel_count, 0U);
+}
+
+TEST(PipelineRasterisation, draw_line_varyings_bresenham_matches_dda)
+{
+  const Vector4F p0{10.0F, 20.0F, 0.2F, 1.0F};
+  const Vector4F p1{50.0F, 20.0F, 0.8F, 0.5F};
+
+  RegisterFile<single_precision, 1U> varyings0;
+  RegisterFile<single_precision, 1U> varyings1;
+  varyings0[0U] = Vector4F{1.0F, 0.0F, 0.0F, 0.0F};
+  varyings1[0U] = Vector4F{0.0F, 1.0F, 0.0F, 0.0F};
+
+  struct Sample
+  {
+    Point2I pixel;
+    Vector4F varying;
+    single_precision window_z;
+    single_precision inv_w;
+  };
+  std::vector<Sample> bresenham;
+  std::vector<Sample> dda;
+
+  draw_line_varyings(
+      p0, p1, varyings0, varyings1, math::BoundingBoxI{0, 0, 1'023, 1'023},
+      [&bresenham](const Point2I& p, const RegisterFile<single_precision, 1U>& varyings, single_precision window_z,
+                   single_precision inv_w) { bresenham.push_back({p, varyings[0U], window_z, inv_w}); },
+      LineRaster::BRESENHAM);
+  draw_line_varyings(
+      p0, p1, varyings0, varyings1, math::BoundingBoxI{0, 0, 1'023, 1'023},
+      [&dda](const Point2I& p, const RegisterFile<single_precision, 1U>& varyings, single_precision window_z,
+             single_precision inv_w) { dda.push_back({p, varyings[0U], window_z, inv_w}); },
+      LineRaster::DDA);
+
+  ASSERT_EQ(bresenham.size(), dda.size());
+  ASSERT_FALSE(bresenham.empty());
+  for (std::size_t i = 0U; i < bresenham.size(); ++i)
+  {
+    EXPECT_EQ(bresenham[i].pixel.x(), dda[i].pixel.x());
+    EXPECT_EQ(bresenham[i].pixel.y(), dda[i].pixel.y());
+    EXPECT_NEAR(bresenham[i].varying.x(), dda[i].varying.x(), 1e-4F);
+    EXPECT_NEAR(bresenham[i].varying.y(), dda[i].varying.y(), 1e-4F);
+    EXPECT_NEAR(bresenham[i].window_z, dda[i].window_z, 1e-4F);
+    EXPECT_NEAR(bresenham[i].inv_w, dda[i].inv_w, 1e-4F);
+  }
+}
+
+TEST(PipelineRasterisation, draw_line_varyings_clips_to_bounds)
+{
+  std::vector<Point2I> pixels;
+  const Vector4F p0{-5.0F, 5.0F, 1.0F, 1.0F};
+  const Vector4F p1{5.0F, 5.0F, 1.0F, 1.0F};
+  const RegisterFile<single_precision, 1U> varyings0;
+  const RegisterFile<single_precision, 1U> varyings1;
+
+  draw_line_varyings(p0, p1, varyings0, varyings1, math::BoundingBoxI{0, 0, 63, 63},
+                     [&pixels](const Point2I& p, const RegisterFile<single_precision, 1U>&, single_precision,
+                               single_precision) { pixels.push_back(p); });
+
+  ASSERT_FALSE(pixels.empty());
+  for (const auto& p : pixels)
+  {
+    EXPECT_GE(p.x(), 0);
+    EXPECT_LE(p.x(), 63);
+  }
+}
+
+TEST(PipelineRasterisation, draw_point_varyings_covers_vertex)
+{
+  std::vector<Point2I> pixels;
+  const Vector4F p{15.0F, 25.0F, 0.5F, 0.5F};
+  RegisterFile<single_precision, 2U> varyings;
+  varyings[1U] = Vector4F{1.0F, 2.0F, 3.0F, 4.0F};
+
+  single_precision seen_window_z{0};
+  single_precision seen_inv_w{0};
+  Vector4F seen_varying{};
+  draw_point_varyings(p, varyings, math::BoundingBoxI{0, 0, 1'023, 1'023},
+                      [&](const Point2I& pixel, const RegisterFile<single_precision, 2U>& v, single_precision window_z,
+                          single_precision inv_w)
+                      {
+                        pixels.push_back(pixel);
+                        seen_window_z = window_z;
+                        seen_inv_w = inv_w;
+                        seen_varying = v[1U];
+                      });
+
+  ASSERT_EQ(pixels.size(), 1U);
+  EXPECT_EQ(pixels.front().x(), 15);
+  EXPECT_EQ(pixels.front().y(), 25);
+  EXPECT_NEAR(seen_window_z, 0.5F, 1e-5F);
+  EXPECT_NEAR(seen_inv_w, 0.5F, 1e-5F);
+  EXPECT_NEAR(seen_varying.x(), 1.0F, 1e-5F);
+  EXPECT_NEAR(seen_varying.w(), 4.0F, 1e-5F);
+}
+
+TEST(PipelineRasterisation, draw_point_varyings_out_of_bounds_skipped)
+{
+  std::size_t count = 0;
+  const Vector4F p{-1.0F, 5.0F, 0.5F, 1.0F};
+  const RegisterFile<single_precision, 1U> varyings;
+
+  draw_point_varyings(p, varyings, math::BoundingBoxI{0, 0, 63, 63},
+                      [&count](const Point2I&, const RegisterFile<single_precision, 1U>&, single_precision,
+                               single_precision) { ++count; });
+
+  EXPECT_EQ(count, 0U);
+}
+
+TEST(PipelineRasterisation, draw_point_varyings_emits_square_block_for_point_size)
+{
+  std::vector<Point2I> pixels;
+  const Vector4F p{15.0F, 25.0F, 0.5F, 0.5F};
+  const RegisterFile<single_precision, 1U> varyings;
+
+  draw_point_varyings(
+      p, varyings, math::BoundingBoxI{0, 0, 1'023, 1'023},
+      [&pixels](const Point2I& pixel, const RegisterFile<single_precision, 1U>&, single_precision, single_precision)
+      { pixels.push_back(pixel); }, single_precision{3});
+
+  ASSERT_EQ(pixels.size(), 9U);
+  std::int32_t min_x = 1'023;
+  std::int32_t max_x = 0;
+  std::int32_t min_y = 1'023;
+  std::int32_t max_y = 0;
+  for (const auto& pixel : pixels)
+  {
+    min_x = std::min(min_x, pixel.x());
+    max_x = std::max(max_x, pixel.x());
+    min_y = std::min(min_y, pixel.y());
+    max_y = std::max(max_y, pixel.y());
+  }
+  EXPECT_EQ(min_x, 14);
+  EXPECT_EQ(max_x, 16);
+  EXPECT_EQ(min_y, 24);
+  EXPECT_EQ(max_y, 26);
+}
+
+TEST(PipelineRasterisation, draw_point_varyings_square_block_clamps_to_bounds)
+{
+  std::vector<Point2I> pixels;
+  const Vector4F p{0.0F, 0.0F, 0.5F, 1.0F};
+  const RegisterFile<single_precision, 1U> varyings;
+
+  draw_point_varyings(
+      p, varyings, math::BoundingBoxI{0, 0, 63, 63},
+      [&pixels](const Point2I& pixel, const RegisterFile<single_precision, 1U>&, single_precision, single_precision)
+      { pixels.push_back(pixel); }, single_precision{3});
+
+  ASSERT_EQ(pixels.size(), 4U);
+  for (const auto& pixel : pixels)
+  {
+    EXPECT_GE(pixel.x(), 0);
+    EXPECT_LE(pixel.x(), 1);
+    EXPECT_GE(pixel.y(), 0);
+    EXPECT_LE(pixel.y(), 1);
+  }
+}
+
 } // namespace
 } // namespace rtw::sw_renderer

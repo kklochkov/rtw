@@ -194,7 +194,7 @@ void Pipeline::transform_vertices(const IShaderProgram& program, const RawVertex
   {
     const VertexContext context{static_cast<std::uint32_t>(i), 0U};
     const auto output = program.vertex(vertices[i], context);
-    transformed_[i] = ClipVertex<single_precision>{output.position, output.varyings};
+    transformed_[i] = ClipVertex<single_precision>{output.position, output.varyings, output.point_size};
   }
 }
 
@@ -215,7 +215,6 @@ void Pipeline::process_triangle(const IShaderProgram& program, const ClipVertex<
 
   const math::BoundingBoxI bounds{0, 0, static_cast<std::int32_t>(framebuffer.width()) - 1,
                                   static_cast<std::int32_t>(framebuffer.height()) - 1};
-
   for (std::size_t i = 0U; i < triangles.triangle_count; ++i)
   {
     const auto& triangle = triangles.triangles[i]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
@@ -246,51 +245,69 @@ void Pipeline::process_triangle(const IShaderProgram& program, const ClipVertex<
       continue;
     }
 
-    fill_triangle_bbox(
-        w0, w1, w2, cv0.varyings, cv1.varyings, cv2.varyings, bounds,
-        [&](const Point2I& p, const RegisterFile<single_precision, MAX_VARYING_COUNT>& varyings,
-            const single_precision window_z, const single_precision inv_w)
-        {
-          if (state.scissor.enabled && !details::inside_scissor(state.scissor, p.x(), p.y()))
-          {
-            return;
-          }
+    const auto shade_fragment = [&](const Point2I& p, const RegisterFile<single_precision, MAX_VARYING_COUNT>& varyings,
+                                    const single_precision window_z, const single_precision inv_w)
+    {
+      if (state.scissor.enabled && !details::inside_scissor(state.scissor, p.x(), p.y()))
+      {
+        return;
+      }
 
-          auto& depth_buffer = framebuffer.depth_buffer();
-          const auto x = static_cast<std::size_t>(p.x());
-          const auto y = static_cast<std::size_t>(p.y());
-          const auto stored_z = depth_buffer.depth(x, y);
-          if (state.depth_test_enabled && !details::depth_test_passes(state.depth_func, window_z, stored_z))
-          {
-            return;
-          }
+      auto& depth_buffer = framebuffer.depth_buffer();
+      const auto x = static_cast<std::size_t>(p.x());
+      const auto y = static_cast<std::size_t>(p.y());
+      const auto stored_z = depth_buffer.depth(x, y);
+      if (state.depth_test_enabled && !details::depth_test_passes(state.depth_func, window_z, stored_z))
+      {
+        return;
+      }
 
-          const FragmentContext context{Vector4F{static_cast<single_precision>(p.x()) + 0.5F,
-                                                 static_cast<single_precision>(p.y()) + 0.5F, window_z, inv_w},
-                                        primitive_id, front_facing};
-          const auto fragment = program.fragment(varyings, context);
-          if (fragment.discard)
-          {
-            return;
-          }
+      const FragmentContext context{Vector4F{static_cast<single_precision>(p.x()) + 0.5F,
+                                             static_cast<single_precision>(p.y()) + 0.5F, window_z, inv_w},
+                                    primitive_id, front_facing};
+      const auto fragment = program.fragment(varyings, context);
+      if (fragment.discard)
+      {
+        return;
+      }
 
-          const auto depth = fragment.depth.value_or(window_z);
-          // Re-test depth only when the fragment shader overrode it.
-          // Otherwise `depth == window_z` and the early test above already passed against
-          // the same stored_z (nothing writes the depth buffer in between),
-          // so the re-test is redundant and skipping it leaves the depth/colour result unchanged.
-          if (fragment.depth.has_value() && state.depth_test_enabled
-              && !details::depth_test_passes(state.depth_func, depth, stored_z))
-          {
-            return;
-          }
-          if (state.depth_write_enabled)
-          {
-            depth_buffer.set_depth(x, y, depth);
-          }
+      const auto depth = fragment.depth.value_or(window_z);
+      // Re-test depth only when the fragment shader overrode it.
+      // Otherwise `depth == window_z` and the early test above already passed against
+      // the same stored_z (nothing writes the depth buffer in between),
+      // so the re-test is redundant and skipping it leaves the depth/colour result unchanged.
+      if (fragment.depth.has_value() && state.depth_test_enabled
+          && !details::depth_test_passes(state.depth_func, depth, stored_z))
+      {
+        return;
+      }
+      if (state.depth_write_enabled)
+      {
+        depth_buffer.set_depth(x, y, depth);
+      }
 
-          details::write_color(framebuffer.color_buffer(), x, y, fragment.color, state.blend, state.color_mask);
-        });
+      details::write_color(framebuffer.color_buffer(), x, y, fragment.color, state.blend, state.color_mask);
+    };
+
+    // PolygonMode selects how the (clipped, culled) triangle becomes fragments. FILL is the default and its call
+    // is unchanged; LINE and POINT reuse the same fragment-shading callback, so the depth test, discard, blend
+    // and colour write behave identically across all three modes.
+    switch (state.polygon_mode)
+    {
+    case PolygonMode::FILL:
+      fill_triangle_bbox(w0, w1, w2, cv0.varyings, cv1.varyings, cv2.varyings, bounds, shade_fragment);
+      break;
+    case PolygonMode::LINE:
+      draw_line_varyings(w0, w1, cv0.varyings, cv1.varyings, bounds, shade_fragment);
+      draw_line_varyings(w1, w2, cv1.varyings, cv2.varyings, bounds, shade_fragment);
+      draw_line_varyings(w2, w0, cv2.varyings, cv0.varyings, bounds, shade_fragment);
+      break;
+    case PolygonMode::POINT:
+      draw_point_varyings(w0, cv0.varyings, bounds, shade_fragment, cv0.point_size);
+      draw_point_varyings(w1, cv1.varyings, bounds, shade_fragment, cv1.point_size);
+      draw_point_varyings(w2, cv2.varyings, bounds, shade_fragment, cv2.point_size);
+      break;
+    }
 
     ++stats.triangles_rendered;
   }

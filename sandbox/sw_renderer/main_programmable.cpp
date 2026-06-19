@@ -51,15 +51,6 @@ namespace
 /// Rolling window of recent draw-call timings (milliseconds) backing the on-screen pipeline-cost readout.
 constexpr std::size_t DRAW_HISTORY_SIZE = 120U;
 
-/// Which built-in shader program the demo currently feeds to the pipeline.
-enum class ShaderKind : std::uint8_t
-{
-  FLAT,
-  VERTEX_COLOR,
-  TEXTURED,
-  LIT,
-};
-
 /// Interleaved, GPU-style vertex consumed by the programmable pipeline.
 ///
 /// The pipeline reads attributes from raw bytes through a `VertexLayout`, so the members are plain
@@ -181,12 +172,13 @@ private:
   void process_events(bool& is_running, const rtw::time_constants::Seconds& delta_time);
   void update(const rtw::time_constants::Seconds& delta_time);
   void render_imgui();
-  void shader_radio(const char* label, ShaderKind kind);
+  void polygon_radio(const char* label, rtw::sw_renderer::PolygonMode mode);
   void cull_radio(const char* label, rtw::sw_renderer::CullMode mode);
   rtw::sw_renderer::Vector4F object_color() const;
   rtw::sw_renderer::Vector3F light_direction() const;
   void configure_state();
-  rtw::sw_renderer::IShaderProgram* configure_program();
+  void configure_program();
+  void draw_active_shader(const rtw::sw_renderer::RawVertexStream& stream);
   void render();
 
 private:
@@ -199,10 +191,7 @@ private:
   rtw::sw_renderer::PipelineState state_;
   rtw::sw_renderer::RenderStats stats_;
 
-  rtw::sw_renderer::FlatColorShader flat_shader_;
-  rtw::sw_renderer::VertexColorShader vertex_color_shader_;
-  rtw::sw_renderer::TexturedShader textured_shader_;
-  rtw::sw_renderer::LitShader lit_shader_;
+  rtw::sw_renderer::StandardShader standard_shader_;
 
   rtw::sw_renderer::Mesh mesh_;
   std::vector<DemoVertex> vertices_;
@@ -221,11 +210,15 @@ private:
       rtw::sw_renderer::Vector3F{0.0F, 0.0F, 0.0F},
   };
 
-  ShaderKind shader_kind_{ShaderKind::TEXTURED};
+  rtw::sw_renderer::PolygonMode polygon_mode_{rtw::sw_renderer::PolygonMode::FILL};
+  float point_size_{4.0F};
   rtw::sw_renderer::CullMode cull_mode_{rtw::sw_renderer::CullMode::BACK};
-  rtw::sw_renderer::FilterMode filter_mode_{rtw::sw_renderer::FilterMode::LINEAR};
-  std::array<float, 4> color_{1.0F, 0.5F, 0.2F, 1.0F};
+  rtw::sw_renderer::FilterMode filter_mode_{rtw::sw_renderer::FilterMode::NEAREST};
+  std::array<float, 4> color_{1.0F, 1.0F, 1.0F, 1.0F};
   std::array<float, 3> light_{0.3F, -0.5F, -1.0F};
+  bool use_texture_{true};
+  bool use_vertex_color_{false};
+  bool use_lighting_{false};
   bool depth_test_enabled_{true};
   bool blend_enabled_{false};
   bool show_demo_window_{false};
@@ -481,11 +474,11 @@ void Application::update(const rtw::time_constants::Seconds& delta_time)
   view_matrix_ = rtw::sw_renderer::make_look_at(camera_.position, target);
 }
 
-void Application::shader_radio(const char* label, const ShaderKind kind)
+void Application::polygon_radio(const char* label, const rtw::sw_renderer::PolygonMode mode)
 {
-  if (ImGui::RadioButton(label, shader_kind_ == kind))
+  if (ImGui::RadioButton(label, polygon_mode_ == mode))
   {
-    shader_kind_ = kind;
+    polygon_mode_ = mode;
   }
 }
 
@@ -531,27 +524,32 @@ void Application::render_imgui()
               ImGui::GetIO().Framerate);
 
   ImGui::Separator();
-  ImGui::TextUnformatted("Shader");
-  shader_radio("Flat colour", ShaderKind::FLAT);
-  shader_radio("Vertex colour", ShaderKind::VERTEX_COLOR);
-  shader_radio("Textured", ShaderKind::TEXTURED);
-  shader_radio("Lit (Lambert)", ShaderKind::LIT);
-
-  if ((shader_kind_ == ShaderKind::FLAT) || (shader_kind_ == ShaderKind::LIT))
-  {
-    ImGui::ColorEdit4("Colour", color_.data());
-  }
-  if (shader_kind_ == ShaderKind::LIT)
-  {
-    ImGui::SliderFloat3("Light direction", light_.data(), -1.0F, 1.0F);
-  }
-  if (shader_kind_ == ShaderKind::TEXTURED)
+  ImGui::TextUnformatted("Shader effects");
+  ImGui::ColorEdit4("Base colour", color_.data());
+  ImGui::Checkbox("Texture", &use_texture_);
+  if (use_texture_)
   {
     bool linear = filter_mode_ == rtw::sw_renderer::FilterMode::LINEAR;
     if (ImGui::Checkbox("Bilinear filtering", &linear))
     {
       filter_mode_ = linear ? rtw::sw_renderer::FilterMode::LINEAR : rtw::sw_renderer::FilterMode::NEAREST;
     }
+  }
+  ImGui::Checkbox("Vertex colour", &use_vertex_color_);
+  ImGui::Checkbox("Lighting (Lambert)", &use_lighting_);
+  if (use_lighting_)
+  {
+    ImGui::SliderFloat3("Light direction", light_.data(), -1.0F, 1.0F);
+  }
+
+  ImGui::Separator();
+  ImGui::TextUnformatted("Polygon mode");
+  polygon_radio("Fill", rtw::sw_renderer::PolygonMode::FILL);
+  polygon_radio("Wireframe", rtw::sw_renderer::PolygonMode::LINE);
+  polygon_radio("Points", rtw::sw_renderer::PolygonMode::POINT);
+  if (polygon_mode_ == rtw::sw_renderer::PolygonMode::POINT)
+  {
+    ImGui::SliderFloat("Point size", &point_size_, 1.0F, 16.0F, "%.0f");
   }
 
   ImGui::Separator();
@@ -595,6 +593,7 @@ void Application::configure_state()
                                                static_cast<std::int32_t>(framebuffer_.height())};
   state_.cull_mode = cull_mode_;
   state_.front_face = rtw::sw_renderer::FrontFace::COUNTER_CLOCKWISE;
+  state_.polygon_mode = polygon_mode_;
   state_.depth_test_enabled = depth_test_enabled_;
   state_.depth_write_enabled = true;
 
@@ -607,35 +606,39 @@ void Application::configure_state()
   state_.blend.eq_alpha = rtw::sw_renderer::BlendEquation::ADD;
 }
 
-rtw::sw_renderer::IShaderProgram* Application::configure_program()
+void Application::configure_program()
 {
   const auto mvp = projection_matrix_ * view_matrix_ * model_matrix_;
+  standard_shader_.set_mvp_matrix(mvp);
+  standard_shader_.set_base_color(object_color());
 
-  switch (shader_kind_)
+  const bool textured = use_texture_ && (diffuse_texture_ != nullptr);
+  standard_shader_.set_use_texture(textured);
+  if (textured)
   {
-  case ShaderKind::FLAT:
-    flat_shader_.set_mvp_matrix(mvp);
-    flat_shader_.set_color(object_color());
-    return &flat_shader_;
-  case ShaderKind::VERTEX_COLOR:
-    vertex_color_shader_.set_mvp_matrix(mvp);
-    return &vertex_color_shader_;
-  case ShaderKind::TEXTURED:
-    textured_shader_.set_mvp_matrix(mvp);
-    if (diffuse_texture_ != nullptr)
-    {
-      textured_shader_.set_sampler(
-          rtw::sw_renderer::Sampler2D{*diffuse_texture_, rtw::sw_renderer::WrapMode::REPEAT, filter_mode_});
-    }
-    return &textured_shader_;
-  case ShaderKind::LIT:
-    lit_shader_.set_mvp_matrix(mvp);
-    lit_shader_.set_color(object_color());
-    lit_shader_.set_normal_matrix(view_matrix_ * model_matrix_);
-    lit_shader_.set_light_direction(light_direction());
-    return &lit_shader_;
+    standard_shader_.set_sampler(
+        rtw::sw_renderer::Sampler2D{*diffuse_texture_, rtw::sw_renderer::WrapMode::REPEAT, filter_mode_});
   }
-  return &textured_shader_;
+
+  standard_shader_.set_use_vertex_color(use_vertex_color_);
+
+  standard_shader_.set_use_lighting(use_lighting_);
+  if (use_lighting_)
+  {
+    standard_shader_.set_normal_matrix(view_matrix_ * model_matrix_);
+    standard_shader_.set_light_direction(light_direction());
+  }
+
+  standard_shader_.set_point_size(static_cast<rtw::sw_renderer::single_precision>(point_size_));
+}
+
+void Application::draw_active_shader(const rtw::sw_renderer::RawVertexStream& stream)
+{
+  const auto draw_start = std::chrono::steady_clock::now();
+  pipeline_.draw_arrays(standard_shader_, stream, state_, framebuffer_, stats_);
+  const rtw::time_constants::Milliseconds draw_ms = std::chrono::steady_clock::now() - draw_start;
+  draw_ms_history_[draw_ms_cursor_] = draw_ms.count();
+  draw_ms_cursor_ = (draw_ms_cursor_ + 1U) % DRAW_HISTORY_SIZE;
 }
 
 void Application::render()
@@ -661,17 +664,13 @@ void Application::render()
   framebuffer_.clear(GREY, 1.0F);
 
   configure_state();
-  auto* program = configure_program();
+  configure_program();
   stats_.reset();
 
-  if ((program != nullptr) && !vertices_.empty())
+  if (!vertices_.empty())
   {
     const rtw::sw_renderer::RawVertexStream stream{layout_, rtw::stl::as_bytes(rtw::stl::make_span(vertices_))};
-    const auto draw_start = std::chrono::steady_clock::now();
-    pipeline_.draw_arrays(*program, stream, state_, framebuffer_, stats_);
-    const rtw::time_constants::Milliseconds draw_ms = std::chrono::steady_clock::now() - draw_start;
-    draw_ms_history_[draw_ms_cursor_] = draw_ms.count();
-    draw_ms_cursor_ = (draw_ms_cursor_ + 1U) % DRAW_HISTORY_SIZE;
+    draw_active_shader(stream);
   }
 
   SDL_UpdateTexture(sdl_texture_, nullptr, framebuffer_.color_buffer().data(),

@@ -124,6 +124,31 @@ private:
   Vector4F color_;
 };
 
+class PointSizeProgram : public IShaderProgram
+{
+public:
+  PointSizeProgram(const Vector4F& color, const single_precision point_size) : color_{color}, point_size_{point_size} {}
+
+  VertexShaderOutput vertex(const AttributeView& input, const VertexContext& /*context*/) const override
+  {
+    VertexShaderOutput out;
+    out.position = input.attribute(POSITION_LOCATION);
+    out.point_size = point_size_;
+    return out;
+  }
+
+  FragmentShaderOutput fragment(const DynamicVaryings& /*varyings*/, const FragmentContext& /*context*/) const override
+  {
+    FragmentShaderOutput out;
+    out.color = color_;
+    return out;
+  }
+
+private:
+  Vector4F color_;
+  single_precision point_size_;
+};
+
 /// A shader that forwards the per-vertex colour through a varying slot (perspective-correct interpolation).
 class VaryingColorProgram : public IShaderProgram
 {
@@ -488,6 +513,116 @@ TEST(Pipeline, draw_elements_matches_draw_arrays)
     }
   }
   EXPECT_EQ(arrays_stats.triangles_rendered, elements_stats.triangles_rendered);
+}
+
+TEST(Pipeline, polygon_mode_selects_fill_wireframe_or_points)
+{
+  constexpr std::size_t DIM{32U};
+  PipelineState base_state;
+  base_state.viewport = Viewport{0, 0, static_cast<std::int32_t>(DIM), static_cast<std::int32_t>(DIM)};
+
+  const ConstantColorProgram program{RED};
+  const auto vertices = inside_triangle();
+  const auto stream = make_stream(vertices);
+
+  const auto render_mask = [&](const PolygonMode mode)
+  {
+    auto state = base_state;
+    state.polygon_mode = mode;
+    FrameBuffer framebuffer{DIM, DIM};
+    framebuffer.clear(Color{}, 1.0F);
+    RenderStats stats;
+    Pipeline pipeline;
+    pipeline.draw_arrays(program, stream, state, framebuffer, stats);
+
+    std::vector<bool> mask(DIM * DIM, false);
+    for (std::size_t y = 0U; y < DIM; ++y)
+    {
+      for (std::size_t x = 0U; x < DIM; ++x)
+      {
+        mask[(y * DIM) + x] = framebuffer.color_buffer().pixel(x, y) != Color{};
+      }
+    }
+    return mask;
+  };
+
+  const auto count = [](const std::vector<bool>& mask)
+  {
+    std::size_t n = 0U;
+    for (const bool covered : mask)
+    {
+      if (covered)
+      {
+        ++n;
+      }
+    }
+    return n;
+  };
+
+  const auto fill_mask = render_mask(PolygonMode::FILL);
+  const auto line_mask = render_mask(PolygonMode::LINE);
+  const auto point_mask = render_mask(PolygonMode::POINT);
+
+  const auto fill_count = count(fill_mask);
+  const auto line_count = count(line_mask);
+  const auto point_count = count(point_mask);
+
+  EXPECT_GT(fill_count, line_count);
+  EXPECT_GT(line_count, point_count);
+  EXPECT_GE(point_count, 1U);
+  EXPECT_LE(point_count, 3U);
+
+  bool fill_has_interior_pixel = false;
+  for (std::size_t i = 0U; i < fill_mask.size(); ++i)
+  {
+    if (fill_mask[i] && !line_mask[i])
+    {
+      fill_has_interior_pixel = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(fill_has_interior_pixel);
+}
+
+TEST(Pipeline, point_size_expands_point_coverage)
+{
+  constexpr std::size_t DIM{64U};
+  PipelineState state;
+  state.viewport = Viewport{0, 0, static_cast<std::int32_t>(DIM), static_cast<std::int32_t>(DIM)};
+  state.polygon_mode = PolygonMode::POINT;
+
+  const auto vertices = inside_triangle();
+  const auto stream = make_stream(vertices);
+
+  const auto count_covered = [&](const single_precision point_size)
+  {
+    const PointSizeProgram program{RED, point_size};
+    FrameBuffer framebuffer{DIM, DIM};
+    framebuffer.clear(Color{}, 1.0F);
+    RenderStats stats;
+    Pipeline pipeline;
+    pipeline.draw_arrays(program, stream, state, framebuffer, stats);
+
+    std::size_t covered = 0U;
+    for (std::size_t y = 0U; y < DIM; ++y)
+    {
+      for (std::size_t x = 0U; x < DIM; ++x)
+      {
+        if (framebuffer.color_buffer().pixel(x, y) != Color{})
+        {
+          ++covered;
+        }
+      }
+    }
+    return covered;
+  };
+
+  const auto small = count_covered(single_precision{1});
+  const auto large = count_covered(single_precision{3});
+
+  EXPECT_EQ(small, 3U);
+  EXPECT_EQ(large, 27U);
+  EXPECT_GT(large, small);
 }
 
 } // namespace

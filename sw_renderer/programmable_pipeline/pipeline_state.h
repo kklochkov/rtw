@@ -21,6 +21,16 @@ enum class FrontFace : std::uint8_t
   CLOCKWISE,
 };
 
+// Mirrors OpenGL's glPolygonMode: a triangle is rasterised either as a filled area, as the three edge
+// lines of its wireframe, or as its three corner points. The modes are mutually exclusive (not flags);
+// FILL is the default and leaves the existing fill path byte-for-byte unchanged.
+enum class PolygonMode : std::uint8_t
+{
+  FILL = 0U,
+  LINE,
+  POINT,
+};
+
 enum class DepthFunc : std::uint8_t
 {
   NEVER = 0U,
@@ -110,6 +120,7 @@ struct PipelineState
   DepthRange depth_range{};
   CullMode cull_mode{CullMode::NONE};
   FrontFace front_face{FrontFace::COUNTER_CLOCKWISE};
+  PolygonMode polygon_mode{PolygonMode::FILL};
   BlendState blend{};
   ColorMask color_mask{};
   Scissor scissor{};

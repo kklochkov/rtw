@@ -251,6 +251,22 @@ vertex stream + optional index buffer
 
 That order is worth studying because it is where most of the package's design decisions show up.
 
+## Two draw overloads: virtual and templated
+
+`Pipeline::draw_arrays` / `draw_elements` each come in two overloads that share one rasterizer body:
+
+- the **virtual** overload takes `const IShaderProgram&` - the canonical interface, used by the
+  dynamic/scripted path and anywhere the shader type is not known at compile time;
+- the **templated** overload takes a concrete `const ShaderT&` - it keeps the concrete shader type, which
+  is what lets a C++ shader build typed, named vertex/varying accessors on top instead of working only
+  through attribute indices.
+
+Overload resolution picks automatically: pass a concrete shader and you get the templated overload; pass
+something whose static type is `IShaderProgram` and you get the virtual one. Both forward to the same
+internal `draw_*_impl<ShaderT>` (the virtual path is just the `IShaderProgram` instantiation of it), so they
+produce identical output and run at the same speed - the templated overload is a type-safety/ergonomics
+convenience, not a separate or faster pipeline.
+
 ## Why `PipelineState` was made an aggregate
 
 `PipelineState` is deliberately a plain data struct. That keeps the API easy to construct in tests,

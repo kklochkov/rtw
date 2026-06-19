@@ -13,6 +13,7 @@
 #include "sw_renderer/types.h"
 
 #include "math/matrix.h"
+#include "math/vector_operations.h"
 
 #include "stl/span.h"
 
@@ -260,62 +261,56 @@ TEST(TexturedShader, fills_a_triangle_from_a_solid_texture)
 
 // --- LitShader --------------------------------------------------------------
 
+TEST(LitShader, vertex_is_fully_lit_when_the_normal_faces_the_light)
+{
+  const std::vector<Vertex> vertices{make_vertex(clip_position(0.0F, 0.0F), {0.0F, 0.0F, 1.0F}, {0.0F, 0.0F}, WHITE)};
+  const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
+
+  const LitShader shader;
+  const auto out = shader.vertex(stream[0], VertexContext{});
+
+  EXPECT_FLOAT_EQ(out.varyings[LitShader::INTENSITY_VARYING].x(), 1.0F);
+  EXPECT_FLOAT_EQ(out.varyings[LitShader::INTENSITY_VARYING].y(), 0.0F);
+  EXPECT_FLOAT_EQ(out.varyings[LitShader::INTENSITY_VARYING].z(), 0.0F);
+  EXPECT_FLOAT_EQ(out.varyings[LitShader::INTENSITY_VARYING].w(), 0.0F);
+}
+
+TEST(LitShader, vertex_is_dark_when_the_normal_faces_away_from_the_light)
+{
+  const std::vector<Vertex> vertices{make_vertex(clip_position(0.0F, 0.0F), {0.0F, 0.0F, -1.0F}, {0.0F, 0.0F}, WHITE)};
+  const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
+
+  const LitShader shader;
+  const auto out = shader.vertex(stream[0], VertexContext{});
+
+  EXPECT_FLOAT_EQ(out.varyings[LitShader::INTENSITY_VARYING].x(), 0.0F);
+}
+
 TEST(LitShader, vertex_transforms_the_normal_as_a_direction)
 {
-  const std::vector<Vertex> vertices{make_vertex(clip_position(0.0F, 0.0F), {1.0F, 1.0F, 1.0F}, {0.0F, 0.0F}, WHITE)};
+  const std::vector<Vertex> vertices{make_vertex(clip_position(0.0F, 0.0F), {1.0F, 0.0F, 1.0F}, {0.0F, 0.0F}, WHITE)};
   const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
 
   LitShader shader;
-  // Scale by (2, 3, 4) with a translation that must be ignored for a direction (w = 0).
   shader.set_normal_matrix(Matrix4x4F{math::FROM_ROW_MAJOR, 2.0F, 0.0F, 0.0F, 5.0F, 0.0F, 3.0F, 0.0F, 6.0F, 0.0F, 0.0F,
                                       4.0F, 7.0F, 0.0F, 0.0F, 0.0F, 1.0F});
 
   const auto out = shader.vertex(stream[0], VertexContext{});
 
-  expect_vec4_eq(out.varyings[0U], Vector4F{2.0F, 3.0F, 4.0F, 0.0F});
+  EXPECT_FLOAT_EQ(out.varyings[LitShader::INTENSITY_VARYING].x(), 2.0F / std::sqrt(5.0F));
 }
 
-TEST(LitShader, fragment_is_fully_lit_when_the_normal_faces_the_light)
+TEST(LitShader, fragment_scales_the_colour_by_the_interpolated_intensity)
 {
-  LitShader shader; // default light direction (0, 0, -1)
+  LitShader shader;
   shader.set_color(Vector4F{0.6F, 0.8F, 1.0F, 1.0F});
 
   IShaderProgram::DynamicVaryings varyings;
-  varyings[0U] = Vector4F{0.0F, 0.0F, 1.0F, 0.0F}; // normal points at the viewer / light source
+  varyings[LitShader::INTENSITY_VARYING] = Vector4F{0.5F, 0.0F, 0.0F, 0.0F};
 
   const auto out = shader.fragment(varyings, FragmentContext{});
 
-  expect_vec4_eq(out.color, Vector4F{0.6F, 0.8F, 1.0F, 1.0F});
-}
-
-TEST(LitShader, fragment_is_dark_when_the_normal_faces_away_from_the_light)
-{
-  LitShader shader;
-  shader.set_color(WHITE);
-
-  IShaderProgram::DynamicVaryings varyings;
-  varyings[0U] = Vector4F{0.0F, 0.0F, -1.0F, 0.0F}; // normal points away from the light
-
-  const auto out = shader.fragment(varyings, FragmentContext{});
-
-  expect_vec4_eq(out.color, Vector4F{0.0F, 0.0F, 0.0F, 1.0F});
-}
-
-TEST(LitShader, fragment_scales_colour_by_the_lambert_term)
-{
-  LitShader shader;
-  shader.set_color(WHITE);
-
-  IShaderProgram::DynamicVaryings varyings;
-  varyings[0U] = Vector4F{1.0F, 0.0F, 1.0F, 0.0F}; // 45 degrees: intensity = 1 / sqrt(2)
-
-  const auto out = shader.fragment(varyings, FragmentContext{});
-
-  const auto expected = 1.0F / std::sqrt(2.0F);
-  EXPECT_FLOAT_EQ(out.color.x(), expected);
-  EXPECT_FLOAT_EQ(out.color.y(), expected);
-  EXPECT_FLOAT_EQ(out.color.z(), expected);
-  EXPECT_FLOAT_EQ(out.color.w(), 1.0F);
+  expect_vec4_eq(out.color, Vector4F{0.3F, 0.4F, 0.5F, 1.0F});
 }
 
 TEST(LitShader, shades_a_triangle_through_the_pipeline)
@@ -488,6 +483,167 @@ TEST(Builtins, vertex_id_is_supplied_to_the_vertex_stage)
   const auto out = shader.vertex(stream[0], context);
 
   EXPECT_FLOAT_EQ(out.varyings[0U].x(), 7.0F);
+}
+
+TEST(StandardShader, vertex_routes_each_attribute_to_its_fixed_slot)
+{
+  const std::vector<Vertex> vertices{make_vertex(clip_position(0.0F, 0.0F), {0.0F, 0.0F, 1.0F}, {0.25F, 0.75F}, GREEN)};
+  const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
+
+  StandardShader shader;
+  shader.set_use_texture(true);
+  shader.set_use_vertex_color(true);
+  shader.set_use_lighting(true);
+  const auto out = shader.vertex(stream[0], VertexContext{});
+
+  EXPECT_FLOAT_EQ(out.varyings[StandardShader::UV_VARYING].x(), 0.25F);
+  EXPECT_FLOAT_EQ(out.varyings[StandardShader::UV_VARYING].y(), 0.75F);
+  EXPECT_FLOAT_EQ(out.varyings[StandardShader::LIGHT_VARYING].x(), 1.0F);
+  expect_vec4_eq(out.varyings[StandardShader::COLOR_VARYING], GREEN);
+}
+
+TEST(StandardShader, vertex_leaves_disabled_effect_slots_zero)
+{
+  const std::vector<Vertex> vertices{make_vertex(clip_position(0.0F, 0.0F), {1.0F, 1.0F, 1.0F}, {0.25F, 0.75F}, GREEN)};
+  const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
+
+  StandardShader shader;
+  shader.set_use_texture(true);
+  const auto out = shader.vertex(stream[0], VertexContext{});
+
+  EXPECT_FLOAT_EQ(out.varyings[StandardShader::UV_VARYING].x(), 0.25F);
+  EXPECT_FLOAT_EQ(out.varyings[StandardShader::UV_VARYING].y(), 0.75F);
+  expect_vec4_eq(out.varyings[StandardShader::COLOR_VARYING], Vector4F{});
+  expect_vec4_eq(out.varyings[StandardShader::LIGHT_VARYING], Vector4F{});
+}
+
+TEST(StandardShader, vertex_emits_the_configured_point_size)
+{
+  const std::vector<Vertex> vertices{make_vertex(clip_position(0.0F, 0.0F), {0.0F, 0.0F, 1.0F}, {0.0F, 0.0F}, GREEN)};
+  const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
+
+  StandardShader shader;
+  EXPECT_FLOAT_EQ(shader.vertex(stream[0], VertexContext{}).point_size, 1.0F);
+
+  shader.set_point_size(single_precision{5});
+  EXPECT_FLOAT_EQ(shader.vertex(stream[0], VertexContext{}).point_size, 5.0F);
+}
+
+TEST(StandardShader, all_terms_disabled_emits_the_base_colour)
+{
+  StandardShader shader;
+  shader.set_base_color(BLUE);
+
+  IShaderProgram::DynamicVaryings varyings;
+  varyings[StandardShader::UV_VARYING] = Vector4F{0.5F, 0.5F, 0.0F, 0.0F};
+  varyings[StandardShader::COLOR_VARYING] = RED;
+  varyings[StandardShader::LIGHT_VARYING] = Vector4F{0.5F, 0.0F, 0.0F, 0.0F};
+
+  const auto out = shader.fragment(varyings, FragmentContext{});
+
+  expect_vec4_eq(out.color, BLUE);
+}
+
+TEST(StandardShader, texture_term_multiplies_the_base_colour)
+{
+  std::vector<std::uint32_t> texels{
+      Color{std::uint8_t{10}, std::uint8_t{20}, std::uint8_t{30}, std::uint8_t{255}}.rgba,
+      Color{std::uint8_t{40}, std::uint8_t{50}, std::uint8_t{60}, std::uint8_t{255}}.rgba,
+      Color{std::uint8_t{70}, std::uint8_t{80}, std::uint8_t{90}, std::uint8_t{255}}.rgba,
+      Color{std::uint8_t{100}, std::uint8_t{110}, std::uint8_t{120}, std::uint8_t{255}}.rgba};
+  const Texture texture{texels.data(), 2U, 2U};
+  const Sampler2D sampler{texture};
+
+  const Vector4F base{0.5F, 0.25F, 1.0F, 1.0F};
+  StandardShader shader;
+  shader.set_base_color(base);
+  shader.set_sampler(sampler);
+  shader.set_use_texture(true);
+
+  IShaderProgram::DynamicVaryings varyings;
+  varyings[StandardShader::UV_VARYING] = Vector4F{0.75F, 0.25F, 0.0F, 0.0F};
+  const auto out = shader.fragment(varyings, FragmentContext{});
+
+  expect_vec4_eq(out.color, math::hadamard(base, sampler.sample(Vector2F{0.75F, 0.25F})));
+}
+
+TEST(StandardShader, vertex_colour_term_multiplies_the_base_colour)
+{
+  const Vector4F base{0.5F, 0.6F, 0.7F, 1.0F};
+  const Vector4F vertex_color{0.4F, 0.5F, 0.6F, 0.5F};
+  StandardShader shader;
+  shader.set_base_color(base);
+  shader.set_use_vertex_color(true);
+
+  IShaderProgram::DynamicVaryings varyings;
+  varyings[StandardShader::COLOR_VARYING] = vertex_color;
+  const auto out = shader.fragment(varyings, FragmentContext{});
+
+  expect_vec4_eq(out.color, math::hadamard(base, vertex_color));
+}
+
+TEST(StandardShader, lighting_term_scales_rgb_by_the_interpolated_intensity)
+{
+  StandardShader shader;
+  shader.set_base_color(WHITE);
+  shader.set_use_lighting(true);
+
+  IShaderProgram::DynamicVaryings varyings;
+  const auto intensity = 1.0F / std::sqrt(2.0F);
+  varyings[StandardShader::LIGHT_VARYING] = Vector4F{intensity, 0.0F, 0.0F, 0.0F};
+  const auto out = shader.fragment(varyings, FragmentContext{});
+
+  EXPECT_FLOAT_EQ(out.color.x(), intensity);
+  EXPECT_FLOAT_EQ(out.color.y(), intensity);
+  EXPECT_FLOAT_EQ(out.color.z(), intensity);
+  EXPECT_FLOAT_EQ(out.color.w(), 1.0F);
+}
+
+TEST(StandardShader, composes_texture_vertex_colour_and_lighting_multiplicatively)
+{
+  std::vector<std::uint32_t> texels(
+      4U, Color{std::uint8_t{128}, std::uint8_t{64}, std::uint8_t{255}, std::uint8_t{255}}.rgba);
+  const Texture texture{texels.data(), 2U, 2U};
+  const Sampler2D sampler{texture};
+
+  const Vector4F base{0.9F, 0.8F, 0.7F, 1.0F};
+  const Vector4F vertex_color{0.5F, 0.5F, 0.5F, 1.0F};
+  StandardShader shader;
+  shader.set_base_color(base);
+  shader.set_sampler(sampler);
+  shader.set_use_texture(true);
+  shader.set_use_vertex_color(true);
+  shader.set_use_lighting(true);
+
+  IShaderProgram::DynamicVaryings varyings;
+  varyings[StandardShader::UV_VARYING] = Vector4F{0.5F, 0.5F, 0.0F, 0.0F};
+  varyings[StandardShader::COLOR_VARYING] = vertex_color;
+  varyings[StandardShader::LIGHT_VARYING] = Vector4F{1.0F, 0.0F, 0.0F, 0.0F};
+  const auto out = shader.fragment(varyings, FragmentContext{});
+
+  const auto product = math::hadamard(math::hadamard(base, sampler.sample(Vector2F{0.5F, 0.5F})), vertex_color);
+  EXPECT_FLOAT_EQ(out.color.x(), product.x());
+  EXPECT_FLOAT_EQ(out.color.y(), product.y());
+  EXPECT_FLOAT_EQ(out.color.z(), product.z());
+  EXPECT_FLOAT_EQ(out.color.w(), product.w());
+}
+
+TEST(StandardShader, all_terms_disabled_fills_a_triangle_like_a_flat_colour)
+{
+  FrameBuffer framebuffer{WIDTH, HEIGHT};
+  framebuffer.clear(Color{}, 1.0F);
+
+  StandardShader shader;
+  shader.set_base_color(BLUE);
+  const auto vertices = full_screen_triangle(WHITE);
+  const RawVertexStream stream{make_layout(), stl::as_bytes(stl::make_span(vertices))};
+  RenderStats stats;
+  Pipeline pipeline;
+
+  pipeline.draw_arrays(shader, stream, make_state(), framebuffer, stats);
+
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{BLUE});
+  EXPECT_EQ(framebuffer.color_buffer().pixel(1U, 1U), Color{BLUE});
 }
 
 } // namespace
