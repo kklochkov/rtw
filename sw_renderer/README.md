@@ -6,8 +6,9 @@ The renderer ships **two coexisting pipelines** layered over a shared core:
 
 - **`fixed_pipeline`** — the legacy fixed-function `Renderer` (render-mode flags: wireframe,
   shading, texturing, lighting, face culling, normals). Stable, kept as the reference path.
-- **`programmable_pipeline`** — an OpenGL-style programmable `Pipeline` driven by a virtual
-  `IShaderProgram` (vertex + fragment stages, varyings, samplers, full blend/scissor/depth state).
+- **`programmable_pipeline`** — an OpenGL-style programmable `Pipeline` driven by `IShaderProgram`
+  (plus additive templated `draw_*` overloads for concrete shaders), with vertex + fragment stages,
+  varyings, samplers, and full blend/scissor/depth state.
 
 Tutorial guides for each pipeline:
 
@@ -62,7 +63,7 @@ Tutorial guides for each pipeline:
 | `frame_buffer.h` | `FrameBuffer` wrapping `ColorBuffer` + `DepthBuffer` |
 | `shader.h` | `IShaderProgram`, `VertexContext` / `FragmentContext`, `VertexShaderOutput` / `FragmentShaderOutput` |
 | `shader_builtins.h` | GLSL-style helpers (`mix`, `saturate`, `step`, `smoothstep`, `fract`, `reflect`, `refract`, `texture`) |
-| `builtin_shaders.h` | Ready-made shaders (`FlatColor`, `VertexColor`, `Textured`, `Lit`) + `attribute_location` |
+| `builtin_shaders.h` | Ready-made shaders (`FlatColor`, `VertexColor`, `Textured`, `Lit`, `Standard`) + `attribute_location` |
 | `sampler.h` | `Sampler2D` over `Texture` (wrap / filter modes) |
 | `register_file.h` | `RegisterFile<T, N>` varying substrate (lerp-able) |
 | `varyings.h` | `VaryingsBase` typed overlay helper over the register file |
@@ -251,8 +252,8 @@ Available helpers and built-ins:
 - **`builtin_shaders.h`** — `FlatColorShader`, `VertexColorShader`, `TexturedShader`, `LitShader`
   are worked examples to copy from.
 
-> `dFdx` / `dFdy`, `textureLod`, mip-LOD selection, instancing (`gl_InstanceID`) and `gl_PointSize`
-> are not yet implemented — see the roadmap below.
+> `dFdx` / `dFdy`, `textureLod`, mip-LOD selection, and instancing (`gl_InstanceID`) are not yet
+> implemented — see the roadmap below.
 
 ## Render state
 
@@ -300,8 +301,8 @@ The `*_fixed_point_tests` targets recompile their dependency graph with `-DRTW_U
 
 ## Roadmap
 
-**Phase 1.5** — POINTS primitive + `gl_PointSize`; instancing + `gl_InstanceID`; quad-based
-rasterization for `dFdx` / `dFdy` + mip LOD.
+**Phase 1.5** — instancing + `gl_InstanceID`; quad-based rasterization for `dFdx` / `dFdy` + mip
+LOD.
 
 **Deferred** — stencil test/op (`StencilState` / `StencilBuffer`); sRGB decode-on-sample /
 encode-on-write; tiled / multithreaded rasterization; a Phase 2 scripted backend

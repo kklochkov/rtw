@@ -515,6 +515,37 @@ TEST(Pipeline, draw_elements_matches_draw_arrays)
   EXPECT_EQ(arrays_stats.triangles_rendered, elements_stats.triangles_rendered);
 }
 
+TEST(Pipeline, templated_overload_matches_virtual_overload)
+{
+  const VaryingColorProgram program;
+  const auto state = make_state();
+  const auto vertices = full_screen_triangle_rgb();
+  const auto stream = make_stream(vertices);
+
+  FrameBuffer templated_fb{WIDTH, HEIGHT};
+  templated_fb.clear(Color{}, 1.0F);
+  RenderStats templated_stats;
+  Pipeline templated_pipeline;
+  templated_pipeline.draw_arrays(program, stream, state, templated_fb, templated_stats);
+
+  FrameBuffer virtual_fb{WIDTH, HEIGHT};
+  virtual_fb.clear(Color{}, 1.0F);
+  RenderStats virtual_stats;
+  Pipeline virtual_pipeline;
+  const IShaderProgram& virtual_program = program;
+  virtual_pipeline.draw_arrays(virtual_program, stream, state, virtual_fb, virtual_stats);
+
+  for (std::size_t y = 0U; y < HEIGHT; ++y)
+  {
+    for (std::size_t x = 0U; x < WIDTH; ++x)
+    {
+      EXPECT_EQ(templated_fb.color_buffer().pixel(x, y), virtual_fb.color_buffer().pixel(x, y));
+      EXPECT_FLOAT_EQ(templated_fb.depth_buffer().depth(x, y), virtual_fb.depth_buffer().depth(x, y));
+    }
+  }
+  EXPECT_EQ(templated_stats.triangles_rendered, virtual_stats.triangles_rendered);
+}
+
 TEST(Pipeline, polygon_mode_selects_fill_wireframe_or_points)
 {
   constexpr std::size_t DIM{32U};

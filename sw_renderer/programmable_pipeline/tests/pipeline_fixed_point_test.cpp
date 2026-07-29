@@ -173,5 +173,36 @@ TEST(PipelineFixedPoint, additive_blending_sums_source_and_destination)
   EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{WHITE});
 }
 
+TEST(PipelineFixedPoint, templated_overload_matches_virtual_overload)
+{
+  const auto vertices = full_screen_triangle();
+  const auto stream = make_stream(vertices);
+  const auto state = make_state();
+  const ConstantColorProgram program{RED};
+
+  FrameBuffer templated_fb{WIDTH, HEIGHT};
+  templated_fb.clear(Color{}, single_precision{1});
+  RenderStats templated_stats;
+  Pipeline templated_pipeline;
+  templated_pipeline.draw_arrays(program, stream, state, templated_fb, templated_stats);
+
+  FrameBuffer virtual_fb{WIDTH, HEIGHT};
+  virtual_fb.clear(Color{}, single_precision{1});
+  RenderStats virtual_stats;
+  Pipeline virtual_pipeline;
+  const IShaderProgram& virtual_program = program;
+  virtual_pipeline.draw_arrays(virtual_program, stream, state, virtual_fb, virtual_stats);
+
+  for (std::size_t y = 0U; y < HEIGHT; ++y)
+  {
+    for (std::size_t x = 0U; x < WIDTH; ++x)
+    {
+      EXPECT_EQ(templated_fb.color_buffer().pixel(x, y), virtual_fb.color_buffer().pixel(x, y));
+      EXPECT_EQ(templated_fb.depth_buffer().depth(x, y), virtual_fb.depth_buffer().depth(x, y));
+    }
+  }
+  EXPECT_EQ(templated_stats.triangles_rendered, virtual_stats.triangles_rendered);
+}
+
 } // namespace
 } // namespace rtw::sw_renderer
