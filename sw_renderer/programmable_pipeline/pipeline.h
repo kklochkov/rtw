@@ -90,56 +90,88 @@ public:
   void draw_arrays(const IShaderProgram& program, const RawVertexStream& vertices, const PipelineState& state,
                    FrameBuffer& framebuffer, RenderStats& stats);
 
+  void draw_arrays_instanced(const IShaderProgram& program, const RawVertexStream& vertices,
+                             const std::uint32_t instance_count, const PipelineState& state, FrameBuffer& framebuffer,
+                             RenderStats& stats);
+
   void draw_elements(const IShaderProgram& program, const RawVertexStream& vertices, const IndexBuffer& indices,
                      const PipelineState& state, FrameBuffer& framebuffer, RenderStats& stats);
+
+  void draw_elements_instanced(const IShaderProgram& program, const RawVertexStream& vertices,
+                               const IndexBuffer& indices, const std::uint32_t instance_count,
+                               const PipelineState& state, FrameBuffer& framebuffer, RenderStats& stats);
 
   template <typename ShaderT>
   void draw_arrays(const ShaderT& program, const RawVertexStream& vertices, const PipelineState& state,
                    FrameBuffer& framebuffer, RenderStats& stats)
   {
-    draw_arrays_impl(program, vertices, state, framebuffer, stats);
+    draw_arrays_impl(program, vertices, 1U, state, framebuffer, stats);
+  }
+
+  template <typename ShaderT>
+  void draw_arrays_instanced(const ShaderT& program, const RawVertexStream& vertices,
+                             const std::uint32_t instance_count, const PipelineState& state, FrameBuffer& framebuffer,
+                             RenderStats& stats)
+  {
+    draw_arrays_impl(program, vertices, instance_count, state, framebuffer, stats);
   }
 
   template <typename ShaderT>
   void draw_elements(const ShaderT& program, const RawVertexStream& vertices, const IndexBuffer& indices,
                      const PipelineState& state, FrameBuffer& framebuffer, RenderStats& stats)
   {
-    draw_elements_impl(program, vertices, indices, state, framebuffer, stats);
+    draw_elements_impl(program, vertices, indices, 1U, state, framebuffer, stats);
+  }
+
+  template <typename ShaderT>
+  void draw_elements_instanced(const ShaderT& program, const RawVertexStream& vertices, const IndexBuffer& indices,
+                               const std::uint32_t instance_count, const PipelineState& state, FrameBuffer& framebuffer,
+                               RenderStats& stats)
+  {
+    draw_elements_impl(program, vertices, indices, instance_count, state, framebuffer, stats);
   }
 
 private:
   template <typename ShaderT>
-  void draw_arrays_impl(const ShaderT& program, const RawVertexStream& vertices, const PipelineState& state,
-                        FrameBuffer& framebuffer, RenderStats& stats)
+  void draw_arrays_impl(const ShaderT& program, const RawVertexStream& vertices, const std::uint32_t instance_count,
+                        const PipelineState& state, FrameBuffer& framebuffer, RenderStats& stats)
   {
-    transform_vertices(program, vertices);
-    for (std::size_t i = 0U, primitive = 0U; (i + 2U) < transformed_.size(); i += 3U, ++primitive)
+    for (std::uint32_t instance_id = 0U; instance_id < instance_count; ++instance_id)
     {
-      process_triangle(program, transformed_[i], transformed_[i + 1U], transformed_[i + 2U],
-                       static_cast<std::uint32_t>(primitive), state, framebuffer, stats);
+      transform_vertices(program, vertices, instance_id);
+      for (std::size_t i = 0U, primitive = 0U; (i + 2U) < transformed_.size(); i += 3U, ++primitive)
+      {
+        process_triangle(program, transformed_[i], transformed_[i + 1U], transformed_[i + 2U],
+                         static_cast<std::uint32_t>(primitive), state, framebuffer, stats);
+      }
     }
   }
 
   template <typename ShaderT>
   void draw_elements_impl(const ShaderT& program, const RawVertexStream& vertices, const IndexBuffer& indices,
-                          const PipelineState& state, FrameBuffer& framebuffer, RenderStats& stats)
+                          const std::uint32_t instance_count, const PipelineState& state, FrameBuffer& framebuffer,
+                          RenderStats& stats)
   {
-    transform_vertices(program, vertices);
-    for (std::size_t i = 0U, primitive = 0U; (i + 2U) < indices.size(); i += 3U, ++primitive)
+    for (std::uint32_t instance_id = 0U; instance_id < instance_count; ++instance_id)
     {
-      process_triangle(program, transformed_[indices[i]], transformed_[indices[i + 1U]], transformed_[indices[i + 2U]],
-                       static_cast<std::uint32_t>(primitive), state, framebuffer, stats);
+      transform_vertices(program, vertices, instance_id);
+      for (std::size_t i = 0U, primitive = 0U; (i + 2U) < indices.size(); i += 3U, ++primitive)
+      {
+        process_triangle(program, transformed_[indices[i]], transformed_[indices[i + 1U]],
+                         transformed_[indices[i + 2U]], static_cast<std::uint32_t>(primitive), state, framebuffer,
+                         stats);
+      }
     }
   }
 
   template <typename ShaderT>
-  void transform_vertices(const ShaderT& program, const RawVertexStream& vertices)
+  void transform_vertices(const ShaderT& program, const RawVertexStream& vertices, std::uint32_t instance_id)
   {
     const auto count = vertices.size();
     transformed_.resize(count);
     for (std::size_t i = 0U; i < count; ++i)
     {
-      const VertexContext context{static_cast<std::uint32_t>(i), 0U};
+      const VertexContext context{static_cast<std::uint32_t>(i), instance_id};
       const auto output = program.vertex(vertices[i], context);
       transformed_[i] = ClipVertex<single_precision>{output.position, output.varyings, output.point_size};
     }

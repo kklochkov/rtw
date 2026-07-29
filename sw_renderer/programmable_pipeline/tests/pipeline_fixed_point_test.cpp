@@ -46,6 +46,7 @@ static_assert(sizeof(Vertex) == 16U, "Vertex must be tightly packed for the byte
 
 const Vector4F RED{single_precision{1}, single_precision{0}, single_precision{0}, single_precision{1}};
 const Vector4F GREEN{single_precision{0}, single_precision{1}, single_precision{0}, single_precision{1}};
+const Vector4F BLUE{single_precision{0}, single_precision{0}, single_precision{1}, single_precision{1}};
 const Vector4F WHITE{single_precision{1}, single_precision{1}, single_precision{1}, single_precision{1}};
 
 VertexLayout make_layout()
@@ -93,6 +94,41 @@ public:
 
 private:
   Vector4F color_;
+};
+
+class InstanceIdColorProgram : public IShaderProgram
+{
+public:
+  VertexShaderOutput vertex(const AttributeView& input, const VertexContext& context) const override
+  {
+    VertexShaderOutput out;
+    out.position = input.attribute(POSITION_LOCATION);
+    out.varyings[0U] = Vector4F{static_cast<single_precision>(context.instance_id), single_precision{0},
+                                single_precision{0}, single_precision{0}};
+    return out;
+  }
+
+  FragmentShaderOutput fragment(const DynamicVaryings& varyings, const FragmentContext& /*context*/) const override
+  {
+    const auto instance_id = static_cast<std::uint32_t>(varyings[0U].x());
+    FragmentShaderOutput out;
+    switch (instance_id)
+    {
+    case 0U:
+      out.color = RED;
+      break;
+    case 1U:
+      out.color = GREEN;
+      break;
+    case 2U:
+      out.color = BLUE;
+      break;
+    default:
+      out.color = WHITE;
+      break;
+    }
+    return out;
+  }
 };
 
 TEST(PipelineFixedPoint, draw_arrays_fills_color_and_depth)
@@ -202,6 +238,51 @@ TEST(PipelineFixedPoint, templated_overload_matches_virtual_overload)
     }
   }
   EXPECT_EQ(templated_stats.triangles_rendered, virtual_stats.triangles_rendered);
+}
+
+TEST(PipelineFixedPoint, draw_arrays_instanced_propagates_instance_id)
+{
+  const auto vertices = full_screen_triangle();
+  const auto stream = make_stream(vertices);
+
+  FrameBuffer framebuffer{WIDTH, HEIGHT};
+  framebuffer.clear(Color{}, single_precision{1});
+
+  auto state = make_state();
+  state.depth_test_enabled = false;
+
+  const InstanceIdColorProgram program;
+  RenderStats stats;
+  Pipeline pipeline;
+
+  pipeline.draw_arrays_instanced(program, stream, 3U, state, framebuffer, stats);
+
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{BLUE});
+  EXPECT_EQ(stats.triangles_submitted, 3U);
+  EXPECT_EQ(stats.triangles_rendered, 6U);
+}
+
+TEST(PipelineFixedPoint, draw_elements_instanced_propagates_instance_id)
+{
+  const auto vertices = full_screen_triangle();
+  const auto stream = make_stream(vertices);
+  const IndexBuffer indices{std::vector<std::uint32_t>{0U, 1U, 2U}};
+
+  FrameBuffer framebuffer{WIDTH, HEIGHT};
+  framebuffer.clear(Color{}, single_precision{1});
+
+  auto state = make_state();
+  state.depth_test_enabled = false;
+
+  const InstanceIdColorProgram program;
+  RenderStats stats;
+  Pipeline pipeline;
+
+  pipeline.draw_elements_instanced(program, stream, indices, 3U, state, framebuffer, stats);
+
+  EXPECT_EQ(framebuffer.color_buffer().pixel(4U, 4U), Color{BLUE});
+  EXPECT_EQ(stats.triangles_submitted, 3U);
+  EXPECT_EQ(stats.triangles_rendered, 6U);
 }
 
 } // namespace

@@ -138,13 +138,27 @@ void write_color(ColorBuffer& color_buffer, const std::size_t x, const std::size
 void Pipeline::draw_arrays(const IShaderProgram& program, const RawVertexStream& vertices, const PipelineState& state,
                            FrameBuffer& framebuffer, RenderStats& stats)
 {
-  draw_arrays_impl(program, vertices, state, framebuffer, stats);
+  draw_arrays_impl(program, vertices, 1U, state, framebuffer, stats);
+}
+
+void Pipeline::draw_arrays_instanced(const IShaderProgram& program, const RawVertexStream& vertices,
+                                     const std::uint32_t instance_count, const PipelineState& state,
+                                     FrameBuffer& framebuffer, RenderStats& stats)
+{
+  draw_arrays_impl(program, vertices, instance_count, state, framebuffer, stats);
 }
 
 void Pipeline::draw_elements(const IShaderProgram& program, const RawVertexStream& vertices, const IndexBuffer& indices,
                              const PipelineState& state, FrameBuffer& framebuffer, RenderStats& stats)
 {
-  draw_elements_impl(program, vertices, indices, state, framebuffer, stats);
+  draw_elements_impl(program, vertices, indices, 1U, state, framebuffer, stats);
+}
+
+void Pipeline::draw_elements_instanced(const IShaderProgram& program, const RawVertexStream& vertices,
+                                       const IndexBuffer& indices, const std::uint32_t instance_count,
+                                       const PipelineState& state, FrameBuffer& framebuffer, RenderStats& stats)
+{
+  draw_elements_impl(program, vertices, indices, instance_count, state, framebuffer, stats);
 }
 
 } // namespace rtw::sw_renderer
