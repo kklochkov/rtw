@@ -88,10 +88,10 @@ bool Application::init(const std::string_view window_title, const std::int32_t w
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    // NOLINTBEGIN(hicpp-signed-bitwise)
+    // NOLINTBEGIN(hicpp-signed-bitwise,bugprone-signed-bitwise)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-    // NOLINTEND(hicpp-signed-bitwise)
+    // NOLINTEND(hicpp-signed-bitwise,bugprone-signed-bitwise)
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();

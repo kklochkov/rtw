@@ -5,6 +5,7 @@
 #include <array>
 #include <cassert>
 #include <memory>
+#include <new>
 
 namespace rtw::stl
 {
@@ -24,7 +25,7 @@ enum class ObjectStorageState : std::uint8_t
 {
   UNINITIALIZED = 0U,
   CONSTRUCTED,
-  DESTRUCTED
+  DESTRUCTED,
 };
 
 } // namespace details
@@ -370,6 +371,7 @@ public:
   }
 
 private:
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   storage_type& get_storage(const size_type index) noexcept
   {
     assert(index < Base::capacity());
@@ -381,6 +383,7 @@ private:
     assert(index < Base::capacity());
     return data_.get()[index];
   }
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
   std::unique_ptr<storage_type[]> data_;
 };
@@ -433,14 +436,14 @@ constexpr bool is_memory_contiguous(IteratorT begin, IteratorT end) noexcept
       // The special treatment is required, because of the AlignedObjectStorage,
       // since this class manages wrapped object memory and its lifetime.
       // So, we would like to check if all AlignedObjectStorage are laid out in the same contiguous memory.
-      const auto* a = &*(std::next(begin.get_storage().get_pointer(), i));
-      const auto* b = &*(std::next(&*begin.get_storage(), i));
+      const auto* a = &*std::next(begin.get_storage().get_pointer(), i);
+      const auto* b = &*std::next(&*begin.get_storage(), i);
       contiguous &= a == b;
     }
     else
     {
-      const auto* a = &*(std::next(begin, i));
-      const auto* b = &*(std::next(&*begin, i));
+      const auto* a = &*std::next(begin, i);
+      const auto* b = &*std::next(&*begin, i);
       contiguous &= a == b;
     }
   }

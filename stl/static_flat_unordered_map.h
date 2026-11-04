@@ -2,6 +2,7 @@
 
 #include "stl/hash_iterator.h"
 #include "stl/static_contiguous_storage.h"
+#include "stl/utility.h"
 
 namespace rtw::stl
 {
@@ -184,9 +185,9 @@ public:
         continue;
       }
 
-      if (key_equal_(keys_storage_[index], key))
+      if (key_equal_(at_unsafe(keys_storage_, index), key))
       {
-        return values_storage_[index];
+        return at_unsafe(values_storage_, index);
       }
     }
 
@@ -260,7 +261,7 @@ private:
         continue;
       }
 
-      if (container->key_equal_(container->keys_storage_[index], key))
+      if (container->key_equal_(at_unsafe(container->keys_storage_, index), key))
       {
         return IteratorT{container, index};
       }

@@ -111,8 +111,9 @@ private:
   Matrix4x4F screen_space_matrix_;
   Vector3F light_direction_;
   RenderStats stats_;
-  RenderModeFlags render_mode_{RenderMode::FACE_CULLING | RenderMode::WIREFRAME | RenderMode::SHADING
-                               | RenderMode::LIGHT | RenderMode::STATS};
+  RenderModeFlags render_mode_{
+      RenderMode::FACE_CULLING | RenderMode::WIREFRAME | RenderMode::SHADING | RenderMode::LIGHT | RenderMode::STATS,
+  };
 };
 
 } // namespace rtw::sw_renderer

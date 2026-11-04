@@ -3,6 +3,7 @@
 #include "math/interpolation.h"
 #include "math/vector.h"
 #include "multiprecision/math.h"
+#include "stl/utility.h"
 #include "sw_renderer/precision.h"
 
 #include <array>
@@ -44,7 +45,7 @@ constexpr inline ColorsLUT BYTE_TO_UNIT_FLOAT_LUT = make_byte_to_unit_float_lut(
 /// Normalised [0, 1] single_precision value for an 8-bit channel, looked up from BYTE_TO_UNIT_FLOAT_LUT.
 constexpr single_precision byte_to_unit_float(const std::uint8_t byte) noexcept
 {
-  return BYTE_TO_UNIT_FLOAT_LUT[byte]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
+  return rtw::stl::at_unsafe(BYTE_TO_UNIT_FLOAT_LUT, byte);
 }
 
 } // namespace details
@@ -71,10 +72,12 @@ struct Color
   /// Construct from floating-point channels [0.0, 1.0]. Values are clamped before conversion.
   template <typename T = float, std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
   constexpr Color(const T r, const T g, const T b, const T a = 1.0F) noexcept
-      : Color{static_cast<std::uint8_t>(multiprecision::math::saturate(r) * T{255}),
-              static_cast<std::uint8_t>(multiprecision::math::saturate(g) * T{255}),
-              static_cast<std::uint8_t>(multiprecision::math::saturate(b) * T{255}),
-              static_cast<std::uint8_t>(multiprecision::math::saturate(a) * T{255})}
+      : Color{
+            static_cast<std::uint8_t>(multiprecision::math::saturate(r) * T{255}),
+            static_cast<std::uint8_t>(multiprecision::math::saturate(g) * T{255}),
+            static_cast<std::uint8_t>(multiprecision::math::saturate(b) * T{255}),
+            static_cast<std::uint8_t>(multiprecision::math::saturate(a) * T{255}),
+        }
   {
   }
 

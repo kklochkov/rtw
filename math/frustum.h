@@ -5,6 +5,7 @@
 #include "math/plane.h"
 #include "math/vector.h"
 #include "multiprecision/fixed_point_math.h"
+#include "stl/utility.h"
 
 #include <array>
 
@@ -39,19 +40,19 @@ public:
 
   constexpr const Planes& planes() const noexcept { return planes_; }
 
-  constexpr const Plane3<T>& left() const noexcept { return planes_[0U]; }
-  constexpr const Plane3<T>& right() const noexcept { return planes_[1U]; }
-  constexpr const Plane3<T>& top() const noexcept { return planes_[2U]; }
-  constexpr const Plane3<T>& bottom() const noexcept { return planes_[3U]; }
-  constexpr const Plane3<T>& near() const noexcept { return planes_[4U]; }
-  constexpr const Plane3<T>& far() const noexcept { return planes_[5U]; }
+  constexpr const Plane3<T>& left() const noexcept { return stl::at_unsafe(planes_, 0U); }
+  constexpr const Plane3<T>& right() const noexcept { return stl::at_unsafe(planes_, 1U); }
+  constexpr const Plane3<T>& top() const noexcept { return stl::at_unsafe(planes_, 2U); }
+  constexpr const Plane3<T>& bottom() const noexcept { return stl::at_unsafe(planes_, 3U); }
+  constexpr const Plane3<T>& near() const noexcept { return stl::at_unsafe(planes_, 4U); }
+  constexpr const Plane3<T>& far() const noexcept { return stl::at_unsafe(planes_, 5U); }
 
-  constexpr Plane3<T>& left() noexcept { return planes_[0U]; }
-  constexpr Plane3<T>& right() noexcept { return planes_[1U]; }
-  constexpr Plane3<T>& top() noexcept { return planes_[2U]; }
-  constexpr Plane3<T>& bottom() noexcept { return planes_[3U]; }
-  constexpr Plane3<T>& near() noexcept { return planes_[4U]; }
-  constexpr Plane3<T>& far() noexcept { return planes_[5U]; }
+  constexpr Plane3<T>& left() noexcept { return stl::at_unsafe(planes_, 0U); }
+  constexpr Plane3<T>& right() noexcept { return stl::at_unsafe(planes_, 1U); }
+  constexpr Plane3<T>& top() noexcept { return stl::at_unsafe(planes_, 2U); }
+  constexpr Plane3<T>& bottom() noexcept { return stl::at_unsafe(planes_, 3U); }
+  constexpr Plane3<T>& near() noexcept { return stl::at_unsafe(planes_, 4U); }
+  constexpr Plane3<T>& far() noexcept { return stl::at_unsafe(planes_, 5U); }
 
 private:
   Planes planes_{};

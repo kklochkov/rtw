@@ -1,18 +1,18 @@
 module(name = "rtw")
 
 # C++ rules. Explicit dependency required since Bazel 8+ moved the cc_* rules out of native.
-bazel_dep(name = "rules_cc", version = "0.2.19")
+bazel_dep(name = "rules_cc", version = "0.2.27")
 
 # Build-setting transitions (used to build fixed-point variants of cc_test/cc_binary).
 bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
 
 # Toolchain configuration for LLVM.
-bazel_dep(name = "toolchains_llvm", version = "1.7.0")
+bazel_dep(name = "toolchains_llvm", version = "1.13.0")
 
 # Configure and register the toolchain.
 llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm")
 llvm.toolchain(
-    llvm_version = "19.1.7",
+    llvm_version = "23.1.5",
 )
 
 use_repo(llvm, "llvm_toolchain")

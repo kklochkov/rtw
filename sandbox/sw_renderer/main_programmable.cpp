@@ -1,5 +1,6 @@
 #include "constants/time_constants.h"
 #include "stl/span.h"
+#include "stl/utility.h"
 #include "sw_renderer/camera.h"
 #include "sw_renderer/color.h"
 #include "sw_renderer/mesh.h"
@@ -37,7 +38,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <iterator>
 #include <numeric>
+#include <string>
 #include <thread>
 #include <tuple>
 #include <utility>
@@ -74,18 +77,33 @@ static_assert(offsetof(DemoVertex, color) == 40U, "color attribute offset mismat
 /// The layout describing how `DemoVertex` maps onto the built-in shader attribute locations.
 rtw::sw_renderer::VertexLayout make_demo_layout()
 {
-  return rtw::sw_renderer::VertexLayout{
-      {
-          rtw::sw_renderer::VertexAttribute{rtw::sw_renderer::attribute_location::POSITION, 0U,
-                                            rtw::sw_renderer::ComponentType::FLOAT32, 4U},
-          rtw::sw_renderer::VertexAttribute{rtw::sw_renderer::attribute_location::NORMAL, 16U,
-                                            rtw::sw_renderer::ComponentType::FLOAT32, 4U},
-          rtw::sw_renderer::VertexAttribute{rtw::sw_renderer::attribute_location::UV, 32U,
-                                            rtw::sw_renderer::ComponentType::FLOAT32, 2U},
-          rtw::sw_renderer::VertexAttribute{rtw::sw_renderer::attribute_location::COLOR, 40U,
-                                            rtw::sw_renderer::ComponentType::FLOAT32, 4U},
-      },
-      sizeof(DemoVertex)};
+  return rtw::sw_renderer::VertexLayout{{
+                                            rtw::sw_renderer::VertexAttribute{
+                                                rtw::sw_renderer::attribute_location::POSITION,
+                                                0U,
+                                                rtw::sw_renderer::ComponentType::FLOAT32,
+                                                4U,
+                                            },
+                                            rtw::sw_renderer::VertexAttribute{
+                                                rtw::sw_renderer::attribute_location::NORMAL,
+                                                16U,
+                                                rtw::sw_renderer::ComponentType::FLOAT32,
+                                                4U,
+                                            },
+                                            rtw::sw_renderer::VertexAttribute{
+                                                rtw::sw_renderer::attribute_location::UV,
+                                                32U,
+                                                rtw::sw_renderer::ComponentType::FLOAT32,
+                                                2U,
+                                            },
+                                            rtw::sw_renderer::VertexAttribute{
+                                                rtw::sw_renderer::attribute_location::COLOR,
+                                                40U,
+                                                rtw::sw_renderer::ComponentType::FLOAT32,
+                                                4U,
+                                            },
+                                        },
+                                        sizeof(DemoVertex)};
 }
 
 /// Expand the index-based `Mesh` into a flat, three-vertices-per-triangle stream.
@@ -103,31 +121,31 @@ std::vector<DemoVertex> build_interleaved(const rtw::sw_renderer::Mesh& mesh)
 
   for (const auto& face : mesh.faces)
   {
-    const auto& a = mesh.vertices[face.vertex_indices[0U]];
-    const auto& b = mesh.vertices[face.vertex_indices[1U]];
-    const auto& c = mesh.vertices[face.vertex_indices[2U]];
+    const auto& a = rtw::stl::at_unsafe(mesh.vertices, face.vertex_indices[0U]);
+    const auto& b = rtw::stl::at_unsafe(mesh.vertices, face.vertex_indices[1U]);
+    const auto& c = rtw::stl::at_unsafe(mesh.vertices, face.vertex_indices[2U]);
     const rtw::sw_renderer::Vector3F edge_ab{b.x() - a.x(), b.y() - a.y(), b.z() - a.z()};
     const rtw::sw_renderer::Vector3F edge_ac{c.x() - a.x(), c.y() - a.y(), c.z() - a.z()};
     const auto face_normal = rtw::math::normalize(rtw::math::cross(edge_ab, edge_ac));
 
-    const bool has_normals = face.normal_indices.has_value() && !mesh.normals.empty();
-    const bool has_uvs = face.texture_indices.has_value() && !mesh.tex_coords.empty();
+    const auto normal_indices = face.normal_indices;
+    const auto texture_indices = face.texture_indices;
 
     for (std::size_t i = 0U; i < 3U; ++i)
     {
-      const auto& position = mesh.vertices[face.vertex_indices[i]];
+      const auto& position = rtw::stl::at_unsafe(mesh.vertices, face.vertex_indices[i]);
 
       auto normal = face_normal;
-      if (has_normals)
+      if (normal_indices.has_value() && !mesh.normals.empty())
       {
-        normal = mesh.normals[(*face.normal_indices)[i]];
+        normal = rtw::stl::at_unsafe(mesh.normals, (*normal_indices)[i]);
       }
 
       float u = 0.0F;
       float v = 0.0F;
-      if (has_uvs)
+      if (texture_indices.has_value() && !mesh.tex_coords.empty())
       {
-        const auto& tex_coord = mesh.tex_coords[(*face.texture_indices)[i]];
+        const auto& tex_coord = rtw::stl::at_unsafe(mesh.tex_coords, (*texture_indices)[i]);
         u = to_float(tex_coord.u());
         v = 1.0F - to_float(tex_coord.v());
       }
@@ -136,8 +154,12 @@ std::vector<DemoVertex> build_interleaved(const rtw::sw_renderer::Mesh& mesh)
       vertex.position = {to_float(position.x()), to_float(position.y()), to_float(position.z()), 1.0F};
       vertex.normal = {to_float(normal.x()), to_float(normal.y()), to_float(normal.z()), 0.0F};
       vertex.uv = {u, v};
-      vertex.color = {(to_float(position.x()) * 0.5F) + 0.5F, (to_float(position.y()) * 0.5F) + 0.5F,
-                      (to_float(position.z()) * 0.5F) + 0.5F, 1.0F};
+      vertex.color = {
+          (to_float(position.x()) * 0.5F) + 0.5F,
+          (to_float(position.y()) * 0.5F) + 0.5F,
+          (to_float(position.z()) * 0.5F) + 0.5F,
+          1.0F,
+      };
       vertices.push_back(vertex);
     }
   }
@@ -340,8 +362,11 @@ void Application::init_imgui()
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
   // NOLINTBEGIN(hicpp-signed-bitwise)
+  // ImGui defines its flag API using signed integers.
+  // NOLINTBEGIN(bugprone-signed-bitwise)
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+  // NOLINTEND(bugprone-signed-bitwise)
   // NOLINTEND(hicpp-signed-bitwise)
 
   // Setup Dear ImGui style
@@ -493,15 +518,20 @@ void Application::cull_radio(const char* label, const rtw::sw_renderer::CullMode
 rtw::sw_renderer::Vector4F Application::object_color() const
 {
   return rtw::sw_renderer::Vector4F{
-      rtw::sw_renderer::single_precision{color_[0]}, rtw::sw_renderer::single_precision{color_[1]},
-      rtw::sw_renderer::single_precision{color_[2]}, rtw::sw_renderer::single_precision{color_[3]}};
+      rtw::sw_renderer::single_precision{rtw::stl::at_unsafe(color_, 0U)},
+      rtw::sw_renderer::single_precision{rtw::stl::at_unsafe(color_, 1U)},
+      rtw::sw_renderer::single_precision{rtw::stl::at_unsafe(color_, 2U)},
+      rtw::sw_renderer::single_precision{rtw::stl::at_unsafe(color_, 3U)},
+  };
 }
 
 rtw::sw_renderer::Vector3F Application::light_direction() const
 {
-  const rtw::sw_renderer::Vector3F direction{rtw::sw_renderer::single_precision{light_[0]},
-                                             rtw::sw_renderer::single_precision{light_[1]},
-                                             rtw::sw_renderer::single_precision{light_[2]}};
+  const rtw::sw_renderer::Vector3F direction{
+      rtw::sw_renderer::single_precision{rtw::stl::at_unsafe(light_, 0U)},
+      rtw::sw_renderer::single_precision{rtw::stl::at_unsafe(light_, 1U)},
+      rtw::sw_renderer::single_precision{rtw::stl::at_unsafe(light_, 2U)},
+  };
   if (rtw::math::dot(direction, direction) <= rtw::sw_renderer::single_precision{0.0F})
   {
     return rtw::sw_renderer::Vector3F{rtw::sw_renderer::single_precision{0.0F},
@@ -515,6 +545,7 @@ void Application::render_imgui()
 {
   // NOLINTBEGIN(hicpp-signed-bitwise)
   ImGui::Begin("Programmable Pipeline", nullptr,
+               // NOLINTNEXTLINE(bugprone-signed-bitwise)
                ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavInputs);
   // NOLINTEND(hicpp-signed-bitwise)
   ImGui::SetWindowPos(ImVec2(0, 0));
@@ -570,7 +601,8 @@ void Application::render_imgui()
   const auto draw_ms_minmax = std::minmax_element(draw_ms_history_.begin(), draw_ms_history_.end());
   const auto draw_ms_avg =
       std::accumulate(draw_ms_history_.begin(), draw_ms_history_.end(), 0.0F) / static_cast<float>(DRAW_HISTORY_SIZE);
-  const auto draw_ms_last = draw_ms_history_[(draw_ms_cursor_ + DRAW_HISTORY_SIZE - 1U) % DRAW_HISTORY_SIZE];
+  const auto draw_ms_last =
+      rtw::stl::at_unsafe(draw_ms_history_, (draw_ms_cursor_ + DRAW_HISTORY_SIZE - 1U) % DRAW_HISTORY_SIZE);
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-vararg)
   ImGui::Text("draw %.3f ms  avg %.3f  min %.3f  max %.3f", draw_ms_last, draw_ms_avg, *draw_ms_minmax.first,
               *draw_ms_minmax.second);
@@ -589,8 +621,12 @@ void Application::render_imgui()
 
 void Application::configure_state()
 {
-  state_.viewport = rtw::sw_renderer::Viewport{0, 0, static_cast<std::int32_t>(framebuffer_.width()),
-                                               static_cast<std::int32_t>(framebuffer_.height())};
+  state_.viewport = rtw::sw_renderer::Viewport{
+      0,
+      0,
+      static_cast<std::int32_t>(framebuffer_.width()),
+      static_cast<std::int32_t>(framebuffer_.height()),
+  };
   state_.cull_mode = cull_mode_;
   state_.front_face = rtw::sw_renderer::FrontFace::COUNTER_CLOCKWISE;
   state_.polygon_mode = polygon_mode_;
@@ -637,7 +673,7 @@ void Application::draw_active_shader(const rtw::sw_renderer::RawVertexStream& st
   const auto draw_start = std::chrono::steady_clock::now();
   pipeline_.draw_arrays(standard_shader_, stream, state_, framebuffer_, stats_);
   const rtw::time_constants::Milliseconds draw_ms = std::chrono::steady_clock::now() - draw_start;
-  draw_ms_history_[draw_ms_cursor_] = draw_ms.count();
+  rtw::stl::at_unsafe(draw_ms_history_, draw_ms_cursor_) = draw_ms.count();
   draw_ms_cursor_ = (draw_ms_cursor_ + 1U) % DRAW_HISTORY_SIZE;
 }
 
@@ -724,7 +760,14 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
   bool uncapped = false;
   cli_app.add_flag("--uncapped", uncapped, "Disable vsync and the frame-rate limiter (uncapped FPS for benchmarking)");
 
-  CLI11_PARSE(cli_app, argc, argv);
+  if (argc < 1)
+  {
+    return EXIT_FAILURE;
+  }
+  cli_app.name(*argv);
+  std::vector<std::string> arguments{std::next(argv), std::next(argv, argc)};
+  std::reverse(arguments.begin(), arguments.end());
+  CLI11_PARSE(cli_app, arguments);
 
   Application app(640, 480, uncapped);
 

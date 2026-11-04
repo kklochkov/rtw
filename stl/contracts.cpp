@@ -1,6 +1,7 @@
 #include "stl/contracts.h"
 #include "stl/ostream.h"
 
+#include <cstdlib>
 #include <iostream>
 
 namespace rtw::stl::contracts
@@ -60,7 +61,7 @@ namespace details
 {
 
 void handle_contract_violation(const EvaluationSemantic semantic, const DetectionMode detection_mode,
-                               const StringView comment, const AssertionKind assertion_kind,
+                               const char* comment, const AssertionKind assertion_kind,
                                const SourceLocation source_location) noexcept
 {
   const auto evaluation_exception =
@@ -76,9 +77,10 @@ void invoke_default_contract_violation_handler(const ContractViolation& violatio
 {
   std::cerr << "Contract violation detected:\n";
 
-  if (!violation.comment().empty())
+  const StringView comment{violation.comment()};
+  if (!comment.empty())
   {
-    std::cerr << "  Comment: " << violation.comment().data() << '\n';
+    std::cerr << "  Comment: " << comment << '\n';
   }
 
   std::cerr << "  Source: " << violation.source_location().file_name() << ':' << violation.source_location().line()

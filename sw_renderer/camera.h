@@ -17,8 +17,11 @@ namespace rtw::sw_renderer
 /// @return The look-at matrix.
 template <typename T, math::MemoryOrder MEMORY_ORDER = math::DEFAULT_MEMORY_ORDER>
 constexpr math::Matrix4x4<T, MEMORY_ORDER> make_look_at(const math::Point3<T>& eye, const math::Point3<T>& target,
-                                                        const math::Vector3<T>& up = math::Vector3<T>{T{0}, T{1},
-                                                                                                      T{0}}) noexcept
+                                                        const math::Vector3<T>& up = math::Vector3<T>{
+                                                            T{0},
+                                                            T{1},
+                                                            T{0},
+                                                        }) noexcept
 {
   const auto z = math::normalize(eye - target);
   const auto x = math::normalize(math::cross(up, z));

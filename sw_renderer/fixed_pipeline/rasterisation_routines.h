@@ -167,6 +167,8 @@ void fill_triangle_scanline(VertexF v0, VertexF v1, VertexF v2, RasteriseCallbac
   if (v1v2.y() != 0)
   {
     const auto v1v2_inv_slope = static_cast<single_precision>(v1v2.x()) / static_cast<single_precision>(v1v2.y());
+    // This half of the triangle starts at v1 and ends at v2.
+    // NOLINTNEXTLINE(readability-suspicious-call-argument)
     details::visit_pixels(v1_raster, v2_raster, v1v2_inv_slope, v0v2_inv_slope, rasterise, v0, v1, v2);
   }
 }

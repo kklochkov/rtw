@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stl/utility.h"
+
 #include <cassert>
 #include <iterator>
 #include <type_traits>
@@ -74,11 +76,11 @@ public:
   {
     if constexpr (ITERATOR_TYPE == details::IteratorType::SET_ITERATOR)
     {
-      return container_->keys_storage_[index_];
+      return at_unsafe(container_->keys_storage_, index_);
     }
     else if constexpr (ITERATOR_TYPE == details::IteratorType::MAP_ITERATOR)
     {
-      return {container_->keys_storage_[index_], container_->values_storage_[index_]};
+      return {at_unsafe(container_->keys_storage_, index_), at_unsafe(container_->values_storage_, index_)};
     }
     else
     {

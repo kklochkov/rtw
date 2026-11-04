@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stl/static_contiguous_storage.h"
+#include "stl/utility.h"
 
 namespace rtw::stl
 {
@@ -65,7 +66,7 @@ public:
   constexpr void pop(T& value) noexcept
   {
     assert(!empty());
-    value = storage_[head_];
+    value = at_unsafe(storage_, head_);
     pop();
   }
 
@@ -83,7 +84,7 @@ public:
   constexpr reference front() noexcept
   {
     assert(!empty());
-    return storage_[head_];
+    return at_unsafe(storage_, head_);
   }
 
   /// @brief Returns a const reference to the front (oldest) element.
@@ -91,7 +92,7 @@ public:
   constexpr const_reference front() const noexcept
   {
     assert(!empty());
-    return storage_[head_];
+    return at_unsafe(storage_, head_);
   }
 
   /// @brief Returns a reference to the back (newest) element.
@@ -99,7 +100,7 @@ public:
   constexpr reference back() noexcept
   {
     assert(!empty());
-    return storage_[(head_ + size() - 1U) % capacity()];
+    return at_unsafe(storage_, (head_ + size() - 1U) % capacity());
   }
 
   /// @brief Returns a const reference to the back (newest) element.
@@ -107,7 +108,7 @@ public:
   constexpr const_reference back() const noexcept
   {
     assert(!empty());
-    return storage_[(head_ + size() - 1U) % capacity()];
+    return at_unsafe(storage_, (head_ + size() - 1U) % capacity());
   }
 
   /// @brief Destroys all elements and resets the head index.

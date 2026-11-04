@@ -2,6 +2,7 @@
 
 #include "math/interpolation.h"
 #include "math/vector.h"
+#include "stl/utility.h"
 
 #include <array>
 #include <cstdint>
@@ -25,8 +26,11 @@ public:
 
   constexpr std::uint16_t size() const noexcept { return CAPACITY; }
 
-  constexpr reference operator[](const std::uint16_t index) noexcept { return storage_[index]; }
-  constexpr const_reference operator[](const std::uint16_t index) const noexcept { return storage_[index]; }
+  constexpr reference operator[](const std::uint16_t index) noexcept { return stl::at_unsafe(storage_, index); }
+  constexpr const_reference operator[](const std::uint16_t index) const noexcept
+  {
+    return stl::at_unsafe(storage_, index);
+  }
 
   constexpr iterator begin() noexcept { return storage_.begin(); }
   constexpr const_iterator begin() const noexcept { return storage_.begin(); }
@@ -42,7 +46,7 @@ public:
   {
     for (std::uint16_t i = 0U; i < size(); ++i)
     {
-      storage_[i] += rhs.storage_[i];
+      stl::at_unsafe(storage_, i) += stl::at_unsafe(rhs.storage_, i);
     }
     return *this;
   }
@@ -51,7 +55,7 @@ public:
   {
     for (std::uint16_t i = 0U; i < size(); ++i)
     {
-      storage_[i] *= rhs;
+      stl::at_unsafe(storage_, i) *= rhs;
     }
     return *this;
   }
@@ -63,7 +67,7 @@ public:
   {
     for (std::uint16_t i = 0U; i < lhs.size(); ++i)
     {
-      if (lhs.storage_[i] != rhs.storage_[i])
+      if (stl::at_unsafe(lhs.storage_, i) != stl::at_unsafe(rhs.storage_, i))
       {
         return false;
       }
@@ -83,7 +87,7 @@ constexpr RegisterFile<T, CAPACITY> lerp(const RegisterFile<T, CAPACITY>& lhs, c
   RegisterFile<T, CAPACITY> result{};
   for (std::uint16_t i = 0U; i < lhs.size(); ++i)
   {
-    result[i] = math::lerp(lhs[i], rhs[i], t);
+    stl::at_unsafe(result, i) = math::lerp(stl::at_unsafe(lhs, i), stl::at_unsafe(rhs, i), t);
   }
   return result;
 }

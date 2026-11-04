@@ -1,5 +1,6 @@
 #pragma once
 
+#include "stl/utility.h"
 #include "sw_renderer/color.h"
 
 #include <cassert>
@@ -36,14 +37,14 @@ public:
   {
     assert(x < width_ && "x coordinate out of bounds");
     assert(y < height_ && "y coordinate out of bounds");
-    buffer_[(y * width_) + x] = color.rgba;
+    stl::at_unsafe(buffer_, (y * width_) + x) = color.rgba;
   }
 
   Color pixel(const std::size_t x, const std::size_t y) const
   {
     assert(x < width_ && "x coordinate out of bounds");
     assert(y < height_ && "y coordinate out of bounds");
-    return Color{buffer_[(y * width_) + x]};
+    return Color{stl::at_unsafe(buffer_, (y * width_) + x)};
   }
 
   void clear(const Color color) { std::fill(buffer_.begin(), buffer_.end(), color.rgba); }

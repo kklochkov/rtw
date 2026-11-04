@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math/point.h"
+#include "stl/utility.h"
 
 namespace rtw::math
 {
@@ -42,79 +43,79 @@ public:
   constexpr const_reference operator[](const std::size_t index) const noexcept
   {
     assert(index < size_);
-    return vertices_[index];
+    return stl::at_unsafe(vertices_, index);
   }
 
   constexpr reference operator[](const std::size_t index) noexcept
   {
     assert(index < size_);
-    return vertices_[index];
+    return stl::at_unsafe(vertices_, index);
   }
 
   constexpr const_reference front() const noexcept
   {
     assert(size_ > 0U);
-    return vertices_[0U];
+    return stl::at_unsafe(vertices_, 0U);
   }
 
   constexpr reference front() noexcept
   {
     assert(size_ > 0U);
-    return vertices_[0U];
+    return stl::at_unsafe(vertices_, 0U);
   }
 
   constexpr const_reference back() const noexcept
   {
     assert(size_ > 0U);
-    return vertices_[size_ - 1U];
+    return stl::at_unsafe(vertices_, size_ - 1U);
   }
 
   constexpr reference back() noexcept
   {
     assert(size_ > 0U);
-    return vertices_[size_ - 1U];
+    return stl::at_unsafe(vertices_, size_ - 1U);
   }
 
   constexpr const_reference previous(const std::size_t index) const noexcept
   {
     assert(index < size_);
-    return vertices_[(index + size_ - 1U) % size_];
+    return stl::at_unsafe(vertices_, (index + size_ - 1U) % size_);
   }
 
   constexpr reference previous(const std::size_t index) noexcept
   {
     assert(index < size_);
-    return vertices_[(index + size_ - 1U) % size_];
+    return stl::at_unsafe(vertices_, (index + size_ - 1U) % size_);
   }
 
   constexpr const_reference at(const std::size_t index) const noexcept
   {
     assert(index < size_);
-    return vertices_[index];
+    return stl::at_unsafe(vertices_, index);
   }
 
   constexpr reference at(const std::size_t index) noexcept
   {
     assert(index < size_);
-    return vertices_[index];
+    return stl::at_unsafe(vertices_, index);
   }
 
   constexpr const_reference next(const std::size_t index) const noexcept
   {
     assert(index < size_);
-    return vertices_[(index + 1U) % size_];
+    return stl::at_unsafe(vertices_, (index + 1U) % size_);
   }
 
   constexpr reference next(const std::size_t index) noexcept
   {
     assert(index < size_);
-    return vertices_[(index + 1U) % size_];
+    return stl::at_unsafe(vertices_, (index + 1U) % size_);
   }
 
   constexpr void push_back(const value_type& vertex) noexcept
   {
     assert(size_ + 1U <= CAPACITY);
-    vertices_[size_++] = vertex;
+    stl::at_unsafe(vertices_, size_++) = vertex;
   }
 
   constexpr void clear() noexcept { size_ = 0U; }

@@ -1,4 +1,5 @@
 #include "constants/time_constants.h"
+#include "stl/utility.h"
 #include "sw_renderer/camera.h"
 #include "sw_renderer/fixed_pipeline/renderer.h"
 #include "sw_renderer/obj_loader.h"
@@ -20,7 +21,9 @@
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
+#include <iterator>
 #include <numeric>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -59,6 +62,7 @@ private:
   rtw::sw_renderer::Mesh mesh_;
   rtw::sw_renderer::Matrix4x4F model_matrix_;
   rtw::sw_renderer::Matrix4x4F view_matrix_;
+  // Floating-point literal operators require long double parameters.
   rtw::sw_renderer::EulerAnglesF rotation_{0.0_degF, 45.0_degF, 0.0_degF};
   rtw::sw_renderer::Vector3F translation_{0.0F, 0.0F, -5.0F};
   rtw::sw_renderer::Vector3F scale_{1.0F, 1.0F, 1.0F};
@@ -174,8 +178,11 @@ void Application::init_imgui()
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
   // NOLINTBEGIN(hicpp-signed-bitwise)
+  // ImGui defines its flag API using signed integers.
+  // NOLINTBEGIN(bugprone-signed-bitwise)
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+  // NOLINTEND(bugprone-signed-bitwise)
   // NOLINTEND(hicpp-signed-bitwise)
 
   // Setup Dear ImGui style
@@ -315,6 +322,7 @@ void Application::render_imgui()
 {
   // NOLINTBEGIN(hicpp-signed-bitwise)
   ImGui::Begin("Settings", nullptr,
+               // NOLINTNEXTLINE(bugprone-signed-bitwise)
                ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavInputs);
   // NOLINTEND(hicpp-signed-bitwise)
   ImGui::SetWindowPos(ImVec2(0, 0));
@@ -326,7 +334,8 @@ void Application::render_imgui()
   const auto draw_ms_minmax = std::minmax_element(draw_ms_history_.begin(), draw_ms_history_.end());
   const auto draw_ms_avg =
       std::accumulate(draw_ms_history_.begin(), draw_ms_history_.end(), 0.0F) / static_cast<float>(DRAW_HISTORY_SIZE);
-  const auto draw_ms_last = draw_ms_history_[(draw_ms_cursor_ + DRAW_HISTORY_SIZE - 1U) % DRAW_HISTORY_SIZE];
+  const auto draw_ms_last =
+      rtw::stl::at_unsafe(draw_ms_history_, (draw_ms_cursor_ + DRAW_HISTORY_SIZE - 1U) % DRAW_HISTORY_SIZE);
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-vararg)
   ImGui::Text("draw %.3f ms  avg %.3f  min %.3f  max %.3f", draw_ms_last, draw_ms_avg, *draw_ms_minmax.first,
               *draw_ms_minmax.second);
@@ -410,7 +419,7 @@ void Application::render()
   const auto draw_start = std::chrono::steady_clock::now();
   sw_renderer_.draw_mesh(mesh_, view_matrix_ * model_matrix_);
   const rtw::time_constants::Milliseconds draw_ms = std::chrono::steady_clock::now() - draw_start;
-  draw_ms_history_[draw_ms_cursor_] = draw_ms.count();
+  rtw::stl::at_unsafe(draw_ms_history_, draw_ms_cursor_) = draw_ms.count();
   draw_ms_cursor_ = (draw_ms_cursor_ + 1U) % DRAW_HISTORY_SIZE;
 
   SDL_UpdateTexture(sdl_texture_, nullptr, sw_renderer_.data(), static_cast<std::int32_t>(sw_renderer_.pitch()));
@@ -463,7 +472,14 @@ int main(int argc, char* argv[]) // NOLINT(bugprone-exception-escape)
   bool uncapped = false;
   cli_app.add_flag("--uncapped", uncapped, "Disable vsync and the frame-rate limiter (uncapped FPS for benchmarking)");
 
-  CLI11_PARSE(cli_app, argc, argv);
+  if (argc < 1)
+  {
+    return EXIT_FAILURE;
+  }
+  cli_app.name(*argv);
+  std::vector<std::string> arguments{std::next(argv), std::next(argv, argc)};
+  std::reverse(arguments.begin(), arguments.end());
+  CLI11_PARSE(cli_app, arguments);
 
   //  Application app(800, 600);
   Application app(320, 240, uncapped);

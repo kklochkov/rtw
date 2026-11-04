@@ -1,5 +1,6 @@
 #pragma once
 
+#include "stl/utility.h"
 #include "sw_renderer/precision.h"
 #include "sw_renderer/programmable_pipeline/vertex_layout.h"
 #include "sw_renderer/types.h"
@@ -7,6 +8,7 @@
 #include "stl/span.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -52,7 +54,7 @@ private:
   constexpr static T read(const std::size_t index, const stl::Span<const std::byte> data) noexcept
   {
     T value{};
-    std::memcpy(&value, &data[index], sizeof(T));
+    std::memcpy(&value, &stl::at_unsafe(data, index), sizeof(T));
     return value;
   }
 
@@ -128,8 +130,11 @@ public:
     return stride == 0U ? 0U : vertex_data_.size() / stride;
   }
 
-  AttributeView operator[](const std::size_t index) const
+  AttributeView operator[](const std::size_t index) const { return at(index); }
+
+  AttributeView at(const std::size_t index) const
   {
+    assert(index < size());
     const auto stride = layout_.vertex_stride();
     return AttributeView{layout_, vertex_data_.subspan(index * stride, stride)};
   }
@@ -161,7 +166,9 @@ public:
   explicit IndexBuffer(std::vector<std::uint32_t> indices) : indices_{std::move(indices)} {}
 
   std::size_t size() const noexcept { return indices_.size(); }
-  std::uint32_t operator[](const std::size_t index) const { return indices_[index]; }
+  std::uint32_t operator[](const std::size_t index) const { return stl::at_unsafe(indices_, index); }
+
+  std::uint32_t at(const std::size_t index) const { return indices_.at(index); }
 
 private:
   std::vector<std::uint32_t> indices_;

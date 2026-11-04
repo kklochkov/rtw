@@ -6,6 +6,7 @@
 #include "stl/static_stack.h"
 #include "stl/static_vector.h"
 
+#include <algorithm>
 #include <array>
 #include <optional>
 #include <vector>
@@ -324,7 +325,7 @@ enum class VisitState : std::uint8_t
 {
   UNVISITED = 0U,
   VISITING,
-  VISITED
+  VISITED,
 };
 
 /// @brief Detects cycles in a directed graph using recursive DFS with 3-color marking.

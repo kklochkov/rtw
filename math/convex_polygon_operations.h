@@ -10,7 +10,7 @@ namespace rtw::math
 enum class WindingOrder : std::uint8_t
 {
   COUNTER_CLOCKWISE,
-  CLOCKWISE
+  CLOCKWISE,
 };
 
 template <typename T>
@@ -47,7 +47,7 @@ struct PolygonInfo
     CONVEX,
     CONCAVE,
     INVALID_POLYGON,
-    COLLINEAR_POINTS
+    COLLINEAR_POINTS,
   };
 
   constexpr explicit PolygonInfo(const Property property = Property::CONVEX,

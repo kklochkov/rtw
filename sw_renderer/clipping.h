@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stl/utility.h"
+
 #include "math/convex_polygon.h"
 #include "stl/span.h"
 
@@ -116,7 +118,7 @@ triangulate(const math::ConvexPolygon<T, VertexT, CAPACITY>& polygon) noexcept
     result.triangle_count = polygon.size() - 2U;
     for (std::size_t i = 0U; i < result.triangle_count; ++i)
     {
-      result.triangles[i] = {polygon.next(i + 1U), polygon.next(i), polygon.at(0)};
+      stl::at_unsafe(result.triangles, i) = {polygon.next(i + 1U), polygon.next(i), polygon.at(0)};
     }
   }
 

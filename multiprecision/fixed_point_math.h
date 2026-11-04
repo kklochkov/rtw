@@ -1,6 +1,7 @@
 #pragma once
 
 #include "multiprecision/fixed_point.h"
+#include "stl/utility.h"
 
 #include <array>
 
@@ -238,14 +239,15 @@ constexpr std::uint64_t factorial(const std::uint64_t n) noexcept
 
 constexpr inline std::array INV_FACTORIALS{
     1.0 / factorial(0U), 1.0 / factorial(1U), 1.0 / factorial(2U), 1.0 / factorial(3U), 1.0 / factorial(4U),
-    1.0 / factorial(5U), 1.0 / factorial(6U), 1.0 / factorial(7U), 1.0 / factorial(8U), 1.0 / factorial(9U)};
+    1.0 / factorial(5U), 1.0 / factorial(6U), 1.0 / factorial(7U), 1.0 / factorial(8U), 1.0 / factorial(9U),
+};
 
 enum class Quadrant : std::uint8_t
 {
   I,
   II,
   III,
-  IV
+  IV,
 };
 
 /// @brief Returns the sign multiplier for sine in the given quadrant.
@@ -399,10 +401,10 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> sin(const FixedPoint<T, FRAC_BIT
   const FixedPoint x_pow_9 = x_pow_7 * x_pow_2;
 
   FixedPoint result = x;
-  result -= x_pow_3 * details::INV_FACTORIALS[3];
-  result += x_pow_5 * details::INV_FACTORIALS[5];
-  result -= x_pow_7 * details::INV_FACTORIALS[7];
-  result += x_pow_9 * details::INV_FACTORIALS[9];
+  result -= x_pow_3 * stl::at_unsafe(details::INV_FACTORIALS, 3);
+  result += x_pow_5 * stl::at_unsafe(details::INV_FACTORIALS, 5);
+  result -= x_pow_7 * stl::at_unsafe(details::INV_FACTORIALS, 7);
+  result += x_pow_9 * stl::at_unsafe(details::INV_FACTORIALS, 9);
 
   return result * sin_sign(quadrant);
 }
@@ -421,10 +423,10 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> cos(const FixedPoint<T, FRAC_BIT
   const FixedPoint x_pow_8 = x_pow_6 * x_pow_2;
 
   FixedPoint result{1};
-  result -= x_pow_2 * details::INV_FACTORIALS[2];
-  result += x_pow_4 * details::INV_FACTORIALS[4];
-  result -= x_pow_6 * details::INV_FACTORIALS[6];
-  result += x_pow_8 * details::INV_FACTORIALS[8];
+  result -= x_pow_2 * stl::at_unsafe(details::INV_FACTORIALS, 2);
+  result += x_pow_4 * stl::at_unsafe(details::INV_FACTORIALS, 4);
+  result -= x_pow_6 * stl::at_unsafe(details::INV_FACTORIALS, 6);
+  result += x_pow_8 * stl::at_unsafe(details::INV_FACTORIALS, 8);
 
   return result * details::cos_sign(quadrant);
 }
@@ -669,11 +671,11 @@ constexpr FixedPoint<T, FRAC_BITS, SaturationT> exp(const FixedPoint<T, FRAC_BIT
 
   FixedPoint exp_r{1};
   exp_r += r;
-  exp_r += r2 * details::INV_FACTORIALS[2];
-  exp_r += r3 * details::INV_FACTORIALS[3];
-  exp_r += r4 * details::INV_FACTORIALS[4];
-  exp_r += r5 * details::INV_FACTORIALS[5];
-  exp_r += r6 * details::INV_FACTORIALS[6];
+  exp_r += r2 * stl::at_unsafe(details::INV_FACTORIALS, 2);
+  exp_r += r3 * stl::at_unsafe(details::INV_FACTORIALS, 3);
+  exp_r += r4 * stl::at_unsafe(details::INV_FACTORIALS, 4);
+  exp_r += r5 * stl::at_unsafe(details::INV_FACTORIALS, 5);
+  exp_r += r6 * stl::at_unsafe(details::INV_FACTORIALS, 6);
 
   // Multiply by 2^k
   if (k >= 0)

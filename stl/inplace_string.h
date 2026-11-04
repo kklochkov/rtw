@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stl/string_view.h"
+#include "stl/utility.h"
 
 #include <array>
 
@@ -75,7 +76,7 @@ public:
     const size_type size = std::min(capacity_ - size_, other.size());
     for (size_type i = 0U; i < size; ++i)
     {
-      get_derived().value(size_ + i) = other[i];
+      get_derived().value(size_ + i) = at_unsafe(other.data(), i);
     }
     size_ += size;
     ensure_null_termination();
@@ -299,7 +300,7 @@ private:
     auto& derived = get_derived();
     for (size_type i = 0U; i < size; ++i)
     {
-      derived.value(i) = str[i];
+      derived.value(i) = at_unsafe(str, i);
     }
     ensure_null_termination();
   }
@@ -342,24 +343,24 @@ public:
     Base::ensure_null_termination();
   }
 
-  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions, cppcoreguidelines-explicit-constructor)
   constexpr InplaceString(StringView str) noexcept
   {
     Base::capacity_ = CAPACITY;
     Base::size_ = std::min(Base::capacity(), str.size());
     for (size_type i = 0U; i < Base::size_; ++i)
     {
-      storage_[i] = str[i];
+      storage_[i] = at_unsafe(str, i);
     }
     Base::ensure_null_termination();
   }
 
   constexpr InplaceString(const_pointer str) noexcept : InplaceString{StringView{str}} {}
-  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions, cppcoreguidelines-explicit-constructor)
 
 private:
-  constexpr reference value(const size_type index) noexcept { return storage_[index]; }
-  constexpr const_reference value(const size_type index) const noexcept { return storage_[index]; }
+  constexpr reference value(const size_type index) noexcept { return at_unsafe(storage_, index); }
+  constexpr const_reference value(const size_type index) const noexcept { return at_unsafe(storage_, index); }
 
   constexpr pointer get_data() noexcept { return storage_.data(); }
   constexpr const_pointer get_data() const noexcept { return storage_.data(); }

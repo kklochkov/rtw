@@ -1,5 +1,6 @@
 #pragma once
 
+#include "stl/utility.h"
 #include "sw_renderer/color.h"
 
 #include <cassert>
@@ -36,7 +37,7 @@ public:
   {
     assert(x < width_ && "x coordinate out of bounds");
     assert(y < height_ && "y coordinate out of bounds");
-    return Color{buffer_[(y * width_) + x]};
+    return Color{stl::at_unsafe(buffer_, (y * width_) + x)};
   }
 
 private:

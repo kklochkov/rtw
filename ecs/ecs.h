@@ -61,8 +61,11 @@ struct Entity
 {
   using EntitySignature = EntitySignature<EnumT>;
 
-  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
-  Entity(const EntityId id = {}, EntitySignature signature = {}) : signature{std::move(signature)}, id{id} {}
+  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions, cppcoreguidelines-explicit-constructor)
+  Entity(const EntityId id = EntityId(), EntitySignature signature = EntitySignature())
+      : signature{std::move(signature)}, id{id}
+  {
+  }
 
   constexpr bool operator==(const Entity& other) const noexcept { return id == other.id; }
 
@@ -647,7 +650,7 @@ public:
 
     const std::type_index type_index{typeid(SystemT)};
 
-    assert(systems_.find(type_index) == systems_.end());
+    assert(!systems_.contains(type_index));
 
     auto system = std::make_unique<SystemT>(std::forward<ArgsT>(args)...);
     auto& system_ref = *system;

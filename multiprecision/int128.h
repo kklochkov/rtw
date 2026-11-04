@@ -60,7 +60,7 @@ public:
   constexpr Int() noexcept = default;
   constexpr Int(const hi_type hi, const lo_type lo) noexcept : hi_{hi}, lo_{lo} {}
 
-  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions, cppcoreguidelines-explicit-constructor)
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
   constexpr Int(const I value) noexcept
       : hi_{static_cast<hi_type>(-math::signbit(value))}, lo_{static_cast<lo_type>(value)}
@@ -79,7 +79,7 @@ public:
         hi_ = static_cast<hi_type>(-value / POW_2_64);
 
         lo_ = ~lo_ + 1U;
-        hi_ = ~hi_ + static_cast<hi_type>(lo_ == 0U);
+        hi_ = static_cast<hi_type>(~static_cast<lo_type>(hi_)) + static_cast<hi_type>(lo_ == 0U);
       }
       else
       {
@@ -99,7 +99,7 @@ public:
       : hi_{static_cast<hi_type>(other.hi())}, lo_{static_cast<lo_type>(other.lo())}
   {
   }
-  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions, cppcoreguidelines-explicit-constructor)
 
   constexpr hi_type hi() const noexcept { return hi_; }
   constexpr lo_type lo() const noexcept { return lo_; }
@@ -290,8 +290,10 @@ public:
   friend constexpr Int operator-(Int lhs) noexcept
   {
     // Perform addition in unsigned to avoid signed overflow UB when lhs == min().
-    return Int{static_cast<hi_type>(static_cast<lo_type>(~lhs.hi_) + static_cast<lo_type>(lhs.lo_ == 0U)),
-               static_cast<lo_type>(~lhs.lo_ + 1U)};
+    return Int{
+        static_cast<hi_type>(static_cast<lo_type>(~lhs.hi_) + static_cast<lo_type>(lhs.lo_ == 0U)),
+        static_cast<lo_type>(~lhs.lo_ + 1U),
+    };
   }
   /// @}
 

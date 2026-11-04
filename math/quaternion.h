@@ -109,7 +109,7 @@ public:
         (cr * cp * cy) + (sr * sp * sy), // w
         (sr * cp * cy) - (cr * sp * sy), // x
         (cr * sp * cy) + (sr * cp * sy), // y
-        (cr * cp * sy) - (sr * sp * cy)  // z
+        (cr * cp * sy) - (sr * sp * cy), // z
     };
   }
 
@@ -143,27 +143,43 @@ public:
     if (trace > T{0})
     {
       const auto s = sqrt(trace + T{1}) * T{2};
-      return {s / T{4}, (rotation_matrix(2, 1) - rotation_matrix(1, 2)) / s,
-              (rotation_matrix(0, 2) - rotation_matrix(2, 0)) / s, (rotation_matrix(1, 0) - rotation_matrix(0, 1)) / s};
+      return {
+          s / T{4},
+          (rotation_matrix(2, 1) - rotation_matrix(1, 2)) / s,
+          (rotation_matrix(0, 2) - rotation_matrix(2, 0)) / s,
+          (rotation_matrix(1, 0) - rotation_matrix(0, 1)) / s,
+      };
     }
 
     if ((rotation_matrix(0, 0) > rotation_matrix(1, 1)) && (rotation_matrix(0, 0) > rotation_matrix(2, 2)))
     {
       const auto s = sqrt(T{1} + rotation_matrix(0, 0) - rotation_matrix(1, 1) - rotation_matrix(2, 2)) * T{2};
-      return {(rotation_matrix(2, 1) - rotation_matrix(1, 2)) / s, s / T{4},
-              (rotation_matrix(0, 1) + rotation_matrix(1, 0)) / s, (rotation_matrix(0, 2) + rotation_matrix(2, 0)) / s};
+      return {
+          (rotation_matrix(2, 1) - rotation_matrix(1, 2)) / s,
+          s / T{4},
+          (rotation_matrix(0, 1) + rotation_matrix(1, 0)) / s,
+          (rotation_matrix(0, 2) + rotation_matrix(2, 0)) / s,
+      };
     }
 
     if (rotation_matrix(1, 1) > rotation_matrix(2, 2))
     {
       const auto s = sqrt(T{1} + rotation_matrix(1, 1) - rotation_matrix(0, 0) - rotation_matrix(2, 2)) * T{2};
-      return {(rotation_matrix(0, 2) - rotation_matrix(2, 0)) / s, (rotation_matrix(0, 1) + rotation_matrix(1, 0)) / s,
-              s / T{4}, (rotation_matrix(1, 2) + rotation_matrix(2, 1)) / s};
+      return {
+          (rotation_matrix(0, 2) - rotation_matrix(2, 0)) / s,
+          (rotation_matrix(0, 1) + rotation_matrix(1, 0)) / s,
+          s / T{4},
+          (rotation_matrix(1, 2) + rotation_matrix(2, 1)) / s,
+      };
     }
 
     const auto s = sqrt(T{1} + rotation_matrix(2, 2) - rotation_matrix(0, 0) - rotation_matrix(1, 1)) * T{2};
-    return {(rotation_matrix(1, 0) - rotation_matrix(0, 1)) / s, (rotation_matrix(0, 2) + rotation_matrix(2, 0)) / s,
-            (rotation_matrix(1, 2) + rotation_matrix(2, 1)) / s, s / T{4}};
+    return {
+        (rotation_matrix(1, 0) - rotation_matrix(0, 1)) / s,
+        (rotation_matrix(0, 2) + rotation_matrix(2, 0)) / s,
+        (rotation_matrix(1, 2) + rotation_matrix(2, 1)) / s,
+        s / T{4},
+    };
   }
 
   template <MemoryOrder MEMORY_ORDER = DEFAULT_MEMORY_ORDER>

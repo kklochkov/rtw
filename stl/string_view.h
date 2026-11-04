@@ -1,7 +1,9 @@
 #pragma once
 
 #include "stl/span.h"
+#include "stl/utility.h"
 
+#include <algorithm>
 #include <string> // IWYU pragma: keep, for std::char_traits
 
 namespace rtw::stl
@@ -24,22 +26,22 @@ class StringView
   using StorageType = Span<const char>;
 
 public:
-  using element_type = typename StorageType::element_type;
-  using value_type = typename StorageType::value_type;
-  using size_type = typename StorageType::size_type;
-  using difference_type = typename StorageType::difference_type;
-  using pointer = typename StorageType::pointer;
-  using const_pointer = typename StorageType::const_pointer;
-  using reference = typename StorageType::reference;
-  using const_reference = typename StorageType::const_reference;
-  using iterator = typename StorageType::iterator;
-  using const_iterator = typename StorageType::const_iterator;
+  using element_type = StorageType::element_type;
+  using value_type = StorageType::value_type;
+  using size_type = StorageType::size_type;
+  using difference_type = StorageType::difference_type;
+  using pointer = StorageType::pointer;
+  using const_pointer = StorageType::const_pointer;
+  using reference = StorageType::reference;
+  using const_reference = StorageType::const_reference;
+  using iterator = StorageType::iterator;
+  using const_iterator = StorageType::const_iterator;
 
   constexpr static size_type NPOS = static_cast<size_type>(-1);
 
   constexpr StringView() noexcept = default;
   constexpr StringView(const_pointer str, const size_type size) noexcept : storage_{str, size} {}
-  // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
+  // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,cppcoreguidelines-explicit-constructor)
   constexpr StringView(const_pointer str) noexcept : storage_{str, std::char_traits<char>::length(str)} {}
 
   constexpr size_type size() const noexcept { return storage_.size(); }
@@ -47,7 +49,7 @@ public:
   constexpr bool empty() const noexcept { return storage_.empty(); }
 
   constexpr const_pointer data() const noexcept { return storage_.data(); }
-  constexpr const_reference operator[](const size_type index) const noexcept { return storage_[index]; }
+  constexpr const_reference operator[](const size_type index) const noexcept { return at_unsafe(storage_, index); }
 
   constexpr const_reference front() const noexcept { return storage_.front(); }
   constexpr const_reference back() const noexcept { return storage_.back(); }
@@ -76,7 +78,7 @@ public:
   {
     assert(pos <= size());
     const size_type length = std::min(count, size() - pos);
-    std::copy_n(storage_.data() + pos, length, dest);
+    std::copy_n(storage_.subspan(pos, length).data(), length, dest);
     return length;
   }
 
@@ -84,7 +86,7 @@ public:
   {
     assert(pos <= size());
     const size_type length = std::min(count, size() - pos);
-    return StringView{storage_.data() + pos, length};
+    return StringView{storage_.subspan(pos, length).data(), length};
   }
 
   constexpr std::int32_t compare(const StringView other) const noexcept
@@ -130,7 +132,7 @@ public:
     {
       return false; // Suffix is longer than the string
     }
-    return std::char_traits<char>::compare(cend() - suffix.size(), suffix.cbegin(), suffix.size()) == 0;
+    return std::char_traits<char>::compare(storage_.last(suffix.size()).data(), suffix.cbegin(), suffix.size()) == 0;
   }
 
   constexpr bool ends_with(const_pointer suffix) const noexcept { return ends_with(StringView{suffix}); }
@@ -149,7 +151,8 @@ public:
 
     for (size_type i = pos; i <= size() - str.size(); ++i)
     {
-      if (std::equal(cbegin() + i, cbegin() + i + str.size(), str.cbegin()))
+      const auto candidate = storage_.subspan(i, str.size());
+      if (std::equal(candidate.cbegin(), candidate.cend(), str.cbegin()))
       {
         return i;
       }
@@ -172,7 +175,7 @@ public:
 
     for (size_type i = pos; i < size(); ++i)
     {
-      if (storage_[i] == c)
+      if (at_unsafe(storage_, i) == c)
       {
         return i;
       }

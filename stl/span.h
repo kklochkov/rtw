@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stl/utility.h"
+
 #include <array>
 #include <cassert>
 #include <cstddef>
@@ -99,7 +101,7 @@ public:
   }
 
   template <typename U, typename = std::enable_if_t<std::is_convertible_v<U*, pointer>>>
-  // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,-warnings-as-errors)
+  // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions,cppcoreguidelines-explicit-constructor)
   constexpr Span(const Span<U>& other) noexcept : data_{other.data()}, size_{other.size()}
   {
   }
@@ -111,24 +113,24 @@ public:
   constexpr reference front() noexcept
   {
     assert(!empty());
-    return data_[0];
+    return at_unsafe(data_, 0U);
   }
   constexpr const_reference front() const noexcept
   {
     assert(!empty());
-    return data_[0];
+    return at_unsafe(data_, 0U);
   }
 
   constexpr reference back() noexcept
   {
     assert(!empty());
-    return data_[size_ - 1];
+    return at_unsafe(data_, size_ - 1U);
   }
 
   constexpr const_reference back() const noexcept
   {
     assert(!empty());
-    return data_[size_ - 1];
+    return at_unsafe(data_, size_ - 1U);
   }
 
   constexpr pointer data() noexcept { return data_; }
@@ -137,18 +139,19 @@ public:
   constexpr reference operator[](const std::size_t index) noexcept
   {
     assert(index < size());
-    return data_[index];
+    return at_unsafe(data_, index);
   }
   constexpr const_reference operator[](const std::size_t index) const noexcept
   {
     assert(index < size());
-    return data_[index];
+    return at_unsafe(data_, index);
   }
 
   constexpr iterator begin() noexcept { return data_; }
   constexpr const_iterator begin() const noexcept { return data_; }
   constexpr const_iterator cbegin() const noexcept { return data_; }
 
+  // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
   constexpr iterator end() noexcept { return data_ + size_; }
   constexpr const_iterator end() const noexcept { return data_ + size_; }
   constexpr const_iterator cend() const noexcept { return data_ + size_; }
@@ -175,6 +178,7 @@ public:
     }
     return {data_ + offset, count};
   }
+  // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
 private:
   pointer data_{nullptr};

@@ -1,4 +1,5 @@
 #include "sw_renderer/obj_loader.h"
+#include "stl/utility.h"
 
 #include <fstream>
 #include <sstream>
@@ -130,19 +131,19 @@ ObjParseResult load_obj(std::istream& stream)
 
   for (std::string line; std::getline(stream, line);)
   {
-    if (line.empty() || line[0] == '#')
+    if (line.empty() || stl::at_unsafe(line, 0U) == '#')
     {
       continue;
     }
 
-    if (line[0] == 'm')
+    if (stl::at_unsafe(line, 0U) == 'm')
     {
       // Material library
       result.materials.emplace_back(parse_material(line, "mtllib"));
     }
-    else if (line[0] == 'v')
+    else if (stl::at_unsafe(line, 0U) == 'v')
     {
-      switch (line[1])
+      switch (stl::at_unsafe(line, 1U))
       {
       case ' ': // Vertex
       {
@@ -163,12 +164,12 @@ ObjParseResult load_obj(std::istream& stream)
         break;
       }
     }
-    else if (line[0] == 'u')
+    else if (stl::at_unsafe(line, 0U) == 'u')
     {
       // Use material
       material = parse_material(line, "usemtl");
     }
-    else if (line[0] == 'f')
+    else if (stl::at_unsafe(line, 0U) == 'f')
     {
       // Face
       Face& face = mesh.faces.emplace_back();
@@ -203,21 +204,21 @@ void load_mtl(std::istream& stream, Mesh& mesh)
 
   for (std::string line; std::getline(stream, line);)
   {
-    if (line.empty() || line[0] == '#')
+    if (line.empty() || stl::at_unsafe(line, 0U) == '#')
     {
       try_add_material(mesh, material);
       continue;
     }
 
-    if (line[0] == 'n')
+    if (stl::at_unsafe(line, 0U) == 'n')
     {
       // New material
       material.name = parse_material(line, "newmtl");
     }
-    else if (line[0] == 'K')
+    else if (stl::at_unsafe(line, 0U) == 'K')
     {
       // Color
-      switch (line[1])
+      switch (stl::at_unsafe(line, 1U))
       {
       case 'a': // Ambient
         material.ambient = parse_color(line);
@@ -232,10 +233,10 @@ void load_mtl(std::istream& stream, Mesh& mesh)
         break;
       }
     }
-    else if ((line[0] == 'm') && (line.size() > 5U))
+    else if ((stl::at_unsafe(line, 0U) == 'm') && (line.size() > 5U))
     {
       // Texture (map_Ka, map_Kd, map_Ks)
-      switch (line[5])
+      switch (stl::at_unsafe(line, 5U))
       {
       case 'a': // Ambient
         material.ambient_texture = parse_material(line, "map_Ka");

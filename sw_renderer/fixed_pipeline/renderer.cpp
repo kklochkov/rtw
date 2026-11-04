@@ -24,6 +24,7 @@ Renderer::Renderer(const std::size_t width, const std::size_t height)
     : color_buffer_(width, height), depth_buffer_(width, height)
 {
   const auto aspect_ratio = static_cast<single_precision>(color_buffer_.aspect_ratio());
+  // Floating-point literal operators require long double parameters.
   const auto fov_y = 60.0_degF;
 
   const auto frustum_params =
@@ -207,15 +208,15 @@ void Renderer::fill_triangle(const VertexF& v0, const VertexF& v1, const VertexF
 void Renderer::transform_face_vertices(VertexF& v0, VertexF& v1, VertexF& v2, const Mesh& mesh, const Face& face,
                                        const Matrix4x4F& model_view_matrix)
 {
-  v0.point = model_view_matrix * mesh.vertices[face.vertex_indices[0]];
-  v1.point = model_view_matrix * mesh.vertices[face.vertex_indices[1]];
-  v2.point = model_view_matrix * mesh.vertices[face.vertex_indices[2]];
+  v0.point = model_view_matrix * stl::at_unsafe(mesh.vertices, face.vertex_indices[0]);
+  v1.point = model_view_matrix * stl::at_unsafe(mesh.vertices, face.vertex_indices[1]);
+  v2.point = model_view_matrix * stl::at_unsafe(mesh.vertices, face.vertex_indices[2]);
 
   if (face.texture_indices.has_value() && !mesh.textures.empty())
   {
-    v0.tex_coord = mesh.tex_coords[(*face.texture_indices)[0]];
-    v1.tex_coord = mesh.tex_coords[(*face.texture_indices)[1]];
-    v2.tex_coord = mesh.tex_coords[(*face.texture_indices)[2]];
+    v0.tex_coord = stl::at_unsafe(mesh.tex_coords, (*face.texture_indices)[0]);
+    v1.tex_coord = stl::at_unsafe(mesh.tex_coords, (*face.texture_indices)[1]);
+    v2.tex_coord = stl::at_unsafe(mesh.tex_coords, (*face.texture_indices)[2]);
   }
 }
 
@@ -224,9 +225,9 @@ void Renderer::setup_normals(VertexF& v0, VertexF& v1, VertexF& v2, const Mesh& 
 {
   if (face.normal_indices.has_value() && !mesh.normals.empty())
   {
-    v0.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[0]]).xyz();
-    v1.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[1]]).xyz();
-    v2.normal = (model_view_matrix * mesh.normals[(*face.normal_indices)[2]]).xyz();
+    v0.normal = (model_view_matrix * stl::at_unsafe(mesh.normals, (*face.normal_indices)[0])).xyz();
+    v1.normal = (model_view_matrix * stl::at_unsafe(mesh.normals, (*face.normal_indices)[1])).xyz();
+    v2.normal = (model_view_matrix * stl::at_unsafe(mesh.normals, (*face.normal_indices)[2])).xyz();
   }
   else
   {
@@ -290,22 +291,20 @@ void Renderer::draw_mesh(const Mesh& mesh, const Matrix4x4F& model_view_matrix)
 
     for (std::size_t i = 0U; i < triangles.triangle_count; ++i)
     {
-      const auto& triangle = triangles.triangles[i]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-      v0 = triangle[0U];
-      v1 = triangle[1U];
-      v2 = triangle[2U];
+      const auto& triangle = stl::at_unsafe(triangles.triangles, i);
+      v0 = stl::at_unsafe(triangle, 0U);
+      v1 = stl::at_unsafe(triangle, 1U);
+      v2 = stl::at_unsafe(triangle, 2U);
 
       project_to_screen(v0, projection_matrix_, screen_space_matrix_);
       project_to_screen(v1, projection_matrix_, screen_space_matrix_);
       project_to_screen(v2, projection_matrix_, screen_space_matrix_);
 
-      if (face_culling_enabled())
+      if (face_culling_enabled()
+          && math::winding_order(v0.point.xy(), v1.point.xy(), v2.point.xy()) == math::WindingOrder::CLOCKWISE)
       {
-        if (math::winding_order(v0.point.xy(), v1.point.xy(), v2.point.xy()) == math::WindingOrder::CLOCKWISE)
-        {
-          ++frame_stats.triangles_culled;
-          continue;
-        }
+        ++frame_stats.triangles_culled;
+        continue;
       }
 
       ++frame_stats.triangles_rendered;

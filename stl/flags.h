@@ -8,11 +8,8 @@ namespace rtw::stl
 namespace details
 {
 
-constexpr bool test_scoped_enum(...) noexcept { return true; }
-constexpr bool test_scoped_enum(std::int32_t /*unused*/) noexcept { return false; }
-
 template <typename T>
-constexpr inline bool IS_SCOPED_ENUM_V = std::is_enum_v<T> && test_scoped_enum(T{});
+constexpr inline bool IS_SCOPED_ENUM_V = std::is_enum_v<T> && !std::is_convertible_v<T, int>;
 
 } // namespace details
 
@@ -41,7 +38,7 @@ public:
     }
     else
     {
-      flags_ &= ~static_cast<underlying_type>(flag);
+      flags_ &= static_cast<underlying_type>(~static_cast<underlying_type>(flag));
     }
   }
 

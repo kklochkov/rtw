@@ -80,25 +80,25 @@ namespace angle_literals
 {
 
 /// Construct a single-precision angle from degrees (e.g., 90.0_degF).
-constexpr AngleF operator"" _degF(long double value) noexcept
+constexpr AngleF operator""_degF(const long double value) noexcept
 {
   return AngleF{math::DEG, static_cast<single_precision>(value)};
 }
 
 /// Construct a double-precision angle from degrees (e.g., 90_degD).
-constexpr AngleD operator"" _degD(unsigned long long value) noexcept
+constexpr AngleD operator""_degD(const unsigned long long value) noexcept
 {
   return AngleD{math::DEG, static_cast<double_precision>(value)};
 }
 
 /// Construct a single-precision angle from radians (e.g., 1.57_radF).
-constexpr AngleF operator"" _radF(long double value) noexcept
+constexpr AngleF operator""_radF(const long double value) noexcept
 {
   return AngleF{math::RAD, static_cast<single_precision>(value)};
 }
 
 /// Construct a double-precision angle from radians (e.g., 1_radD).
-constexpr AngleD operator"" _radD(unsigned long long value) noexcept
+constexpr AngleD operator""_radD(const unsigned long long value) noexcept
 {
   return AngleD{math::RAD, static_cast<double_precision>(value)};
 }

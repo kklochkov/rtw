@@ -44,8 +44,12 @@ static_assert(sizeof(VertexF) == sizeof(float) * 4 + sizeof(float) * 2 + sizeof(
 template <typename T>
 constexpr Vertex<T> lerp(const Vertex<T>& v0, const Vertex<T>& v1, const T t) noexcept
 {
-  return Vertex<T>{math::lerp(v0.point, v1.point, t), lerp(v0.tex_coord, v1.tex_coord, t),
-                   math::lerp(v0.normal, v1.normal, t), lerp(v0.color, v1.color, static_cast<float>(t))};
+  return Vertex<T>{
+      math::lerp(v0.point, v1.point, t),
+      lerp(v0.tex_coord, v1.tex_coord, t),
+      math::lerp(v0.normal, v1.normal, t),
+      lerp(v0.color, v1.color, static_cast<float>(t)),
+  };
 }
 
 /// Computes the signed distance from a vertex to a plane.

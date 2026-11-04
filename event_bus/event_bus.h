@@ -32,7 +32,7 @@ struct Event
 enum class ThreadingPolicy : std::uint8_t
 {
   SINGLE_THREADED, ///< No synchronization is performed. Single-threaded access only.
-  MULTI_THREADED   ///< Reader-writer (shared_mutex) synchronization. Multi-threaded access is safe.
+  MULTI_THREADED,  ///< Reader-writer (shared_mutex) synchronization. Multi-threaded access is safe.
 };
 
 namespace details
@@ -87,8 +87,8 @@ private:
 
 enum class EventBusState : std::uint8_t
 {
-  ALIVE,    ///< The event bus is alive and can be subscribed to and published.
-  DESTROYED ///< The event bus has been destroyed.
+  ALIVE,     ///< The event bus is alive and can be subscribed to and published.
+  DESTROYED, ///< The event bus has been destroyed.
 };
 
 using EventBusStateToken = std::shared_ptr<std::atomic<EventBusState>>;
@@ -141,6 +141,7 @@ class GenericEventBus
     {
     }
 
+    // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): FP, clang-tidy is confused here
     void dispatch(const Event& event) final
     {
       std::apply(callable, std::tuple_cat(args, std::make_tuple(static_cast<const EventT&>(event))));

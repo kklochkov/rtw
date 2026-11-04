@@ -23,7 +23,7 @@ struct DegTag
 {
   enum class Tag : std::uint8_t
   {
-    TAG
+    TAG,
   };
 
   constexpr explicit DegTag(Tag /*tag*/) noexcept {}
@@ -32,7 +32,7 @@ struct RadTag
 {
   enum class Tag : std::uint8_t
   {
-    TAG
+    TAG,
   };
 
   constexpr explicit RadTag(Tag /*tag*/) noexcept {}
@@ -59,7 +59,7 @@ public:
 
   constexpr value_type rad() const noexcept { return rad_; }
   constexpr value_type deg() const noexcept { return rad_ * math_constants::RAD_TO_DEG<value_type>; }
-  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTNEXTLINE(google-explicit-constructor, hicpp-explicit-conversions, cppcoreguidelines-explicit-constructor)
   constexpr operator value_type() const noexcept { return rad_; }
 
   constexpr Angle operator-() const noexcept { return Angle{-rad_}; }
@@ -227,7 +227,7 @@ enum class RotationConvention : std::uint8_t
   YAW_ROLL_PITCH = ZXY,
   ROLL_YAW_PITCH = XZY,
   YAW_PITCH_ROLL = ZYX,
-  PITCH_ROLL_YAW = YXZ
+  PITCH_ROLL_YAW = YXZ,
 };
 
 using EulerAnglesF = EulerAngles<float>;

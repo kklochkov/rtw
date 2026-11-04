@@ -1,6 +1,7 @@
 #pragma once
 
 #include "multiprecision/fixed_point.h"
+#include "stl/utility.h"
 
 #include <array>
 #include <cassert>
@@ -69,8 +70,8 @@ constexpr inline FromColumnMajorTag FROM_COLUMN_MAJOR{FromColumnMajorTag::Tag::T
 /// Storage memory order for matrix elements in memory.
 enum class MemoryOrder : std::uint8_t
 {
-  ROW_MAJOR,   ///< Elements stored row-by-row (C/C++, DirectX)
-  COLUMN_MAJOR ///< Elements stored column-by-column (OpenGL, BLAS)
+  ROW_MAJOR,    ///< Elements stored row-by-row (C/C++, DirectX)
+  COLUMN_MAJOR, ///< Elements stored column-by-column (OpenGL, BLAS)
 };
 constexpr inline MemoryOrder DEFAULT_MEMORY_ORDER = MemoryOrder::ROW_MAJOR;
 
@@ -134,12 +135,11 @@ class Matrix
   constexpr static std::array<T, SIZE> make_with_value(std::integer_sequence<std::uint16_t, INDEX...> /*index*/,
                                                        const T value) noexcept
   {
-    return std::array<T, SIZE>{(
-        [&value]()
-        {
-          (void)INDEX;
-          return value;
-        }())...};
+    return std::array<T, SIZE>{[&value]
+                               {
+                                 (void)INDEX;
+                                 return value;
+                               }()...};
   }
 
   constexpr static std::size_t get_storage_index(const std::uint16_t row, const std::uint16_t col) noexcept
@@ -264,7 +264,7 @@ public:
     Matrix<U, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
-      result[i] = static_cast<U>(data_[i]);
+      result[i] = static_cast<U>(stl::at_unsafe(data_, i));
     }
     return result;
   }
@@ -297,7 +297,7 @@ public:
     Matrix<U, ROWS, COLS, MEMORY_ORDER> result{math::UNINITIALIZED};
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
-      result[i] = static_cast<U>(data_[i].real());
+      result[i] = static_cast<U>(stl::at_unsafe(data_, i).real());
     }
     return result;
   }
@@ -306,24 +306,24 @@ public:
   {
     assert(row < ROWS);
     assert(col < COLS);
-    return data_[get_storage_index(row, col)];
+    return stl::at_unsafe(data_, get_storage_index(row, col));
   }
   constexpr value_type operator()(const std::uint16_t row, const std::uint16_t col) const noexcept
   {
     assert(row < ROWS);
     assert(col < COLS);
-    return data_[get_storage_index(row, col)];
+    return stl::at_unsafe(data_, get_storage_index(row, col));
   }
 
   constexpr reference operator[](const std::uint32_t index) noexcept
   {
     assert(index < SIZE);
-    return data_[index];
+    return stl::at_unsafe(data_, index);
   }
   constexpr value_type operator[](const std::uint32_t index) const noexcept
   {
     assert(index < SIZE);
-    return data_[index];
+    return stl::at_unsafe(data_, index);
   }
 
   /// Accessors for the first column.
@@ -381,7 +381,7 @@ public:
   {
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
-      data_[i] += rhs[i];
+      stl::at_unsafe(data_, i) += rhs[i];
     }
     return *this;
   }
@@ -390,7 +390,7 @@ public:
   {
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
-      data_[i] -= rhs[i];
+      stl::at_unsafe(data_, i) -= rhs[i];
     }
     return *this;
   }
@@ -400,7 +400,7 @@ public:
     assert(rhs != 0);
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
-      data_[i] /= rhs;
+      stl::at_unsafe(data_, i) /= rhs;
     }
     return *this;
   }
@@ -409,7 +409,7 @@ public:
   {
     for (std::uint32_t i = 0U; i < SIZE; ++i)
     {
-      data_[i] *= rhs;
+      stl::at_unsafe(data_, i) *= rhs;
     }
     return *this;
   }
@@ -554,6 +554,8 @@ public:
           const auto lhs_val = lhs(row, col);
           for (std::uint16_t other_col = 0U; other_col < OTHER_COLS; ++other_col)
           {
+            // The left-hand column selects the right-hand row in matrix multiplication.
+            // NOLINTNEXTLINE(readability-suspicious-call-argument)
             result(row, other_col) += lhs_val * rhs(col, other_col);
           }
         }

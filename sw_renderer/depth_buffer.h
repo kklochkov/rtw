@@ -1,7 +1,9 @@
 #pragma once
 
+#include "stl/utility.h"
 #include "sw_renderer/precision.h"
 
+#include <algorithm>
 #include <cassert>
 #include <limits>
 #include <vector>
@@ -39,14 +41,14 @@ public:
   {
     assert(x < width_ && "x coordinate out of bounds");
     assert(y < height_ && "y coordinate out of bounds");
-    buffer_[(y * width_) + x] = depth;
+    rtw::stl::at_unsafe(buffer_, (y * width_) + x) = depth;
   }
 
   single_precision depth(const std::size_t x, const std::size_t y) const
   {
     assert(x < width_ && "x coordinate out of bounds");
     assert(y < height_ && "y coordinate out of bounds");
-    return buffer_[(y * width_) + x];
+    return rtw::stl::at_unsafe(buffer_, (y * width_) + x);
   }
 
 private:

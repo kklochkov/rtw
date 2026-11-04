@@ -1,5 +1,12 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "utility",
+    hdrs = ["utility.h"],
+)
+
 cc_library(
     name = "stl",
     srcs = ["contracts.cpp"],
@@ -28,13 +35,12 @@ cc_library(
         "static_vector.h",
         "string_view.h",
     ],
-    visibility = ["//visibility:public"],
+    deps = [":utility"],
 )
 
 cc_library(
     name = "format",
     hdrs = ["format.h"],
-    visibility = ["//visibility:public"],
     deps = [
         ":stl",
         "@fmt",

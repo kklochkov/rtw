@@ -41,7 +41,7 @@ public:
     normalize();
   }
 
-  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions, cppcoreguidelines-explicit-constructor)
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
   constexpr Rational(const I numerator) noexcept : numerator_{numerator}
   {
@@ -52,7 +52,7 @@ public:
   /// @param[in] value The floating-point value to convert.
   /// @pre value must not be NaN or Inf.
   template <typename F, std::enable_if_t<std::is_floating_point_v<F>, ArithmeticType> = ArithmeticType::FLOATING_POINT>
-  Rational(const F value) noexcept // NOLINT(google-explicit-constructor, hicpp-explicit-conversions)
+  Rational(const F value) noexcept
   {
     if (std::isnan(value) || std::isinf(value))
     {
@@ -91,7 +91,7 @@ public:
 
     normalize();
   }
-  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions, cppcoreguidelines-explicit-constructor)
 
   constexpr T numerator() const noexcept { return numerator_; }
   constexpr T denominator() const noexcept { return denominator_; }

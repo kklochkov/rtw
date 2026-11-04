@@ -3,6 +3,8 @@
 #include "math/matrix.h"
 #include "multiprecision/fixed_point_math.h"
 
+#include <optional>
+
 namespace rtw::math::matrix_decomposition
 {
 
@@ -330,8 +332,10 @@ template <typename T, std::uint16_t ROWS, std::uint16_t COLS, MemoryOrder MEMORY
 constexpr Decomposition<T, ROWS, COLS, MEMORY_ORDER>
 decompose(const Matrix<T, ROWS, COLS, MEMORY_ORDER>& matrix) noexcept
 {
-  Decomposition<T, ROWS, COLS, MEMORY_ORDER> result{Matrix<T, ROWS, ROWS, MEMORY_ORDER>{math::ZERO},
-                                                    Matrix<T, ROWS, ROWS, MEMORY_ORDER>{math::ZERO}};
+  Decomposition<T, ROWS, COLS, MEMORY_ORDER> result{
+      Matrix<T, ROWS, ROWS, MEMORY_ORDER>{math::ZERO},
+      Matrix<T, ROWS, ROWS, MEMORY_ORDER>{math::ZERO},
+  };
 
   for (std::uint16_t col = 0U; col < COLS; ++col)
   {

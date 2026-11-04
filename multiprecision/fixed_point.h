@@ -112,9 +112,9 @@ public:
   constexpr static std::uint32_t BITS = sizeof(T) * 8U;
   constexpr static std::uint32_t FRACTIONAL_BITS = FRAC_BITS;
   constexpr static std::uint32_t INTEGER_BITS = BITS - FRACTIONAL_BITS - std::uint32_t{std::is_signed_v<T>};
-  constexpr static T ONE = T{1} << FRACTIONAL_BITS;
-  constexpr static T HALF = ONE >> 1U;
-  constexpr static double RESOLUTION = 1.0L / static_cast<double>(ONE);
+  constexpr static T ONE = static_cast<T>(1UL << FRACTIONAL_BITS);
+  constexpr static T HALF = static_cast<T>((1UL << FRACTIONAL_BITS) >> 1U);
+  constexpr static double RESOLUTION = 1.0 / static_cast<double>(ONE);
   constexpr static double ULP = RESOLUTION; // Unit in the last place or Unit of least precision (ULP)
   constexpr static T MAX_INTEGER = std::numeric_limits<T>::max();
   constexpr static T MIN_INTEGER = std::numeric_limits<T>::min();
@@ -135,11 +135,11 @@ public:
 
   constexpr FixedPoint(RawValueConstructTag /*tag*/, const T value) noexcept : value_{value} {}
 
-  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTBEGIN(google-explicit-constructor, cppcoreguidelines-explicit-constructor)
   template <typename I, std::enable_if_t<std::is_integral_v<I>, ArithmeticType> = ArithmeticType::INTEGRAL>
   constexpr FixedPoint(const I value) noexcept
   {
-    const auto result = static_cast<SaturationT>(value) << FRACTIONAL_BITS;
+    const auto result = static_cast<SaturationT>(value) * static_cast<SaturationT>(ONE);
     value_ = saturate_and_cast(result);
   }
 
@@ -149,7 +149,7 @@ public:
     const auto result = static_cast<SaturationT>(math::round_to_nearest_integer(value * ONE));
     value_ = saturate_and_cast(result);
   }
-  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTEND(google-explicit-constructor, cppcoreguidelines-explicit-constructor)
 
   /// Converting constructor between fixed-point types of different scale and/or width.
   /// Rescales the raw value from @p OTHER_FRAC_BITS to @c FRAC_BITS: widening the fractional
@@ -265,11 +265,10 @@ public:
     auto result = static_cast<SaturationT>(value_) * static_cast<SaturationT>(rhs.value_);
 
     // Rounding to the nearest integer by adding 1/2 to the fractional part.
-    // This rounding works symmetrically for positive and negative numbers.
-    result += HALF;
+    result /= static_cast<SaturationT>(HALF);
 
-    // Scale back to the original number of fractional bits
-    result >>= FRACTIONAL_BITS;
+    // Scale back to the original number of fractional bits by dividing by 2 and adding the remainder to round up.
+    result = (result / SaturationT{2}) + (result % SaturationT{2});
 
     value_ = saturate_and_cast(result);
     return *this;
@@ -277,27 +276,18 @@ public:
 
   constexpr FixedPoint& operator/=(const FixedPoint rhs) noexcept
   {
+    assert(rhs.value_ != 0);
+
     // Scale up to avoid losing precision
-    auto result = static_cast<SaturationT>(value_) << FRACTIONAL_BITS;
-    const auto rhs_value = static_cast<SaturationT>(rhs.value_);
+    auto result = static_cast<SaturationT>(value_) * static_cast<SaturationT>(ONE);
 
-    assert(rhs_value != 0);
+    // Rounding to the nearest integer by adding 1/2 to the fractional part.
+    result *= SaturationT{2U};
 
-    // Rounding to the nearest.
-    // If signs are same, add rhs_value/2 to the result, otherwise subtract rhs_value/2.
-    // This is to ensure that the result is rounded up for positive numbers and rounded down for negative numbers.
-    const auto same_sign = math::signbit(result) == math::signbit(rhs_value);
-    // Bias by half the divisor, truncated toward zero. Halve the underlying value directly (a native
-    // division) instead of widening to SaturationT first: for the Int128-backed types the widened
-    // `rhs_value / SaturationT{2}` runs a full software long-division just to divide by two. Integer
-    // division (not a right shift) preserves truncation toward zero, so the result is bit-identical while
-    // avoiding the implementation-defined rounding a shift of a negative value would introduce.
-    const auto half = static_cast<SaturationT>(rhs.value_ / T{2});
-    const SaturationT halfs[] = {-half, half}; // NOLINT(cppcoreguidelines-avoid-c-arrays)
-    result += halfs[same_sign];
+    result /= static_cast<SaturationT>(rhs.value_);
 
-    // Divide
-    result /= rhs_value;
+    // Scale back to the original number of fractional bits by dividing by 2 and adding the remainder to round up.
+    result = (result / SaturationT{2}) + (result % SaturationT{2});
 
     value_ = saturate_and_cast(result);
     return *this;

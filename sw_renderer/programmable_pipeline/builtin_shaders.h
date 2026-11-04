@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stl/utility.h"
+
 #include "sw_renderer/programmable_pipeline/sampler.h"
 #include "sw_renderer/programmable_pipeline/shader.h"
 #include "sw_renderer/programmable_pipeline/shader_builtins.h"
@@ -54,14 +56,14 @@ public:
   {
     VertexShaderOutput out;
     out.position = get_mvp_matrix() * input.attribute(attribute_location::POSITION);
-    out.varyings[COLOR_VARYING] = input.attribute(attribute_location::COLOR);
+    stl::at_unsafe(out.varyings, COLOR_VARYING) = input.attribute(attribute_location::COLOR);
     return out;
   }
 
   FragmentShaderOutput fragment(const DynamicVaryings& varyings, const FragmentContext& /*context*/) const override
   {
     FragmentShaderOutput out;
-    out.color = varyings[COLOR_VARYING];
+    out.color = stl::at_unsafe(varyings, COLOR_VARYING);
     return out;
   }
 };
@@ -77,14 +79,14 @@ public:
   {
     VertexShaderOutput out;
     out.position = get_mvp_matrix() * input.attribute(attribute_location::POSITION);
-    out.varyings[UV_VARYING] = input.attribute(attribute_location::UV);
+    stl::at_unsafe(out.varyings, UV_VARYING) = input.attribute(attribute_location::UV);
     return out;
   }
 
   FragmentShaderOutput fragment(const DynamicVaryings& varyings, const FragmentContext& /*context*/) const override
   {
     FragmentShaderOutput out;
-    out.color = texture(sampler_, varyings[UV_VARYING].xy());
+    out.color = texture(sampler_, stl::at_unsafe(varyings, UV_VARYING).xy());
     return out;
   }
 
@@ -115,14 +117,14 @@ public:
     const auto world_normal =
         (normal_matrix_ * Vector4F{normal.x(), normal.y(), normal.z(), single_precision{0.0F}}).xyz();
     const auto intensity = saturate(-math::dot(math::normalize(world_normal), light_direction_));
-    out.varyings[INTENSITY_VARYING] =
+    stl::at_unsafe(out.varyings, INTENSITY_VARYING) =
         Vector4F{intensity, single_precision{0.0F}, single_precision{0.0F}, single_precision{0.0F}};
     return out;
   }
 
   FragmentShaderOutput fragment(const DynamicVaryings& input, const FragmentContext& /*context*/) const override
   {
-    const auto intensity = input[INTENSITY_VARYING].x();
+    const auto intensity = stl::at_unsafe(input, INTENSITY_VARYING).x();
     const auto rgb = color_.xyz() * intensity;
 
     FragmentShaderOutput out;
@@ -168,7 +170,7 @@ public:
 
     if (use_texture_)
     {
-      out.varyings[UV_VARYING] = input.attribute(attribute_location::UV);
+      stl::at_unsafe(out.varyings, UV_VARYING) = input.attribute(attribute_location::UV);
     }
     if (use_lighting_)
     {
@@ -176,12 +178,12 @@ public:
       const auto world_normal =
           (normal_matrix_ * Vector4F{normal.x(), normal.y(), normal.z(), single_precision{0.0F}}).xyz();
       const auto intensity = saturate(-math::dot(math::normalize(world_normal), light_direction_));
-      out.varyings[LIGHT_VARYING] =
+      stl::at_unsafe(out.varyings, LIGHT_VARYING) =
           Vector4F{intensity, single_precision{0.0F}, single_precision{0.0F}, single_precision{0.0F}};
     }
     if (use_vertex_color_)
     {
-      out.varyings[COLOR_VARYING] = input.attribute(attribute_location::COLOR);
+      stl::at_unsafe(out.varyings, COLOR_VARYING) = input.attribute(attribute_location::COLOR);
     }
     return out;
   }
@@ -192,15 +194,15 @@ public:
 
     if (use_texture_)
     {
-      color = math::hadamard(color, texture(sampler_, varyings[UV_VARYING].xy()));
+      color = math::hadamard(color, texture(sampler_, stl::at_unsafe(varyings, UV_VARYING).xy()));
     }
     if (use_vertex_color_)
     {
-      color = math::hadamard(color, varyings[COLOR_VARYING]);
+      color = math::hadamard(color, stl::at_unsafe(varyings, COLOR_VARYING));
     }
     if (use_lighting_)
     {
-      const auto intensity = varyings[LIGHT_VARYING].x();
+      const auto intensity = stl::at_unsafe(varyings, LIGHT_VARYING).x();
       const auto rgb = color.xyz() * intensity;
       color = Vector4F{rgb.x(), rgb.y(), rgb.z(), color.w()};
     }

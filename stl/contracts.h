@@ -3,9 +3,15 @@
 #include "stl/source_location.h"
 
 #include <cstdint>
+#include <cstdlib>
 #include <exception>
 #include <tuple>
+#include <utility>
 
+/// Contract checking with non-owning diagnostic strings.
+/// Comment arguments must be non-null, null-terminated C strings whose storage remains valid
+/// while used, including by violation handlers. Comments are not owned or copied.
+/// String literals satisfy these requirements; arbitrary StringView slices do not.
 namespace rtw::stl::contracts
 {
 
@@ -35,13 +41,13 @@ namespace details
 {
 
 void handle_contract_violation(const EvaluationSemantic semantic, const DetectionMode detection_mode,
-                               const StringView comment, const AssertionKind assertion_kind,
+                               const char* comment, const AssertionKind assertion_kind,
                                const SourceLocation source_location) noexcept;
 
 template <EvaluationSemantic SEMANTIC>
 struct ContractViolationHandler
 {
-  static void handle_violation(const DetectionMode detection_mode, const StringView comment,
+  static void handle_violation(const DetectionMode detection_mode, const char* comment,
                                const AssertionKind assertion_kind, const SourceLocation source_location) noexcept
   {
     handle_contract_violation(SEMANTIC, detection_mode, comment, assertion_kind, source_location);
@@ -51,7 +57,7 @@ struct ContractViolationHandler
 template <>
 struct ContractViolationHandler<EvaluationSemantic::QUICK_ENFORCE>
 {
-  static void handle_violation(const DetectionMode detection_mode, const StringView comment,
+  static void handle_violation(const DetectionMode detection_mode, const char* comment,
                                const AssertionKind assertion_kind, const SourceLocation source_location) noexcept
   {
     std::ignore = detection_mode;
@@ -67,19 +73,19 @@ struct ContractViolationHandler<EvaluationSemantic::QUICK_ENFORCE>
 class ContractViolation
 {
   friend void details::handle_contract_violation(const EvaluationSemantic semantic, const DetectionMode detection_mode,
-                                                 const StringView comment, const AssertionKind assertion_kind,
+                                                 const char* comment, const AssertionKind assertion_kind,
                                                  const SourceLocation source_location) noexcept;
 
-  ContractViolation(const StringView comment, const SourceLocation& source_location,
-                    const std::exception_ptr& evaluation_exception, const AssertionKind assertion_kind,
-                    const EvaluationSemantic evaluation_semantic, const DetectionMode detection_mode) noexcept
-      : comment_{comment}, source_location_{source_location}, evaluation_exception_{evaluation_exception},
+  ContractViolation(const char* comment, const SourceLocation& source_location, std::exception_ptr evaluation_exception,
+                    const AssertionKind assertion_kind, const EvaluationSemantic evaluation_semantic,
+                    const DetectionMode detection_mode) noexcept
+      : comment_{comment}, source_location_{source_location}, evaluation_exception_{std::move(evaluation_exception)},
         assertion_kind_{assertion_kind}, evaluation_semantic_{evaluation_semantic}, detection_mode_{detection_mode}
   {
   }
 
 public:
-  StringView comment() const noexcept { return comment_; }
+  const char* comment() const noexcept { return comment_; }
   SourceLocation source_location() const noexcept { return source_location_; }
   std::exception_ptr evaluation_exception() const noexcept { return evaluation_exception_; }
   AssertionKind assertion_kind() const noexcept { return assertion_kind_; }
@@ -92,7 +98,7 @@ public:
   }
 
 private:
-  StringView comment_;
+  const char* comment_{""};
   SourceLocation source_location_;
   std::exception_ptr evaluation_exception_;
   AssertionKind assertion_kind_;
@@ -102,7 +108,7 @@ private:
 
 constexpr EvaluationSemantic current_semantic() noexcept
 {
-#if defined(RTW_CONTRACTS_IGNORE)
+#ifdef RTW_CONTRACTS_IGNORE
 #pragma message("Contracts are ignored. Violations will not be detected or reported.")
   return EvaluationSemantic::IGNORE;
 #elif defined(RTW_CONTRACTS_OBSERVE)
@@ -118,7 +124,7 @@ void handle_contract_violation(const ContractViolation& violation) noexcept;
 void invoke_default_contract_violation_handler(const ContractViolation& violation) noexcept;
 
 template <typename PredicateT>
-void check_predicate(const PredicateT& predicate, const StringView comment, const AssertionKind assertion_kind,
+void check_predicate(const PredicateT& predicate, const char* comment, const AssertionKind assertion_kind,
                      const SourceLocation source_location) noexcept
 {
   constexpr auto SEMANTIC = current_semantic();
@@ -155,21 +161,21 @@ void check_predicate(const PredicateT& predicate, const StringView comment, cons
 }
 
 template <typename PredicateT>
-void pre(const PredicateT& predicate, const StringView comment,
+void pre(const PredicateT& predicate, const char* comment,
          const SourceLocation source_location = SourceLocation::current()) noexcept
 {
   check_predicate(predicate, comment, AssertionKind::PRE, source_location);
 }
 
 template <typename PredicateT>
-void post(const PredicateT& predicate, const StringView comment,
+void post(const PredicateT& predicate, const char* comment,
           const SourceLocation source_location = SourceLocation::current()) noexcept
 {
   check_predicate(predicate, comment, AssertionKind::POST, source_location);
 }
 
 template <typename PredicateT>
-void contract_assert(const PredicateT& predicate, const StringView comment,
+void contract_assert(const PredicateT& predicate, const char* comment,
                      const SourceLocation source_location = SourceLocation::current()) noexcept
 {
   check_predicate(predicate, comment, AssertionKind::ASSERT, source_location);

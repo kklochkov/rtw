@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stl/utility.h"
+
 #include "sw_renderer/clipping.h"
 #include "sw_renderer/color.h"
 #include "sw_renderer/color_buffer.h"
@@ -141,8 +143,9 @@ private:
       transform_vertices(program, vertices, instance_id);
       for (std::size_t i = 0U, primitive = 0U; (i + 2U) < transformed_.size(); i += 3U, ++primitive)
       {
-        process_triangle(program, transformed_[i], transformed_[i + 1U], transformed_[i + 2U],
-                         static_cast<std::uint32_t>(primitive), state, framebuffer, stats);
+        process_triangle(program, stl::at_unsafe(transformed_, i), stl::at_unsafe(transformed_, i + 1U),
+                         stl::at_unsafe(transformed_, i + 2U), static_cast<std::uint32_t>(primitive), state,
+                         framebuffer, stats);
       }
     }
   }
@@ -157,9 +160,10 @@ private:
       transform_vertices(program, vertices, instance_id);
       for (std::size_t i = 0U, primitive = 0U; (i + 2U) < indices.size(); i += 3U, ++primitive)
       {
-        process_triangle(program, transformed_[indices[i]], transformed_[indices[i + 1U]],
-                         transformed_[indices[i + 2U]], static_cast<std::uint32_t>(primitive), state, framebuffer,
-                         stats);
+        process_triangle(program, stl::at_unsafe(transformed_, indices.at(i)),
+                         stl::at_unsafe(transformed_, indices.at(i + 1U)),
+                         stl::at_unsafe(transformed_, indices.at(i + 2U)), static_cast<std::uint32_t>(primitive), state,
+                         framebuffer, stats);
       }
     }
   }
@@ -172,8 +176,9 @@ private:
     for (std::size_t i = 0U; i < count; ++i)
     {
       const VertexContext context{static_cast<std::uint32_t>(i), instance_id};
-      const auto output = program.vertex(vertices[i], context);
-      transformed_[i] = ClipVertex<single_precision>{output.position, output.varyings, output.point_size};
+      const auto output = program.vertex(vertices.at(i), context);
+      stl::at_unsafe(transformed_, i) =
+          ClipVertex<single_precision>{output.position, output.varyings, output.point_size};
     }
   }
 
@@ -193,14 +198,18 @@ private:
       return;
     }
 
-    const math::BoundingBoxI bounds{0, 0, static_cast<std::int32_t>(framebuffer.width()) - 1,
-                                    static_cast<std::int32_t>(framebuffer.height()) - 1};
+    const math::BoundingBoxI bounds{
+        0,
+        0,
+        static_cast<std::int32_t>(framebuffer.width()) - 1,
+        static_cast<std::int32_t>(framebuffer.height()) - 1,
+    };
     for (std::size_t i = 0U; i < triangles.triangle_count; ++i)
     {
-      const auto& triangle = triangles.triangles[i]; // NOLINT(cppcoreguidelines-pro-bounds-constant-array-index)
-      const auto& cv0 = triangle[0U];
-      const auto& cv1 = triangle[1U];
-      const auto& cv2 = triangle[2U];
+      const auto& triangle = stl::at_unsafe(triangles.triangles, i);
+      const auto& cv0 = stl::at_unsafe(triangle, 0U);
+      const auto& cv1 = stl::at_unsafe(triangle, 1U);
+      const auto& cv2 = stl::at_unsafe(triangle, 2U);
 
       const auto w0 = details::clip_to_window(cv0.position, state.viewport, state.depth_range);
       const auto w1 = details::clip_to_window(cv1.position, state.viewport, state.depth_range);
@@ -243,9 +252,12 @@ private:
           return;
         }
 
-        const FragmentContext context{Vector4F{static_cast<single_precision>(p.x()) + 0.5F,
-                                               static_cast<single_precision>(p.y()) + 0.5F, window_z, inv_w},
-                                      primitive_id, front_facing};
+        const FragmentContext context{
+            Vector4F{static_cast<single_precision>(p.x()) + 0.5F, static_cast<single_precision>(p.y()) + 0.5F, window_z,
+                     inv_w},
+            primitive_id,
+            front_facing,
+        };
         const auto fragment = program.fragment(varyings, context);
         if (fragment.discard)
         {

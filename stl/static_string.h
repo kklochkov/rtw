@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stl/inplace_string.h"
+#include "stl/utility.h"
 
 #include <memory>
 
@@ -30,14 +31,14 @@ public:
     ensure_null_termination();
   }
 
-  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTBEGIN(google-explicit-constructor, hicpp-explicit-conversions,cppcoreguidelines-explicit-constructor)
   StaticString(StringView str) noexcept : StaticString{str.size()}
   {
     size_ = str.size();
     init_from_string_view(str);
   }
   StaticString(const_pointer str) noexcept : StaticString{StringView{str}} {}
-  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions)
+  // NOLINTEND(google-explicit-constructor, hicpp-explicit-conversions,cppcoreguidelines-explicit-constructor)
 
   StaticString(const StaticString& other) noexcept : StaticString{StringView{other.data(), other.size()}} {}
   StaticString(StaticString&& other) noexcept : storage_{std::move(other.storage_)}
@@ -53,7 +54,7 @@ public:
       size_ = std::min(capacity_, other.size_);
       for (size_type i = 0U; i < size_; ++i)
       {
-        storage_[i] = other.storage_[i];
+        at_unsafe(storage_, i) = at_unsafe(other.storage_, i);
       }
       ensure_null_termination();
     }
@@ -75,8 +76,8 @@ public:
   ~StaticString() noexcept = default;
 
 private:
-  reference value(const size_type index) noexcept { return storage_[index]; }
-  const_reference value(const size_type index) const noexcept { return storage_[index]; }
+  reference value(const size_type index) noexcept { return at_unsafe(storage_, index); }
+  const_reference value(const size_type index) const noexcept { return at_unsafe(storage_, index); }
 
   pointer get_data() noexcept { return storage_.get(); }
   const_pointer get_data() const noexcept { return storage_.get(); }

@@ -15,7 +15,7 @@ TEST(ContractsEnforceTest, current_semantic)
 TEST(ContractsEnforceTest, simple)
 {
   const auto location = rtw::stl::SourceLocation::current();
-  const std::string file_name(location.file_name().data());
+  const std::string file_name(location.file_name());
 
   EXPECT_NO_FATAL_FAILURE(RTW_PRE(true, "This precondition should pass"));
   EXPECT_DEATH(RTW_PRE(false), ::testing::ContainsRegex(fmt::format("  Source: {}:{}", file_name, 21)));

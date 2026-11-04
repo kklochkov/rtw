@@ -27,6 +27,9 @@ build --cxxopt=-Wall
 build --cxxopt=-Wextra
 build --cxxopt=-Wpedantic
 build --cxxopt=-Werror
+build --per_file_copt=external/.*@-Wno-error
+build --per_file_copt=external/.*@-Wno-thread-safety-analysis
+build --per_file_copt=external/.*@-Wno-nontrivial-memcall
 
 # Route external (third-party) repository headers through -isystem so our -Werror
 # warnings only apply to first-party code, not to BCR dependencies' headers.

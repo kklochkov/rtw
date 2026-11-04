@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stl/utility.h"
+
 #include "sw_renderer/programmable_pipeline/register_file.h"
 #include "sw_renderer/raster_common.h"
 #include "sw_renderer/types.h"
@@ -93,7 +95,8 @@ constexpr void fill_triangle_bbox(const Vector4F& p0, const Vector4F& p1, const 
   constexpr math::Vector4<single_precision> ZERO_VARYING{};
   for (std::uint16_t slot = 0U; slot < N; ++slot)
   {
-    if (varyings0[slot] != ZERO_VARYING || varyings1[slot] != ZERO_VARYING || varyings2[slot] != ZERO_VARYING)
+    if (stl::at_unsafe(varyings0, slot) != ZERO_VARYING || stl::at_unsafe(varyings1, slot) != ZERO_VARYING
+        || stl::at_unsafe(varyings2, slot) != ZERO_VARYING)
     {
       active_count = static_cast<std::uint16_t>(slot + 1U);
     }
@@ -131,8 +134,9 @@ constexpr void fill_triangle_bbox(const Vector4F& p0, const Vector4F& p1, const 
           const auto recip = single_precision{1} / inv_w;
           for (std::uint16_t slot = 0U; slot < active_count; ++slot)
           {
-            const auto accumulated = (varyings0[slot] * c0) + (varyings1[slot] * c1) + (varyings2[slot] * c2);
-            varyings[slot] = accumulated * recip;
+            const auto accumulated = (stl::at_unsafe(varyings0, slot) * c0) + (stl::at_unsafe(varyings1, slot) * c1)
+                                   + (stl::at_unsafe(varyings2, slot) * c2);
+            stl::at_unsafe(varyings, slot) = accumulated * recip;
           }
         }
 
@@ -210,7 +214,7 @@ constexpr void draw_line_varyings(const Vector4F& p0, const Vector4F& p1,
   constexpr math::Vector4<single_precision> ZERO_VARYING{};
   for (std::uint16_t slot = 0U; slot < N; ++slot)
   {
-    if ((varyings0[slot] != ZERO_VARYING) || (varyings1[slot] != ZERO_VARYING))
+    if ((stl::at_unsafe(varyings0, slot) != ZERO_VARYING) || (stl::at_unsafe(varyings1, slot) != ZERO_VARYING))
     {
       active_count = static_cast<std::uint16_t>(slot + 1U);
     }
@@ -237,8 +241,8 @@ constexpr void draw_line_varyings(const Vector4F& p0, const Vector4F& p1,
       const auto recip = single_precision{1} / inv_w;
       for (std::uint16_t slot = 0U; slot < active_count; ++slot)
       {
-        const auto accumulated = (varyings0[slot] * c0) + (varyings1[slot] * c1);
-        varyings[slot] = accumulated * recip;
+        const auto accumulated = (stl::at_unsafe(varyings0, slot) * c0) + (stl::at_unsafe(varyings1, slot) * c1);
+        stl::at_unsafe(varyings, slot) = accumulated * recip;
       }
     }
 
