@@ -26,8 +26,9 @@ git_override(
     module_name = "hedron_compile_commands",
     remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
     commit = "abb61a688167623088f8768cc9264798df6a9d10",
-    # Replace the commit hash (above) with the latest (https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main).
-    # Even better, set up Renovate and let it do the work for you (see "Suggestion: Updates" in the README).
+    # Bazel 9 removed native.py_binary; use explicit Python/C++ rules.
+    patches = ["//third_party/hedron_compile_commands:bazel9.patch"],
+    patch_strip = 1,
 )
 
 # clang-tidy

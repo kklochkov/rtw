@@ -22,6 +22,19 @@ To run tests for the math library use the following command:
 bazel test //math/...
 ```
 
+### Editor support (clangd)
+
+Generate or refresh the compilation database after changing Bazel dependencies
+or build settings:
+
+```bash
+bazel run @hedron_compile_commands//:refresh_all
+```
+
+This writes the ignored `compile_commands.json`, including entries for headers.
+Hedron is patched in `third_party/hedron_compile_commands/bazel9.patch` to use
+explicit Python/C++ rules on Bazel 9 and support header discovery with LLVM 23.
+
 ## Currently implemented:
 - [x] [multiprecision](multiprecision) - A set of classes to work with big ints, fixed-point and rationals. Includes arithmetic library and a set of math functions including trigonometric functions.
 - [x] [math](math) - A math library, that is compatible with fixed-point arithmetic library.
