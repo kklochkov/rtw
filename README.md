@@ -42,6 +42,18 @@ bazel run //sandbox/sw_renderer:sw_renderer_fixed_point -c opt
 ```
 
 ## Third party libraries
+
+ImGui (docking) and ImPlot come from the Bazel Central Registry. SDL2 and
+SDL2_image use system shared libraries via the sysroot extension: install
+`sdl2` and `sdl2_image` with Homebrew on macOS, or `libsdl2-dev` and
+`libsdl2-image-dev` on Debian/Ubuntu.
+
+The small patch in `third_party/imgui/sysroot_sdl2.patch` exposes ImGui's SDL2
+backend sources and headers. `//third_party/imgui:sdl2_backend` compiles them
+against sysroot SDL2; use this target instead of BCR's compiled SDL2 backends
+to avoid mixing source-built SDL2 with the SDL2 used by system SDL2_image.
+BCR ImGui also enables FreeType/LunaSVG, 32-bit character types and 32-bit indices.
+
 - [SDL2](https://www.libsdl.org/) - Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D
 - [fmtlib](https://github.com/fmtlib) - A modern formatting library
 - [googletest](https://github.com/google/googletest) - Google Testing and Mocking Framework

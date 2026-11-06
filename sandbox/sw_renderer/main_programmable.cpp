@@ -714,7 +714,7 @@ void Application::render()
   SDL_RenderCopy(sdl_renderer_, sdl_texture_, nullptr, nullptr);
 
   {
-    ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
+    ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), sdl_renderer_);
   }
 
   SDL_RenderPresent(sdl_renderer_);

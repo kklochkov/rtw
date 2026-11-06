@@ -1,0 +1,28 @@
+--- a/backends/BUILD.bazel
++++ b/backends/BUILD.bazel
+@@ -6,6 +6,25 @@
+ )
+ 
++# Allow consumers to compile these backends against their system SDL2.
++filegroup(
++    name = "sdl2_backend_sources",
++    srcs = [
++        "imgui_impl_sdl2.cpp",
++        "imgui_impl_sdlrenderer2.cpp",
++    ],
++)
++
++cc_library(
++    name = "sdl2_backend_headers",
++    hdrs = [
++        "imgui_impl_sdl2.h",
++        "imgui_impl_sdlrenderer2.h",
++    ],
++    includes = ["."],
++    deps = ["//:imgui"],
++)
++
+ cc_library(
+     name = "platform-glfw",
+     srcs = ["imgui_impl_glfw.cpp"],
+     hdrs = ["imgui_impl_glfw.h"],

@@ -43,12 +43,16 @@ bazel_dep(name = "fmt", version = "12.1.0")
 bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 bazel_dep(name = "google_benchmark", version = "1.9.5")
 bazel_dep(name = "cli11", version = "2.6.2")
+bazel_dep(name = "imgui", version = "1.92.6-docking.bcr.3")
+bazel_dep(name = "implot", version = "0.17")
 
-# Non BCR third-party dependencies (served from the local //bzlmod_registery).
-# imgui/implot stay here so their SDL2 backend keeps compiling against the
-# system (sysroot) SDL2 instead of BCR imgui's bundled @sdl2 dependency.
-bazel_dep(name = "imgui", version = "1.90.5-docking")
-bazel_dep(name = "implot", version = "0.16-docking")
+# Expose backend sources so //third_party/imgui can compile against sysroot SDL2.
+# Do not use BCR's compiled SDL2 backends: they link a separate, source-built SDL2.
+single_version_override(
+    module_name = "imgui",
+    patches = ["//third_party/imgui:sysroot_sdl2.patch"],
+    patch_strip = 1,
+)
 
 # sysroot dependencies
 sysroot = use_extension("//:extensions.bzl", "sysroot")

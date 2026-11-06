@@ -1,0 +1,15 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+exports_files(["sysroot_sdl2.patch"])
+
+# Compile BCR ImGui's backend sources against the same SDL2 as SDL2_image.
+cc_library(
+    name = "sdl2_backend",
+    srcs = ["@imgui//backends:sdl2_backend_sources"],
+    tags = ["no-clang-tidy"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@imgui//backends:sdl2_backend_headers",
+        "@sysroot//:SDL2",
+    ],
+)

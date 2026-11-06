@@ -1,5 +1,4 @@
-# Registers
-common --registry=file://%workspace%/bzlmod_registery
+# Module registry
 common --registry=https://bcr.bazel.build
 
 # clang-tidy
